@@ -1,26 +1,40 @@
 package cmd
 
 import (
-	"embed"
-	"io/fs"
+	"fmt"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
-//go:embed dist
-var frontendDir embed.FS
+type ServerConfig struct {
+	Port      int
+	UIHandler http.Handler
+}
 
-func StartServer() {
-	srv := getFrontendDir()
-	err := http.ListenAndServe(":8080", srv)
-	if err != nil {
-		panic(err)
+type ServerOpt func(o *ServerConfig)
+
+func WithPort(port int) ServerOpt {
+	return func(o *ServerConfig) {
+		o.Port = port
 	}
 }
 
-func getFrontendDir() http.Handler {
-	subFS, err := fs.Sub(frontendDir, "web")
-	if err != nil {
-		panic(err)
+func WithUI(handler http.Handler) ServerOpt {
+	return func(o *ServerConfig) {
+		o.UIHandler = handler
 	}
-	return http.FileServer(http.FS(subFS))
+}
+
+func StartServer(opt ...ServerOpt) {
+	config := &ServerConfig{}
+	for _, o := range opt {
+		o(config)
+	}
+
+	http.Handle("/", config.UIHandler)
+
+	err := http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to start server")
+	}
 }
