@@ -17,11 +17,11 @@ COPY go.sum .
 
 RUN go mod download
 
-COPY server/ server/
+COPY backend/ backend/
 
-COPY --from=front /frontend/dist/ ./server/cmd/dist/
+COPY --from=front /frontend/dist/ ./backend/cmd/dist/
 
-RUN go build -o dockman "./server/cmd/server/main.go"
+RUN go build -o dockman "./backend/cmd/server/main.go"
 
 FROM alpine:latest
 
