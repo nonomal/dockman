@@ -1,0 +1,23 @@
+{
+  "name": "spec",
+  "version": "1.0.0",
+  "description": "Generate grpc stubs for dockman",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "geno": "npm run build && docker run --rm -v .:/workspace gouda-proto:latest",
+    "gen": "npm run geno && npm run go && npm run dart && npm run web",
+    "go": "echo 'moving go files' && rimraf ../backend/generated/* && cpx generated/go/* ../backend/generated && rimraf generated/go",
+    "web": "echo 'moving web files' && rimraf ../frontend/src/gen/* && cpx generated/web/* ../frontend/src/gen && rimraf generated/web",
+    "it": "npm run build && docker run --rm --name gouda_grpc_shell -v .:/workspace -it gouda-proto:latest /bin/bash",
+    "build": "docker build . -t gouda-proto:latest",
+    "push": "docker push gouda-proto:latest",
+    "bpsh": "npm run build && npm run push"
+  },
+  "devDependencies": {
+    "cpx": "^1.5.0",
+    "rimraf": "^6.0.1"
+  }
+}

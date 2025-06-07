@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package compose.v1;
+
+option go_package = "github.com/RA341/dockman/backend/generated/compose/v1";
+
+service ComposeService {
+  rpc Create(ComposeFile) returns (Empty) {}
+  rpc Delete(ComposeFile) returns (Empty) {}
+
+  rpc List(Empty) returns (ListResponse) {}
+  rpc Load(ComposeFile) returns (ComposeFile) {}
+  rpc Edit(ComposeFile) returns (ComposeFile) {}
+}
+
+message ListResponse {
+  repeated string files = 1;
+}
+
+message Empty {}
+
+message ComposeFile {
+  string name = 1;
+}
