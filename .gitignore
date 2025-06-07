@@ -2,6 +2,6 @@
 /**/dist
 /**/bin
 /**/node_modules
-./compose/*
-backend/**/compose
 /compose/
+./compose/*
+/**/.dockman.yaml
