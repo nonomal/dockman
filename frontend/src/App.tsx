@@ -28,12 +28,15 @@ export default function App() {
 }
 
 // Navigation Bar
-const Navbar = ({activeTab, setActiveTab}) => {
+const Navbar = ({activeTab, setActiveTab}: {
+    activeTab: any;
+    setActiveTab: any;
+}) => {
     return (
         <nav
             className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-700 flex items-center justify-between px-4 py-2 sticky top-0 z-50">
             <div className="flex items-center space-x-4">
-                <img src="https://placehold.co/32x32/7c3aed/ffffff?text=L" alt="Logo" className="h-8 w-8 rounded-md"/>
+                <img src="/dockmanTBD.png" alt="Logo" className="h-8 w-8 rounded-md"/>
                 <div className="flex items-center space-x-1">
                     <NavTab name="compose" activeTab={activeTab} setActiveTab={setActiveTab}>
                         Compose
@@ -47,7 +50,12 @@ const Navbar = ({activeTab, setActiveTab}) => {
     );
 };
 
-const NavTab = ({name, activeTab, setActiveTab, children}) => {
+const NavTab = ({name, activeTab, setActiveTab, children}: {
+    name: any;
+    children: any;
+    activeTab: any;
+    setActiveTab: any;
+}) => {
     const isActive = name === activeTab;
     return (
         <button

@@ -10,16 +10,16 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file compose/v1/compose.proto.
  */
 export const file_compose_v1_compose: GenFile = /*@__PURE__*/
-  fileDesc("Chhjb21wb3NlL3YxL2NvbXBvc2UucHJvdG8SCmNvbXBvc2UudjEiHQoMTGlzdFJlc3BvbnNlEg0KBWZpbGVzGAEgAygJIgcKBUVtcHR5IhsKC0NvbXBvc2VGaWxlEgwKBG5hbWUYASABKAkyrwIKDkNvbXBvc2VTZXJ2aWNlEjYKBkNyZWF0ZRIXLmNvbXBvc2UudjEuQ29tcG9zZUZpbGUaES5jb21wb3NlLnYxLkVtcHR5IgASNgoGRGVsZXRlEhcuY29tcG9zZS52MS5Db21wb3NlRmlsZRoRLmNvbXBvc2UudjEuRW1wdHkiABI1CgRMaXN0EhEuY29tcG9zZS52MS5FbXB0eRoYLmNvbXBvc2UudjEuTGlzdFJlc3BvbnNlIgASOgoETG9hZBIXLmNvbXBvc2UudjEuQ29tcG9zZUZpbGUaFy5jb21wb3NlLnYxLkNvbXBvc2VGaWxlIgASOgoERWRpdBIXLmNvbXBvc2UudjEuQ29tcG9zZUZpbGUaFy5jb21wb3NlLnYxLkNvbXBvc2VGaWxlIgBCngEKDmNvbS5jb21wb3NlLnYxQgxDb21wb3NlUHJvdG9QAVo1Z2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2JhY2tlbmQvZ2VuZXJhdGVkL2NvbXBvc2UvdjGiAgNDWFiqAgpDb21wb3NlLlYxygIKQ29tcG9zZVxWMeICFkNvbXBvc2VcVjFcR1BCTWV0YWRhdGHqAgtDb21wb3NlOjpWMWIGcHJvdG8z");
+  fileDesc("Chhjb21wb3NlL3YxL2NvbXBvc2UucHJvdG8SCmNvbXBvc2UudjEiLwoMTGlzdFJlc3BvbnNlEh8KBWZpbGVzGAEgAygLMhAuY29tcG9zZS52MS5GaWxlIgcKBUVtcHR5IiYKBEZpbGUSDAoEbmFtZRgBIAEoCRIQCghzdWJmaWxlcxgCIAMoCTKFAgoOQ29tcG9zZVNlcnZpY2USLwoGQ3JlYXRlEhAuY29tcG9zZS52MS5GaWxlGhEuY29tcG9zZS52MS5FbXB0eSIAEi8KBkRlbGV0ZRIQLmNvbXBvc2UudjEuRmlsZRoRLmNvbXBvc2UudjEuRW1wdHkiABI1CgRMaXN0EhEuY29tcG9zZS52MS5FbXB0eRoYLmNvbXBvc2UudjEuTGlzdFJlc3BvbnNlIgASLAoETG9hZBIQLmNvbXBvc2UudjEuRmlsZRoQLmNvbXBvc2UudjEuRmlsZSIAEiwKBEVkaXQSEC5jb21wb3NlLnYxLkZpbGUaEC5jb21wb3NlLnYxLkZpbGUiAEKeAQoOY29tLmNvbXBvc2UudjFCDENvbXBvc2VQcm90b1ABWjVnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vYmFja2VuZC9nZW5lcmF0ZWQvY29tcG9zZS92MaICA0NYWKoCCkNvbXBvc2UuVjHKAgpDb21wb3NlXFYx4gIWQ29tcG9zZVxWMVxHUEJNZXRhZGF0YeoCC0NvbXBvc2U6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message compose.v1.ListResponse
  */
 export type ListResponse = Message<"compose.v1.ListResponse"> & {
   /**
-   * @generated from field: repeated string files = 1;
+   * @generated from field: repeated compose.v1.File files = 1;
    */
-  files: string[];
+  files: File[];
 };
 
 /**
@@ -43,20 +43,25 @@ export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
   messageDesc(file_compose_v1_compose, 1);
 
 /**
- * @generated from message compose.v1.ComposeFile
+ * @generated from message compose.v1.File
  */
-export type ComposeFile = Message<"compose.v1.ComposeFile"> & {
+export type File = Message<"compose.v1.File"> & {
   /**
    * @generated from field: string name = 1;
    */
   name: string;
+
+  /**
+   * @generated from field: repeated string subfiles = 2;
+   */
+  subfiles: string[];
 };
 
 /**
- * Describes the message compose.v1.ComposeFile.
- * Use `create(ComposeFileSchema)` to create a new message.
+ * Describes the message compose.v1.File.
+ * Use `create(FileSchema)` to create a new message.
  */
-export const ComposeFileSchema: GenMessage<ComposeFile> = /*@__PURE__*/
+export const FileSchema: GenMessage<File> = /*@__PURE__*/
   messageDesc(file_compose_v1_compose, 2);
 
 /**
@@ -68,7 +73,7 @@ export const ComposeService: GenService<{
    */
   create: {
     methodKind: "unary";
-    input: typeof ComposeFileSchema;
+    input: typeof FileSchema;
     output: typeof EmptySchema;
   },
   /**
@@ -76,7 +81,7 @@ export const ComposeService: GenService<{
    */
   delete: {
     methodKind: "unary";
-    input: typeof ComposeFileSchema;
+    input: typeof FileSchema;
     output: typeof EmptySchema;
   },
   /**
@@ -92,16 +97,16 @@ export const ComposeService: GenService<{
    */
   load: {
     methodKind: "unary";
-    input: typeof ComposeFileSchema;
-    output: typeof ComposeFileSchema;
+    input: typeof FileSchema;
+    output: typeof FileSchema;
   },
   /**
    * @generated from rpc compose.v1.ComposeService.Edit
    */
   edit: {
     methodKind: "unary";
-    input: typeof ComposeFileSchema;
-    output: typeof ComposeFileSchema;
+    input: typeof FileSchema;
+    output: typeof FileSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_compose_v1_compose, 0);

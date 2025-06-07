@@ -1,41 +1,48 @@
 import {useEffect, useState} from "react";
 import {ChevronDown, ChevronRight, FileText, Plus, Trash2} from 'lucide-react';
 import {YamlEditor} from "./editor.tsx";
-import {type FileAndFile} from "../lib/file.ts";
-import {callRPC, composeClient} from "../lib/grpc.ts";
+import {callRPC, useClient} from "../lib/api.ts";
+import {ComposeService, type File} from "../gen/compose/v1/compose_pb.ts"
+import {AddFileButton} from "./button-popup.tsx";
 
 export const ComposePage = () => {
-    const [files, _setFiles] = useState<FileAndFile[]>([]);
+    const [files, setFiles] = useState<File[]>([]);
     const [selectedFile, setSelectedFile] = useState(files[0] || null);
-    // const [loading, setLoading] = useState(false);
-    const [_error, setError] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const composeClient = useClient(ComposeService)
+
 
     useEffect(() => {
         async function fetchData() {
             const {val, err} = await callRPC(() => composeClient.list({}))
-            if (err !== null) {
+            console.log("calling fetchData");
+            if (err) {
                 setError(err)
+            } else {
+                setFiles(val?.files ?? [])
             }
-
-            for (let _f of val!.files) {
-                // const file = {
-                //     name: f,
-                //     content: "",
-                // } as File
-            }
-
-            // setFiles(f)
+            setLoading(false)
         }
 
         fetchData();
     }, []);
 
+    useEffect(() => {
+        if (files.length > 0 && !selectedFile) {
+            setSelectedFile(files[0]);
+        }
+    }, [files, selectedFile]);
+
     const addRootFile = () => {
-        console.log("Adding root file");
+        // composeClient.create({name})
+        // fetchData()
     };
 
-    const addSubFile = (parentId: string) => {
+    const addSubFile = async (parentId: string) => {
         console.log("Adding sub file: ", parentId);
+        return ""
     };
 
     const deleteFile = (fileId: string, parentId: string | null = null) => {
@@ -46,6 +53,29 @@ export const ComposePage = () => {
         console.log(`Updating content ${fileId}, ${newContent}`);
     };
 
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-57px)] bg-blue-950 text-white">
+                {/* Spinner */}
+                <div className="w-10 h-10 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                <p className="mt-3 text-lg font-medium">Fetching files...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-57px)] bg-blue-950 p-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p className="mt-3 text-xl font-semibold text-red-700">Error loading files</p>
+                <p className="mt-1 text-center text-md text-red-600">{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-[calc(100vh-57px)]">
@@ -72,9 +102,9 @@ const FileSidebar = (
         selectedFile,
         setSelectedFile,
     }: {
-        files: FileAndFile[];
+        files: File[];
         addRootFile: () => void;
-        addSubFile: (parentId: string) => void;
+        addSubFile: (filename: string) => Promise<string>;
         deleteFile: (fileId: string, parentId: string | null) => void;
         selectedFile: any;
         setSelectedFile: any;
@@ -94,9 +124,8 @@ const FileSidebar = (
             <div className="flex-grow overflow-y-auto pr-2 -mr-2">
                 {files.map(file => (
                     <FileItem
-                        key={file.rootFile.name}
+                        key={file.name}
                         file={file}
-                        isRoot={true}
                         addSubFile={addSubFile}
                         deleteFile={deleteFile}
                         selectedFile={selectedFile}
@@ -112,21 +141,21 @@ const FileSidebar = (
 const FileItem = (
     {
         file,
-        isRoot,
         addSubFile,
         deleteFile,
         selectedFile,
         setSelectedFile
     }: {
         file: File;
-        isRoot: boolean;
-        addSubFile: any;
+        addSubFile: (filename: string) => Promise<string>;
         deleteFile: any;
         selectedFile: any;
         setSelectedFile: any;
     }) => {
     const [isExpanded, setIsExpanded] = useState(true);
-    const isSelected = selectedFile?.name === file.;
+    const isSelected = selectedFile?.name === file.name;
+
+    const isRoot = file.subfiles.length === 0
 
     return (
         <div>
@@ -136,7 +165,7 @@ const FileItem = (
                 }`}
             >
                 <div className="flex items-center flex-grow" onClick={() => setSelectedFile(file)}>
-                    {isRoot && file.subFiles.length > 0 && (
+                    {file.subfiles.length > 0 && (
                         <button onClick={(e) => {
                             e.stopPropagation();
                             setIsExpanded(!isExpanded)
@@ -149,16 +178,10 @@ const FileItem = (
                 </div>
                 <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {isRoot && (
-                        <button
-                            onClick={() => addSubFile(file.id)}
-                            className="p-1 text-gray-400 hover:text-white"
-                            aria-label="Add sub-file"
-                        >
-                            <Plus size={14}/>
-                        </button>
+                        <AddFileButton file={file} isSubfile={isRoot} onSubmit={addSubFile} />
                     )}
                     <button
-                        onClick={() => deleteFile(file.id, isRoot ? null : file.parentId)}
+                        onClick={() => deleteFile(file.name, isRoot ? null : file.name)}
                         className="p-1 text-gray-400 hover:text-red-500"
                         aria-label="Delete file"
                     >
@@ -166,13 +189,13 @@ const FileItem = (
                     </button>
                 </div>
             </div>
-            {isRoot && isExpanded && file.subFiles.length > 0 && (
+            {isRoot && isExpanded && file.subfiles.length > 0 && (
                 <div className="pl-4 border-l border-gray-600 ml-2">
-                    {file.subFiles.map(subFile => (
+                    {file.subfiles.map(subFile => (
                         <FileItem
-                            key={subFile.id}
-                            file={{...subFile, parentId: file.id}}
-                            isRoot={false}
+                            key={subFile}
+                            file={{name: subFile} as File}
+                            addSubFile={addSubFile}
                             deleteFile={deleteFile}
                             selectedFile={selectedFile}
                             setSelectedFile={setSelectedFile}
@@ -186,7 +209,15 @@ const FileItem = (
 
 
 // File Content Display
-const FileContent = ({file, onContentChange}) => {
+const FileContent = (
+    {
+        file,
+        onContentChange,
+    }: {
+        file: File,
+        onContentChange: (filename: string, content: string) => void,
+    }
+) => {
     if (!file) {
         return (
             <div className="flex-grow p-8 flex items-center justify-center text-gray-500">
@@ -199,11 +230,21 @@ const FileContent = ({file, onContentChange}) => {
         );
     }
 
+    let [content, setContent] = useState('');
+
+    useEffect(
+        () => {
+            onContentChange("", "")
+            // todo load file
+            setContent("");
+        }
+    )
+
     return (
         <div className="flex-grow p-1">
             <YamlEditor
-                key={file.id}
-                content={file.content}
+                key={file.name}
+                content={content}
             />
         </div>
     );

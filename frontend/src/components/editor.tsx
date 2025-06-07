@@ -2,8 +2,8 @@ import {type JSX, useState} from "react";
 import * as monacoEditor from "monaco-editor";
 import {Editor} from "@monaco-editor/react";
 
-export function YamlEditor({ content }: { content: string }): JSX.Element {
-    const [code, setCode] = useState(content); // Some initial content
+export function YamlEditor({content}: { content: string }): JSX.Element {
+    const [code, setCode] = useState(content);
 
     function handleEditorChange(
         value: string | undefined
@@ -18,13 +18,13 @@ export function YamlEditor({ content }: { content: string }): JSX.Element {
     }
 
     return (
-        <div className="app-container"> {/* This container will define the editor's bounds */}
+        <div className="app-container">
             {/* You could have a small header/toolbar here if needed */}
             {/* <header>My Awesome Editor</header> */}
-            <div className="editor-wrapper"> {/* Optional: Another wrapper for more complex layouts */}
+            <div className="editor-wrapper">
                 <Editor
-                    height="90vh"
-                    width="90vw"
+                    height="100vw"
+                    width="100vw"
                     // No height/width props needed if parent is sized, it will default to 100%
                     defaultLanguage="yaml"
                     value={code}
@@ -33,7 +33,7 @@ export function YamlEditor({ content }: { content: string }): JSX.Element {
                     theme="vs-dark"
                     options={{
                         selectOnLineNumbers: true,
-                        minimap: {enabled: false} // Example: disable minimap for more space
+                        minimap: {enabled: false}
                     }}
                 />
             </div>
