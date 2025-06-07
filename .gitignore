@@ -1,3 +1,7 @@
 /**/.idea
 /**/dist
 /**/bin
+/**/node_modules
+./compose/*
+backend/**/compose
+/compose/
