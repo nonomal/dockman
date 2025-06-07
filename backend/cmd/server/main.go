@@ -2,12 +2,14 @@ package main
 
 import (
 	"github.com/RA341/dockman/backend/cmd"
+	logger "github.com/RA341/dockman/backend/pkg"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"
 )
 
 func main() {
+	logger.ConsoleLogger()
 	cmd.StartServer(
 		cmd.WithUI(setupFrontend()),
 		cmd.WithPort(8866),

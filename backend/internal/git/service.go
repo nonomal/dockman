@@ -11,12 +11,14 @@ type Service struct {
 	repo     *git.Repository
 }
 
-func New(root string) (*Service, error) {
+func New(root string) *Service {
 	srv := Service{repoPath: root}
+
 	if err := srv.Init(); err != nil {
-		return nil, err
+		log.Fatal().Err(err).Msg("Failed to start git service")
 	}
-	return &srv, nil
+
+	return &srv
 }
 
 func (s *Service) Init() error {

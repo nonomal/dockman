@@ -2,6 +2,7 @@ package compose
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"os"
 	"path/filepath"
 )
@@ -10,12 +11,14 @@ type Service struct {
 	composeRoot string
 }
 
-func New(composeRoot string) (*Service, error) {
+func New(composeRoot string) *Service {
 	srv := &Service{composeRoot: composeRoot}
+
 	if err := srv.Init(); err != nil {
-		return nil, err
+		log.Fatal().Err(err).Msg("Failed to start compose service")
 	}
-	return srv, nil
+
+	return srv
 }
 
 func (s *Service) Init() error {
