@@ -19,8 +19,6 @@ RUN go mod download
 
 COPY backend/ backend/
 
-COPY --from=front /frontend/dist/ ./backend/cmd/dist/
-
 RUN go build -o dockman "./backend/cmd/server/main.go"
 
 FROM alpine:latest
@@ -29,6 +27,8 @@ WORKDIR /app
 
 COPY --from=back /backend/dockman dockman
 
+COPY --from=front /frontend/dist/ ./dist
+
 EXPOSE 8080
 
-CMD ["./dockman"]
+CMD ["./dockman", "--ui=dist"]
