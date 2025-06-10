@@ -12,14 +12,14 @@ FROM golang:1.24-alpine AS back
 
 WORKDIR /backend
 
-COPY go.mod .
-COPY go.sum .
+COPY backend/go.mod .
+COPY backend/go.sum .
 
 RUN go mod download
 
-COPY backend/ backend/
+COPY backend/ .
 
-RUN go build -o dockman "./backend/cmd/server/main.go"
+RUN go build -o dockman "./cmd/server/main.go"
 
 FROM alpine:latest
 

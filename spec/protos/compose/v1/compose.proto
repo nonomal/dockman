@@ -2,24 +2,50 @@ syntax = "proto3";
 
 package compose.v1;
 
-option go_package = "github.com/RA341/dockman/backend/generated/compose/v1";
+option go_package = "github.com/RA341/dockman/generated/compose/v1";
 
 service ComposeService {
-  rpc Create(File) returns (Empty) {}
-  rpc Delete(File) returns (Empty) {}
-
+  // root file management
+  rpc Create(CreateFile) returns (Empty) {}
   rpc List(Empty) returns (ListResponse) {}
-  rpc Load(File) returns (File) {}
-  rpc Edit(File) returns (File) {}
+  rpc Delete(File) returns (Empty) {}
+  rpc Rename(RenameFile) returns (Empty) {}
+
+  // content
+  rpc UpdateContents(File) returns (File) {}
+  rpc LoadContents(File) returns (stream FileTransfer) {}
+}
+
+message FileTransfer {
+  bytes chunk_data = 1;
+}
+
+message SubReq{
+  string groupName = 1;
+  string subFilename = 2;
 }
 
 message ListResponse {
-  repeated File files = 1;
+  repeated FileGroup groups = 1;
+}
+
+message FileGroup {
+  string root = 1;
+  repeated string subFiles = 2;
+}
+
+message RenameFile {
+  File oldFile = 1;
+  File newFile = 2;
+}
+
+message CreateFile {
+  File file = 1;
+  string parent = 2;
+}
+
+message File {
+  string filename = 1;
 }
 
 message Empty {}
-
-message File {
-  string name = 1;
-  repeated string subfiles = 2;
-}

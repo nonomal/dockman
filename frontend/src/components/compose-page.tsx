@@ -2,46 +2,38 @@ import {useEffect, useState} from "react";
 import {ChevronDown, ChevronRight, FileText, Plus, Trash2} from 'lucide-react';
 import {YamlEditor} from "./editor.tsx";
 import {callRPC, useClient} from "../lib/api.ts";
-import {ComposeService, type File} from "../gen/compose/v1/compose_pb.ts"
+import {ComposeService, type FileGroup} from "../gen/compose/v1/compose_pb.ts"
 import {AddFileButton} from "./button-popup.tsx";
 
 export const ComposePage = () => {
-    const [files, setFiles] = useState<File[]>([]);
-    const [selectedFile, setSelectedFile] = useState(files[0] || null);
+    const [files, setFiles] = useState<FileGroup[]>([]);
+    const [selectedFile, setSelectedFile] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     const composeClient = useClient(ComposeService)
 
+    async function fetchData() {
+        const {val, err} = await callRPC(() => composeClient.list({}))
+        console.log("calling fetchData");
+        if (err) {
+            setError(err)
+        } else {
+            setFiles(val?.groups ?? [])
+        }
+        setLoading(false)
+    }
 
     useEffect(() => {
-        async function fetchData() {
-            const {val, err} = await callRPC(() => composeClient.list({}))
-            console.log("calling fetchData");
-            if (err) {
-                setError(err)
-            } else {
-                setFiles(val?.files ?? [])
-            }
-            setLoading(false)
-        }
-
         fetchData();
     }, []);
 
-    useEffect(() => {
-        if (files.length > 0 && !selectedFile) {
-            setSelectedFile(files[0]);
-        }
-    }, [files, selectedFile]);
-
-    const addRootFile = () => {
-        // composeClient.create({name})
-        // fetchData()
+    const addRootFile = async (filename: string) => {
+        await composeClient.create({file: {filename: filename}, parent: ""})
+        fetchData()
     };
 
-    const addSubFile = async (parentId: string) => {
-        console.log("Adding sub file: ", parentId);
+    const addSubFile = async () => {
         return ""
     };
 
@@ -102,10 +94,10 @@ const FileSidebar = (
         selectedFile,
         setSelectedFile,
     }: {
-        files: File[];
-        addRootFile: () => void;
-        addSubFile: (filename: string) => Promise<string>;
-        deleteFile: (fileId: string, parentId: string | null) => void;
+        files: FileGroup[];
+        addRootFile: any;
+        addSubFile: any;
+        deleteFile: any;
         selectedFile: any;
         setSelectedFile: any;
     }) => {
@@ -124,8 +116,9 @@ const FileSidebar = (
             <div className="flex-grow overflow-y-auto pr-2 -mr-2">
                 {files.map(file => (
                     <FileItem
-                        key={file.name}
-                        file={file}
+                        key={file.root}
+                        filename={file.root}
+                        children={file.subFiles}
                         addSubFile={addSubFile}
                         deleteFile={deleteFile}
                         selectedFile={selectedFile}
@@ -140,22 +133,23 @@ const FileSidebar = (
 // Single File Item Component
 const FileItem = (
     {
-        file,
+        filename,
+        children,
         addSubFile,
         deleteFile,
         selectedFile,
         setSelectedFile
     }: {
-        file: File;
+        filename: string;
+        children: string[];
         addSubFile: (filename: string) => Promise<string>;
         deleteFile: any;
         selectedFile: any;
         setSelectedFile: any;
     }) => {
     const [isExpanded, setIsExpanded] = useState(true);
-    const isSelected = selectedFile?.name === file.name;
-
-    const isRoot = file.subfiles.length === 0
+    const isSelected = selectedFile?.name === filename;
+    const isRoot = children.length === 0
 
     return (
         <div>
@@ -164,8 +158,8 @@ const FileItem = (
                     isSelected ? 'bg-purple-600/30' : 'hover:bg-gray-700'
                 }`}
             >
-                <div className="flex items-center flex-grow" onClick={() => setSelectedFile(file)}>
-                    {file.subfiles.length > 0 && (
+                <div className="flex items-center flex-grow" onClick={() => setSelectedFile(filename)}>
+                    {children.length > 0 && (
                         <button onClick={(e) => {
                             e.stopPropagation();
                             setIsExpanded(!isExpanded)
@@ -174,14 +168,14 @@ const FileItem = (
                         </button>
                     )}
                     <FileText size={16} className={`mr-2 ${isRoot ? '' : 'ml-4'}`}/>
-                    <span className="truncate flex-1 text-sm">{file.name}</span>
+                    <span className="truncate flex-1 text-sm">{filename}</span>
                 </div>
                 <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {isRoot && (
-                        <AddFileButton file={file} isSubfile={isRoot} onSubmit={addSubFile} />
+                        <AddFileButton onSubmit={addSubFile} file={filename} isSubfile={isRoot}/>
                     )}
                     <button
-                        onClick={() => deleteFile(file.name, isRoot ? null : file.name)}
+                        onClick={() => deleteFile(filename, isRoot ? null : filename)}
                         className="p-1 text-gray-400 hover:text-red-500"
                         aria-label="Delete file"
                     >
@@ -189,12 +183,13 @@ const FileItem = (
                     </button>
                 </div>
             </div>
-            {isRoot && isExpanded && file.subfiles.length > 0 && (
+            {isRoot && isExpanded && children.length > 0 && (
                 <div className="pl-4 border-l border-gray-600 ml-2">
-                    {file.subfiles.map(subFile => (
+                    {children.map(subFile => (
                         <FileItem
                             key={subFile}
-                            file={{name: subFile} as File}
+                            filename={subFile}
+                            children={[]}
                             addSubFile={addSubFile}
                             deleteFile={deleteFile}
                             selectedFile={selectedFile}
@@ -214,8 +209,8 @@ const FileContent = (
         file,
         onContentChange,
     }: {
-        file: File,
-        onContentChange: (filename: string, content: string) => void,
+        file: string,
+        onContentChange: any,
     }
 ) => {
     if (!file) {
@@ -231,20 +226,64 @@ const FileContent = (
     }
 
     let [content, setContent] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("")
+    const composeClient = useClient(ComposeService)
 
     useEffect(
         () => {
-            onContentChange("", "")
-            // todo load file
-            setContent("");
+            async function fetchContents() {
+                const fileStream = composeClient.loadContents({filename: file})
+                const decoder = new TextDecoder('utf-8');
+
+                try {
+                    let content = ""
+                    for await (const chunk of fileStream) {
+                        const decodedString = decoder.decode(chunk.chunkData);
+                        content += decodedString;
+                    }
+
+                    setContent(content.trim())
+                } catch (error: any) {
+                    setError(error.toString)
+                }
+
+                setLoading(false)
+            }
+
+            fetchContents();
         }
     )
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-57px)] bg-blue-950 text-white">
+                <div className="w-10 h-10 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                <p className="mt-3 text-lg font-medium">Fetching files...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-57px)] bg-blue-950 p-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p className="mt-3 text-xl font-semibold text-red-700">Error loading files</p>
+                <p className="mt-1 text-center text-md text-red-600">{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex-grow p-1">
             <YamlEditor
-                key={file.name}
+                key={file}
                 content={content}
+                contentChange={onContentChange}
             />
         </div>
     );

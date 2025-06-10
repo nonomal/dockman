@@ -10,16 +10,55 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file compose/v1/compose.proto.
  */
 export const file_compose_v1_compose: GenFile = /*@__PURE__*/
-  fileDesc("Chhjb21wb3NlL3YxL2NvbXBvc2UucHJvdG8SCmNvbXBvc2UudjEiLwoMTGlzdFJlc3BvbnNlEh8KBWZpbGVzGAEgAygLMhAuY29tcG9zZS52MS5GaWxlIgcKBUVtcHR5IiYKBEZpbGUSDAoEbmFtZRgBIAEoCRIQCghzdWJmaWxlcxgCIAMoCTKFAgoOQ29tcG9zZVNlcnZpY2USLwoGQ3JlYXRlEhAuY29tcG9zZS52MS5GaWxlGhEuY29tcG9zZS52MS5FbXB0eSIAEi8KBkRlbGV0ZRIQLmNvbXBvc2UudjEuRmlsZRoRLmNvbXBvc2UudjEuRW1wdHkiABI1CgRMaXN0EhEuY29tcG9zZS52MS5FbXB0eRoYLmNvbXBvc2UudjEuTGlzdFJlc3BvbnNlIgASLAoETG9hZBIQLmNvbXBvc2UudjEuRmlsZRoQLmNvbXBvc2UudjEuRmlsZSIAEiwKBEVkaXQSEC5jb21wb3NlLnYxLkZpbGUaEC5jb21wb3NlLnYxLkZpbGUiAEKeAQoOY29tLmNvbXBvc2UudjFCDENvbXBvc2VQcm90b1ABWjVnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vYmFja2VuZC9nZW5lcmF0ZWQvY29tcG9zZS92MaICA0NYWKoCCkNvbXBvc2UuVjHKAgpDb21wb3NlXFYx4gIWQ29tcG9zZVxWMVxHUEJNZXRhZGF0YeoCC0NvbXBvc2U6OlYxYgZwcm90bzM");
+  fileDesc("Chhjb21wb3NlL3YxL2NvbXBvc2UucHJvdG8SCmNvbXBvc2UudjEiIgoMRmlsZVRyYW5zZmVyEhIKCmNodW5rX2RhdGEYASABKAwiMAoGU3ViUmVxEhEKCWdyb3VwTmFtZRgBIAEoCRITCgtzdWJGaWxlbmFtZRgCIAEoCSI1CgxMaXN0UmVzcG9uc2USJQoGZ3JvdXBzGAEgAygLMhUuY29tcG9zZS52MS5GaWxlR3JvdXAiKwoJRmlsZUdyb3VwEgwKBHJvb3QYASABKAkSEAoIc3ViRmlsZXMYAiADKAkiUgoKUmVuYW1lRmlsZRIhCgdvbGRGaWxlGAEgASgLMhAuY29tcG9zZS52MS5GaWxlEiEKB25ld0ZpbGUYAiABKAsyEC5jb21wb3NlLnYxLkZpbGUiPAoKQ3JlYXRlRmlsZRIeCgRmaWxlGAEgASgLMhAuY29tcG9zZS52MS5GaWxlEg4KBnBhcmVudBgCIAEoCSIYCgRGaWxlEhAKCGZpbGVuYW1lGAEgASgJIgcKBUVtcHR5Mt4CCg5Db21wb3NlU2VydmljZRI1CgZDcmVhdGUSFi5jb21wb3NlLnYxLkNyZWF0ZUZpbGUaES5jb21wb3NlLnYxLkVtcHR5IgASNQoETGlzdBIRLmNvbXBvc2UudjEuRW1wdHkaGC5jb21wb3NlLnYxLkxpc3RSZXNwb25zZSIAEi8KBkRlbGV0ZRIQLmNvbXBvc2UudjEuRmlsZRoRLmNvbXBvc2UudjEuRW1wdHkiABI1CgZSZW5hbWUSFi5jb21wb3NlLnYxLlJlbmFtZUZpbGUaES5jb21wb3NlLnYxLkVtcHR5IgASNgoOVXBkYXRlQ29udGVudHMSEC5jb21wb3NlLnYxLkZpbGUaEC5jb21wb3NlLnYxLkZpbGUiABI+CgxMb2FkQ29udGVudHMSEC5jb21wb3NlLnYxLkZpbGUaGC5jb21wb3NlLnYxLkZpbGVUcmFuc2ZlciIAMAFClgEKDmNvbS5jb21wb3NlLnYxQgxDb21wb3NlUHJvdG9QAVotZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9jb21wb3NlL3YxogIDQ1hYqgIKQ29tcG9zZS5WMcoCCkNvbXBvc2VcVjHiAhZDb21wb3NlXFYxXEdQQk1ldGFkYXRh6gILQ29tcG9zZTo6VjFiBnByb3RvMw");
+
+/**
+ * @generated from message compose.v1.FileTransfer
+ */
+export type FileTransfer = Message<"compose.v1.FileTransfer"> & {
+  /**
+   * @generated from field: bytes chunk_data = 1;
+   */
+  chunkData: Uint8Array;
+};
+
+/**
+ * Describes the message compose.v1.FileTransfer.
+ * Use `create(FileTransferSchema)` to create a new message.
+ */
+export const FileTransferSchema: GenMessage<FileTransfer> = /*@__PURE__*/
+  messageDesc(file_compose_v1_compose, 0);
+
+/**
+ * @generated from message compose.v1.SubReq
+ */
+export type SubReq = Message<"compose.v1.SubReq"> & {
+  /**
+   * @generated from field: string groupName = 1;
+   */
+  groupName: string;
+
+  /**
+   * @generated from field: string subFilename = 2;
+   */
+  subFilename: string;
+};
+
+/**
+ * Describes the message compose.v1.SubReq.
+ * Use `create(SubReqSchema)` to create a new message.
+ */
+export const SubReqSchema: GenMessage<SubReq> = /*@__PURE__*/
+  messageDesc(file_compose_v1_compose, 1);
 
 /**
  * @generated from message compose.v1.ListResponse
  */
 export type ListResponse = Message<"compose.v1.ListResponse"> & {
   /**
-   * @generated from field: repeated compose.v1.File files = 1;
+   * @generated from field: repeated compose.v1.FileGroup groups = 1;
    */
-  files: File[];
+  groups: FileGroup[];
 };
 
 /**
@@ -27,7 +66,90 @@ export type ListResponse = Message<"compose.v1.ListResponse"> & {
  * Use `create(ListResponseSchema)` to create a new message.
  */
 export const ListResponseSchema: GenMessage<ListResponse> = /*@__PURE__*/
-  messageDesc(file_compose_v1_compose, 0);
+  messageDesc(file_compose_v1_compose, 2);
+
+/**
+ * @generated from message compose.v1.FileGroup
+ */
+export type FileGroup = Message<"compose.v1.FileGroup"> & {
+  /**
+   * @generated from field: string root = 1;
+   */
+  root: string;
+
+  /**
+   * @generated from field: repeated string subFiles = 2;
+   */
+  subFiles: string[];
+};
+
+/**
+ * Describes the message compose.v1.FileGroup.
+ * Use `create(FileGroupSchema)` to create a new message.
+ */
+export const FileGroupSchema: GenMessage<FileGroup> = /*@__PURE__*/
+  messageDesc(file_compose_v1_compose, 3);
+
+/**
+ * @generated from message compose.v1.RenameFile
+ */
+export type RenameFile = Message<"compose.v1.RenameFile"> & {
+  /**
+   * @generated from field: compose.v1.File oldFile = 1;
+   */
+  oldFile?: File;
+
+  /**
+   * @generated from field: compose.v1.File newFile = 2;
+   */
+  newFile?: File;
+};
+
+/**
+ * Describes the message compose.v1.RenameFile.
+ * Use `create(RenameFileSchema)` to create a new message.
+ */
+export const RenameFileSchema: GenMessage<RenameFile> = /*@__PURE__*/
+  messageDesc(file_compose_v1_compose, 4);
+
+/**
+ * @generated from message compose.v1.CreateFile
+ */
+export type CreateFile = Message<"compose.v1.CreateFile"> & {
+  /**
+   * @generated from field: compose.v1.File file = 1;
+   */
+  file?: File;
+
+  /**
+   * @generated from field: string parent = 2;
+   */
+  parent: string;
+};
+
+/**
+ * Describes the message compose.v1.CreateFile.
+ * Use `create(CreateFileSchema)` to create a new message.
+ */
+export const CreateFileSchema: GenMessage<CreateFile> = /*@__PURE__*/
+  messageDesc(file_compose_v1_compose, 5);
+
+/**
+ * @generated from message compose.v1.File
+ */
+export type File = Message<"compose.v1.File"> & {
+  /**
+   * @generated from field: string filename = 1;
+   */
+  filename: string;
+};
+
+/**
+ * Describes the message compose.v1.File.
+ * Use `create(FileSchema)` to create a new message.
+ */
+export const FileSchema: GenMessage<File> = /*@__PURE__*/
+  messageDesc(file_compose_v1_compose, 6);
 
 /**
  * @generated from message compose.v1.Empty
@@ -40,48 +162,20 @@ export type Empty = Message<"compose.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-  messageDesc(file_compose_v1_compose, 1);
-
-/**
- * @generated from message compose.v1.File
- */
-export type File = Message<"compose.v1.File"> & {
-  /**
-   * @generated from field: string name = 1;
-   */
-  name: string;
-
-  /**
-   * @generated from field: repeated string subfiles = 2;
-   */
-  subfiles: string[];
-};
-
-/**
- * Describes the message compose.v1.File.
- * Use `create(FileSchema)` to create a new message.
- */
-export const FileSchema: GenMessage<File> = /*@__PURE__*/
-  messageDesc(file_compose_v1_compose, 2);
+  messageDesc(file_compose_v1_compose, 7);
 
 /**
  * @generated from service compose.v1.ComposeService
  */
 export const ComposeService: GenService<{
   /**
+   * root file management
+   *
    * @generated from rpc compose.v1.ComposeService.Create
    */
   create: {
     methodKind: "unary";
-    input: typeof FileSchema;
-    output: typeof EmptySchema;
-  },
-  /**
-   * @generated from rpc compose.v1.ComposeService.Delete
-   */
-  delete: {
-    methodKind: "unary";
-    input: typeof FileSchema;
+    input: typeof CreateFileSchema;
     output: typeof EmptySchema;
   },
   /**
@@ -93,20 +187,38 @@ export const ComposeService: GenService<{
     output: typeof ListResponseSchema;
   },
   /**
-   * @generated from rpc compose.v1.ComposeService.Load
+   * @generated from rpc compose.v1.ComposeService.Delete
    */
-  load: {
+  delete: {
+    methodKind: "unary";
+    input: typeof FileSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc compose.v1.ComposeService.Rename
+   */
+  rename: {
+    methodKind: "unary";
+    input: typeof RenameFileSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * content
+   *
+   * @generated from rpc compose.v1.ComposeService.UpdateContents
+   */
+  updateContents: {
     methodKind: "unary";
     input: typeof FileSchema;
     output: typeof FileSchema;
   },
   /**
-   * @generated from rpc compose.v1.ComposeService.Edit
+   * @generated from rpc compose.v1.ComposeService.LoadContents
    */
-  edit: {
-    methodKind: "unary";
+  loadContents: {
+    methodKind: "server_streaming";
     input: typeof FileSchema;
-    output: typeof FileSchema;
+    output: typeof FileTransferSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_compose_v1_compose, 0);

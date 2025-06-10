@@ -1,9 +1,8 @@
 import {type FC, type FormEvent, useState} from 'react';
 import {Plus} from 'lucide-react'; // Assuming you use lucide-react for icons
-import {type File} from '../gen/compose/v1/compose_pb.ts';
 
 interface AddSubFileButtonProps {
-    file: File;
+    file: string;
     isSubfile: boolean;
     onSubmit: (filename: string) => Promise<string>;
 }

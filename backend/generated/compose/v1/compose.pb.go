@@ -21,16 +21,112 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type FileTransfer struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ChunkData     []byte                 `protobuf:"bytes,1,opt,name=chunk_data,json=chunkData,proto3" json:"chunk_data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FileTransfer) Reset() {
+	*x = FileTransfer{}
+	mi := &file_compose_v1_compose_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileTransfer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileTransfer) ProtoMessage() {}
+
+func (x *FileTransfer) ProtoReflect() protoreflect.Message {
+	mi := &file_compose_v1_compose_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileTransfer.ProtoReflect.Descriptor instead.
+func (*FileTransfer) Descriptor() ([]byte, []int) {
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *FileTransfer) GetChunkData() []byte {
+	if x != nil {
+		return x.ChunkData
+	}
+	return nil
+}
+
+type SubReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupName     string                 `protobuf:"bytes,1,opt,name=groupName,proto3" json:"groupName,omitempty"`
+	SubFilename   string                 `protobuf:"bytes,2,opt,name=subFilename,proto3" json:"subFilename,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubReq) Reset() {
+	*x = SubReq{}
+	mi := &file_compose_v1_compose_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubReq) ProtoMessage() {}
+
+func (x *SubReq) ProtoReflect() protoreflect.Message {
+	mi := &file_compose_v1_compose_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubReq.ProtoReflect.Descriptor instead.
+func (*SubReq) Descriptor() ([]byte, []int) {
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SubReq) GetGroupName() string {
+	if x != nil {
+		return x.GroupName
+	}
+	return ""
+}
+
+func (x *SubReq) GetSubFilename() string {
+	if x != nil {
+		return x.SubFilename
+	}
+	return ""
+}
+
 type ListResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Files         []*File                `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty"`
+	Groups        []*FileGroup           `protobuf:"bytes,1,rep,name=groups,proto3" json:"groups,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListResponse) Reset() {
 	*x = ListResponse{}
-	mi := &file_compose_v1_compose_proto_msgTypes[0]
+	mi := &file_compose_v1_compose_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +138,7 @@ func (x *ListResponse) String() string {
 func (*ListResponse) ProtoMessage() {}
 
 func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[0]
+	mi := &file_compose_v1_compose_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,37 +151,39 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{0}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ListResponse) GetFiles() []*File {
+func (x *ListResponse) GetGroups() []*FileGroup {
 	if x != nil {
-		return x.Files
+		return x.Groups
 	}
 	return nil
 }
 
-type Empty struct {
+type FileGroup struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Root          string                 `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"`
+	SubFiles      []string               `protobuf:"bytes,2,rep,name=subFiles,proto3" json:"subFiles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Empty) Reset() {
-	*x = Empty{}
-	mi := &file_compose_v1_compose_proto_msgTypes[1]
+func (x *FileGroup) Reset() {
+	*x = FileGroup{}
+	mi := &file_compose_v1_compose_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Empty) String() string {
+func (x *FileGroup) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Empty) ProtoMessage() {}
+func (*FileGroup) ProtoMessage() {}
 
-func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[1]
+func (x *FileGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_compose_v1_compose_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -96,22 +194,139 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
-func (*Empty) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use FileGroup.ProtoReflect.Descriptor instead.
+func (*FileGroup) Descriptor() ([]byte, []int) {
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *FileGroup) GetRoot() string {
+	if x != nil {
+		return x.Root
+	}
+	return ""
+}
+
+func (x *FileGroup) GetSubFiles() []string {
+	if x != nil {
+		return x.SubFiles
+	}
+	return nil
+}
+
+type RenameFile struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OldFile       *File                  `protobuf:"bytes,1,opt,name=oldFile,proto3" json:"oldFile,omitempty"`
+	NewFile       *File                  `protobuf:"bytes,2,opt,name=newFile,proto3" json:"newFile,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RenameFile) Reset() {
+	*x = RenameFile{}
+	mi := &file_compose_v1_compose_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RenameFile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenameFile) ProtoMessage() {}
+
+func (x *RenameFile) ProtoReflect() protoreflect.Message {
+	mi := &file_compose_v1_compose_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenameFile.ProtoReflect.Descriptor instead.
+func (*RenameFile) Descriptor() ([]byte, []int) {
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *RenameFile) GetOldFile() *File {
+	if x != nil {
+		return x.OldFile
+	}
+	return nil
+}
+
+func (x *RenameFile) GetNewFile() *File {
+	if x != nil {
+		return x.NewFile
+	}
+	return nil
+}
+
+type CreateFile struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	Parent        string                 `protobuf:"bytes,2,opt,name=parent,proto3" json:"parent,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateFile) Reset() {
+	*x = CreateFile{}
+	mi := &file_compose_v1_compose_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateFile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFile) ProtoMessage() {}
+
+func (x *CreateFile) ProtoReflect() protoreflect.Message {
+	mi := &file_compose_v1_compose_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFile.ProtoReflect.Descriptor instead.
+func (*CreateFile) Descriptor() ([]byte, []int) {
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CreateFile) GetFile() *File {
+	if x != nil {
+		return x.File
+	}
+	return nil
+}
+
+func (x *CreateFile) GetParent() string {
+	if x != nil {
+		return x.Parent
+	}
+	return ""
 }
 
 type File struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Subfiles      []string               `protobuf:"bytes,2,rep,name=subfiles,proto3" json:"subfiles,omitempty"`
+	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *File) Reset() {
 	*x = File{}
-	mi := &file_compose_v1_compose_proto_msgTypes[2]
+	mi := &file_compose_v1_compose_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -123,7 +338,7 @@ func (x *File) String() string {
 func (*File) ProtoMessage() {}
 
 func (x *File) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[2]
+	mi := &file_compose_v1_compose_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -136,21 +351,50 @@ func (x *File) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use File.ProtoReflect.Descriptor instead.
 func (*File) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{2}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *File) GetName() string {
+func (x *File) GetFilename() string {
 	if x != nil {
-		return x.Name
+		return x.Filename
 	}
 	return ""
 }
 
-func (x *File) GetSubfiles() []string {
+type Empty struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Empty) Reset() {
+	*x = Empty{}
+	mi := &file_compose_v1_compose_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Empty) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Empty) ProtoMessage() {}
+
+func (x *Empty) ProtoReflect() protoreflect.Message {
+	mi := &file_compose_v1_compose_proto_msgTypes[7]
 	if x != nil {
-		return x.Subfiles
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return nil
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
+func (*Empty) Descriptor() ([]byte, []int) {
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{7}
 }
 
 var File_compose_v1_compose_proto protoreflect.FileDescriptor
@@ -158,20 +402,37 @@ var File_compose_v1_compose_proto protoreflect.FileDescriptor
 const file_compose_v1_compose_proto_rawDesc = "" +
 	"\n" +
 	"\x18compose/v1/compose.proto\x12\n" +
-	"compose.v1\"6\n" +
-	"\fListResponse\x12&\n" +
-	"\x05files\x18\x01 \x03(\v2\x10.compose.v1.FileR\x05files\"\a\n" +
-	"\x05Empty\"6\n" +
-	"\x04File\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
-	"\bsubfiles\x18\x02 \x03(\tR\bsubfiles2\x85\x02\n" +
-	"\x0eComposeService\x12/\n" +
-	"\x06Create\x12\x10.compose.v1.File\x1a\x11.compose.v1.Empty\"\x00\x12/\n" +
+	"compose.v1\"-\n" +
+	"\fFileTransfer\x12\x1d\n" +
+	"\n" +
+	"chunk_data\x18\x01 \x01(\fR\tchunkData\"H\n" +
+	"\x06SubReq\x12\x1c\n" +
+	"\tgroupName\x18\x01 \x01(\tR\tgroupName\x12 \n" +
+	"\vsubFilename\x18\x02 \x01(\tR\vsubFilename\"=\n" +
+	"\fListResponse\x12-\n" +
+	"\x06groups\x18\x01 \x03(\v2\x15.compose.v1.FileGroupR\x06groups\";\n" +
+	"\tFileGroup\x12\x12\n" +
+	"\x04root\x18\x01 \x01(\tR\x04root\x12\x1a\n" +
+	"\bsubFiles\x18\x02 \x03(\tR\bsubFiles\"d\n" +
+	"\n" +
+	"RenameFile\x12*\n" +
+	"\aoldFile\x18\x01 \x01(\v2\x10.compose.v1.FileR\aoldFile\x12*\n" +
+	"\anewFile\x18\x02 \x01(\v2\x10.compose.v1.FileR\anewFile\"J\n" +
+	"\n" +
+	"CreateFile\x12$\n" +
+	"\x04file\x18\x01 \x01(\v2\x10.compose.v1.FileR\x04file\x12\x16\n" +
+	"\x06parent\x18\x02 \x01(\tR\x06parent\"\"\n" +
+	"\x04File\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\"\a\n" +
+	"\x05Empty2\xde\x02\n" +
+	"\x0eComposeService\x125\n" +
+	"\x06Create\x12\x16.compose.v1.CreateFile\x1a\x11.compose.v1.Empty\"\x00\x125\n" +
+	"\x04List\x12\x11.compose.v1.Empty\x1a\x18.compose.v1.ListResponse\"\x00\x12/\n" +
 	"\x06Delete\x12\x10.compose.v1.File\x1a\x11.compose.v1.Empty\"\x00\x125\n" +
-	"\x04List\x12\x11.compose.v1.Empty\x1a\x18.compose.v1.ListResponse\"\x00\x12,\n" +
-	"\x04Load\x12\x10.compose.v1.File\x1a\x10.compose.v1.File\"\x00\x12,\n" +
-	"\x04Edit\x12\x10.compose.v1.File\x1a\x10.compose.v1.File\"\x00B\x9e\x01\n" +
-	"\x0ecom.compose.v1B\fComposeProtoP\x01Z5github.com/RA341/dockman/backend/generated/compose/v1\xa2\x02\x03CXX\xaa\x02\n" +
+	"\x06Rename\x12\x16.compose.v1.RenameFile\x1a\x11.compose.v1.Empty\"\x00\x126\n" +
+	"\x0eUpdateContents\x12\x10.compose.v1.File\x1a\x10.compose.v1.File\"\x00\x12>\n" +
+	"\fLoadContents\x12\x10.compose.v1.File\x1a\x18.compose.v1.FileTransfer\"\x000\x01B\x96\x01\n" +
+	"\x0ecom.compose.v1B\fComposeProtoP\x01Z-github.com/RA341/dockman/generated/compose/v1\xa2\x02\x03CXX\xaa\x02\n" +
 	"Compose.V1\xca\x02\n" +
 	"Compose\\V1\xe2\x02\x16Compose\\V1\\GPBMetadata\xea\x02\vCompose::V1b\x06proto3"
 
@@ -187,29 +448,39 @@ func file_compose_v1_compose_proto_rawDescGZIP() []byte {
 	return file_compose_v1_compose_proto_rawDescData
 }
 
-var file_compose_v1_compose_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_compose_v1_compose_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_compose_v1_compose_proto_goTypes = []any{
-	(*ListResponse)(nil), // 0: compose.v1.ListResponse
-	(*Empty)(nil),        // 1: compose.v1.Empty
-	(*File)(nil),         // 2: compose.v1.File
+	(*FileTransfer)(nil), // 0: compose.v1.FileTransfer
+	(*SubReq)(nil),       // 1: compose.v1.SubReq
+	(*ListResponse)(nil), // 2: compose.v1.ListResponse
+	(*FileGroup)(nil),    // 3: compose.v1.FileGroup
+	(*RenameFile)(nil),   // 4: compose.v1.RenameFile
+	(*CreateFile)(nil),   // 5: compose.v1.CreateFile
+	(*File)(nil),         // 6: compose.v1.File
+	(*Empty)(nil),        // 7: compose.v1.Empty
 }
 var file_compose_v1_compose_proto_depIdxs = []int32{
-	2, // 0: compose.v1.ListResponse.files:type_name -> compose.v1.File
-	2, // 1: compose.v1.ComposeService.Create:input_type -> compose.v1.File
-	2, // 2: compose.v1.ComposeService.Delete:input_type -> compose.v1.File
-	1, // 3: compose.v1.ComposeService.List:input_type -> compose.v1.Empty
-	2, // 4: compose.v1.ComposeService.Load:input_type -> compose.v1.File
-	2, // 5: compose.v1.ComposeService.Edit:input_type -> compose.v1.File
-	1, // 6: compose.v1.ComposeService.Create:output_type -> compose.v1.Empty
-	1, // 7: compose.v1.ComposeService.Delete:output_type -> compose.v1.Empty
-	0, // 8: compose.v1.ComposeService.List:output_type -> compose.v1.ListResponse
-	2, // 9: compose.v1.ComposeService.Load:output_type -> compose.v1.File
-	2, // 10: compose.v1.ComposeService.Edit:output_type -> compose.v1.File
-	6, // [6:11] is the sub-list for method output_type
-	1, // [1:6] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	3,  // 0: compose.v1.ListResponse.groups:type_name -> compose.v1.FileGroup
+	6,  // 1: compose.v1.RenameFile.oldFile:type_name -> compose.v1.File
+	6,  // 2: compose.v1.RenameFile.newFile:type_name -> compose.v1.File
+	6,  // 3: compose.v1.CreateFile.file:type_name -> compose.v1.File
+	5,  // 4: compose.v1.ComposeService.Create:input_type -> compose.v1.CreateFile
+	7,  // 5: compose.v1.ComposeService.List:input_type -> compose.v1.Empty
+	6,  // 6: compose.v1.ComposeService.Delete:input_type -> compose.v1.File
+	4,  // 7: compose.v1.ComposeService.Rename:input_type -> compose.v1.RenameFile
+	6,  // 8: compose.v1.ComposeService.UpdateContents:input_type -> compose.v1.File
+	6,  // 9: compose.v1.ComposeService.LoadContents:input_type -> compose.v1.File
+	7,  // 10: compose.v1.ComposeService.Create:output_type -> compose.v1.Empty
+	2,  // 11: compose.v1.ComposeService.List:output_type -> compose.v1.ListResponse
+	7,  // 12: compose.v1.ComposeService.Delete:output_type -> compose.v1.Empty
+	7,  // 13: compose.v1.ComposeService.Rename:output_type -> compose.v1.Empty
+	6,  // 14: compose.v1.ComposeService.UpdateContents:output_type -> compose.v1.File
+	0,  // 15: compose.v1.ComposeService.LoadContents:output_type -> compose.v1.FileTransfer
+	10, // [10:16] is the sub-list for method output_type
+	4,  // [4:10] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_compose_v1_compose_proto_init() }
@@ -223,7 +494,7 @@ func file_compose_v1_compose_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_compose_v1_compose_proto_rawDesc), len(file_compose_v1_compose_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

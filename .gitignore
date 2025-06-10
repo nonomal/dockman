@@ -2,6 +2,7 @@
 /**/dist
 /**/bin
 /**/node_modules
-/compose/
-./compose/*
 /**/.dockman.yaml
+compose/*
+/**/test-compose
+/dock/

@@ -1,14 +1,12 @@
-import {type JSX, useState} from "react";
+import {type JSX} from "react";
 import * as monacoEditor from "monaco-editor";
 import {Editor} from "@monaco-editor/react";
 
-export function YamlEditor({content}: { content: string }): JSX.Element {
-    const [code, setCode] = useState(content);
-
+export function YamlEditor({content, contentChange}: { content: string, contentChange: (code :string) => void }): JSX.Element {
     function handleEditorChange(
         value: string | undefined
     ): void {
-        setCode(value || "");
+        contentChange(value || "");
     }
 
     function handleEditorDidMount(
@@ -27,7 +25,7 @@ export function YamlEditor({content}: { content: string }): JSX.Element {
                     width="100vw"
                     // No height/width props needed if parent is sized, it will default to 100%
                     defaultLanguage="yaml"
-                    value={code}
+                    value={content}
                     onChange={handleEditorChange}
                     onMount={handleEditorDidMount}
                     theme="vs-dark"

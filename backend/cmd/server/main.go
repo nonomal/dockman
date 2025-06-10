@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/RA341/dockman/backend/cmd"
-	logger "github.com/RA341/dockman/backend/pkg"
+	"github.com/RA341/dockman/cmd"
+	logger "github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"

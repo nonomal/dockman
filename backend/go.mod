@@ -5,7 +5,7 @@ go 1.24
 require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
-	github.com/go-git/go-git/v5 v5.16.1
+	github.com/go-git/go-git/v5 v5.16.2
 	github.com/goccy/go-yaml v1.18.0
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.34.0

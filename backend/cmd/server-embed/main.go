@@ -2,7 +2,7 @@ package main
 
 import (
 	"embed"
-	"github.com/RA341/dockman/backend/cmd"
+	"github.com/RA341/dockman/cmd"
 	"github.com/rs/zerolog/log"
 	"io/fs"
 	"net/http"

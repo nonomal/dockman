@@ -3,9 +3,9 @@ package cmd
 import (
 	connectcors "connectrpc.com/cors"
 	"fmt"
-	"github.com/RA341/dockman/backend/generated/compose/v1/v1connect"
-	"github.com/RA341/dockman/backend/internal/compose"
-	"github.com/RA341/dockman/backend/internal/git"
+	"github.com/RA341/dockman/generated/compose/v1/v1connect"
+	"github.com/RA341/dockman/internal/compose"
+	"github.com/RA341/dockman/internal/git"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
@@ -86,9 +86,9 @@ type AllServices struct {
 }
 
 func initServices() *AllServices {
-	composeRoot := "compose"
+	composeRoot := "dock"
 
-	comp := compose.New(composeRoot)
+	comp := compose.NewService(composeRoot)
 	gitMan := git.New(composeRoot)
 
 	return &AllServices{
