@@ -3,12 +3,44 @@ package git
 import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/rs/zerolog/log"
 )
 
 type Service struct {
-	repoPath string
-	repo     *git.Repository
+	username  string
+	authToken string
+	repoPath  string
+	repo      *git.Repository
+}
+
+func (s *Service) TrackFiles(files ...string) {
+
+}
+
+func (s *Service) ListCommits(files ...string) {
+
+}
+
+func (s *Service) ListCommitByFile(files string) {
+
+}
+
+func (s *Service) EditRemote(remoteNickname string, repoUrl string) error {
+	_, err := s.repo.CreateRemote(
+		&config.RemoteConfig{
+			Name: remoteNickname,
+			URLs: []string{repoUrl},
+		})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) ListRemote(files string) {
+
 }
 
 func New(root string) *Service {
@@ -29,8 +61,8 @@ func (s *Service) Init() error {
 		return nil
 	}
 
-	// If PlainOpen returns an error, implies the directory doesn't exist,
-	// or it's not a git repository. proceed to initialize.
+	// PlainOpen returns an error, implies the directory doesn't exist,
+	// or it's not a git repository, initialize
 	newRepo, err := git.PlainInit(s.repoPath, false)
 	if err != nil {
 		return fmt.Errorf("Error initializing repository: %s\n", err)
