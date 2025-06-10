@@ -1,7 +1,7 @@
 package compose
 
 import (
-	"github.com/RA341/dockman/backend/pkg"
+	"github.com/RA341/dockman/pkg"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
