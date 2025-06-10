@@ -1,7 +1,6 @@
 package compose
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"io"
@@ -83,20 +82,29 @@ func (s *Service) getPath(filename string) string {
 	return filepath.Join(s.composeRoot, filename)
 }
 
-func (s *Service) Save(filename string, contents []byte) error {
+func (s *Service) Save(filename string, destWriter io.Reader) error {
 	ok := s.man.Exists(filename)
 	if !ok {
 		return fmt.Errorf("file %s does not exist", filename)
 	}
 
-	return os.WriteFile(s.getPath(filename), contents, os.ModePerm)
-}
-
-func (s *Service) Load(filename string) (*bufio.Reader, io.Closer, error) {
-	file, err := os.Open(s.getPath(filename))
+	srcFile, err := os.OpenFile(s.getPath(filename), os.O_RDWR, os.ModePerm)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
-	return bufio.NewReader(file), file, nil
+	_, err = io.Copy(srcFile, destWriter)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) Load(filename string) (string, error) {
+	ok := s.man.Exists(filename)
+	if !ok {
+		return "", fmt.Errorf("file %s does not exist", filename)
+	}
+	return s.getPath(filename), nil
 }

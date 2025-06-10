@@ -41,12 +41,6 @@ const (
 	ComposeServiceDeleteProcedure = "/compose.v1.ComposeService/Delete"
 	// ComposeServiceRenameProcedure is the fully-qualified name of the ComposeService's Rename RPC.
 	ComposeServiceRenameProcedure = "/compose.v1.ComposeService/Rename"
-	// ComposeServiceUpdateContentsProcedure is the fully-qualified name of the ComposeService's
-	// UpdateContents RPC.
-	ComposeServiceUpdateContentsProcedure = "/compose.v1.ComposeService/UpdateContents"
-	// ComposeServiceLoadContentsProcedure is the fully-qualified name of the ComposeService's
-	// LoadContents RPC.
-	ComposeServiceLoadContentsProcedure = "/compose.v1.ComposeService/LoadContents"
 )
 
 // ComposeServiceClient is a client for the compose.v1.ComposeService service.
@@ -56,9 +50,6 @@ type ComposeServiceClient interface {
 	List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error)
 	Delete(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
 	Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error)
-	// content
-	UpdateContents(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.File], error)
-	LoadContents(context.Context, *connect.Request[v1.File]) (*connect.ServerStreamForClient[v1.FileTransfer], error)
 }
 
 // NewComposeServiceClient constructs a client for the compose.v1.ComposeService service. By
@@ -96,29 +87,15 @@ func NewComposeServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(composeServiceMethods.ByName("Rename")),
 			connect.WithClientOptions(opts...),
 		),
-		updateContents: connect.NewClient[v1.File, v1.File](
-			httpClient,
-			baseURL+ComposeServiceUpdateContentsProcedure,
-			connect.WithSchema(composeServiceMethods.ByName("UpdateContents")),
-			connect.WithClientOptions(opts...),
-		),
-		loadContents: connect.NewClient[v1.File, v1.FileTransfer](
-			httpClient,
-			baseURL+ComposeServiceLoadContentsProcedure,
-			connect.WithSchema(composeServiceMethods.ByName("LoadContents")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
 // composeServiceClient implements ComposeServiceClient.
 type composeServiceClient struct {
-	create         *connect.Client[v1.CreateFile, v1.Empty]
-	list           *connect.Client[v1.Empty, v1.ListResponse]
-	delete         *connect.Client[v1.File, v1.Empty]
-	rename         *connect.Client[v1.RenameFile, v1.Empty]
-	updateContents *connect.Client[v1.File, v1.File]
-	loadContents   *connect.Client[v1.File, v1.FileTransfer]
+	create *connect.Client[v1.CreateFile, v1.Empty]
+	list   *connect.Client[v1.Empty, v1.ListResponse]
+	delete *connect.Client[v1.File, v1.Empty]
+	rename *connect.Client[v1.RenameFile, v1.Empty]
 }
 
 // Create calls compose.v1.ComposeService.Create.
@@ -141,16 +118,6 @@ func (c *composeServiceClient) Rename(ctx context.Context, req *connect.Request[
 	return c.rename.CallUnary(ctx, req)
 }
 
-// UpdateContents calls compose.v1.ComposeService.UpdateContents.
-func (c *composeServiceClient) UpdateContents(ctx context.Context, req *connect.Request[v1.File]) (*connect.Response[v1.File], error) {
-	return c.updateContents.CallUnary(ctx, req)
-}
-
-// LoadContents calls compose.v1.ComposeService.LoadContents.
-func (c *composeServiceClient) LoadContents(ctx context.Context, req *connect.Request[v1.File]) (*connect.ServerStreamForClient[v1.FileTransfer], error) {
-	return c.loadContents.CallServerStream(ctx, req)
-}
-
 // ComposeServiceHandler is an implementation of the compose.v1.ComposeService service.
 type ComposeServiceHandler interface {
 	// root file management
@@ -158,9 +125,6 @@ type ComposeServiceHandler interface {
 	List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error)
 	Delete(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
 	Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error)
-	// content
-	UpdateContents(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.File], error)
-	LoadContents(context.Context, *connect.Request[v1.File], *connect.ServerStream[v1.FileTransfer]) error
 }
 
 // NewComposeServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -194,18 +158,6 @@ func NewComposeServiceHandler(svc ComposeServiceHandler, opts ...connect.Handler
 		connect.WithSchema(composeServiceMethods.ByName("Rename")),
 		connect.WithHandlerOptions(opts...),
 	)
-	composeServiceUpdateContentsHandler := connect.NewUnaryHandler(
-		ComposeServiceUpdateContentsProcedure,
-		svc.UpdateContents,
-		connect.WithSchema(composeServiceMethods.ByName("UpdateContents")),
-		connect.WithHandlerOptions(opts...),
-	)
-	composeServiceLoadContentsHandler := connect.NewServerStreamHandler(
-		ComposeServiceLoadContentsProcedure,
-		svc.LoadContents,
-		connect.WithSchema(composeServiceMethods.ByName("LoadContents")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/compose.v1.ComposeService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ComposeServiceCreateProcedure:
@@ -216,10 +168,6 @@ func NewComposeServiceHandler(svc ComposeServiceHandler, opts ...connect.Handler
 			composeServiceDeleteHandler.ServeHTTP(w, r)
 		case ComposeServiceRenameProcedure:
 			composeServiceRenameHandler.ServeHTTP(w, r)
-		case ComposeServiceUpdateContentsProcedure:
-			composeServiceUpdateContentsHandler.ServeHTTP(w, r)
-		case ComposeServiceLoadContentsProcedure:
-			composeServiceLoadContentsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -243,12 +191,4 @@ func (UnimplementedComposeServiceHandler) Delete(context.Context, *connect.Reque
 
 func (UnimplementedComposeServiceHandler) Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("compose.v1.ComposeService.Rename is not implemented"))
-}
-
-func (UnimplementedComposeServiceHandler) UpdateContents(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.File], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("compose.v1.ComposeService.UpdateContents is not implemented"))
-}
-
-func (UnimplementedComposeServiceHandler) LoadContents(context.Context, *connect.Request[v1.File], *connect.ServerStream[v1.FileTransfer]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("compose.v1.ComposeService.LoadContents is not implemented"))
 }

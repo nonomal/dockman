@@ -21,50 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type FileTransfer struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ChunkData     []byte                 `protobuf:"bytes,1,opt,name=chunk_data,json=chunkData,proto3" json:"chunk_data,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FileTransfer) Reset() {
-	*x = FileTransfer{}
-	mi := &file_compose_v1_compose_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FileTransfer) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FileTransfer) ProtoMessage() {}
-
-func (x *FileTransfer) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FileTransfer.ProtoReflect.Descriptor instead.
-func (*FileTransfer) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *FileTransfer) GetChunkData() []byte {
-	if x != nil {
-		return x.ChunkData
-	}
-	return nil
-}
-
 type SubReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupName     string                 `protobuf:"bytes,1,opt,name=groupName,proto3" json:"groupName,omitempty"`
@@ -75,7 +31,7 @@ type SubReq struct {
 
 func (x *SubReq) Reset() {
 	*x = SubReq{}
-	mi := &file_compose_v1_compose_proto_msgTypes[1]
+	mi := &file_compose_v1_compose_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -87,7 +43,7 @@ func (x *SubReq) String() string {
 func (*SubReq) ProtoMessage() {}
 
 func (x *SubReq) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[1]
+	mi := &file_compose_v1_compose_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,7 +56,7 @@ func (x *SubReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubReq.ProtoReflect.Descriptor instead.
 func (*SubReq) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{1}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SubReq) GetGroupName() string {
@@ -126,7 +82,7 @@ type ListResponse struct {
 
 func (x *ListResponse) Reset() {
 	*x = ListResponse{}
-	mi := &file_compose_v1_compose_proto_msgTypes[2]
+	mi := &file_compose_v1_compose_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -138,7 +94,7 @@ func (x *ListResponse) String() string {
 func (*ListResponse) ProtoMessage() {}
 
 func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[2]
+	mi := &file_compose_v1_compose_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -151,7 +107,7 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{2}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListResponse) GetGroups() []*FileGroup {
@@ -171,7 +127,7 @@ type FileGroup struct {
 
 func (x *FileGroup) Reset() {
 	*x = FileGroup{}
-	mi := &file_compose_v1_compose_proto_msgTypes[3]
+	mi := &file_compose_v1_compose_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -183,7 +139,7 @@ func (x *FileGroup) String() string {
 func (*FileGroup) ProtoMessage() {}
 
 func (x *FileGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[3]
+	mi := &file_compose_v1_compose_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -196,7 +152,7 @@ func (x *FileGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileGroup.ProtoReflect.Descriptor instead.
 func (*FileGroup) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{3}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *FileGroup) GetRoot() string {
@@ -223,7 +179,7 @@ type RenameFile struct {
 
 func (x *RenameFile) Reset() {
 	*x = RenameFile{}
-	mi := &file_compose_v1_compose_proto_msgTypes[4]
+	mi := &file_compose_v1_compose_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -235,7 +191,7 @@ func (x *RenameFile) String() string {
 func (*RenameFile) ProtoMessage() {}
 
 func (x *RenameFile) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[4]
+	mi := &file_compose_v1_compose_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -248,7 +204,7 @@ func (x *RenameFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameFile.ProtoReflect.Descriptor instead.
 func (*RenameFile) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{4}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RenameFile) GetOldFile() *File {
@@ -275,7 +231,7 @@ type CreateFile struct {
 
 func (x *CreateFile) Reset() {
 	*x = CreateFile{}
-	mi := &file_compose_v1_compose_proto_msgTypes[5]
+	mi := &file_compose_v1_compose_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -287,7 +243,7 @@ func (x *CreateFile) String() string {
 func (*CreateFile) ProtoMessage() {}
 
 func (x *CreateFile) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[5]
+	mi := &file_compose_v1_compose_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -300,7 +256,7 @@ func (x *CreateFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateFile.ProtoReflect.Descriptor instead.
 func (*CreateFile) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{5}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateFile) GetFile() *File {
@@ -326,7 +282,7 @@ type File struct {
 
 func (x *File) Reset() {
 	*x = File{}
-	mi := &file_compose_v1_compose_proto_msgTypes[6]
+	mi := &file_compose_v1_compose_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -338,7 +294,7 @@ func (x *File) String() string {
 func (*File) ProtoMessage() {}
 
 func (x *File) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[6]
+	mi := &file_compose_v1_compose_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +307,7 @@ func (x *File) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use File.ProtoReflect.Descriptor instead.
 func (*File) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{6}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *File) GetFilename() string {
@@ -369,7 +325,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_compose_v1_compose_proto_msgTypes[7]
+	mi := &file_compose_v1_compose_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -381,7 +337,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[7]
+	mi := &file_compose_v1_compose_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -394,7 +350,7 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{7}
+	return file_compose_v1_compose_proto_rawDescGZIP(), []int{6}
 }
 
 var File_compose_v1_compose_proto protoreflect.FileDescriptor
@@ -402,10 +358,7 @@ var File_compose_v1_compose_proto protoreflect.FileDescriptor
 const file_compose_v1_compose_proto_rawDesc = "" +
 	"\n" +
 	"\x18compose/v1/compose.proto\x12\n" +
-	"compose.v1\"-\n" +
-	"\fFileTransfer\x12\x1d\n" +
-	"\n" +
-	"chunk_data\x18\x01 \x01(\fR\tchunkData\"H\n" +
+	"compose.v1\"H\n" +
 	"\x06SubReq\x12\x1c\n" +
 	"\tgroupName\x18\x01 \x01(\tR\tgroupName\x12 \n" +
 	"\vsubFilename\x18\x02 \x01(\tR\vsubFilename\"=\n" +
@@ -424,14 +377,12 @@ const file_compose_v1_compose_proto_rawDesc = "" +
 	"\x06parent\x18\x02 \x01(\tR\x06parent\"\"\n" +
 	"\x04File\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\"\a\n" +
-	"\x05Empty2\xde\x02\n" +
+	"\x05Empty2\xe6\x01\n" +
 	"\x0eComposeService\x125\n" +
 	"\x06Create\x12\x16.compose.v1.CreateFile\x1a\x11.compose.v1.Empty\"\x00\x125\n" +
 	"\x04List\x12\x11.compose.v1.Empty\x1a\x18.compose.v1.ListResponse\"\x00\x12/\n" +
 	"\x06Delete\x12\x10.compose.v1.File\x1a\x11.compose.v1.Empty\"\x00\x125\n" +
-	"\x06Rename\x12\x16.compose.v1.RenameFile\x1a\x11.compose.v1.Empty\"\x00\x126\n" +
-	"\x0eUpdateContents\x12\x10.compose.v1.File\x1a\x10.compose.v1.File\"\x00\x12>\n" +
-	"\fLoadContents\x12\x10.compose.v1.File\x1a\x18.compose.v1.FileTransfer\"\x000\x01B\x96\x01\n" +
+	"\x06Rename\x12\x16.compose.v1.RenameFile\x1a\x11.compose.v1.Empty\"\x00B\x96\x01\n" +
 	"\x0ecom.compose.v1B\fComposeProtoP\x01Z-github.com/RA341/dockman/generated/compose/v1\xa2\x02\x03CXX\xaa\x02\n" +
 	"Compose.V1\xca\x02\n" +
 	"Compose\\V1\xe2\x02\x16Compose\\V1\\GPBMetadata\xea\x02\vCompose::V1b\x06proto3"
@@ -448,39 +399,34 @@ func file_compose_v1_compose_proto_rawDescGZIP() []byte {
 	return file_compose_v1_compose_proto_rawDescData
 }
 
-var file_compose_v1_compose_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_compose_v1_compose_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_compose_v1_compose_proto_goTypes = []any{
-	(*FileTransfer)(nil), // 0: compose.v1.FileTransfer
-	(*SubReq)(nil),       // 1: compose.v1.SubReq
-	(*ListResponse)(nil), // 2: compose.v1.ListResponse
-	(*FileGroup)(nil),    // 3: compose.v1.FileGroup
-	(*RenameFile)(nil),   // 4: compose.v1.RenameFile
-	(*CreateFile)(nil),   // 5: compose.v1.CreateFile
-	(*File)(nil),         // 6: compose.v1.File
-	(*Empty)(nil),        // 7: compose.v1.Empty
+	(*SubReq)(nil),       // 0: compose.v1.SubReq
+	(*ListResponse)(nil), // 1: compose.v1.ListResponse
+	(*FileGroup)(nil),    // 2: compose.v1.FileGroup
+	(*RenameFile)(nil),   // 3: compose.v1.RenameFile
+	(*CreateFile)(nil),   // 4: compose.v1.CreateFile
+	(*File)(nil),         // 5: compose.v1.File
+	(*Empty)(nil),        // 6: compose.v1.Empty
 }
 var file_compose_v1_compose_proto_depIdxs = []int32{
-	3,  // 0: compose.v1.ListResponse.groups:type_name -> compose.v1.FileGroup
-	6,  // 1: compose.v1.RenameFile.oldFile:type_name -> compose.v1.File
-	6,  // 2: compose.v1.RenameFile.newFile:type_name -> compose.v1.File
-	6,  // 3: compose.v1.CreateFile.file:type_name -> compose.v1.File
-	5,  // 4: compose.v1.ComposeService.Create:input_type -> compose.v1.CreateFile
-	7,  // 5: compose.v1.ComposeService.List:input_type -> compose.v1.Empty
-	6,  // 6: compose.v1.ComposeService.Delete:input_type -> compose.v1.File
-	4,  // 7: compose.v1.ComposeService.Rename:input_type -> compose.v1.RenameFile
-	6,  // 8: compose.v1.ComposeService.UpdateContents:input_type -> compose.v1.File
-	6,  // 9: compose.v1.ComposeService.LoadContents:input_type -> compose.v1.File
-	7,  // 10: compose.v1.ComposeService.Create:output_type -> compose.v1.Empty
-	2,  // 11: compose.v1.ComposeService.List:output_type -> compose.v1.ListResponse
-	7,  // 12: compose.v1.ComposeService.Delete:output_type -> compose.v1.Empty
-	7,  // 13: compose.v1.ComposeService.Rename:output_type -> compose.v1.Empty
-	6,  // 14: compose.v1.ComposeService.UpdateContents:output_type -> compose.v1.File
-	0,  // 15: compose.v1.ComposeService.LoadContents:output_type -> compose.v1.FileTransfer
-	10, // [10:16] is the sub-list for method output_type
-	4,  // [4:10] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	2, // 0: compose.v1.ListResponse.groups:type_name -> compose.v1.FileGroup
+	5, // 1: compose.v1.RenameFile.oldFile:type_name -> compose.v1.File
+	5, // 2: compose.v1.RenameFile.newFile:type_name -> compose.v1.File
+	5, // 3: compose.v1.CreateFile.file:type_name -> compose.v1.File
+	4, // 4: compose.v1.ComposeService.Create:input_type -> compose.v1.CreateFile
+	6, // 5: compose.v1.ComposeService.List:input_type -> compose.v1.Empty
+	5, // 6: compose.v1.ComposeService.Delete:input_type -> compose.v1.File
+	3, // 7: compose.v1.ComposeService.Rename:input_type -> compose.v1.RenameFile
+	6, // 8: compose.v1.ComposeService.Create:output_type -> compose.v1.Empty
+	1, // 9: compose.v1.ComposeService.List:output_type -> compose.v1.ListResponse
+	6, // 10: compose.v1.ComposeService.Delete:output_type -> compose.v1.Empty
+	6, // 11: compose.v1.ComposeService.Rename:output_type -> compose.v1.Empty
+	8, // [8:12] is the sub-list for method output_type
+	4, // [4:8] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_compose_v1_compose_proto_init() }
@@ -494,7 +440,7 @@ func file_compose_v1_compose_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_compose_v1_compose_proto_rawDesc), len(file_compose_v1_compose_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

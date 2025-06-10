@@ -58,7 +58,11 @@ func StartServer(opt ...ServerOpt) {
 
 	err := http.ListenAndServe(
 		fmt.Sprintf(":%d", config.Port),
-		middleware.Handler(h2c.NewHandler(router, &http2.Server{})),
+		loggingMiddleware(
+			middleware.Handler(
+				h2c.NewHandler(router, &http2.Server{}),
+			),
+		),
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server")
@@ -72,12 +76,23 @@ func registerHandlers(mux *http.ServeMux) {
 		func() (string, http.Handler) {
 			return v1connect.NewComposeServiceHandler(compose.NewHandler(services.compose))
 		},
+		func() (string, http.Handler) {
+			return compose.NewFileHandler(services.compose).RegisterHandler()
+		},
 	}
 
 	for _, svc := range endpoints {
 		path, handler := svc()
 		mux.Handle(path, handler)
 	}
+
+}
+func loggingMiddleware(next http.Handler) http.Handler {
+	return next
+	//return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	//	//log.Debug().Str("method", r.Method).Str("path", r.URL.Path).Msg("Serving request")
+	//	next.ServeHTTP(w, r)
+	//})
 }
 
 type AllServices struct {
