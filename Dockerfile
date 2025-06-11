@@ -2,7 +2,7 @@ FROM node:23-alpine AS front
 
 WORKDIR /frontend
 
-COPY frontend .
+COPY ui .
 
 RUN npm i
 

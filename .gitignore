@@ -6,3 +6,12 @@
 compose/*
 /**/test-compose
 /dock/
+dock/*
+dock/.git
+/dock/.dockman.yaml
+/dock/arr-docker-compose.yml
+/dock/controller-docker-compose.yml
+/dock/media-docker-compose.yml
+/dock/personal-docker-compose.yml
+/dock/router-docker-compose.yml
+/dock/test-docker-compose.yml
