@@ -1,5 +1,16 @@
-import {useState} from 'react';
-import {Alert, Box, createTheme, CssBaseline, Snackbar, Tab, Tabs, ThemeProvider, Typography} from '@mui/material';
+import {type SyntheticEvent, useState} from 'react';
+import {
+    Alert,
+    type AlertColor,
+    Box,
+    createTheme,
+    CssBaseline,
+    Snackbar,
+    Tab,
+    Tabs,
+    ThemeProvider,
+    Typography
+} from '@mui/material';
 import {EditorPage} from './pages/editor-page';
 import {DeployPage} from "./pages/deploy-page.tsx";
 import {FileSidebar} from "./components/sidebar.tsx";
@@ -36,26 +47,17 @@ const darkTheme = createTheme({
 function IdeLayout() {
     const [tabValue, setTabValue] = useState(0);
 
-    const [loadingStates, setLoadingStates] = useState({
-        save: false,
-        start: false,
-        stop: false,
-        remove: false,
-        restart: false,
-        update: false,
-    });
-
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
         severity: 'success',
     });
 
-    const handleTabChange = (_event: never, newValue: number) => {
+    const handleTabChange = (_event: SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
     };
 
-    const handleCloseSnackbar = (event, reason) => {
+    const handleCloseSnackbar = (_event: any, reason: string) => {
         if (reason === 'clickaway') return;
         setSnackbar((prev) => ({...prev, open: false}));
     };
@@ -64,7 +66,7 @@ function IdeLayout() {
 
     return (
         <Box sx={{display: 'flex', height: '100vh', overflow: 'hidden'}}>
-            <FileSidebar selectedFile={selectedFile} onFileClick={({filename}) => {
+            <FileSidebar onFileClick={({filename}) => {
                 setSelectedFile(filename)
             }}/>
             <Box
@@ -115,8 +117,8 @@ function IdeLayout() {
                 anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
             >
                 <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
+                    onClose={event => handleCloseSnackbar(event, "")}
+                    severity={snackbar.severity as AlertColor}
                     sx={{width: '100%'}}
                     variant="filled"
                 >

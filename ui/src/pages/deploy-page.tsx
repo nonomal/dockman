@@ -12,6 +12,16 @@ interface DeployPageProps {
     selectedPage: string
 }
 
+// const [loadingStates, setLoadingStates] = useState({
+//         save: false,
+//         start: false,
+//         stop: false,
+//         remove: false,
+//         restart: false,
+//         update: false,
+//     });
+
+
 export function DeployPage({selectedPage}: DeployPageProps) {
     const deployActions = [
         {

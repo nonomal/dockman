@@ -83,27 +83,21 @@ export function EditorPage({selectedPage}: EditorProps) {
                     backgroundColor: 'rgba(0,0,0,0.1)'
                 }}
             >
-                {
-                    fileContent ?
-                        <Editor
-                            key={selectedPage}
-                            // height="100vw"
-                            // width="100vw"
-                            // No height/width props needed if parent is sized, it will default to 100%
-                            defaultLanguage="yaml"
-                            value={fileContent}
-                            onChange={handleEditorChange}
-                            onMount={handleEditorDidMount}
-                            theme="vs-dark"
-                            options={{
-                                selectOnLineNumbers: true,
-                                minimap: {enabled: false}
-                            }}
-                        /> :
-                        <Typography variant="h5" color="text.secondary">
-                            Select or create a file
-                        </Typography>
-                }
+                <Editor
+                    key={selectedPage}
+                    // height="100vw"
+                    // width="100vw"
+                    // No height/width props needed if parent is sized, it will default to 100%
+                    defaultLanguage="yaml"
+                    value={fileContent}
+                    onChange={handleEditorChange}
+                    onMount={handleEditorDidMount}
+                    theme="vs-dark"
+                    options={{
+                        selectOnLineNumbers: true,
+                        minimap: {enabled: false}
+                    }}
+                />
             </Box>
         </Box>
     );

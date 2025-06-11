@@ -9,7 +9,7 @@ import {
     Drawer,
     IconButton,
     List,
-    ListItem,
+    ListItemButton,
     ListItemIcon,
     ListItemText,
     Snackbar,
@@ -98,7 +98,7 @@ export function FileSidebar({onFileClick}: SidebarProps) {
         }
     };
 
-    const handleDeleteParent = (filename: string) => {
+    const handleDelete = (filename: string) => {
         callRPC(() => composeClient.delete({filename: filename}))
             .then(({err}) => {
                 setSnackbarOpen(true);
@@ -158,9 +158,8 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                 <List>{
                     files.map((item) => (
                         <React.Fragment key={item.name}>
-                            <ListItem
+                            <ListItemButton
                                 selected={internalSelectedFile === item.name}
-                                button
                                 onClick={() => {
                                     setInternalSelectedFile(item.name)
                                     onFileClick({filename: item.name})
@@ -176,23 +175,25 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                                     sx={{mr: 1}}
                                 >
                                     <AddIcon/>
+                                    {/* Your icon here */}
                                 </IconButton>
                                 <IconButton
                                     size="small"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        handleDeleteParent(item.name)
+                                        handleDelete(item.name);
                                     }}
+                                    sx={{mr: 1}}
                                 >
                                     <DeleteIcon/>
                                 </IconButton>
-                            </ListItem>
+                            </ListItemButton>
                             {item.children && (
                                 <List disablePadding sx={{pl: 4}}>
                                     {item.children.map((child) => (
-                                        <ListItem
+                                        <ListItemButton
                                             selected={internalSelectedFile === child}
-                                            button key={child}
+                                            key={child}
                                             onClick={() => {
                                                 setInternalSelectedFile(child)
                                                 onFileClick({filename: child})
@@ -204,11 +205,11 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                                                 size="small"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDeleteParent(child);
+                                                    handleDelete(child);
                                                 }}>
                                                 <DeleteIcon/>
                                             </IconButton>
-                                        </ListItem>
+                                        </ListItemButton>
                                     ))}
                                 </List>
                             )}
@@ -234,8 +235,8 @@ export function FileSidebar({onFileClick}: SidebarProps) {
 
             <Dialog open={addDialogOpen} onClose={handleAddCancel}>
                 {currentParent ?
-                    <DialogTitle>Add New Child to "{currentParent}"</DialogTitle> :
-                    <DialogTitle>Add New root file</DialogTitle>}
+                    <DialogTitle>Add subfile to "{currentParent}"</DialogTitle> :
+                    <DialogTitle>Add new root file</DialogTitle>}
                 <DialogContent>
                     <TextField
                         autoFocus
