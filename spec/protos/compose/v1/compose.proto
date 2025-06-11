@@ -10,17 +10,9 @@ service ComposeService {
   rpc List(Empty) returns (ListResponse) {}
   rpc Delete(File) returns (Empty) {}
   rpc Rename(RenameFile) returns (Empty) {}
-
-  // content
-  rpc UpdateContents(File) returns (File) {}
-  rpc LoadContents(File) returns (stream FileTransfer) {}
 }
 
-message FileTransfer {
-  bytes chunk_data = 1;
-}
-
-message SubReq{
+message SubReq {
   string groupName = 1;
   string subFilename = 2;
 }
