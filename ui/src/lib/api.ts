@@ -61,7 +61,10 @@ export async function uploadFile(filename: string, contents: string): Promise<st
 
 export async function downloadFile(filename: string): Promise<{ file: string; err: string }> {
     try {
-        const response = await fetch(`${API_URL}/api/file/load/${encodeURIComponent(filename)}`);
+        const response = await fetch(
+            `${API_URL}/api/file/load/${encodeURIComponent(filename)}`,
+            {cache: 'no-cache'}
+        );
         if (!response.ok) {
             return {file: "", err: `Failed to download file: ${response.status} ${response.statusText}`};
         }
