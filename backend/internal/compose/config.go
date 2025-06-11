@@ -66,12 +66,11 @@ func (fa *FileAssociations) List() map[string][]string {
 			return true
 		}
 
-		// load children
+		// key is a child
 		val, ok := result[value]
 		if ok {
-			result[key] = append(val, key)
+			result[value] = append(val, key)
 		}
-
 		return true
 	})
 

@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	comprpc "github.com/RA341/dockman/generated/compose/v1"
+	"maps"
+	"slices"
 )
 
 type Handler struct {
@@ -22,12 +24,13 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[comprpc.Empty]) (*c
 	}
 
 	var resp []*comprpc.FileGroup
-	for key, val := range flist {
+	for _, key := range slices.Sorted(maps.Keys(flist)) {
 		resp = append(resp, &comprpc.FileGroup{
 			Root:     key,
-			SubFiles: val,
+			SubFiles: flist[key],
 		})
 	}
+
 	return connect.NewResponse(&comprpc.ListResponse{Groups: resp}), nil
 }
 

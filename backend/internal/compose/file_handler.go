@@ -61,7 +61,7 @@ func (h *FileHandler) LoadFile(w http.ResponseWriter, r *http.Request) {
 
 	fullPath, err := h.srv.Load(cleanPath)
 	if err != nil {
-		log.Error().Err(err).Msg("Error loading file")
+		log.Error().Err(err).Str("path", cleanPath).Msg("Error loading file")
 		http.Error(w, "Filename not found", http.StatusBadRequest)
 		return
 	}
