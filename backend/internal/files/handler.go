@@ -1,4 +1,4 @@
-package compose
+package files
 
 import (
 	"connectrpc.com/connect"
