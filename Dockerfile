@@ -29,6 +29,6 @@ COPY --from=back /backend/dockman dockman
 
 COPY --from=front /frontend/dist/ ./dist
 
-EXPOSE 8080
+EXPOSE 8866
 
-CMD ["./dockman", "--ui=dist"]
+CMD ["./dockman", "--ui=dist", "--cr=/compose"]

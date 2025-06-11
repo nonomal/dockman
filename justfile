@@ -14,7 +14,7 @@ prune:
 # start a temprory gouda build using docker run
 devr:
     just dkbd
-    docker run --rm -p 8080:8866 dockman:dev
+    docker run --rm -v ./wow:/compose -p 8080:8866 dockman:dev
 
 # no cache docker build
 dkc:
