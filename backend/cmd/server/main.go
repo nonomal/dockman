@@ -10,14 +10,16 @@ import (
 
 func main() {
 	logger.ConsoleLogger()
+	uipath, composeRoot := cmd.LoadArgs()
+
 	cmd.StartServer(
-		cmd.WithUI(setupFrontend()),
+		cmd.WithUI(setupFrontend(*uipath)),
 		cmd.WithPort(8866),
+		cmd.WithComposeRoot(*composeRoot),
 	)
 }
 
-func setupFrontend() http.Handler {
-	uipath := *cmd.LoadArgs()
+func setupFrontend(uipath string) http.Handler {
 	log.Debug().Str("path", uipath).Msg("Loading frontend path from args")
 
 	root, err := os.OpenRoot(uipath)

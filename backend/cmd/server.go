@@ -11,11 +11,13 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"net/http"
+	"strings"
 )
 
 type ServerConfig struct {
-	Port      int
-	UIHandler http.Handler
+	Port        int
+	ComposeRoot string
+	uiHandler   http.Handler
 }
 
 type ServerOpt func(o *ServerConfig)
@@ -28,7 +30,13 @@ func WithPort(port int) ServerOpt {
 
 func WithUI(handler http.Handler) ServerOpt {
 	return func(o *ServerConfig) {
-		o.UIHandler = handler
+		o.uiHandler = handler
+	}
+}
+
+func WithComposeRoot(compose string) ServerOpt {
+	return func(o *ServerConfig) {
+		o.ComposeRoot = compose
 	}
 }
 
@@ -37,14 +45,15 @@ func StartServer(opt ...ServerOpt) {
 	for _, o := range opt {
 		o(config)
 	}
+	log.Info().Any("config", config).Msg("loaded config")
 
 	router := http.NewServeMux()
 
 	// todo
 	//authInterceptor := connect.WithInterceptors(newAuthInterceptor())
 
-	registerHandlers(router)
-	router.Handle("/", config.UIHandler)
+	registerHandlers(router, config)
+	router.Handle("/", config.uiHandler)
 
 	middleware := cors.New(cors.Options{
 		AllowedOrigins:      []string{"*"},
@@ -69,8 +78,8 @@ func StartServer(opt ...ServerOpt) {
 	}
 }
 
-func registerHandlers(mux *http.ServeMux) {
-	services := initServices()
+func registerHandlers(mux *http.ServeMux, config *ServerConfig) {
+	services := initServices(config)
 
 	endpoints := []func() (string, http.Handler){
 		func() (string, http.Handler) {
@@ -100,9 +109,8 @@ type AllServices struct {
 	git     *git.Service
 }
 
-func initServices() *AllServices {
-	composeRoot := "dock"
-
+func initServices(conf *ServerConfig) *AllServices {
+	composeRoot := strings.TrimSpace(conf.ComposeRoot)
 	comp := compose.NewService(composeRoot)
 	gitMan := git.New(composeRoot)
 
