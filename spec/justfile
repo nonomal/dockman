@@ -22,7 +22,7 @@ web:
     clear
     echo 'moving web files'
     rm -r ../ui/src/gen/*
-    cp -r generated/web/* ../frontend/src/gen/
+    cp -r generated/web/* ../ui/src/gen/
     rm -r generated/web
 
 
