@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        (unknown)
-// source: compose/v1/compose.proto
+// source: files/v1/files.proto
 
 package v1
 
@@ -31,7 +31,7 @@ type SubReq struct {
 
 func (x *SubReq) Reset() {
 	*x = SubReq{}
-	mi := &file_compose_v1_compose_proto_msgTypes[0]
+	mi := &file_files_v1_files_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +43,7 @@ func (x *SubReq) String() string {
 func (*SubReq) ProtoMessage() {}
 
 func (x *SubReq) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[0]
+	mi := &file_files_v1_files_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +56,7 @@ func (x *SubReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubReq.ProtoReflect.Descriptor instead.
 func (*SubReq) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{0}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SubReq) GetGroupName() string {
@@ -82,7 +82,7 @@ type ListResponse struct {
 
 func (x *ListResponse) Reset() {
 	*x = ListResponse{}
-	mi := &file_compose_v1_compose_proto_msgTypes[1]
+	mi := &file_files_v1_files_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -94,7 +94,7 @@ func (x *ListResponse) String() string {
 func (*ListResponse) ProtoMessage() {}
 
 func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[1]
+	mi := &file_files_v1_files_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -107,7 +107,7 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{1}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListResponse) GetGroups() []*FileGroup {
@@ -127,7 +127,7 @@ type FileGroup struct {
 
 func (x *FileGroup) Reset() {
 	*x = FileGroup{}
-	mi := &file_compose_v1_compose_proto_msgTypes[2]
+	mi := &file_files_v1_files_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -139,7 +139,7 @@ func (x *FileGroup) String() string {
 func (*FileGroup) ProtoMessage() {}
 
 func (x *FileGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[2]
+	mi := &file_files_v1_files_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -152,7 +152,7 @@ func (x *FileGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileGroup.ProtoReflect.Descriptor instead.
 func (*FileGroup) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{2}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *FileGroup) GetRoot() string {
@@ -179,7 +179,7 @@ type RenameFile struct {
 
 func (x *RenameFile) Reset() {
 	*x = RenameFile{}
-	mi := &file_compose_v1_compose_proto_msgTypes[3]
+	mi := &file_files_v1_files_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +191,7 @@ func (x *RenameFile) String() string {
 func (*RenameFile) ProtoMessage() {}
 
 func (x *RenameFile) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[3]
+	mi := &file_files_v1_files_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +204,7 @@ func (x *RenameFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameFile.ProtoReflect.Descriptor instead.
 func (*RenameFile) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{3}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RenameFile) GetOldFile() *File {
@@ -231,7 +231,7 @@ type CreateFile struct {
 
 func (x *CreateFile) Reset() {
 	*x = CreateFile{}
-	mi := &file_compose_v1_compose_proto_msgTypes[4]
+	mi := &file_files_v1_files_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -243,7 +243,7 @@ func (x *CreateFile) String() string {
 func (*CreateFile) ProtoMessage() {}
 
 func (x *CreateFile) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[4]
+	mi := &file_files_v1_files_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -256,7 +256,7 @@ func (x *CreateFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateFile.ProtoReflect.Descriptor instead.
 func (*CreateFile) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{4}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateFile) GetFile() *File {
@@ -282,7 +282,7 @@ type File struct {
 
 func (x *File) Reset() {
 	*x = File{}
-	mi := &file_compose_v1_compose_proto_msgTypes[5]
+	mi := &file_files_v1_files_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -294,7 +294,7 @@ func (x *File) String() string {
 func (*File) ProtoMessage() {}
 
 func (x *File) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[5]
+	mi := &file_files_v1_files_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -307,7 +307,7 @@ func (x *File) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use File.ProtoReflect.Descriptor instead.
 func (*File) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{5}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *File) GetFilename() string {
@@ -325,7 +325,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_compose_v1_compose_proto_msgTypes[6]
+	mi := &file_files_v1_files_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -337,7 +337,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_compose_v1_compose_proto_msgTypes[6]
+	mi := &file_files_v1_files_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -350,78 +350,76 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_compose_v1_compose_proto_rawDescGZIP(), []int{6}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{6}
 }
 
-var File_compose_v1_compose_proto protoreflect.FileDescriptor
+var File_files_v1_files_proto protoreflect.FileDescriptor
 
-const file_compose_v1_compose_proto_rawDesc = "" +
+const file_files_v1_files_proto_rawDesc = "" +
 	"\n" +
-	"\x18compose/v1/compose.proto\x12\n" +
-	"compose.v1\"H\n" +
+	"\x14files/v1/files.proto\x12\bfiles.v1\"H\n" +
 	"\x06SubReq\x12\x1c\n" +
 	"\tgroupName\x18\x01 \x01(\tR\tgroupName\x12 \n" +
-	"\vsubFilename\x18\x02 \x01(\tR\vsubFilename\"=\n" +
-	"\fListResponse\x12-\n" +
-	"\x06groups\x18\x01 \x03(\v2\x15.compose.v1.FileGroupR\x06groups\";\n" +
+	"\vsubFilename\x18\x02 \x01(\tR\vsubFilename\";\n" +
+	"\fListResponse\x12+\n" +
+	"\x06groups\x18\x01 \x03(\v2\x13.files.v1.FileGroupR\x06groups\";\n" +
 	"\tFileGroup\x12\x12\n" +
 	"\x04root\x18\x01 \x01(\tR\x04root\x12\x1a\n" +
-	"\bsubFiles\x18\x02 \x03(\tR\bsubFiles\"d\n" +
+	"\bsubFiles\x18\x02 \x03(\tR\bsubFiles\"`\n" +
 	"\n" +
-	"RenameFile\x12*\n" +
-	"\aoldFile\x18\x01 \x01(\v2\x10.compose.v1.FileR\aoldFile\x12*\n" +
-	"\anewFile\x18\x02 \x01(\v2\x10.compose.v1.FileR\anewFile\"J\n" +
+	"RenameFile\x12(\n" +
+	"\aoldFile\x18\x01 \x01(\v2\x0e.files.v1.FileR\aoldFile\x12(\n" +
+	"\anewFile\x18\x02 \x01(\v2\x0e.files.v1.FileR\anewFile\"H\n" +
 	"\n" +
-	"CreateFile\x12$\n" +
-	"\x04file\x18\x01 \x01(\v2\x10.compose.v1.FileR\x04file\x12\x16\n" +
+	"CreateFile\x12\"\n" +
+	"\x04file\x18\x01 \x01(\v2\x0e.files.v1.FileR\x04file\x12\x16\n" +
 	"\x06parent\x18\x02 \x01(\tR\x06parent\"\"\n" +
 	"\x04File\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\"\a\n" +
-	"\x05Empty2\xe6\x01\n" +
-	"\x0eComposeService\x125\n" +
-	"\x06Create\x12\x16.compose.v1.CreateFile\x1a\x11.compose.v1.Empty\"\x00\x125\n" +
-	"\x04List\x12\x11.compose.v1.Empty\x1a\x18.compose.v1.ListResponse\"\x00\x12/\n" +
-	"\x06Delete\x12\x10.compose.v1.File\x1a\x11.compose.v1.Empty\"\x00\x125\n" +
-	"\x06Rename\x12\x16.compose.v1.RenameFile\x1a\x11.compose.v1.Empty\"\x00B\x96\x01\n" +
-	"\x0ecom.compose.v1B\fComposeProtoP\x01Z-github.com/RA341/dockman/generated/compose/v1\xa2\x02\x03CXX\xaa\x02\n" +
-	"Compose.V1\xca\x02\n" +
-	"Compose\\V1\xe2\x02\x16Compose\\V1\\GPBMetadata\xea\x02\vCompose::V1b\x06proto3"
+	"\x05Empty2\xd3\x01\n" +
+	"\vFileService\x121\n" +
+	"\x06Create\x12\x14.files.v1.CreateFile\x1a\x0f.files.v1.Empty\"\x00\x121\n" +
+	"\x04List\x12\x0f.files.v1.Empty\x1a\x16.files.v1.ListResponse\"\x00\x12+\n" +
+	"\x06Delete\x12\x0e.files.v1.File\x1a\x0f.files.v1.Empty\"\x00\x121\n" +
+	"\x06Rename\x12\x14.files.v1.RenameFile\x1a\x0f.files.v1.Empty\"\x00B\x88\x01\n" +
+	"\fcom.files.v1B\n" +
+	"FilesProtoP\x01Z+github.com/RA341/dockman/generated/files/v1\xa2\x02\x03FXX\xaa\x02\bFiles.V1\xca\x02\bFiles\\V1\xe2\x02\x14Files\\V1\\GPBMetadata\xea\x02\tFiles::V1b\x06proto3"
 
 var (
-	file_compose_v1_compose_proto_rawDescOnce sync.Once
-	file_compose_v1_compose_proto_rawDescData []byte
+	file_files_v1_files_proto_rawDescOnce sync.Once
+	file_files_v1_files_proto_rawDescData []byte
 )
 
-func file_compose_v1_compose_proto_rawDescGZIP() []byte {
-	file_compose_v1_compose_proto_rawDescOnce.Do(func() {
-		file_compose_v1_compose_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_compose_v1_compose_proto_rawDesc), len(file_compose_v1_compose_proto_rawDesc)))
+func file_files_v1_files_proto_rawDescGZIP() []byte {
+	file_files_v1_files_proto_rawDescOnce.Do(func() {
+		file_files_v1_files_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_files_v1_files_proto_rawDesc), len(file_files_v1_files_proto_rawDesc)))
 	})
-	return file_compose_v1_compose_proto_rawDescData
+	return file_files_v1_files_proto_rawDescData
 }
 
-var file_compose_v1_compose_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_compose_v1_compose_proto_goTypes = []any{
-	(*SubReq)(nil),       // 0: compose.v1.SubReq
-	(*ListResponse)(nil), // 1: compose.v1.ListResponse
-	(*FileGroup)(nil),    // 2: compose.v1.FileGroup
-	(*RenameFile)(nil),   // 3: compose.v1.RenameFile
-	(*CreateFile)(nil),   // 4: compose.v1.CreateFile
-	(*File)(nil),         // 5: compose.v1.File
-	(*Empty)(nil),        // 6: compose.v1.Empty
+var file_files_v1_files_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_files_v1_files_proto_goTypes = []any{
+	(*SubReq)(nil),       // 0: files.v1.SubReq
+	(*ListResponse)(nil), // 1: files.v1.ListResponse
+	(*FileGroup)(nil),    // 2: files.v1.FileGroup
+	(*RenameFile)(nil),   // 3: files.v1.RenameFile
+	(*CreateFile)(nil),   // 4: files.v1.CreateFile
+	(*File)(nil),         // 5: files.v1.File
+	(*Empty)(nil),        // 6: files.v1.Empty
 }
-var file_compose_v1_compose_proto_depIdxs = []int32{
-	2, // 0: compose.v1.ListResponse.groups:type_name -> compose.v1.FileGroup
-	5, // 1: compose.v1.RenameFile.oldFile:type_name -> compose.v1.File
-	5, // 2: compose.v1.RenameFile.newFile:type_name -> compose.v1.File
-	5, // 3: compose.v1.CreateFile.file:type_name -> compose.v1.File
-	4, // 4: compose.v1.ComposeService.Create:input_type -> compose.v1.CreateFile
-	6, // 5: compose.v1.ComposeService.List:input_type -> compose.v1.Empty
-	5, // 6: compose.v1.ComposeService.Delete:input_type -> compose.v1.File
-	3, // 7: compose.v1.ComposeService.Rename:input_type -> compose.v1.RenameFile
-	6, // 8: compose.v1.ComposeService.Create:output_type -> compose.v1.Empty
-	1, // 9: compose.v1.ComposeService.List:output_type -> compose.v1.ListResponse
-	6, // 10: compose.v1.ComposeService.Delete:output_type -> compose.v1.Empty
-	6, // 11: compose.v1.ComposeService.Rename:output_type -> compose.v1.Empty
+var file_files_v1_files_proto_depIdxs = []int32{
+	2, // 0: files.v1.ListResponse.groups:type_name -> files.v1.FileGroup
+	5, // 1: files.v1.RenameFile.oldFile:type_name -> files.v1.File
+	5, // 2: files.v1.RenameFile.newFile:type_name -> files.v1.File
+	5, // 3: files.v1.CreateFile.file:type_name -> files.v1.File
+	4, // 4: files.v1.FileService.Create:input_type -> files.v1.CreateFile
+	6, // 5: files.v1.FileService.List:input_type -> files.v1.Empty
+	5, // 6: files.v1.FileService.Delete:input_type -> files.v1.File
+	3, // 7: files.v1.FileService.Rename:input_type -> files.v1.RenameFile
+	6, // 8: files.v1.FileService.Create:output_type -> files.v1.Empty
+	1, // 9: files.v1.FileService.List:output_type -> files.v1.ListResponse
+	6, // 10: files.v1.FileService.Delete:output_type -> files.v1.Empty
+	6, // 11: files.v1.FileService.Rename:output_type -> files.v1.Empty
 	8, // [8:12] is the sub-list for method output_type
 	4, // [4:8] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
@@ -429,26 +427,26 @@ var file_compose_v1_compose_proto_depIdxs = []int32{
 	0, // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_compose_v1_compose_proto_init() }
-func file_compose_v1_compose_proto_init() {
-	if File_compose_v1_compose_proto != nil {
+func init() { file_files_v1_files_proto_init() }
+func file_files_v1_files_proto_init() {
+	if File_files_v1_files_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_compose_v1_compose_proto_rawDesc), len(file_compose_v1_compose_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_files_v1_files_proto_rawDesc), len(file_files_v1_files_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_compose_v1_compose_proto_goTypes,
-		DependencyIndexes: file_compose_v1_compose_proto_depIdxs,
-		MessageInfos:      file_compose_v1_compose_proto_msgTypes,
+		GoTypes:           file_files_v1_files_proto_goTypes,
+		DependencyIndexes: file_files_v1_files_proto_depIdxs,
+		MessageInfos:      file_files_v1_files_proto_msgTypes,
 	}.Build()
-	File_compose_v1_compose_proto = out.File
-	file_compose_v1_compose_proto_goTypes = nil
-	file_compose_v1_compose_proto_depIdxs = nil
+	File_files_v1_files_proto = out.File
+	file_files_v1_files_proto_goTypes = nil
+	file_files_v1_files_proto_depIdxs = nil
 }

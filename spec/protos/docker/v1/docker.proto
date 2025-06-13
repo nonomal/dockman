@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package docker.v1;
+
+option go_package = "github.com/RA341/dockman/generated/docker/v1";
+
+service DockerService {
+  rpc Start(ComposeFile) returns (Empty) {}
+  rpc Stop(ComposeFile) returns (Empty) {}
+  rpc Remove(ComposeFile) returns (Empty) {}
+  rpc Update(ComposeFile) returns (Empty) {}
+}
+
+message Empty{}
+
+message ComposeFile {
+  string filename = 1;
+}

@@ -4,7 +4,7 @@ import (
 	"connectrpc.com/connect"
 	"context"
 	"fmt"
-	comprpc "github.com/RA341/dockman/generated/compose/v1"
+	"github.com/RA341/dockman/generated/files/v1"
 	"maps"
 	"slices"
 )
@@ -17,24 +17,24 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{srv: service}
 }
 
-func (h *Handler) List(_ context.Context, _ *connect.Request[comprpc.Empty]) (*connect.Response[comprpc.ListResponse], error) {
+func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
 	flist, err := h.srv.List()
 	if err != nil {
 		return nil, err
 	}
 
-	var resp []*comprpc.FileGroup
+	var resp []*v1.FileGroup
 	for _, key := range slices.Sorted(maps.Keys(flist)) {
-		resp = append(resp, &comprpc.FileGroup{
+		resp = append(resp, &v1.FileGroup{
 			Root:     key,
 			SubFiles: flist[key],
 		})
 	}
 
-	return connect.NewResponse(&comprpc.ListResponse{Groups: resp}), nil
+	return connect.NewResponse(&v1.ListResponse{Groups: resp}), nil
 }
 
-func (h *Handler) Create(_ context.Context, c *connect.Request[comprpc.CreateFile]) (*connect.Response[comprpc.Empty], error) {
+func (h *Handler) Create(_ context.Context, c *connect.Request[v1.CreateFile]) (*connect.Response[v1.Empty], error) {
 	filename, err := getFile(c.Msg.GetFile())
 	if err != nil {
 		return nil, err
@@ -45,9 +45,9 @@ func (h *Handler) Create(_ context.Context, c *connect.Request[comprpc.CreateFil
 		return nil, err
 	}
 
-	return &connect.Response[comprpc.Empty]{}, nil
+	return &connect.Response[v1.Empty]{}, nil
 }
-func (h *Handler) Delete(_ context.Context, c *connect.Request[comprpc.File]) (*connect.Response[comprpc.Empty], error) {
+func (h *Handler) Delete(_ context.Context, c *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
 	filename, err := getFile(c.Msg)
 	if err != nil {
 		return nil, err
@@ -57,11 +57,11 @@ func (h *Handler) Delete(_ context.Context, c *connect.Request[comprpc.File]) (*
 		return nil, err
 	}
 
-	return &connect.Response[comprpc.Empty]{}, nil
+	return &connect.Response[v1.Empty]{}, nil
 
 }
 
-func (h *Handler) Rename(ctx context.Context, c *connect.Request[comprpc.RenameFile]) (*connect.Response[comprpc.Empty], error) {
+func (h *Handler) Rename(ctx context.Context, c *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -129,7 +129,7 @@ func (h *Handler) Rename(ctx context.Context, c *connect.Request[comprpc.RenameF
 //	return nil
 //}
 
-func getFile(c *comprpc.File) (string, error) {
+func getFile(c *v1.File) (string, error) {
 	msg := c.GetFilename()
 	if msg == "" {
 		return "", fmt.Errorf("name is empty")

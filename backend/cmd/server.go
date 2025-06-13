@@ -3,7 +3,9 @@ package cmd
 import (
 	connectcors "connectrpc.com/cors"
 	"fmt"
-	"github.com/RA341/dockman/generated/compose/v1/v1connect"
+	dockerpc "github.com/RA341/dockman/generated/docker/v1/v1connect"
+	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
+	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
 	"github.com/rs/cors"
@@ -12,6 +14,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
@@ -70,7 +73,7 @@ func StartServer(opt ...ServerOpt) {
 		ExposedHeaders:      connectcors.ExposedHeaders(),
 	})
 
-	log.Info().Int("port", config.Port).Msg("Starting server on port")
+	log.Info().Int("port", config.Port).Msg("Starting server...")
 
 	err := http.ListenAndServe(
 		fmt.Sprintf(":%d", config.Port),
@@ -86,7 +89,10 @@ func registerHandlers(mux *http.ServeMux, config *ServerConfig) io.Closer {
 
 	endpoints := []func() (string, http.Handler){
 		func() (string, http.Handler) {
-			return v1connect.NewComposeServiceHandler(files.NewHandler(services.compose))
+			return filesrpc.NewFileServiceHandler(files.NewHandler(services.compose))
+		},
+		func() (string, http.Handler) {
+			return dockerpc.NewDockerServiceHandler(docker.NewHandler(services.docker))
 		},
 		func() (string, http.Handler) {
 			return files.NewFileHandler(services.compose).RegisterHandler()
@@ -104,22 +110,35 @@ func registerHandlers(mux *http.ServeMux, config *ServerConfig) io.Closer {
 type AllServices struct {
 	compose *files.Service
 	git     *git.Service
+	docker  *docker.Service
 }
 
 func (a *AllServices) Close() error {
 	if err := a.compose.Close(); err != nil {
 		return err
 	}
+	if err := a.docker.Close(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func initServices(conf *ServerConfig) *AllServices {
 	composeRoot := strings.TrimSpace(conf.ComposeRoot)
+	abs, err := filepath.Abs(composeRoot)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to get absolute path for compose root")
+	}
+	composeRoot = abs
+
 	comp := files.NewService(composeRoot)
-	gitMan := git.New(composeRoot)
+	gitMan := git.NewService(composeRoot)
+	dock := docker.NewService(composeRoot)
 
 	return &AllServices{
 		compose: comp,
 		git:     gitMan,
+		docker:  dock,
 	}
 }

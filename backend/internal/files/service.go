@@ -14,13 +14,11 @@ type Service struct {
 }
 
 func NewService(composeRoot string, importPatterns ...string) *Service {
-	abs, err := filepath.Abs(composeRoot)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to get absolute path for compose root")
+	if !filepath.IsAbs(composeRoot) {
+		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
 	}
-	composeRoot = abs
 
-	if err = os.MkdirAll(composeRoot, 0755); err != nil {
+	if err := os.MkdirAll(composeRoot, 0755); err != nil {
 		log.Fatal().Err(err).Str("compose-root", composeRoot).Msg("failed to create compose root folder")
 	}
 
@@ -30,7 +28,7 @@ func NewService(composeRoot string, importPatterns ...string) *Service {
 	}
 
 	importPatterns = append(importPatterns, "*.yaml", "*.yml") //default
-	if err = srv.AutoImport(importPatterns...); err != nil {
+	if err := srv.AutoImport(importPatterns...); err != nil {
 		log.Fatal().Err(err).Msg("failed to auto import files")
 	}
 

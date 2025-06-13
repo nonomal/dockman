@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package compose.v1;
+package files.v1;
 
-option go_package = "github.com/RA341/dockman/generated/compose/v1";
+option go_package = "github.com/RA341/dockman/generated/files/v1";
 
-service ComposeService {
+service FileService {
   // root file management
   rpc Create(CreateFile) returns (Empty) {}
   rpc List(Empty) returns (ListResponse) {}

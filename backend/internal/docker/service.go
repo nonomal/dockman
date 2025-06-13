@@ -11,6 +11,7 @@ import (
 	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
+	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -25,6 +26,10 @@ type Service struct {
 }
 
 func NewService(composeRoot string) *Service {
+	if !filepath.IsAbs(composeRoot) {
+		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
+	}
+
 	dockerClient, err := newDockerDaemonClient()
 	if err != nil {
 		log.Fatal().Err(err).Msg("error initializing docker client")
@@ -222,6 +227,7 @@ func (s *Service) getProjectImageDigests(ctx context.Context, project *types.Pro
 }
 
 func (s *Service) withProject(ctx context.Context, filename string, execFn func(ctx context.Context, project *types.Project) error) error {
+	filename = filepath.Join(s.composeRoot, filename)
 	options, err := cli.NewProjectOptions(
 		[]string{filename},
 		cli.WithOsEnv,
@@ -249,6 +255,10 @@ func (s *Service) withProject(ctx context.Context, filename string, execFn func(
 	project = project.WithoutUnnecessaryResources()
 
 	return execFn(ctx, project)
+}
+
+func (s *Service) Close() error {
+	return s.daemon.Close()
 }
 
 func addServiceLabels(project *types.Project) {

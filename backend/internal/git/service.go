@@ -43,7 +43,7 @@ func (s *Service) ListRemote(files string) {
 
 }
 
-func New(root string) *Service {
+func NewService(root string) *Service {
 	srv := Service{repoPath: root}
 
 	if err := srv.Init(); err != nil {
