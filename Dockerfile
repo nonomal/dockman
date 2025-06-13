@@ -25,6 +25,8 @@ FROM alpine:latest
 
 WORKDIR /app
 
+#RUN apk --no-cache add docker-cli docker-cli-compose
+
 COPY --from=back /backend/dockman dockman
 
 COPY --from=front /frontend/dist/ ./dist
