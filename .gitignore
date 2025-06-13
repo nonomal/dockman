@@ -16,3 +16,4 @@ dock/.git
 /dock/router-docker-compose.yml
 /dock/test-docker-compose.yml
 /backend/**/*compose.yml
+install/stacks/*

@@ -66,7 +66,7 @@ func StartServer(opt ...ServerOpt) {
 	router.Handle("/", config.uiHandler)
 
 	middleware := cors.New(cors.Options{
-		AllowedOrigins:      []string{"http://localhost:5173"}, // todo load from env
+		AllowedOrigins:      []string{"*"}, // todo load from env
 		AllowPrivateNetwork: true,
 		AllowedMethods:      connectcors.AllowedMethods(),
 		AllowedHeaders:      append(connectcors.AllowedHeaders(), "Authorization"),

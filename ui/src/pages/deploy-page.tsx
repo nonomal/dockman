@@ -32,7 +32,7 @@ interface SnackbarState {
 }
 
 export function DeployPage({selectedPage}: DeployPageProps) {
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string>("");
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
     const [snackbar, setSnackbar] = useState<SnackbarState>({
         open: false,
@@ -63,7 +63,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
     };
 
     const handleCloseError = () => {
-        setError(null);
+        setError("");
     };
 
     const deployActions = [
@@ -180,7 +180,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
             </Box>
 
             {/* Error Dialog */}
-            <Dialog open={!!error} onClose={handleCloseError}>
+            <Dialog open={error !== ""} onClose={handleCloseError}>
                 <DialogTitle>Error</DialogTitle>
                 <DialogContent>
                     <Typography>{error}</Typography>
