@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 
 import React, {useCallback, useEffect, useState} from 'react';
-import {ComposeService} from "../gen/compose/v1/compose_pb.ts";
+import {FileService} from "../gen/files/v1/files_pb.ts";
 import {callRPC, useClient} from "../lib/api.ts";
 import {Add as AddIcon, Delete as DeleteIcon, Description as FileIcon,} from '@mui/icons-material';
 
@@ -38,7 +38,7 @@ export function FileSidebar({onFileClick}: SidebarProps) {
     const [files, setFiles] = useState<FileComponent[]>([]);
     const [internalSelectedFile, setInternalSelectedFile] = useState("");
 
-    const composeClient = useClient(ComposeService)
+    const composeClient = useClient(FileService)
 
     const fetchData = useCallback(async () => {
         const {val, err} = await callRPC(() => composeClient.list({}))
