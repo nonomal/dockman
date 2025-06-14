@@ -33,8 +33,6 @@ export async function callRPC<T>(exec: () => Promise<T>): Promise<{ val: T | nul
 export async function uploadFile(filename: string, contents: string): Promise<string> {
     try {
         const formData = new FormData();
-        // Create a File object from the string content.
-        // 'fileContent' is wrapped in an array as the first argument.
         const file = new File([contents], filename);
 
         formData.append('contents', file, filename);

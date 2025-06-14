@@ -130,7 +130,8 @@ func (s *Service) getPath(filename string) string {
 	return filepath.Join(s.composeRoot, filename)
 }
 
-func (s *Service) Save(filename string, destWriter io.Reader) error {
+// checks verifies file existence
+func (s *Service) withFile(filename string, execFn func(filename string) error) error {
 	ok, err := s.fdb.Exists(filename)
 	if err != nil {
 		return err
@@ -139,28 +140,32 @@ func (s *Service) Save(filename string, destWriter io.Reader) error {
 		return fmt.Errorf("file %s does not exist", filename)
 	}
 
-	filename = s.getPath(filename)
+	return execFn(filename)
+}
 
-	read, err := io.ReadAll(destWriter)
-	if err != nil {
-		return err
-	}
+func (s *Service) Save(filename string, destWriter io.Reader) error {
+	return s.withFile(filename, func(filename string) error {
+		filename = s.getPath(filename)
 
-	err = os.WriteFile(filename, read, os.ModePerm)
-	if err != nil {
-		return err
-	}
+		read, err := io.ReadAll(destWriter)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		err = os.WriteFile(filename, read, os.ModePerm)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (s *Service) Load(filename string) (string, error) {
-	ok, err := s.fdb.Exists(filename)
-	if err != nil {
+	if err := s.withFile(
+		filename,
+		func(filename string) error { return nil },
+	); err != nil {
 		return "", err
-	}
-	if !ok {
-		return "", fmt.Errorf("file %s does not exist", filename)
 	}
 	return s.getPath(filename), nil
 }
