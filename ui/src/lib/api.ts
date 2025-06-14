@@ -35,9 +35,7 @@ export async function uploadFile(filename: string, contents: string): Promise<st
         const formData = new FormData();
         // Create a File object from the string content.
         // 'fileContent' is wrapped in an array as the first argument.
-        const file = new File([contents], filename, {
-            type: 'text/plain',
-        });
+        const file = new File([contents], filename);
 
         formData.append('contents', file, filename);
 
