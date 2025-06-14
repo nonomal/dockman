@@ -246,7 +246,7 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                         variant="outlined"
                         value={newChildName}
                         onChange={(e) => setNewChildName(e.target.value)}
-                        onKeyPress={(e) => {
+                        onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 handleAddConfirm();
                             }
