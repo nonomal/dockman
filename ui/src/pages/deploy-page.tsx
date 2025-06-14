@@ -235,11 +235,13 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                                     <Grid container alignItems="center" spacing={2}>
                                         {/* @ts-expect-error some dumb mui shit*/}
                                         <Grid item xs={12} sm={3}>
-                                            <Typography variant="body1" fontWeight="500">{container.name}</Typography>
+                                            <Typography variant="body1"
+                                                        fontWeight="500">{container.name}</Typography>
                                         </Grid>
                                         {/* @ts-expect-error some dumb mui shit*/}
                                         <Grid item xs={12} sm={2}>
-                                            <Chip label={container.status} color={getStatusChipColor(container.status)}
+                                            <Chip label={container.status}
+                                                  color={getStatusChipColor(container.status)}
                                                   size="small"/>
                                         </Grid>
                                         {/* @ts-expect-error some dumb mui shit*/}
