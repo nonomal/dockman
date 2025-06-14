@@ -227,6 +227,7 @@ func (s *Service) getProjectImageDigests(ctx context.Context, project *types.Pro
 }
 
 func (s *Service) withProject(ctx context.Context, filename string, execFn func(ctx context.Context, project *types.Project) error) error {
+	filename = filepath.Join(s.composeRoot, filename)
 	options, err := cli.NewProjectOptions(
 		[]string{filename},
 		cli.WithOsEnv,
