@@ -18,7 +18,7 @@ type FileDB interface {
 	GetFileGroup(filename string) ([]string, error)
 }
 
-const boltFileDBName = ".dockman.db"
+const BoltFileDBName = ".dockman.db"
 const fileBucket = "files"
 
 type BoltFileDB struct {
@@ -79,7 +79,7 @@ func initBoltDB(composeRoot string) (*bolt.DB, error) {
 		composeRoot = "."
 	}
 
-	db, err := bolt.Open(filepath.Join(composeRoot, boltFileDBName), 0600, nil)
+	db, err := bolt.Open(filepath.Join(composeRoot, BoltFileDBName), 0600, nil)
 	if err != nil {
 		return nil, err
 	}

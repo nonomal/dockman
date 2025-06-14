@@ -12,7 +12,7 @@ func TestBolt(t *testing.T) {
 		err := conf.Close()
 		require.NoError(t, err)
 
-		err = os.RemoveAll(boltFileDBName)
+		err = os.RemoveAll(BoltFileDBName)
 		require.NoError(t, err)
 	})
 

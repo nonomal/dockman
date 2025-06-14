@@ -9,7 +9,7 @@ import (
 func TestService_Create(t *testing.T) {
 	baseFolder := "test-compose"
 	srv := NewService(baseFolder)
-	require.FileExists(t, filepath.Join(baseFolder, boltFileDBName))
+	require.FileExists(t, filepath.Join(baseFolder, BoltFileDBName))
 
 	parent := "test2.yaml"
 	err := srv.Create(parent, "")

@@ -25,7 +25,12 @@ func NewService(root string, fileMan files.FileDB) *Service {
 		log.Fatal().Err(err).Msg("Failed to create git service")
 	}
 
-	return &Service{repo: repo, fileMan: fileMan, repoPath: root}
+	srv := &Service{repo: repo, fileMan: fileMan, repoPath: root}
+	if err := srv.CheckDockmanDBStatus(files.BoltFileDBName); err != nil {
+		log.Fatal().Err(err).Msg("Failed to check dockman to vcs")
+	}
+
+	return srv
 }
 
 func initializeGit(root string) (*git.Repository, error) {
@@ -37,27 +42,18 @@ func initializeGit(root string) (*git.Repository, error) {
 
 	// PlainOpen returns an error, implies the directory doesn't exist,
 	// or it's not a git repository, initialize
-	newRepo, err := git.PlainInit(root, false)
+	newRepo, err := git.PlainInitWithOptions(root, &git.PlainInitOptions{
+		InitOptions: git.InitOptions{
+			DefaultBranch: "refs/heads/main",
+		},
+		Bare: false,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Error initializing repository: %s\n", err)
 	}
 
 	log.Info().Str("path", root).Msg("Repository initialized successfully")
 	return newRepo, nil
-}
-
-func (s *Service) CommitFileGroup(commitMessage string, filename string) error {
-	fileList, err := s.fileMan.GetFileGroup(filename)
-	if err != nil {
-		return err
-	}
-
-	err = s.Commit(commitMessage, fileList...)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (s *Service) Commit(commitMessage string, fileList ...string) error {
@@ -97,7 +93,17 @@ func (s *Service) Commit(commitMessage string, fileList ...string) error {
 	return nil
 }
 
-func (s *Service) ListCommits(files ...string) error {
+func (s *Service) CommitFileGroup(commitMessage string, filename string) error {
+	fileList, err := s.fileMan.GetFileGroup(filename)
+	if err != nil {
+		return err
+	}
+
+	err = s.Commit(commitMessage, fileList...)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -123,6 +129,65 @@ func (s *Service) ListCommitByFile(filePath string) ([]*object.Commit, error) {
 	}
 
 	return commitList, nil
+}
+
+func (s *Service) CheckDockmanDBStatus(filename string) error {
+	worktree, err := s.repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	status, err := worktree.Status()
+	if err != nil {
+		return err
+	}
+
+	var commitMessage = ""
+
+	if fileStatus, exists := status[filename]; exists {
+		if fileStatus.Staging == git.Untracked {
+			log.Info().Str("file", filename).Msg("File is untracked")
+			commitMessage = "added dockman db"
+		} else if fileStatus.Staging == git.Modified {
+			log.Info().Str("file", filename).Msg("File is modified")
+			commitMessage = "updated dockman db"
+		}
+	}
+
+	if commitMessage != "" {
+		if err := s.Commit(commitMessage, filename); err != nil {
+			return err
+		}
+	} else {
+		log.Info().Str("file", filename).Msg("File is clean (no changes)")
+	}
+
+	return err
+}
+
+// EditUserConfig updates user configuration, skipping empty parameters
+func (s *Service) EditUserConfig(name, email string) error {
+	conf, err := s.repo.Config()
+	if err != nil {
+		return fmt.Errorf("failed to get config: %w", err)
+	}
+
+	// Only update name if provided
+	if name != "" {
+		conf.Author.Name = name
+	}
+
+	// Only update email if provided
+	if email != "" {
+		conf.Author.Email = email
+	}
+
+	// Save the configuration back to the repository
+	return s.repo.Storer.SetConfig(conf)
+}
+
+func (s *Service) ListCommits(files ...string) error {
+	return nil
 }
 
 func (s *Service) EditRemote(remoteNickname string, repoUrl string) error {

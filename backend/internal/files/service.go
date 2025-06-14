@@ -52,7 +52,7 @@ func (s *Service) AutoImport(globPatterns ...string) error {
 		}
 
 		filename := dir.Name()
-		if filename == boltFileDBName {
+		if filename == BoltFileDBName {
 			continue
 		}
 
