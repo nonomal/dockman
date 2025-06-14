@@ -10,7 +10,7 @@ import (
 
 type Service struct {
 	composeRoot string
-	fdb         FileDB
+	Fdb         FileDB
 }
 
 func NewService(composeRoot string, importPatterns ...string) *Service {
@@ -24,7 +24,7 @@ func NewService(composeRoot string, importPatterns ...string) *Service {
 
 	srv := &Service{
 		composeRoot: composeRoot,
-		fdb:         NewBoltConfig(composeRoot),
+		Fdb:         NewBoltConfig(composeRoot),
 	}
 
 	importPatterns = append(importPatterns, "*.yaml", "*.yml") //default
@@ -36,11 +36,7 @@ func NewService(composeRoot string, importPatterns ...string) *Service {
 }
 
 func (s *Service) Close() error {
-	return s.fdb.Close()
-}
-
-func (s *Service) List() (map[string][]string, error) {
-	return s.fdb.List()
+	return s.Fdb.Close()
 }
 
 func (s *Service) AutoImport(globPatterns ...string) error {
@@ -60,7 +56,7 @@ func (s *Service) AutoImport(globPatterns ...string) error {
 			continue
 		}
 
-		ok, err := s.fdb.Exists(filename)
+		ok, err := s.Fdb.Exists(filename)
 		if err != nil {
 			return err
 		}
@@ -76,7 +72,7 @@ func (s *Service) AutoImport(globPatterns ...string) error {
 
 			if match {
 				// add as parent
-				if err = s.fdb.Insert(filename, ""); err != nil {
+				if err = s.Fdb.Insert(filename, ""); err != nil {
 					return err
 				}
 			}
@@ -86,12 +82,16 @@ func (s *Service) AutoImport(globPatterns ...string) error {
 	return nil
 }
 
+func (s *Service) List() (map[string][]string, error) {
+	return s.Fdb.List()
+}
+
 func (s *Service) Create(fileName, parent string) error {
-	if err := s.CreateFile(fileName); err != nil {
+	if err := s.createFile(fileName); err != nil {
 		return err
 	}
 
-	if err := s.fdb.Insert(fileName, parent); err != nil {
+	if err := s.Fdb.Insert(fileName, parent); err != nil {
 		return err
 	}
 
@@ -104,43 +104,11 @@ func (s *Service) Delete(fileName string) error {
 		return err
 	}
 
-	if err := s.fdb.Delete(fileName); err != nil {
+	if err := s.Fdb.Delete(fileName); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (s *Service) CreateFile(filename string) error {
-	f, err := s.OpenFile(filename)
-	if err != nil {
-		return err
-	}
-
-	closeFile(f)
-	return nil
-}
-
-func (s *Service) OpenFile(filename string) (*os.File, error) {
-	filename = s.getPath(filename)
-	return os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
-}
-
-func (s *Service) getPath(filename string) string {
-	return filepath.Join(s.composeRoot, filename)
-}
-
-// checks verifies file existence
-func (s *Service) withFile(filename string, execFn func(filename string) error) error {
-	ok, err := s.fdb.Exists(filename)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return fmt.Errorf("file %s does not exist", filename)
-	}
-
-	return execFn(filename)
 }
 
 func (s *Service) Save(filename string, destWriter io.Reader) error {
@@ -168,6 +136,38 @@ func (s *Service) Load(filename string) (string, error) {
 		return "", err
 	}
 	return s.getPath(filename), nil
+}
+
+func (s *Service) createFile(filename string) error {
+	f, err := s.openFile(filename)
+	if err != nil {
+		return err
+	}
+
+	closeFile(f)
+	return nil
+}
+
+func (s *Service) openFile(filename string) (*os.File, error) {
+	filename = s.getPath(filename)
+	return os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
+}
+
+func (s *Service) getPath(filename string) string {
+	return filepath.Join(s.composeRoot, filename)
+}
+
+// checks verifies file existence
+func (s *Service) withFile(filename string, execFn func(filename string) error) error {
+	ok, err := s.Fdb.Exists(filename)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("file %s does not exist", filename)
+	}
+
+	return execFn(filename)
 }
 
 func closeFile(rw io.Closer) {

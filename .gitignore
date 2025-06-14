@@ -9,3 +9,4 @@ compose/*
 dock/*
 /backend/**/*compose.yml
 install/stacks/
+/backend/**/gitTest

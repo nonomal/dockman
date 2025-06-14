@@ -15,14 +15,54 @@ type FileDB interface {
 	Rename(string, string) error
 	Close() error
 	List() (map[string][]string, error)
+	GetFileGroup(filename string) ([]string, error)
 }
 
 const boltFileDBName = ".dockman.db"
-
 const fileBucket = "files"
 
 type BoltFileDB struct {
 	db *bolt.DB
+}
+
+// GetFileGroup gets all children and the parent in a list
+func (b *BoltFileDB) GetFileGroup(inputFilename string) ([]string, error) {
+	val, isParent, err := b.Get(inputFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []string
+	err = b.db.View(func(tx *bolt.Tx) error {
+		bucket, err := b.getFileBucket(tx)
+		if err != nil {
+			return err
+		}
+
+		c := bucket.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			filename := string(k)
+			parent := string(v)
+			if parent == "" {
+				continue
+			}
+
+			// use inputFilename if it is a parent or
+			// use the retrieved val since it would be the parent
+			if !(isParent && parent == inputFilename || parent == val) {
+				continue
+			}
+
+			result = append(result, filename)
+		}
+		return nil
+	})
+	if err != nil {
+		return []string{}, err
+	}
+
+	result = append(result, inputFilename)
+	return result, nil
 }
 
 func NewBoltConfig(composeRoot string) FileDB {

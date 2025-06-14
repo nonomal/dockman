@@ -22,3 +22,14 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+/**/.idea
+/**/bin
+/**/.dockman.yaml
+compose/*
+/**/test-compose
+/dock/
+dock/*
+/backend/**/*compose.yml
+install/stacks/
+/backend/**/gitTest

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	dockerpc "github.com/RA341/dockman/generated/docker/v1/v1connect"
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
+	"github.com/RA341/dockman/generated/git/v1/gitrpc"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
@@ -89,13 +90,16 @@ func registerHandlers(mux *http.ServeMux, config *ServerConfig) io.Closer {
 
 	endpoints := []func() (string, http.Handler){
 		func() (string, http.Handler) {
-			return filesrpc.NewFileServiceHandler(files.NewHandler(services.compose))
+			return filesrpc.NewFileServiceHandler(files.NewHandler(services.file))
+		},
+		func() (string, http.Handler) {
+			return files.NewFileHandler(services.file).RegisterHandler()
 		},
 		func() (string, http.Handler) {
 			return dockerpc.NewDockerServiceHandler(docker.NewHandler(services.docker))
 		},
 		func() (string, http.Handler) {
-			return files.NewFileHandler(services.compose).RegisterHandler()
+			return gitrpc.NewGitServiceHandler(git.NewHandler(services.git))
 		},
 	}
 
@@ -108,13 +112,13 @@ func registerHandlers(mux *http.ServeMux, config *ServerConfig) io.Closer {
 }
 
 type AllServices struct {
-	compose *files.Service
-	git     *git.Service
-	docker  *docker.Service
+	file   *files.Service
+	git    *git.Service
+	docker *docker.Service
 }
 
 func (a *AllServices) Close() error {
-	if err := a.compose.Close(); err != nil {
+	if err := a.file.Close(); err != nil {
 		return err
 	}
 	if err := a.docker.Close(); err != nil {
@@ -132,13 +136,13 @@ func initServices(conf *ServerConfig) *AllServices {
 	}
 	composeRoot = abs
 
-	comp := files.NewService(composeRoot)
-	gitMan := git.NewService(composeRoot)
+	fMan := files.NewService(composeRoot)
+	gitMan := git.NewService(composeRoot, fMan.Fdb)
 	dock := docker.NewService(composeRoot)
 
 	return &AllServices{
-		compose: comp,
-		git:     gitMan,
-		docker:  dock,
+		file:   fMan,
+		git:    gitMan,
+		docker: dock,
 	}
 }
