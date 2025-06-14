@@ -9,6 +9,28 @@ service DockerService {
   rpc Stop(ComposeFile) returns (Empty) {}
   rpc Remove(ComposeFile) returns (Empty) {}
   rpc Update(ComposeFile) returns (Empty) {}
+  rpc List(ComposeFile) returns (ListResponse) {}
+}
+
+message ListResponse {
+  repeated ContainerList list = 1;
+}
+
+message ContainerList {
+  string id = 1;
+  string imageID = 2;
+  string imageName = 3;
+  string status = 4;
+  string name = 5;
+  string created = 6;
+  repeated Port ports = 7;
+}
+
+message Port {
+  int32 public = 1;
+  int32 private = 2;
+  string host = 3;
+  string type = 4;
 }
 
 message Empty{}

@@ -1,13 +1,16 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {
     Alert,
     Box,
     Button,
+    Chip,
     CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
+    Grid,
+    Paper,
     Snackbar,
     Typography
 } from '@mui/material';
@@ -16,10 +19,10 @@ import {
     PlayArrow as PlayArrowIcon,
     RestartAlt as RestartAltIcon,
     Stop as StopIcon,
-    Update as UpdateIcon
+    Update as UpdateIcon,
 } from '@mui/icons-material';
-import {callRPC, useClient} from "../lib/api.ts";
-import {DockerService} from "../gen/docker/v1/docker_pb.ts";
+import {type ContainerList, DockerService} from "../gen/docker/v1/docker_pb.ts";
+import {callRPC, useClient} from '../lib/api.ts';
 
 interface DeployPageProps {
     selectedPage: string
@@ -41,6 +44,29 @@ export function DeployPage({selectedPage}: DeployPageProps) {
     });
 
     const dockerService = useClient(DockerService);
+
+    const [containers, setContainers] = useState<ContainerList[]>([]);
+
+    useEffect(() => {
+        if (!selectedPage) {
+            setContainers([]);
+            return;
+        }
+
+        const fetchContainers = async () => {
+            const {val, err} = await callRPC(() => dockerService.list({filename: selectedPage}));
+            if (err) {
+                showSnackbar(`Failed to refresh containers: ${err}`, 'error');
+                setContainers([]);
+            } else {
+                setContainers(val?.list || []);
+            }
+        };
+
+        fetchContainers();
+        const intervalId = setInterval(fetchContainers, 5000);
+        return () => clearInterval(intervalId);
+    }, [selectedPage, dockerService]);
 
     const handleActionStart = (actionName: string) => {
         setLoadingStates(prev => ({...prev, [actionName]: true}));
@@ -140,6 +166,20 @@ export function DeployPage({selectedPage}: DeployPageProps) {
         },
     ];
 
+    const getStatusChipColor = (status: string): "success" | "warning" | "default" | "error" => {
+        if (status.toLowerCase().startsWith('up')) return 'success';
+        if (status.toLowerCase().startsWith('exited')) return 'error';
+        if (status.toLowerCase().includes('restarting')) return 'warning';
+        return 'default';
+    };
+
+    const formatPorts = (ports: Port[]): string => {
+        if (!ports || ports.length === 0) {
+            return '—';
+        }
+        return ports.map(p => `${p.host}:${p.public}→${p.private}/${p.type}`).join(', ');
+    };
+
     return (
         <Box sx={{p: 3, height: '100%', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
             <Box sx={{display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3}}>
@@ -165,18 +205,63 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                     borderRadius: 1,
                     p: 2,
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    flexDirection: 'column',
                     backgroundColor: 'rgba(0,0,0,0.1)'
                 }}
             >
-                {selectedPage ?
-                    <Typography variant="h5" color="text.secondary">
-                        Deployment Status and Logs Placeholder
-                    </Typography> :
-                    <Typography variant="h5" color="text.secondary">
-                        Select a page
-                    </Typography>}
+                {selectedPage ? (
+                    containers.length > 0 ? (
+                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
+                            <Grid container sx={{px: 2, color: 'text.secondary'}}>
+                                <Grid xs={12} sm={3}>
+                                    <Typography variant="body2" fontWeight="bold">Name</Typography>
+                                </Grid>
+                                <Grid xs={12} sm={2}>
+                                    <Typography variant="body2" fontWeight="bold">Status</Typography>
+                                </Grid>
+                                <Grid xs={12} sm={4}>
+                                    <Typography variant="body2" fontWeight="bold">Image</Typography>
+                                </Grid>
+                                <Grid xs={12} sm={3}>
+                                    <Typography variant="body2" fontWeight="bold">Ports</Typography>
+                                </Grid>
+                            </Grid>
+                            {containers.map((container) => (
+                                <Paper key={container.id} elevation={2} sx={{p: 2}}>
+                                    <Grid container alignItems="center" spacing={2}>
+                                        <Grid xs={12} sm={3}>
+                                            <Typography variant="body1" fontWeight="500">{container.name}</Typography>
+                                        </Grid>
+                                        <Grid xs={12} sm={2}>
+                                            <Chip label={container.status} color={getStatusChipColor(container.status)}
+                                                  size="small"/>
+                                        </Grid>
+                                        <Grid xs={12} sm={4}>
+                                            <Typography variant="body2" color="text.secondary"
+                                                        sx={{wordBreak: 'break-all'}}>{container.imageName}</Typography>
+                                        </Grid>
+                                        <Grid xs={12} sm={3}>
+                                            <Typography variant="body2"
+                                                        fontWeight="500">{formatPorts(container.ports)}</Typography>
+                                        </Grid>
+                                    </Grid>
+                                </Paper>
+                            ))}
+                        </Box>
+                    ) : (
+                        <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
+                            <Typography variant="h6" color="text.secondary">
+                                No containers found for this deployment.
+                            </Typography>
+                        </Box>
+                    )
+                ) : (
+                    <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
+                        <Typography variant="h5" color="text.secondary">
+                            Select a page
+                        </Typography>
+                    </Box>
+                )}
             </Box>
 
             {/* Error Dialog */}
@@ -197,7 +282,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 open={snackbar.open}
                 autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
-                anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
             >
                 <Alert
                     onClose={handleCloseSnackbar}

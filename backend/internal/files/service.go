@@ -139,12 +139,14 @@ func (s *Service) Save(filename string, destWriter io.Reader) error {
 		return fmt.Errorf("file %s does not exist", filename)
 	}
 
-	srcFile, err := os.OpenFile(s.getPath(filename), os.O_RDWR, os.ModePerm)
+	filename = s.getPath(filename)
+
+	read, err := io.ReadAll(destWriter)
 	if err != nil {
 		return err
 	}
 
-	_, err = io.Copy(srcFile, destWriter)
+	err = os.WriteFile(filename, read, os.ModePerm)
 	if err != nil {
 		return err
 	}

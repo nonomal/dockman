@@ -9,6 +9,8 @@ import (
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
 	"path/filepath"
@@ -172,32 +174,30 @@ func (s *Service) pullStack(ctx context.Context, project *types.Project) error {
 	return nil
 }
 
-func (s *Service) ListStack(projectname, filename string) error {
-	//options, err := cli.NewProjectOptions(
-	//	[]string{filename},
-	//	cli.WithOsEnv,
-	//	cli.WithDotEnv,
-	//	cli.WithName(projectname),
-	//)
-	//if err != nil {
-	//	return err
-	//}
+func (s *Service) ListStack(ctx context.Context, filename string) ([]container.Summary, error) {
+	var result []container.Summary
 
-	//project, err := options.LoadProject(context.Background())
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//err = s.compose.Up(context.Background(), project, api.UpOptions{})
-	//if err != nil {
-	//	return err
-	//}
+	err := s.withProject(ctx, filename, func(ctx context.Context, project *types.Project) error {
+		containerFilters := filters.NewArgs()
+		projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
+		containerFilters.Add("label", projectLabel)
 
-	//p, err := loader.LoadWithContext(context.Background(), configDetails, func(options *loader.Options) {
-	//	options.SetProjectName(projectName, true)
-	//})
+		var err error
+		result, err = s.daemon.ContainerList(ctx, container.ListOptions{
+			All:     true, // all containers (running and stopped).
+			Filters: containerFilters,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to list containers for project '%s': %w", project.Name, err)
+		}
 
-	return nil
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (s *Service) getProjectImageDigests(ctx context.Context, project *types.Project) (map[string]string, error) {

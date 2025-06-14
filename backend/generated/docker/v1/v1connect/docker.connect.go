@@ -41,6 +41,8 @@ const (
 	DockerServiceRemoveProcedure = "/docker.v1.DockerService/Remove"
 	// DockerServiceUpdateProcedure is the fully-qualified name of the DockerService's Update RPC.
 	DockerServiceUpdateProcedure = "/docker.v1.DockerService/Update"
+	// DockerServiceListProcedure is the fully-qualified name of the DockerService's List RPC.
+	DockerServiceListProcedure = "/docker.v1.DockerService/List"
 )
 
 // DockerServiceClient is a client for the docker.v1.DockerService service.
@@ -49,6 +51,7 @@ type DockerServiceClient interface {
 	Stop(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error)
 	Remove(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error)
 	Update(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error)
+	List(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error)
 }
 
 // NewDockerServiceClient constructs a client for the docker.v1.DockerService service. By default,
@@ -86,6 +89,12 @@ func NewDockerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(dockerServiceMethods.ByName("Update")),
 			connect.WithClientOptions(opts...),
 		),
+		list: connect.NewClient[v1.ComposeFile, v1.ListResponse](
+			httpClient,
+			baseURL+DockerServiceListProcedure,
+			connect.WithSchema(dockerServiceMethods.ByName("List")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -95,6 +104,7 @@ type dockerServiceClient struct {
 	stop   *connect.Client[v1.ComposeFile, v1.Empty]
 	remove *connect.Client[v1.ComposeFile, v1.Empty]
 	update *connect.Client[v1.ComposeFile, v1.Empty]
+	list   *connect.Client[v1.ComposeFile, v1.ListResponse]
 }
 
 // Start calls docker.v1.DockerService.Start.
@@ -117,12 +127,18 @@ func (c *dockerServiceClient) Update(ctx context.Context, req *connect.Request[v
 	return c.update.CallUnary(ctx, req)
 }
 
+// List calls docker.v1.DockerService.List.
+func (c *dockerServiceClient) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+	return c.list.CallUnary(ctx, req)
+}
+
 // DockerServiceHandler is an implementation of the docker.v1.DockerService service.
 type DockerServiceHandler interface {
 	Start(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error)
 	Stop(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error)
 	Remove(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error)
 	Update(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error)
+	List(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error)
 }
 
 // NewDockerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -156,6 +172,12 @@ func NewDockerServiceHandler(svc DockerServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(dockerServiceMethods.ByName("Update")),
 		connect.WithHandlerOptions(opts...),
 	)
+	dockerServiceListHandler := connect.NewUnaryHandler(
+		DockerServiceListProcedure,
+		svc.List,
+		connect.WithSchema(dockerServiceMethods.ByName("List")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/docker.v1.DockerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DockerServiceStartProcedure:
@@ -166,6 +188,8 @@ func NewDockerServiceHandler(svc DockerServiceHandler, opts ...connect.HandlerOp
 			dockerServiceRemoveHandler.ServeHTTP(w, r)
 		case DockerServiceUpdateProcedure:
 			dockerServiceUpdateHandler.ServeHTTP(w, r)
+		case DockerServiceListProcedure:
+			dockerServiceListHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -189,4 +213,8 @@ func (UnimplementedDockerServiceHandler) Remove(context.Context, *connect.Reques
 
 func (UnimplementedDockerServiceHandler) Update(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker.v1.DockerService.Update is not implemented"))
+}
+
+func (UnimplementedDockerServiceHandler) List(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker.v1.DockerService.List is not implemented"))
 }

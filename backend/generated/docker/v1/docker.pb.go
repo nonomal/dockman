@@ -21,6 +21,210 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          []*ContainerList       `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListResponse) Reset() {
+	*x = ListResponse{}
+	mi := &file_docker_v1_docker_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListResponse) ProtoMessage() {}
+
+func (x *ListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_docker_v1_docker_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
+func (*ListResponse) Descriptor() ([]byte, []int) {
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ListResponse) GetList() []*ContainerList {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+type ContainerList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ImageID       string                 `protobuf:"bytes,2,opt,name=imageID,proto3" json:"imageID,omitempty"`
+	ImageName     string                 `protobuf:"bytes,3,opt,name=imageName,proto3" json:"imageName,omitempty"`
+	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	Name          string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
+	Created       string                 `protobuf:"bytes,6,opt,name=created,proto3" json:"created,omitempty"`
+	Ports         []*Port                `protobuf:"bytes,7,rep,name=ports,proto3" json:"ports,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerList) Reset() {
+	*x = ContainerList{}
+	mi := &file_docker_v1_docker_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerList) ProtoMessage() {}
+
+func (x *ContainerList) ProtoReflect() protoreflect.Message {
+	mi := &file_docker_v1_docker_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerList.ProtoReflect.Descriptor instead.
+func (*ContainerList) Descriptor() ([]byte, []int) {
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ContainerList) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ContainerList) GetImageID() string {
+	if x != nil {
+		return x.ImageID
+	}
+	return ""
+}
+
+func (x *ContainerList) GetImageName() string {
+	if x != nil {
+		return x.ImageName
+	}
+	return ""
+}
+
+func (x *ContainerList) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ContainerList) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ContainerList) GetCreated() string {
+	if x != nil {
+		return x.Created
+	}
+	return ""
+}
+
+func (x *ContainerList) GetPorts() []*Port {
+	if x != nil {
+		return x.Ports
+	}
+	return nil
+}
+
+type Port struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Public        int32                  `protobuf:"varint,1,opt,name=public,proto3" json:"public,omitempty"`
+	Private       int32                  `protobuf:"varint,2,opt,name=private,proto3" json:"private,omitempty"`
+	Host          string                 `protobuf:"bytes,3,opt,name=host,proto3" json:"host,omitempty"`
+	Type          string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Port) Reset() {
+	*x = Port{}
+	mi := &file_docker_v1_docker_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Port) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Port) ProtoMessage() {}
+
+func (x *Port) ProtoReflect() protoreflect.Message {
+	mi := &file_docker_v1_docker_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Port.ProtoReflect.Descriptor instead.
+func (*Port) Descriptor() ([]byte, []int) {
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Port) GetPublic() int32 {
+	if x != nil {
+		return x.Public
+	}
+	return 0
+}
+
+func (x *Port) GetPrivate() int32 {
+	if x != nil {
+		return x.Private
+	}
+	return 0
+}
+
+func (x *Port) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *Port) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
 type Empty struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -29,7 +233,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_docker_v1_docker_proto_msgTypes[0]
+	mi := &file_docker_v1_docker_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -41,7 +245,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[0]
+	mi := &file_docker_v1_docker_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -54,7 +258,7 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{0}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{3}
 }
 
 type ComposeFile struct {
@@ -66,7 +270,7 @@ type ComposeFile struct {
 
 func (x *ComposeFile) Reset() {
 	*x = ComposeFile{}
-	mi := &file_docker_v1_docker_proto_msgTypes[1]
+	mi := &file_docker_v1_docker_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -78,7 +282,7 @@ func (x *ComposeFile) String() string {
 func (*ComposeFile) ProtoMessage() {}
 
 func (x *ComposeFile) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[1]
+	mi := &file_docker_v1_docker_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -91,7 +295,7 @@ func (x *ComposeFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ComposeFile.ProtoReflect.Descriptor instead.
 func (*ComposeFile) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{1}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ComposeFile) GetFilename() string {
@@ -105,15 +309,31 @@ var File_docker_v1_docker_proto protoreflect.FileDescriptor
 
 const file_docker_v1_docker_proto_rawDesc = "" +
 	"\n" +
-	"\x16docker/v1/docker.proto\x12\tdocker.v1\"\a\n" +
+	"\x16docker/v1/docker.proto\x12\tdocker.v1\"<\n" +
+	"\fListResponse\x12,\n" +
+	"\x04list\x18\x01 \x03(\v2\x18.docker.v1.ContainerListR\x04list\"\xc4\x01\n" +
+	"\rContainerList\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\aimageID\x18\x02 \x01(\tR\aimageID\x12\x1c\n" +
+	"\timageName\x18\x03 \x01(\tR\timageName\x12\x16\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status\x12\x12\n" +
+	"\x04name\x18\x05 \x01(\tR\x04name\x12\x18\n" +
+	"\acreated\x18\x06 \x01(\tR\acreated\x12%\n" +
+	"\x05ports\x18\a \x03(\v2\x0f.docker.v1.PortR\x05ports\"`\n" +
+	"\x04Port\x12\x16\n" +
+	"\x06public\x18\x01 \x01(\x05R\x06public\x12\x18\n" +
+	"\aprivate\x18\x02 \x01(\x05R\aprivate\x12\x12\n" +
+	"\x04host\x18\x03 \x01(\tR\x04host\x12\x12\n" +
+	"\x04type\x18\x04 \x01(\tR\x04type\"\a\n" +
 	"\x05Empty\")\n" +
 	"\vComposeFile\x12\x1a\n" +
-	"\bfilename\x18\x01 \x01(\tR\bfilename2\xe4\x01\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename2\x9f\x02\n" +
 	"\rDockerService\x123\n" +
 	"\x05Start\x12\x16.docker.v1.ComposeFile\x1a\x10.docker.v1.Empty\"\x00\x122\n" +
 	"\x04Stop\x12\x16.docker.v1.ComposeFile\x1a\x10.docker.v1.Empty\"\x00\x124\n" +
 	"\x06Remove\x12\x16.docker.v1.ComposeFile\x1a\x10.docker.v1.Empty\"\x00\x124\n" +
-	"\x06Update\x12\x16.docker.v1.ComposeFile\x1a\x10.docker.v1.Empty\"\x00B\x8f\x01\n" +
+	"\x06Update\x12\x16.docker.v1.ComposeFile\x1a\x10.docker.v1.Empty\"\x00\x129\n" +
+	"\x04List\x12\x16.docker.v1.ComposeFile\x1a\x17.docker.v1.ListResponse\"\x00B\x8f\x01\n" +
 	"\rcom.docker.v1B\vDockerProtoP\x01Z,github.com/RA341/dockman/generated/docker/v1\xa2\x02\x03DXX\xaa\x02\tDocker.V1\xca\x02\tDocker\\V1\xe2\x02\x15Docker\\V1\\GPBMetadata\xea\x02\n" +
 	"Docker::V1b\x06proto3"
 
@@ -129,25 +349,32 @@ func file_docker_v1_docker_proto_rawDescGZIP() []byte {
 	return file_docker_v1_docker_proto_rawDescData
 }
 
-var file_docker_v1_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_docker_v1_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_docker_v1_docker_proto_goTypes = []any{
-	(*Empty)(nil),       // 0: docker.v1.Empty
-	(*ComposeFile)(nil), // 1: docker.v1.ComposeFile
+	(*ListResponse)(nil),  // 0: docker.v1.ListResponse
+	(*ContainerList)(nil), // 1: docker.v1.ContainerList
+	(*Port)(nil),          // 2: docker.v1.Port
+	(*Empty)(nil),         // 3: docker.v1.Empty
+	(*ComposeFile)(nil),   // 4: docker.v1.ComposeFile
 }
 var file_docker_v1_docker_proto_depIdxs = []int32{
-	1, // 0: docker.v1.DockerService.Start:input_type -> docker.v1.ComposeFile
-	1, // 1: docker.v1.DockerService.Stop:input_type -> docker.v1.ComposeFile
-	1, // 2: docker.v1.DockerService.Remove:input_type -> docker.v1.ComposeFile
-	1, // 3: docker.v1.DockerService.Update:input_type -> docker.v1.ComposeFile
-	0, // 4: docker.v1.DockerService.Start:output_type -> docker.v1.Empty
-	0, // 5: docker.v1.DockerService.Stop:output_type -> docker.v1.Empty
-	0, // 6: docker.v1.DockerService.Remove:output_type -> docker.v1.Empty
-	0, // 7: docker.v1.DockerService.Update:output_type -> docker.v1.Empty
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 0: docker.v1.ListResponse.list:type_name -> docker.v1.ContainerList
+	2, // 1: docker.v1.ContainerList.ports:type_name -> docker.v1.Port
+	4, // 2: docker.v1.DockerService.Start:input_type -> docker.v1.ComposeFile
+	4, // 3: docker.v1.DockerService.Stop:input_type -> docker.v1.ComposeFile
+	4, // 4: docker.v1.DockerService.Remove:input_type -> docker.v1.ComposeFile
+	4, // 5: docker.v1.DockerService.Update:input_type -> docker.v1.ComposeFile
+	4, // 6: docker.v1.DockerService.List:input_type -> docker.v1.ComposeFile
+	3, // 7: docker.v1.DockerService.Start:output_type -> docker.v1.Empty
+	3, // 8: docker.v1.DockerService.Stop:output_type -> docker.v1.Empty
+	3, // 9: docker.v1.DockerService.Remove:output_type -> docker.v1.Empty
+	3, // 10: docker.v1.DockerService.Update:output_type -> docker.v1.Empty
+	0, // 11: docker.v1.DockerService.List:output_type -> docker.v1.ListResponse
+	7, // [7:12] is the sub-list for method output_type
+	2, // [2:7] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_docker_v1_docker_proto_init() }
@@ -161,7 +388,7 @@ func file_docker_v1_docker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_docker_v1_docker_proto_rawDesc), len(file_docker_v1_docker_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
