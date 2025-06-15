@@ -1,6 +1,7 @@
 package files
 
 import (
+	"github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"path/filepath"
@@ -39,7 +40,7 @@ func (h *FileHandler) SaveFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving file from form", http.StatusBadRequest)
 		return
 	}
-	defer closeFile(file)
+	defer pkg.CloseFile(file)
 
 	err = h.srv.Save(meta.Filename, file)
 	if err != nil {

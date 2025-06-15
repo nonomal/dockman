@@ -2,6 +2,7 @@ package files
 
 import (
 	"fmt"
+	"github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
@@ -144,7 +145,7 @@ func (s *Service) createFile(filename string) error {
 		return err
 	}
 
-	closeFile(f)
+	pkg.CloseFile(f)
 	return nil
 }
 
@@ -168,11 +169,4 @@ func (s *Service) withFile(filename string, execFn func(filename string) error) 
 	}
 
 	return execFn(filename)
-}
-
-func closeFile(rw io.Closer) {
-	err := rw.Close()
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to close io.Closer")
-	}
 }
