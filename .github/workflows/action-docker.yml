@@ -16,6 +16,11 @@ on:
         description: 'The name of the source Git branch (e.g., main, develop, feature/xyz). For build arguments or specific branch tagging.'
         required: true
         type: string
+      title:
+        type: string
+        description: title for the image
+        required: false
+        default: "app"
 
 jobs:
   build-and-push:
@@ -68,11 +73,10 @@ jobs:
             type=raw,value=latest,enable=${{ inputs.is_latest }}
 
           labels: |
-            org.opencontainers.image.title=Gouda
-            org.opencontainers.image.description=Docker image for Gouda.
+            org.opencontainers.image.title=${{ title }}
+            org.opencontainers.image.description=Docker image for ${{ title }}.
             org.opencontainers.image.vendor=${{ github.repository_owner }}
-            #            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            # org.opencontainers.image.version will be set by metadata-action if semver is detected from version_tag
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
       - name: Build and push Docker image
         id: build_and_push

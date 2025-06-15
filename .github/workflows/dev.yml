@@ -21,6 +21,7 @@ jobs:
     uses: ./.github/workflows/action-docker.yml
     with:
       source_branch: ${{ github.ref_name }}
+      title: 'Dockman'
     secrets: inherit
 
 #  build_and_release_linux:
