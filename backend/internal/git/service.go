@@ -62,7 +62,18 @@ func (s *Service) Commit(commitMessage string, fileList ...string) error {
 		return fmt.Errorf("failed to get worktree: %w", err)
 	}
 
+	status, err := tree.Status()
+	if err != nil {
+		return err
+	}
+
 	for _, file := range fileList {
+		_, ok := status[file]
+		if !ok {
+			log.Debug().Str("file", file).Msg("File not found in status probably ignored, skipping...")
+			continue
+		}
+
 		_, err := tree.Add(file)
 		if err != nil {
 			return fmt.Errorf("failed to add file: %w", err)
