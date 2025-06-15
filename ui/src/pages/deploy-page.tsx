@@ -8,8 +8,13 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Grid,
     Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     Typography
 } from '@mui/material';
 import {
@@ -22,6 +27,7 @@ import {
 import {type ContainerList, DockerService, type Port} from "../gen/docker/v1/docker_pb.ts";
 import {callRPC, useClient} from '../lib/api.ts';
 import {useSnackbar} from "../components/snackbar.tsx";
+import {trim} from "../lib/utils.ts";
 
 interface DeployPageProps {
     selectedPage: string
@@ -153,7 +159,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
         if (!ports || ports.length === 0) {
             return '—';
         }
-        return ports.map(p => `${p.host}:${p.public}→${p.private}/${p.type}`).join(', ');
+        return ports.map(p => `${p.host}:${p.public} → :${p.private}/${p.type}`).join(', ');
     };
 
     return (
@@ -187,53 +193,60 @@ export function DeployPage({selectedPage}: DeployPageProps) {
             >
                 {selectedPage ? (
                     containers.length > 0 ? (
-                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
-                            <Grid container sx={{px: 2, color: 'text.secondary'}}>
-                                {/* @ts-expect-error some dumb mui shit*/}
-                                <Grid xs={12} sm={3}>
-                                    <Typography variant="body2" fontWeight="bold">Name</Typography>
-                                </Grid>
-                                {/* @ts-expect-error some dumb mui shit*/}
-                                <Grid xs={12} sm={2}>
-                                    <Typography variant="body2" fontWeight="bold">Status</Typography>
-                                </Grid>
-                                {/* @ts-expect-error some dumb mui shit*/}
-                                <Grid xs={12} sm={4}>
-                                    <Typography variant="body2" fontWeight="bold">Image</Typography>
-                                </Grid>
-                                {/* @ts-expect-error some dumb mui shit*/}
-                                <Grid xs={12} sm={3}>
-                                    <Typography variant="body2" fontWeight="bold">Ports</Typography>
-                                </Grid>
-                            </Grid>
-                            {containers.map((container) => (
-                                <Paper key={container.id} elevation={2} sx={{p: 2}}>
-                                    <Grid container alignItems="center" spacing={2}>
-                                        {/* @ts-expect-error some dumb mui shit*/}
-                                        <Grid item xs={12} sm={3}>
-                                            <Typography variant="body1"
-                                                        fontWeight="500">{container.name}</Typography>
-                                        </Grid>
-                                        {/* @ts-expect-error some dumb mui shit*/}
-                                        <Grid item xs={12} sm={2}>
-                                            <Chip label={container.status}
-                                                  color={getStatusChipColor(container.status)}
-                                                  size="small"/>
-                                        </Grid>
-                                        {/* @ts-expect-error some dumb mui shit*/}
-                                        <Grid item xs={12} sm={4}>
-                                            <Typography variant="body2" color="text.secondary"
-                                                        sx={{wordBreak: 'break-all'}}>{container.imageName}</Typography>
-                                        </Grid>
-                                        {/* @ts-expect-error some dumb mui shit*/}
-                                        <Grid item xs={12} sm={3}>
-                                            <Typography variant="body2"
-                                                        fontWeight="500">{formatPorts(container.ports)}</Typography>
-                                        </Grid>
-                                    </Grid>
-                                </Paper>
-                            ))}
-                        </Box>
+                        <TableContainer component={Paper} sx={{boxShadow: 3, borderRadius: 2}}>
+                            <Table sx={{minWidth: 650}} aria-label="docker containers table">
+                                {/* Table Header */}
+                                <TableHead>
+                                    <TableRow sx={{'& th': {border: 0}}}>
+                                        <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Name</TableCell>
+                                        <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Status</TableCell>
+                                        <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Image</TableCell>
+                                        <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Ports</TableCell>
+                                    </TableRow>
+                                </TableHead>
+
+                                {/* Table Body */}
+                                <TableBody>
+                                    {containers.map((container) => (
+                                        <TableRow
+                                            key={container.id}
+                                            sx={{'&:last-child td, &:last-child th': {border: 0}}}
+                                        >
+                                            {/* Name Cell */}
+                                            <TableCell component="th" scope="row">
+                                                <Typography variant="body1"
+                                                            fontWeight="500">{trim(container.name, "/")}</Typography>
+                                            </TableCell>
+
+                                            {/* Status Cell */}
+                                            <TableCell>
+                                                <Chip
+                                                    label={container.status}
+                                                    color={getStatusChipColor(container.status)}
+                                                    size="small"
+                                                    sx={{textTransform: 'capitalize'}}
+                                                />
+                                            </TableCell>
+
+                                            {/* Image Cell */}
+                                            <TableCell>
+                                                <Typography variant="body2" color="text.secondary"
+                                                            sx={{wordBreak: 'break-all'}}>
+                                                    {container.imageName}
+                                                </Typography>
+                                            </TableCell>
+
+                                            {/* Ports Cell */}
+                                            <TableCell>
+                                                <Typography variant="body2" fontWeight="500">
+                                                    {formatPorts(container.ports)}
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
                     ) : (
                         <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
                             <Typography variant="h6" color="text.secondary">
