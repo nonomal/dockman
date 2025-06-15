@@ -10,65 +10,55 @@ import {
     Typography
 } from "@mui/material";
 import {Save as SaveIcon,} from '@mui/icons-material';
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {callRPC, downloadFile, uploadFile, useClient} from "../lib/api.ts";
-import {Editor} from "@monaco-editor/react";
 import * as monacoEditor from "monaco-editor";
 import {GitService} from "../gen/git/v1/git_pb.ts";
+import {useSnackbar} from "../components/snackbar.tsx";
+import {MonacoEditor} from "../components/editor.tsx";
 
 interface EditorProps {
     selectedPage: string;
 }
 
-// EditorPage Component
 export function EditorPage({selectedPage}: EditorProps) {
-    const [loading, setLoading] = useState(false)
-    const [fileContent, setFileContent] = useState("")
-    let saveContent = ""
+    const gitClient = useClient(GitService);
+    const {showSuccess, showError, showWarning} = useSnackbar();
 
-    const fetchData = useCallback(async () => {
+    const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>(null);
+    const [fileContent, setFileContent] = useState("")
+
+    const [loading, setLoading] = useState(false)
+    const [commitMessage, setCommitMessage] = useState("")
+    const [openCommitDialog, setOpenCommitDialog] = useState(false)
+
+    const fetchDataCallback = useCallback(async () => {
         if (selectedPage !== "") {
             const {file, err} = await downloadFile(selectedPage)
             if (err) {
-                console.error(err)
+                showError(`Error downloading file ${err}`)
             } else {
                 setFileContent(file)
             }
         }
-    }, [selectedPage]);
+    }, [selectedPage, showError]);
 
     useEffect(() => {
-        fetchData().then(() => {
-        })
-    }, [fetchData]);
-
+        fetchDataCallback().then()
+    }, [fetchDataCallback, selectedPage, showWarning]);
 
     const saveFile = () => {
         setLoading(true)
-        uploadFile(selectedPage, saveContent).then(value => {
+        uploadFile(selectedPage, getContents()).then(value => {
             if (value) {
-                console.error(value)
+                showError(value)
+                return;
             }
+            showSuccess("Saved successfully");
         }).finally(() => {
             setLoading(false)
         })
     }
-
-    const gitClient = useClient(GitService);
-
-    function handleEditorChange(
-        value: string | undefined
-    ): void {
-        saveContent = value ?? ""
-    }
-
-    function handleEditorDidMount(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _editor: monacoEditor.editor.IStandaloneCodeEditor
-    ): void {
-    }
-
-    const [openCommitDialog, setOpenCommitDialog] = useState(false)
 
     const handleAddCancel = () => {
         setCommitMessage('');
@@ -77,35 +67,63 @@ export function EditorPage({selectedPage}: EditorProps) {
 
     const handleCommitConfirm = () => {
         if (commitMessage.trim()) {
-            uploadFile(selectedPage, saveContent).then((err) => {
+            uploadFile(selectedPage, getContents()).then((err) => {
                 if (err) {
-                    console.error(err)
+                    showError(`error saving file ${err}`)
                     return;
                 }
 
                 callRPC(() => gitClient
                     .commit({file: {name: selectedPage}, message: commitMessage.trim()}))
                     .then(() => {
-                        // setSnackbarOpen(true);
-                        //
-                        // if (err) {
-                        //     setSnackbarSeverity('error');
-                        //     setSnackbarMessage(`Error: ${err}`)
-                        // } else {
-                        //     setSnackbarSeverity('success');
-                        //     setSnackbarMessage("File Added")
-                        // }
+                        if (err) {
+                            showError(err, {duration: 5000})
+                        } else {
+                            showSuccess("saved and commited")
+                        }
                     })
             }).finally(() => {
                 setCommitMessage('');
                 setOpenCommitDialog(false);
-                fetchData().then(() => {
-                })
+                fetchDataCallback().then()
             })
         }
     };
 
-    const [commitMessage, setCommitMessage] = useState("")
+    const getContents = () => {
+        if (!editorRef.current) {
+            showWarning("Editor is uninitialized")
+            throw Error("Editor is uninitialized")
+        }
+        return editorRef.current!.getValue();
+    }
+
+    function handleEditorChange(): void {}
+
+    function handleEditorDidMount(
+        editor: monacoEditor.editor.IStandaloneCodeEditor
+    ): void {
+        editorRef.current = editor
+    }
+
+    // const handleEditingComplete = useCallback((value: string) => {
+    //     console.log('Editing complete:', value);
+    //     // Your logic here - save to server, validate, etc.
+    // }, []);
+
+    // const debouncedEditingComplete = useCallback(
+    //     debounce((value: string) => {
+    //         handleEditingComplete(value);
+    //     }, 500),
+    //     [handleEditingComplete]
+    // );
+    //
+    // const handleEditorChange = (value: string | undefined) => {
+    //     if (value !== undefined) {
+    //         setFileContent(value);
+    //         debouncedEditingComplete(value);
+    //     }
+    // };
 
     return (
         <>
@@ -148,20 +166,10 @@ export function EditorPage({selectedPage}: EditorProps) {
                         backgroundColor: 'rgba(0,0,0,0.1)'
                     }}
                 >
-                    <Editor
-                        key={selectedPage}
-                        // height="100vw"
-                        // width="100vw"
-                        // No height/width props needed if parent is sized, it will default to 100%
-                        defaultLanguage="yaml"
-                        value={fileContent}
-                        onChange={handleEditorChange}
-                        onMount={handleEditorDidMount}
-                        theme="vs-dark"
-                        options={{
-                            selectOnLineNumbers: true,
-                            minimap: {enabled: false}
-                        }}
+                    <MonacoEditor selectedPage={selectedPage}
+                                  handleEditorChange={handleEditorChange}
+                                  fileContent={fileContent}
+                                  handleEditorDidMount={handleEditorDidMount}
                     />
                 </Box>
             </Box>

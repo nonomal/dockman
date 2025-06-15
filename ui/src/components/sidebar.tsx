@@ -1,5 +1,4 @@
 import {
-    Alert,
     Button,
     Dialog,
     DialogActions,
@@ -12,7 +11,6 @@ import {
     ListItemButton,
     ListItemIcon,
     ListItemText,
-    Snackbar,
     TextField,
     Toolbar,
     Typography,
@@ -22,6 +20,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {FileService} from "../gen/files/v1/files_pb.ts";
 import {callRPC, useClient} from "../lib/api.ts";
 import {Add as AddIcon, Delete as DeleteIcon, Description as FileIcon,} from '@mui/icons-material';
+import {useSnackbar} from "./snackbar.tsx";
 
 const DRAWER_WIDTH = 300;
 
@@ -35,17 +34,17 @@ interface SidebarProps {
 }
 
 export function FileSidebar({onFileClick}: SidebarProps) {
+    const composeClient = useClient(FileService)
+    const {showError, showSuccess} = useSnackbar()
+
     const [files, setFiles] = useState<FileComponent[]>([]);
     const [internalSelectedFile, setInternalSelectedFile] = useState("");
-
-    const composeClient = useClient(FileService)
 
     const fetchData = useCallback(async () => {
         const {val, err} = await callRPC(() => composeClient.list({}))
         console.log("calling fetchData");
         if (err) {
-            setSnackbarSeverity("error")
-            setSnackbarMessage(err)
+            showError(err)
         } else {
             if (val) {
                 const res = val!.groups.map<FileComponent>(value => {
@@ -54,7 +53,7 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                 setFiles(res)
             }
         }
-    }, [composeClient]);
+    }, [composeClient, showError]);
 
     useEffect(() => {
         fetchData().then(() => {
@@ -64,10 +63,6 @@ export function FileSidebar({onFileClick}: SidebarProps) {
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [currentParent, setCurrentParent] = useState('');
     const [newChildName, setNewChildName] = useState('');
-
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
     const handleAddClick = (parentName: string) => {
         setCurrentParent(parentName);
@@ -79,14 +74,10 @@ export function FileSidebar({onFileClick}: SidebarProps) {
             callRPC(() => composeClient
                 .create({file: {filename: newChildName}, parent: currentParent}))
                 .then(({err}) => {
-                    setSnackbarOpen(true);
-
                     if (err) {
-                        setSnackbarSeverity('error');
-                        setSnackbarMessage(`Error: ${err}`)
+                        showError(`Error saving file: ${err}`)
                     } else {
-                        setSnackbarSeverity('success');
-                        setSnackbarMessage("File Added")
+                        showSuccess(`File saved`)
                     }
                 })
                 .finally(() => {
@@ -101,20 +92,16 @@ export function FileSidebar({onFileClick}: SidebarProps) {
     const handleDelete = (filename: string) => {
         callRPC(() => composeClient.delete({filename: filename}))
             .then(({err}) => {
-                setSnackbarOpen(true);
                 if (err) {
-                    setSnackbarSeverity('error');
-                    setSnackbarMessage(`Error: ${err}`)
+                    showError(`Error: ${err}`)
                 } else {
-                    setSnackbarSeverity('success');
-                    setSnackbarMessage("File Deleted")
+                    showSuccess(`File deleted`)
                 }
             })
             .finally(() => {
                 setNewChildName('');
                 setAddDialogOpen(false);
-                fetchData().then(() => {
-                })
+                fetchData().then()
             })
     }
 
@@ -200,7 +187,9 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                                             }}>
                                             <ListItemIcon><FileIcon/></ListItemIcon>
                                             <ListItemText primary={child}
-                                                          primaryTypographyProps={{style: {fontStyle: 'italic'}}}/>
+                                                          slotProps={{
+                                                              primary: {style: {fontStyle: 'italic'}}
+                                                          }}/>
                                             <IconButton
                                                 size="small"
                                                 onClick={(e) => {
@@ -217,21 +206,6 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                     ))}
                 </List>
             </Drawer>
-
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={() => setSnackbarOpen(false)}
-                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
-            >
-                <Alert
-                    onClose={() => setSnackbarOpen(false)}
-                    severity={snackbarSeverity}
-                    sx={{width: '100%'}}
-                >
-                    {snackbarMessage}
-                </Alert>
-            </Snackbar>
 
             <Dialog open={addDialogOpen} onClose={handleAddCancel}>
                 {currentParent ?

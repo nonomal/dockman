@@ -1,6 +1,5 @@
 import {useEffect, useState} from 'react';
 import {
-    Alert,
     Box,
     Button,
     Chip,
@@ -11,7 +10,6 @@ import {
     DialogTitle,
     Grid,
     Paper,
-    Snackbar,
     Typography
 } from '@mui/material';
 import {
@@ -23,28 +21,18 @@ import {
 } from '@mui/icons-material';
 import {type ContainerList, DockerService, type Port} from "../gen/docker/v1/docker_pb.ts";
 import {callRPC, useClient} from '../lib/api.ts';
+import {useSnackbar} from "../components/snackbar.tsx";
 
 interface DeployPageProps {
     selectedPage: string
 }
 
-interface SnackbarState {
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'warning' | 'info';
-}
-
 export function DeployPage({selectedPage}: DeployPageProps) {
+    const dockerService = useClient(DockerService);
+    const {showSuccess, showWarning} = useSnackbar();
+
     const [error, setError] = useState<string>("");
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
-    const [snackbar, setSnackbar] = useState<SnackbarState>({
-        open: false,
-        message: '',
-        severity: 'success'
-    });
-
-    const dockerService = useClient(DockerService);
-
     const [containers, setContainers] = useState<ContainerList[]>([]);
 
     useEffect(() => {
@@ -56,7 +44,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
         const fetchContainers = async () => {
             const {val, err} = await callRPC(() => dockerService.list({filename: selectedPage}));
             if (err) {
-                showSnackbar(`Failed to refresh containers: ${err}`, 'error');
+                showWarning(`Failed to refresh containers: ${err}`);
                 setContainers([]);
             } else {
                 setContainers(val?.list || []);
@@ -66,7 +54,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
         fetchContainers();
         const intervalId = setInterval(fetchContainers, 5000);
         return () => clearInterval(intervalId);
-    }, [selectedPage, dockerService]);
+    }, [selectedPage, dockerService, showWarning]);
 
     const handleActionStart = (actionName: string) => {
         setLoadingStates(prev => ({...prev, [actionName]: true}));
@@ -74,18 +62,6 @@ export function DeployPage({selectedPage}: DeployPageProps) {
 
     const handleActionEnd = (actionName: string) => {
         setLoadingStates(prev => ({...prev, [actionName]: false}));
-    };
-
-    const showSnackbar = (message: string, severity: SnackbarState['severity'] = 'success') => {
-        setSnackbar({
-            open: true,
-            message,
-            severity
-        });
-    };
-
-    const handleCloseSnackbar = () => {
-        setSnackbar(prev => ({...prev, open: false}));
     };
 
     const handleCloseError = () => {
@@ -102,7 +78,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 if (err) {
                     setError(`Failed to start deployment: ${err}`);
                 } else {
-                    showSnackbar('Deployment started successfully!', 'success');
+                    showSuccess('Deployment started successfully!')
                 }
                 handleActionEnd('start');
             }
@@ -116,7 +92,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 if (err) {
                     setError(`Failed to stop deployment: ${err}`);
                 } else {
-                    showSnackbar('Deployment stopped successfully!', 'success');
+                    showSuccess('Deployment stopped successfully!');
                 }
                 handleActionEnd('stop');
             }
@@ -130,7 +106,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 if (err) {
                     setError(`Failed to remove deployment: ${err}`);
                 } else {
-                    showSnackbar('Deployment removed successfully!', 'success');
+                    showSuccess('Deployment removed successfully!');
                 }
                 handleActionEnd('remove');
             }
@@ -145,7 +121,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 // if (err) {
                 //     setError(`Failed to restart deployment: ${err}`);
                 // } else {
-                //     showSnackbar('Deployment restarted successfully!', 'success');
+                //     showSuccess('Deployment restarted successfully!'}
                 // }
                 handleActionEnd('restart');
             }
@@ -159,7 +135,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 if (err) {
                     setError(`Failed to update deployment: ${err}`);
                 } else {
-                    showSnackbar('Deployment updated successfully!', 'success');
+                    showSuccess('Deployment updated successfully!');
                 }
                 handleActionEnd('update');
             }
@@ -286,22 +262,6 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                     </Button>
                 </DialogActions>
             </Dialog>
-
-            {/* Success/Error Snackbar */}
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={handleCloseSnackbar}
-                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
-            >
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
-                    sx={{width: '100%'}}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }
