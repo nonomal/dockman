@@ -1,4 +1,5 @@
 import {
+    Box,
     Button,
     Dialog,
     DialogActions,
@@ -19,26 +20,27 @@ import {
 import React, {useCallback, useEffect, useState} from 'react';
 import {FileService} from "../gen/files/v1/files_pb.ts";
 import {callRPC, useClient} from "../lib/api.ts";
-import {Add as AddIcon, Delete as DeleteIcon, Description as FileIcon,} from '@mui/icons-material';
+import {Add as AddIcon, Dashboard, Delete as DeleteIcon, Description as FileIcon,} from '@mui/icons-material';
 import {useSnackbar} from "./snackbar.tsx";
-
-const DRAWER_WIDTH = 300;
+import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
 interface FileComponent {
     name: string;
     children: string[];
 }
 
-interface SidebarProps {
-    onFileClick: (params: { filename: string }) => void;
-}
+export function NavSidebar() {
+    const navigate = useNavigate();
+    const location = useLocation();
 
-export function FileSidebar({onFileClick}: SidebarProps) {
     const composeClient = useClient(FileService)
-    const {showError, showSuccess} = useSnackbar()
+    const {showError, showSuccess} = useSnackbar();
 
     const [files, setFiles] = useState<FileComponent[]>([]);
-    const [internalSelectedFile, setInternalSelectedFile] = useState("");
+
+    const [addDialogOpen, setAddDialogOpen] = useState(false);
+    const [currentParent, setCurrentParent] = useState('');
+    const [newChildName, setNewChildName] = useState('');
 
     const fetchData = useCallback(async () => {
         const {val, err} = await callRPC(() => composeClient.list({}))
@@ -56,13 +58,8 @@ export function FileSidebar({onFileClick}: SidebarProps) {
     }, [composeClient, showError]);
 
     useEffect(() => {
-        fetchData().then(() => {
-        })
+        fetchData().then()
     }, [fetchData]);
-
-    const [addDialogOpen, setAddDialogOpen] = useState(false);
-    const [currentParent, setCurrentParent] = useState('');
-    const [newChildName, setNewChildName] = useState('');
 
     const handleAddClick = (parentName: string) => {
         setCurrentParent(parentName);
@@ -70,23 +67,22 @@ export function FileSidebar({onFileClick}: SidebarProps) {
     };
 
     const handleAddConfirm = () => {
-        if (newChildName.trim()) {
-            callRPC(() => composeClient
-                .create({file: {filename: newChildName}, parent: currentParent}))
-                .then(({err}) => {
-                    if (err) {
-                        showError(`Error saving file: ${err}`)
-                    } else {
-                        showSuccess(`File saved`)
-                    }
-                })
-                .finally(() => {
-                    setNewChildName('');
-                    setAddDialogOpen(false);
-                    fetchData().then(() => {
-                    })
-                })
-        }
+        if (!newChildName.trim()) return;
+
+        callRPC(() => composeClient
+            .create({file: {filename: newChildName}, parent: currentParent}))
+            .then(({err}) => {
+                if (err) {
+                    showError(`Error saving file: ${err}`)
+                } else {
+                    showSuccess(`File saved`)
+                }
+            })
+            .finally(() => {
+                setNewChildName('');
+                setAddDialogOpen(false);
+                fetchData().then()
+            })
     };
 
     const handleDelete = (filename: string) => {
@@ -103,7 +99,12 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                 setAddDialogOpen(false);
                 fetchData().then()
             })
-    }
+
+        // If the deleted file was the active one, navigate to dashboard
+        if (location.pathname === `/files/${filename}`) {
+            navigate('/');
+        }
+    };
 
     const handleAddCancel = () => {
         setNewChildName('');
@@ -113,91 +114,57 @@ export function FileSidebar({onFileClick}: SidebarProps) {
     return (
         <>
             <Drawer
-                sx={{
-                    width: DRAWER_WIDTH,
-                    flexShrink: 0,
-                    '& .MuiDrawer-paper': {
-                        width: DRAWER_WIDTH,
-                        boxSizing: 'border-box',
-                        borderRight: '1px solid rgba(255, 255, 255, 0.12)',
-                    },
-                }}
+                sx={{width: 300, flexShrink: 0, '& .MuiDrawer-paper': {width: 300, boxSizing: 'border-box'}}}
                 variant="permanent"
                 anchor="left"
             >
                 <Toolbar>
-                    <Typography variant="h6" noWrap component="div">
-                        Files
-                    </Typography>
-
-                    <Button
-                        startIcon={<AddIcon/>}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddClick("");
-                        }}
-                        sx={{marginLeft: 'auto'}}
-                    >
-                        Add
-                    </Button>
+                    <Box component="img" sx={{height: 40, width: 40, mr: 2}} alt="Logo" src="/dockmanTBD.png"/>
+                    <Typography variant="h5" noWrap>Dockman</Typography>
+                </Toolbar>
+                <Divider/>
+                <List>
+                    <ListItemButton component={RouterLink} to="/" selected={location.pathname === '/'}>
+                        <ListItemIcon><Dashboard/></ListItemIcon>
+                        <ListItemText slotProps={{primary: {variant: 'h6'}}} primary="Dashboard"/>
+                    </ListItemButton>
+                </List>
+                <Divider/>
+                <Toolbar>
+                    <Typography variant="h6" noWrap sx={{flexGrow: 1}}>Files</Typography>
+                    <Button startIcon={<AddIcon/>} onClick={() => handleAddClick("")}>Add</Button>
                 </Toolbar>
                 <Divider/>
                 <List>{
                     files.map((item) => (
                         <React.Fragment key={item.name}>
-                            <ListItemButton
-                                selected={internalSelectedFile === item.name}
-                                onClick={() => {
-                                    setInternalSelectedFile(item.name)
-                                    onFileClick({filename: item.name})
-                                }}>
-                                <ListItemIcon> <FileIcon/> </ListItemIcon>
+                            <ListItemButton component={RouterLink} to={`/files/${item.name}`}
+                                            selected={location.pathname === `/files/${item.name}`}>
+                                <ListItemIcon><FileIcon/></ListItemIcon>
                                 <ListItemText primary={item.name}/>
-                                <IconButton
-                                    size="small"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAddClick(item.name);
-                                    }}
-                                    sx={{mr: 1}}
-                                >
-                                    <AddIcon/>
-                                    {/* Your icon here */}
-                                </IconButton>
-                                <IconButton
-                                    size="small"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(item.name);
-                                    }}
-                                    sx={{mr: 1}}
-                                >
-                                    <DeleteIcon/>
-                                </IconButton>
+                                <IconButton size="small" onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAddClick(item.name);
+                                }}><AddIcon/></IconButton>
+                                <IconButton size="small" onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleDelete(item.name);
+                                }}><DeleteIcon/></IconButton>
                             </ListItemButton>
                             {item.children && (
                                 <List disablePadding sx={{pl: 4}}>
                                     {item.children.map((child) => (
-                                        <ListItemButton
-                                            selected={internalSelectedFile === child}
-                                            key={child}
-                                            onClick={() => {
-                                                setInternalSelectedFile(child)
-                                                onFileClick({filename: child})
-                                            }}>
+                                        <ListItemButton key={child} component={RouterLink} to={`/files/${child}`}
+                                                        selected={location.pathname === `/files/${child}`}>
                                             <ListItemIcon><FileIcon/></ListItemIcon>
-                                            <ListItemText primary={child}
-                                                          slotProps={{
-                                                              primary: {style: {fontStyle: 'italic'}}
-                                                          }}/>
-                                            <IconButton
-                                                size="small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(child);
-                                                }}>
-                                                <DeleteIcon/>
-                                            </IconButton>
+                                            <ListItemText primary={child}/>
+                                            <IconButton size="small" onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleDelete(child);
+                                            }}><DeleteIcon/></IconButton>
                                         </ListItemButton>
                                     ))}
                                 </List>
@@ -206,33 +173,15 @@ export function FileSidebar({onFileClick}: SidebarProps) {
                     ))}
                 </List>
             </Drawer>
-
-            <Dialog open={addDialogOpen} onClose={handleAddCancel}>
-                {currentParent ?
-                    <DialogTitle>Add subfile to "{currentParent}"</DialogTitle> :
-                    <DialogTitle>Add new root file</DialogTitle>}
+            <Dialog open={addDialogOpen} onClose={handleAddCancel} fullWidth>
+                <DialogTitle>{currentParent ? `Add subfile to "${currentParent}"` : "Add new root file"}</DialogTitle>
                 <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Child Name"
-                        fullWidth
-                        variant="outlined"
-                        value={newChildName}
-                        onChange={(e) => setNewChildName(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                handleAddConfirm();
-                            }
-                        }}
-                    />
+                    <TextField autoFocus margin="dense" label="File Name" fullWidth variant="outlined"
+                               value={newChildName} onChange={(e) => setNewChildName(e.target.value)}
+                               onKeyDown={(e) => e.key === 'Enter' && handleAddConfirm()}/>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleAddCancel}>Cancel</Button>
-                    <Button onClick={handleAddConfirm} variant="contained">
-                        Add
-                    </Button>
-                </DialogActions>
+                <DialogActions><Button onClick={handleAddCancel}>Cancel</Button><Button onClick={handleAddConfirm}
+                                                                                        variant="contained">Add</Button></DialogActions>
             </Dialog>
         </>
     );
