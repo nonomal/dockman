@@ -10,7 +10,53 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file docker/v1/docker.proto.
  */
 export const file_docker_v1_docker: GenFile = /*@__PURE__*/
-  fileDesc("ChZkb2NrZXIvdjEvZG9ja2VyLnByb3RvEglkb2NrZXIudjEiNgoMTGlzdFJlc3BvbnNlEiYKBGxpc3QYASADKAsyGC5kb2NrZXIudjEuQ29udGFpbmVyTGlzdCKOAQoNQ29udGFpbmVyTGlzdBIKCgJpZBgBIAEoCRIPCgdpbWFnZUlEGAIgASgJEhEKCWltYWdlTmFtZRgDIAEoCRIOCgZzdGF0dXMYBCABKAkSDAoEbmFtZRgFIAEoCRIPCgdjcmVhdGVkGAYgASgJEh4KBXBvcnRzGAcgAygLMg8uZG9ja2VyLnYxLlBvcnQiQwoEUG9ydBIOCgZwdWJsaWMYASABKAUSDwoHcHJpdmF0ZRgCIAEoBRIMCgRob3N0GAMgASgJEgwKBHR5cGUYBCABKAkiBwoFRW1wdHkiHwoLQ29tcG9zZUZpbGUSEAoIZmlsZW5hbWUYASABKAkynwIKDURvY2tlclNlcnZpY2USMwoFU3RhcnQSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaEC5kb2NrZXIudjEuRW1wdHkiABIyCgRTdG9wEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGhAuZG9ja2VyLnYxLkVtcHR5IgASNAoGUmVtb3ZlEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGhAuZG9ja2VyLnYxLkVtcHR5IgASNAoGVXBkYXRlEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGhAuZG9ja2VyLnYxLkVtcHR5IgASOQoETGlzdBIWLmRvY2tlci52MS5Db21wb3NlRmlsZRoXLmRvY2tlci52MS5MaXN0UmVzcG9uc2UiAEKPAQoNY29tLmRvY2tlci52MUILRG9ja2VyUHJvdG9QAVosZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9kb2NrZXIvdjGiAgNEWFiqAglEb2NrZXIuVjHKAglEb2NrZXJcVjHiAhVEb2NrZXJcVjFcR1BCTWV0YWRhdGHqAgpEb2NrZXI6OlYxYgZwcm90bzM");
+  fileDesc("ChZkb2NrZXIvdjEvZG9ja2VyLnByb3RvEglkb2NrZXIudjEiZQoNU3RhdHNSZXNwb25zZRIlCgZzeXN0ZW0YASABKAsyFS5kb2NrZXIudjEuU3lzdGVtSW5mbxItCgpjb250YWluZXJzGAIgAygLMhkuZG9ja2VyLnYxLkNvbnRhaW5lclN0YXRzIi0KClN5c3RlbUluZm8SCwoDQ1BVGAEgASgBEhIKCm1lbUluQnl0ZXMYAiABKAQiNgoMTGlzdFJlc3BvbnNlEiYKBGxpc3QYASADKAsyGC5kb2NrZXIudjEuQ29udGFpbmVyTGlzdCKOAQoNQ29udGFpbmVyTGlzdBIKCgJpZBgBIAEoCRIPCgdpbWFnZUlEGAIgASgJEhEKCWltYWdlTmFtZRgDIAEoCRIOCgZzdGF0dXMYBCABKAkSDAoEbmFtZRgFIAEoCRIPCgdjcmVhdGVkGAYgASgJEh4KBXBvcnRzGAcgAygLMg8uZG9ja2VyLnYxLlBvcnQiugEKDkNvbnRhaW5lclN0YXRzEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEQoJY3B1X3VzYWdlGAMgASgBEhQKDG1lbW9yeV91c2FnZRgEIAEoBBIUCgxtZW1vcnlfbGltaXQYBSABKAQSEgoKbmV0d29ya19yeBgGIAEoBBISCgpuZXR3b3JrX3R4GAcgASgEEhIKCmJsb2NrX3JlYWQYCCABKAQSEwoLYmxvY2tfd3JpdGUYCSABKAQiQwoEUG9ydBIOCgZwdWJsaWMYASABKAUSDwoHcHJpdmF0ZRgCIAEoBRIMCgRob3N0GAMgASgJEgwKBHR5cGUYBCABKAkiBwoFRW1wdHkiHwoLQ29tcG9zZUZpbGUSEAoIZmlsZW5hbWUYASABKAkyjQMKDURvY2tlclNlcnZpY2USMwoFU3RhcnQSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaEC5kb2NrZXIudjEuRW1wdHkiABIyCgRTdG9wEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGhAuZG9ja2VyLnYxLkVtcHR5IgASNAoGUmVtb3ZlEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGhAuZG9ja2VyLnYxLkVtcHR5IgASNQoHUmVzdGFydBIWLmRvY2tlci52MS5Db21wb3NlRmlsZRoQLmRvY2tlci52MS5FbXB0eSIAEjQKBlVwZGF0ZRIWLmRvY2tlci52MS5Db21wb3NlRmlsZRoQLmRvY2tlci52MS5FbXB0eSIAEjkKBExpc3QSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaFy5kb2NrZXIudjEuTGlzdFJlc3BvbnNlIgASNQoFU3RhdHMSEC5kb2NrZXIudjEuRW1wdHkaGC5kb2NrZXIudjEuU3RhdHNSZXNwb25zZSIAQo8BCg1jb20uZG9ja2VyLnYxQgtEb2NrZXJQcm90b1ABWixnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vZ2VuZXJhdGVkL2RvY2tlci92MaICA0RYWKoCCURvY2tlci5WMcoCCURvY2tlclxWMeICFURvY2tlclxWMVxHUEJNZXRhZGF0YeoCCkRvY2tlcjo6VjFiBnByb3RvMw");
+
+/**
+ * @generated from message docker.v1.StatsResponse
+ */
+export type StatsResponse = Message<"docker.v1.StatsResponse"> & {
+  /**
+   * @generated from field: docker.v1.SystemInfo system = 1;
+   */
+  system?: SystemInfo;
+
+  /**
+   * @generated from field: repeated docker.v1.ContainerStats containers = 2;
+   */
+  containers: ContainerStats[];
+};
+
+/**
+ * Describes the message docker.v1.StatsResponse.
+ * Use `create(StatsResponseSchema)` to create a new message.
+ */
+export const StatsResponseSchema: GenMessage<StatsResponse> = /*@__PURE__*/
+  messageDesc(file_docker_v1_docker, 0);
+
+/**
+ * @generated from message docker.v1.SystemInfo
+ */
+export type SystemInfo = Message<"docker.v1.SystemInfo"> & {
+  /**
+   * represents float64
+   *
+   * @generated from field: double CPU = 1;
+   */
+  CPU: number;
+
+  /**
+   * @generated from field: uint64 memInBytes = 2;
+   */
+  memInBytes: bigint;
+};
+
+/**
+ * Describes the message docker.v1.SystemInfo.
+ * Use `create(SystemInfoSchema)` to create a new message.
+ */
+export const SystemInfoSchema: GenMessage<SystemInfo> = /*@__PURE__*/
+  messageDesc(file_docker_v1_docker, 1);
 
 /**
  * @generated from message docker.v1.ListResponse
@@ -27,7 +73,7 @@ export type ListResponse = Message<"docker.v1.ListResponse"> & {
  * Use `create(ListResponseSchema)` to create a new message.
  */
 export const ListResponseSchema: GenMessage<ListResponse> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 0);
+  messageDesc(file_docker_v1_docker, 2);
 
 /**
  * @generated from message docker.v1.ContainerList
@@ -74,7 +120,84 @@ export type ContainerList = Message<"docker.v1.ContainerList"> & {
  * Use `create(ContainerListSchema)` to create a new message.
  */
 export const ContainerListSchema: GenMessage<ContainerList> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 1);
+  messageDesc(file_docker_v1_docker, 3);
+
+/**
+ * ContainerInfo holds metrics for a single Docker container.
+ *
+ * @generated from message docker.v1.ContainerStats
+ */
+export type ContainerStats = Message<"docker.v1.ContainerStats"> & {
+  /**
+   * Unique identifier of the container.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Name of the container.
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * CPU usage as a percentage.
+   *
+   * @generated from field: double cpu_usage = 3;
+   */
+  cpuUsage: number;
+
+  /**
+   * Current memory usage in bytes.
+   *
+   * @generated from field: uint64 memory_usage = 4;
+   */
+  memoryUsage: bigint;
+
+  /**
+   * Maximum memory limit in bytes.
+   *
+   * @generated from field: uint64 memory_limit = 5;
+   */
+  memoryLimit: bigint;
+
+  /**
+   * Total bytes received over the network.
+   *
+   * @generated from field: uint64 network_rx = 6;
+   */
+  networkRx: bigint;
+
+  /**
+   * Total bytes sent over the network.
+   *
+   * @generated from field: uint64 network_tx = 7;
+   */
+  networkTx: bigint;
+
+  /**
+   * Total bytes read from block devices.
+   *
+   * @generated from field: uint64 block_read = 8;
+   */
+  blockRead: bigint;
+
+  /**
+   * Total bytes written to block devices.
+   *
+   * @generated from field: uint64 block_write = 9;
+   */
+  blockWrite: bigint;
+};
+
+/**
+ * Describes the message docker.v1.ContainerStats.
+ * Use `create(ContainerStatsSchema)` to create a new message.
+ */
+export const ContainerStatsSchema: GenMessage<ContainerStats> = /*@__PURE__*/
+  messageDesc(file_docker_v1_docker, 4);
 
 /**
  * @generated from message docker.v1.Port
@@ -106,7 +229,7 @@ export type Port = Message<"docker.v1.Port"> & {
  * Use `create(PortSchema)` to create a new message.
  */
 export const PortSchema: GenMessage<Port> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 2);
+  messageDesc(file_docker_v1_docker, 5);
 
 /**
  * @generated from message docker.v1.Empty
@@ -119,7 +242,7 @@ export type Empty = Message<"docker.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 3);
+  messageDesc(file_docker_v1_docker, 6);
 
 /**
  * @generated from message docker.v1.ComposeFile
@@ -136,7 +259,7 @@ export type ComposeFile = Message<"docker.v1.ComposeFile"> & {
  * Use `create(ComposeFileSchema)` to create a new message.
  */
 export const ComposeFileSchema: GenMessage<ComposeFile> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 4);
+  messageDesc(file_docker_v1_docker, 7);
 
 /**
  * @generated from service docker.v1.DockerService
@@ -167,6 +290,14 @@ export const DockerService: GenService<{
     output: typeof EmptySchema;
   },
   /**
+   * @generated from rpc docker.v1.DockerService.Restart
+   */
+  restart: {
+    methodKind: "unary";
+    input: typeof ComposeFileSchema;
+    output: typeof EmptySchema;
+  },
+  /**
    * @generated from rpc docker.v1.DockerService.Update
    */
   update: {
@@ -181,6 +312,14 @@ export const DockerService: GenService<{
     methodKind: "unary";
     input: typeof ComposeFileSchema;
     output: typeof ListResponseSchema;
+  },
+  /**
+   * @generated from rpc docker.v1.DockerService.Stats
+   */
+  stats: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof StatsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_docker_v1_docker, 0);

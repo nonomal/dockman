@@ -122,13 +122,14 @@ export function DeployPage({selectedPage}: DeployPageProps) {
             icon: <RestartAltIcon/>,
             handler: async () => {
                 handleActionStart('restart');
-                // todo
-                // const {err} = await callRPC(() => dockerService.restart({filename: selectedPage}));
-                // if (err) {
-                //     setError(`Failed to restart deployment: ${err}`);
-                // } else {
-                //     showSuccess('Deployment restarted successfully!'}
-                // }
+
+                const {err} = await callRPC(() => dockerService.restart({filename: selectedPage}));
+                if (err) {
+                    setError(`Failed to restart deployment: ${err}`);
+                } else {
+                    showSuccess('Deployment restarted successfully!')
+                }
+
                 handleActionEnd('restart');
             }
         },

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	dockerpc "github.com/RA341/dockman/generated/docker/v1/v1connect"
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
-	"github.com/RA341/dockman/generated/git/v1/gitrpc"
+	gitrpc "github.com/RA341/dockman/generated/git/v1/v1connect"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"

@@ -8,8 +8,21 @@ service DockerService {
   rpc Start(ComposeFile) returns (Empty) {}
   rpc Stop(ComposeFile) returns (Empty) {}
   rpc Remove(ComposeFile) returns (Empty) {}
+  rpc Restart(ComposeFile) returns (Empty) {}
   rpc Update(ComposeFile) returns (Empty) {}
   rpc List(ComposeFile) returns (ListResponse) {}
+
+  rpc Stats(Empty) returns (StatsResponse) {}
+}
+
+message StatsResponse {
+  SystemInfo system = 1;
+  repeated ContainerStats containers = 2;
+}
+
+message SystemInfo {
+  double CPU = 1; // represents float64
+  uint64 memInBytes = 2;
 }
 
 message ListResponse {
@@ -25,6 +38,29 @@ message ContainerList {
   string created = 6;
   repeated Port ports = 7;
 }
+
+// ContainerInfo holds metrics for a single Docker container.
+message ContainerStats {
+  // Unique identifier of the container.
+  string id = 1;
+  // Name of the container.
+  string name = 2;
+  // CPU usage as a percentage.
+  double cpu_usage = 3;
+  // Current memory usage in bytes.
+  uint64 memory_usage = 4;
+  // Maximum memory limit in bytes.
+  uint64 memory_limit = 5;
+  // Total bytes received over the network.
+  uint64 network_rx = 6;
+  // Total bytes sent over the network.
+  uint64 network_tx = 7;
+  // Total bytes read from block devices.
+  uint64 block_read = 8;
+  // Total bytes written to block devices.
+  uint64 block_write = 9;
+}
+
 
 message Port {
   int32 public = 1;

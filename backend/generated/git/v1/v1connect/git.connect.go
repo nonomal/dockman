@@ -2,7 +2,7 @@
 //
 // Source: git/v1/git.proto
 
-package gitrpc
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
