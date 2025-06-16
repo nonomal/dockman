@@ -1,4 +1,4 @@
-name: Gouda Docker build and release
+name: Docker build and release
 
 on:
   workflow_call:
@@ -73,7 +73,7 @@ jobs:
             type=raw,value=latest,enable=${{ inputs.is_latest }}
 
           labels: |
-            org.opencontainers.image.title=${{ title }}
+            org.opencontainers.image.title=${{ inputs.title }}
             org.opencontainers.image.description=Docker image for ${{ title }}.
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
