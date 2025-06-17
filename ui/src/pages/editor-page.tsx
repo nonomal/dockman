@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error';
-import {Save as SaveIcon, Schedule,} from '@mui/icons-material';
+import {Commit, Schedule,} from '@mui/icons-material';
 import {useCallback, useEffect, useRef, useState} from "react";
 import {callRPC, downloadFile, uploadFile, useClient} from "../lib/api.ts";
 import * as monacoEditor from "monaco-editor";
@@ -23,7 +23,7 @@ interface EditorProps {
     selectedPage: string;
 }
 
-type SaveState = 'idle'| 'typing'| 'saving'| 'success'| 'error'
+type SaveState = 'idle' | 'typing' | 'saving' | 'success' | 'error'
 
 export function EditorPage({selectedPage}: EditorProps) {
     const gitClient = useClient(GitService);
@@ -163,7 +163,7 @@ export function EditorPage({selectedPage}: EditorProps) {
                         onClick={() => {
                             setOpenCommitDialog(true)
                         }}
-                        startIcon={loading ? <CircularProgress size={20} color="inherit"/> : <SaveIcon/>}
+                        startIcon={loading ? <CircularProgress size={20} color="inherit"/> : <Commit/>}
                     >
                         Commit
                     </Button>
