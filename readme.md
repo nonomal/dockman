@@ -133,7 +133,7 @@ I'd especially love to hear what you think about a couple of things:
   * It works, but if you have a better idea for how to organize everything, please open an issue and let me know!
 
 * The UI
-  * I'm not a UI expert, in fact I hate it. The current interface is mostly built with Material-UI and Gemini.
+  * I'm not a UI expert, in fact I hate HTML/CSS in general. The current interface is mostly built by Material-UI and Gemini.
   * If you have ideas on how to make it look better or easier to use, I'm all ears. Feel free to open an issue with your suggestions.
 
 ## Contributing
