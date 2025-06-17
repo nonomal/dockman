@@ -49,7 +49,7 @@ func (h *FileHandler) SaveFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Debug().Str("filename", meta.Filename).Msg("Successfully saved File")
+	//log.Debug().Str("filename", meta.Filename).Msg("Successfully saved File")
 }
 
 func (h *FileHandler) LoadFile(w http.ResponseWriter, r *http.Request) {

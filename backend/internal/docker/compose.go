@@ -242,10 +242,13 @@ func (s *ComposeService) withProject(
 		filename = filepath.Join(s.composeRoot, filename)
 		options, err := cli.NewProjectOptions(
 			[]string{filename},
+			// important maintain this order to load .env: workingdir -> env -> os -> load dot env
+			cli.WithWorkingDirectory(s.composeRoot),
+			cli.WithEnvFiles(),
 			cli.WithOsEnv,
 			cli.WithDotEnv,
-			cli.WithWorkingDirectory(s.composeRoot),
 			cli.WithDefaultProfiles(),
+			cli.WithResolvedPaths(true),
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create new project: %w", err)
