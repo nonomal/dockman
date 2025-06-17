@@ -24,10 +24,12 @@ import {
     Stop as StopIcon,
     Update as UpdateIcon,
 } from '@mui/icons-material';
-import {type ContainerList, DockerService, type Port} from "../gen/docker/v1/docker_pb.ts";
+import {type ComposeActionResponse, type ContainerList, DockerService, type Port} from "../gen/docker/v1/docker_pb.ts";
 import {callRPC, useClient} from '../lib/api.ts';
 import {useSnackbar} from "../components/snackbar.tsx";
 import {trim} from "../lib/utils.ts";
+import {ConnectError} from "@connectrpc/connect";
+import TerminalPopup from "../components/terminal-logs.tsx";
 
 interface DeployPageProps {
     selectedPage: string
@@ -36,6 +38,11 @@ interface DeployPageProps {
 export function DeployPage({selectedPage}: DeployPageProps) {
     const dockerService = useClient(DockerService);
     const {showSuccess, showWarning} = useSnackbar();
+
+    const [terminalMessages, setTerminalMessages] = useState<string[]>([]);
+    const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+    const [isTerminalMinimized, setIsTerminalMinimized] = useState(false);
+    const [terminalTitle, setTerminalTitle] = useState('');
 
     const [error, setError] = useState<string>("");
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
@@ -74,19 +81,37 @@ export function DeployPage({selectedPage}: DeployPageProps) {
         setError("");
     };
 
+    async function startActionStream(logStream: AsyncIterable<ComposeActionResponse>) {
+        try {
+            setTerminalMessages([]);
+            setTerminalTitle(`${selectedPage}`);
+            setIsTerminalMinimized(false);
+            setIsTerminalOpen(true);
+
+            for await (const mes of logStream) {
+                setTerminalMessages(prevMessages => [...prevMessages, mes.message]);
+            }
+
+            showSuccess('Deployment started successfully!')
+        } catch (error: unknown) {
+            if (error instanceof ConnectError) {
+                setError(`Failed to start deployment\n${error.code} ${error.name}: ${error.message}`);
+            } else {
+                setError(`Failed to start deployment\nUnknown Error: ${(error as Error).toString()}`);
+            }
+        }
+    }
+
     const deployActions = [
         {
             name: 'start',
             icon: <PlayArrowIcon/>,
             handler: async () => {
                 handleActionStart('start');
-                const {err} = await callRPC(() => dockerService.start({filename: selectedPage}));
-                if (err) {
-                    setError(`Failed to start deployment: ${err}`);
-                } else {
-                    showSuccess('Deployment started successfully!')
-                }
-                handleActionEnd('start');
+                const logStream = dockerService.start({filename: selectedPage});
+                startActionStream(logStream).finally(() => {
+                    handleActionEnd('start');
+                });
             }
         },
         {
@@ -94,13 +119,10 @@ export function DeployPage({selectedPage}: DeployPageProps) {
             icon: <StopIcon/>,
             handler: async () => {
                 handleActionStart('stop');
-                const {err} = await callRPC(() => dockerService.stop({filename: selectedPage}));
-                if (err) {
-                    setError(`Failed to stop deployment: ${err}`);
-                } else {
-                    showSuccess('Deployment stopped successfully!');
-                }
-                handleActionEnd('stop');
+                const logStream = dockerService.stop({filename: selectedPage});
+                startActionStream(logStream).finally(() => {
+                    handleActionEnd('stop');
+                });
             }
         },
         {
@@ -108,13 +130,11 @@ export function DeployPage({selectedPage}: DeployPageProps) {
             icon: <DeleteIcon/>,
             handler: async () => {
                 handleActionStart('remove');
-                const {err} = await callRPC(() => dockerService.remove({filename: selectedPage}));
-                if (err) {
-                    setError(`Failed to remove deployment: ${err}`);
-                } else {
-                    showSuccess('Deployment removed successfully!');
-                }
-                handleActionEnd('remove');
+
+                const logStream = dockerService.remove({filename: selectedPage});
+                startActionStream(logStream).finally(() => {
+                    handleActionEnd('remove');
+                });
             }
         },
         {
@@ -123,14 +143,10 @@ export function DeployPage({selectedPage}: DeployPageProps) {
             handler: async () => {
                 handleActionStart('restart');
 
-                const {err} = await callRPC(() => dockerService.restart({filename: selectedPage}));
-                if (err) {
-                    setError(`Failed to restart deployment: ${err}`);
-                } else {
-                    showSuccess('Deployment restarted successfully!')
-                }
-
-                handleActionEnd('restart');
+                const logStream = dockerService.restart({filename: selectedPage});
+                startActionStream(logStream).finally(() => {
+                    handleActionEnd('restart');
+                });
             }
         },
         {
@@ -138,13 +154,11 @@ export function DeployPage({selectedPage}: DeployPageProps) {
             icon: <UpdateIcon/>,
             handler: async () => {
                 handleActionStart('update');
-                const {err} = await callRPC(() => dockerService.update({filename: selectedPage}));
-                if (err) {
-                    setError(`Failed to update deployment: ${err}`);
-                } else {
-                    showSuccess('Deployment updated successfully!');
-                }
-                handleActionEnd('update');
+
+                const logStream = dockerService.update({filename: selectedPage});
+                startActionStream(logStream).finally(() => {
+                    handleActionEnd('update');
+                });
             }
         },
     ];
@@ -264,6 +278,33 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 )}
             </Box>
 
+            {/* --- Bottom Bar --- */}
+            <Box
+                sx={{
+                    p: 2,
+                    borderTop: '1px solid rgba(255, 255, 255, 0.23)',
+                    backgroundColor: 'rgba(0,0,0,0.2)',
+                    flexShrink: 0 // Prevents the bar from shrinking
+                }}
+            >
+                <Button
+                    variant="outlined"
+                    onClick={() => setIsTerminalMinimized(!isTerminalMinimized)}
+                >
+                    Logs
+                </Button>
+            </Box>
+
+            {/* Terminal Popup Component */}
+            <TerminalPopup
+                isOpen={isTerminalOpen}
+                isMinimized={isTerminalMinimized}
+                messages={terminalMessages}
+                title={terminalTitle}
+                onClose={() => setIsTerminalOpen(false)}
+                onMinimizeToggle={() => setIsTerminalMinimized(prev => !prev)}
+            />
+
             {/* Error Dialog */}
             <Dialog open={error !== ""} onClose={handleCloseError}>
                 <DialogTitle>Error</DialogTitle>
@@ -277,5 +318,6 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 </DialogActions>
             </Dialog>
         </Box>
-    );
+    )
+        ;
 }

@@ -23,6 +23,8 @@ interface EditorProps {
     selectedPage: string;
 }
 
+type SaveState = 'idle'| 'typing'| 'saving'| 'success'| 'error'
+
 export function EditorPage({selectedPage}: EditorProps) {
     const gitClient = useClient(GitService);
     const {showSuccess, showError, showWarning} = useSnackbar();
@@ -34,7 +36,7 @@ export function EditorPage({selectedPage}: EditorProps) {
     const [commitMessage, setCommitMessage] = useState("")
     const [openCommitDialog, setOpenCommitDialog] = useState(false)
 
-    const [status, setStatus] = useState('idle'); // 'idle', 'typing', 'saving', 'success', 'error'
+    const [status, setStatus] = useState<SaveState>('idle');
     const debounceTimeout = useRef<null | number>(null);
 
     const fetchDataCallback = useCallback(async () => {
@@ -97,7 +99,7 @@ export function EditorPage({selectedPage}: EditorProps) {
         // If they stop, the timer will fire, triggering the save.
         debounceTimeout.current = setTimeout(() => {
             saveFile(value!);
-        }, 1000); // 1-second delay
+        }, 800); // 1-second delay
     }
 
     // When the status becomes 'success' or 'error', revert to 'idle' after a delay

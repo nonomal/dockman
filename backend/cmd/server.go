@@ -73,12 +73,12 @@ func StartServer(opt ...ServerOpt) {
 		AllowedHeaders:      append(connectcors.AllowedHeaders(), "Authorization"),
 		ExposedHeaders:      connectcors.ExposedHeaders(),
 	})
+	finalMux := middleware.Handler(router)
 
 	log.Info().Int("port", config.Port).Msg("Starting server...")
-
 	err := http.ListenAndServe(
 		fmt.Sprintf(":%d", config.Port),
-		middleware.Handler(h2c.NewHandler(router, &http2.Server{})),
+		h2c.NewHandler(finalMux, &http2.Server{}),
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server")

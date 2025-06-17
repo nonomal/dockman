@@ -10,7 +10,24 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file docker/v1/docker.proto.
  */
 export const file_docker_v1_docker: GenFile = /*@__PURE__*/
-  fileDesc("ChZkb2NrZXIvdjEvZG9ja2VyLnByb3RvEglkb2NrZXIudjEiZQoNU3RhdHNSZXNwb25zZRIlCgZzeXN0ZW0YASABKAsyFS5kb2NrZXIudjEuU3lzdGVtSW5mbxItCgpjb250YWluZXJzGAIgAygLMhkuZG9ja2VyLnYxLkNvbnRhaW5lclN0YXRzIi0KClN5c3RlbUluZm8SCwoDQ1BVGAEgASgBEhIKCm1lbUluQnl0ZXMYAiABKAQiNgoMTGlzdFJlc3BvbnNlEiYKBGxpc3QYASADKAsyGC5kb2NrZXIudjEuQ29udGFpbmVyTGlzdCKOAQoNQ29udGFpbmVyTGlzdBIKCgJpZBgBIAEoCRIPCgdpbWFnZUlEGAIgASgJEhEKCWltYWdlTmFtZRgDIAEoCRIOCgZzdGF0dXMYBCABKAkSDAoEbmFtZRgFIAEoCRIPCgdjcmVhdGVkGAYgASgJEh4KBXBvcnRzGAcgAygLMg8uZG9ja2VyLnYxLlBvcnQiugEKDkNvbnRhaW5lclN0YXRzEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEQoJY3B1X3VzYWdlGAMgASgBEhQKDG1lbW9yeV91c2FnZRgEIAEoBBIUCgxtZW1vcnlfbGltaXQYBSABKAQSEgoKbmV0d29ya19yeBgGIAEoBBISCgpuZXR3b3JrX3R4GAcgASgEEhIKCmJsb2NrX3JlYWQYCCABKAQSEwoLYmxvY2tfd3JpdGUYCSABKAQiQwoEUG9ydBIOCgZwdWJsaWMYASABKAUSDwoHcHJpdmF0ZRgCIAEoBRIMCgRob3N0GAMgASgJEgwKBHR5cGUYBCABKAkiBwoFRW1wdHkiHwoLQ29tcG9zZUZpbGUSEAoIZmlsZW5hbWUYASABKAkyjQMKDURvY2tlclNlcnZpY2USMwoFU3RhcnQSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaEC5kb2NrZXIudjEuRW1wdHkiABIyCgRTdG9wEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGhAuZG9ja2VyLnYxLkVtcHR5IgASNAoGUmVtb3ZlEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGhAuZG9ja2VyLnYxLkVtcHR5IgASNQoHUmVzdGFydBIWLmRvY2tlci52MS5Db21wb3NlRmlsZRoQLmRvY2tlci52MS5FbXB0eSIAEjQKBlVwZGF0ZRIWLmRvY2tlci52MS5Db21wb3NlRmlsZRoQLmRvY2tlci52MS5FbXB0eSIAEjkKBExpc3QSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaFy5kb2NrZXIudjEuTGlzdFJlc3BvbnNlIgASNQoFU3RhdHMSEC5kb2NrZXIudjEuRW1wdHkaGC5kb2NrZXIudjEuU3RhdHNSZXNwb25zZSIAQo8BCg1jb20uZG9ja2VyLnYxQgtEb2NrZXJQcm90b1ABWixnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vZ2VuZXJhdGVkL2RvY2tlci92MaICA0RYWKoCCURvY2tlci5WMcoCCURvY2tlclxWMeICFURvY2tlclxWMVxHUEJNZXRhZGF0YeoCCkRvY2tlcjo6VjFiBnByb3RvMw");
+  fileDesc("ChZkb2NrZXIvdjEvZG9ja2VyLnByb3RvEglkb2NrZXIudjEiKAoVQ29tcG9zZUFjdGlvblJlc3BvbnNlEg8KB21lc3NhZ2UYASABKAkiZQoNU3RhdHNSZXNwb25zZRIlCgZzeXN0ZW0YASABKAsyFS5kb2NrZXIudjEuU3lzdGVtSW5mbxItCgpjb250YWluZXJzGAIgAygLMhkuZG9ja2VyLnYxLkNvbnRhaW5lclN0YXRzIi0KClN5c3RlbUluZm8SCwoDQ1BVGAEgASgBEhIKCm1lbUluQnl0ZXMYAiABKAQiNgoMTGlzdFJlc3BvbnNlEiYKBGxpc3QYASADKAsyGC5kb2NrZXIudjEuQ29udGFpbmVyTGlzdCKOAQoNQ29udGFpbmVyTGlzdBIKCgJpZBgBIAEoCRIPCgdpbWFnZUlEGAIgASgJEhEKCWltYWdlTmFtZRgDIAEoCRIOCgZzdGF0dXMYBCABKAkSDAoEbmFtZRgFIAEoCRIPCgdjcmVhdGVkGAYgASgJEh4KBXBvcnRzGAcgAygLMg8uZG9ja2VyLnYxLlBvcnQiugEKDkNvbnRhaW5lclN0YXRzEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEQoJY3B1X3VzYWdlGAMgASgBEhQKDG1lbW9yeV91c2FnZRgEIAEoBBIUCgxtZW1vcnlfbGltaXQYBSABKAQSEgoKbmV0d29ya19yeBgGIAEoBBISCgpuZXR3b3JrX3R4GAcgASgEEhIKCmJsb2NrX3JlYWQYCCABKAQSEwoLYmxvY2tfd3JpdGUYCSABKAQiQwoEUG9ydBIOCgZwdWJsaWMYASABKAUSDwoHcHJpdmF0ZRgCIAEoBRIMCgRob3N0GAMgASgJEgwKBHR5cGUYBCABKAkiBwoFRW1wdHkiHwoLQ29tcG9zZUZpbGUSEAoIZmlsZW5hbWUYASABKAky5wMKDURvY2tlclNlcnZpY2USRQoFU3RhcnQSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaIC5kb2NrZXIudjEuQ29tcG9zZUFjdGlvblJlc3BvbnNlIgAwARJECgRTdG9wEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGiAuZG9ja2VyLnYxLkNvbXBvc2VBY3Rpb25SZXNwb25zZSIAMAESRgoGUmVtb3ZlEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGiAuZG9ja2VyLnYxLkNvbXBvc2VBY3Rpb25SZXNwb25zZSIAMAESRwoHUmVzdGFydBIWLmRvY2tlci52MS5Db21wb3NlRmlsZRogLmRvY2tlci52MS5Db21wb3NlQWN0aW9uUmVzcG9uc2UiADABEkYKBlVwZGF0ZRIWLmRvY2tlci52MS5Db21wb3NlRmlsZRogLmRvY2tlci52MS5Db21wb3NlQWN0aW9uUmVzcG9uc2UiADABEjkKBExpc3QSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaFy5kb2NrZXIudjEuTGlzdFJlc3BvbnNlIgASNQoFU3RhdHMSEC5kb2NrZXIudjEuRW1wdHkaGC5kb2NrZXIudjEuU3RhdHNSZXNwb25zZSIAQo8BCg1jb20uZG9ja2VyLnYxQgtEb2NrZXJQcm90b1ABWixnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vZ2VuZXJhdGVkL2RvY2tlci92MaICA0RYWKoCCURvY2tlci5WMcoCCURvY2tlclxWMeICFURvY2tlclxWMVxHUEJNZXRhZGF0YeoCCkRvY2tlcjo6VjFiBnByb3RvMw");
+
+/**
+ * @generated from message docker.v1.ComposeActionResponse
+ */
+export type ComposeActionResponse = Message<"docker.v1.ComposeActionResponse"> & {
+  /**
+   * @generated from field: string message = 1;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message docker.v1.ComposeActionResponse.
+ * Use `create(ComposeActionResponseSchema)` to create a new message.
+ */
+export const ComposeActionResponseSchema: GenMessage<ComposeActionResponse> = /*@__PURE__*/
+  messageDesc(file_docker_v1_docker, 0);
 
 /**
  * @generated from message docker.v1.StatsResponse
@@ -32,7 +49,7 @@ export type StatsResponse = Message<"docker.v1.StatsResponse"> & {
  * Use `create(StatsResponseSchema)` to create a new message.
  */
 export const StatsResponseSchema: GenMessage<StatsResponse> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 0);
+  messageDesc(file_docker_v1_docker, 1);
 
 /**
  * @generated from message docker.v1.SystemInfo
@@ -56,7 +73,7 @@ export type SystemInfo = Message<"docker.v1.SystemInfo"> & {
  * Use `create(SystemInfoSchema)` to create a new message.
  */
 export const SystemInfoSchema: GenMessage<SystemInfo> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 1);
+  messageDesc(file_docker_v1_docker, 2);
 
 /**
  * @generated from message docker.v1.ListResponse
@@ -73,7 +90,7 @@ export type ListResponse = Message<"docker.v1.ListResponse"> & {
  * Use `create(ListResponseSchema)` to create a new message.
  */
 export const ListResponseSchema: GenMessage<ListResponse> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 2);
+  messageDesc(file_docker_v1_docker, 3);
 
 /**
  * @generated from message docker.v1.ContainerList
@@ -120,7 +137,7 @@ export type ContainerList = Message<"docker.v1.ContainerList"> & {
  * Use `create(ContainerListSchema)` to create a new message.
  */
 export const ContainerListSchema: GenMessage<ContainerList> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 3);
+  messageDesc(file_docker_v1_docker, 4);
 
 /**
  * ContainerInfo holds metrics for a single Docker container.
@@ -197,7 +214,7 @@ export type ContainerStats = Message<"docker.v1.ContainerStats"> & {
  * Use `create(ContainerStatsSchema)` to create a new message.
  */
 export const ContainerStatsSchema: GenMessage<ContainerStats> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 4);
+  messageDesc(file_docker_v1_docker, 5);
 
 /**
  * @generated from message docker.v1.Port
@@ -229,7 +246,7 @@ export type Port = Message<"docker.v1.Port"> & {
  * Use `create(PortSchema)` to create a new message.
  */
 export const PortSchema: GenMessage<Port> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 5);
+  messageDesc(file_docker_v1_docker, 6);
 
 /**
  * @generated from message docker.v1.Empty
@@ -242,7 +259,7 @@ export type Empty = Message<"docker.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 6);
+  messageDesc(file_docker_v1_docker, 7);
 
 /**
  * @generated from message docker.v1.ComposeFile
@@ -259,7 +276,7 @@ export type ComposeFile = Message<"docker.v1.ComposeFile"> & {
  * Use `create(ComposeFileSchema)` to create a new message.
  */
 export const ComposeFileSchema: GenMessage<ComposeFile> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 7);
+  messageDesc(file_docker_v1_docker, 8);
 
 /**
  * @generated from service docker.v1.DockerService
@@ -269,41 +286,41 @@ export const DockerService: GenService<{
    * @generated from rpc docker.v1.DockerService.Start
    */
   start: {
-    methodKind: "unary";
+    methodKind: "server_streaming";
     input: typeof ComposeFileSchema;
-    output: typeof EmptySchema;
+    output: typeof ComposeActionResponseSchema;
   },
   /**
    * @generated from rpc docker.v1.DockerService.Stop
    */
   stop: {
-    methodKind: "unary";
+    methodKind: "server_streaming";
     input: typeof ComposeFileSchema;
-    output: typeof EmptySchema;
+    output: typeof ComposeActionResponseSchema;
   },
   /**
    * @generated from rpc docker.v1.DockerService.Remove
    */
   remove: {
-    methodKind: "unary";
+    methodKind: "server_streaming";
     input: typeof ComposeFileSchema;
-    output: typeof EmptySchema;
+    output: typeof ComposeActionResponseSchema;
   },
   /**
    * @generated from rpc docker.v1.DockerService.Restart
    */
   restart: {
-    methodKind: "unary";
+    methodKind: "server_streaming";
     input: typeof ComposeFileSchema;
-    output: typeof EmptySchema;
+    output: typeof ComposeActionResponseSchema;
   },
   /**
    * @generated from rpc docker.v1.DockerService.Update
    */
   update: {
-    methodKind: "unary";
+    methodKind: "server_streaming";
     input: typeof ComposeFileSchema;
-    output: typeof EmptySchema;
+    output: typeof ComposeActionResponseSchema;
   },
   /**
    * @generated from rpc docker.v1.DockerService.List

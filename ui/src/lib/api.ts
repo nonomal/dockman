@@ -19,13 +19,13 @@ export async function callRPC<T>(exec: () => Promise<T>): Promise<{ val: T | nul
     try {
         const val = await exec()
         return {val, err: ""}
-    } catch (error: any) {
-        console.error(`Error: ${error.message}`);
-
+    } catch (error: unknown) {
         if (error instanceof ConnectError) {
+            console.error(`Error: ${error.message}`);
             return {val: null, err: `${error.code}: ${error.message}`};
         }
-        return {val: null, err: `Unknown error while calling api: ${error.message}`};
+
+        return {val: null, err: `Unknown error while calling api: ${(error as Error).toString()}`};
     }
 }
 

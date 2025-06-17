@@ -1,10 +1,15 @@
 package docker
 
 import (
+	"bufio"
 	"connectrpc.com/connect"
 	"context"
 	v1 "github.com/RA341/dockman/generated/docker/v1"
+	"github.com/RA341/dockman/pkg"
 	"github.com/docker/docker/api/types/container"
+	"github.com/rs/zerolog/log"
+	"io"
+	"sync"
 )
 
 type Handler struct {
@@ -15,32 +20,94 @@ func NewHandler(srv *Service) *Handler {
 	return &Handler{srv: srv}
 }
 
-func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error) {
-	if err := h.srv.Up(ctx, req.Msg.GetFilename()); err != nil {
-		return nil, err
+func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+	pipeWriter, wg := StreamManager(func(val string) error {
+		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err := h.srv.Up(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+		pkg.CloseFile(pipeWriter)
+		return err
 	}
-	return &connect.Response[v1.Empty]{}, nil
+	pkg.CloseFile(pipeWriter)
+
+	wg.Wait() // all data must be sent
+	return nil
 }
 
-func (h *Handler) Stop(ctx context.Context, c *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error) {
-	if err := h.srv.Stop(ctx, c.Msg.GetFilename()); err != nil {
-		return nil, err
+func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+	pipeWriter, wg := StreamManager(func(val string) error {
+		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err := h.srv.Stop(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+		pkg.CloseFile(pipeWriter)
+		return err
 	}
-	return &connect.Response[v1.Empty]{}, nil
+	pkg.CloseFile(pipeWriter)
+
+	wg.Wait() // all data must be sent
+	return nil
 }
 
-func (h *Handler) Restart(ctx context.Context, c *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error) {
-	if err := h.srv.Restart(ctx, c.Msg.GetFilename()); err != nil {
-		return nil, err
+func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+	pipeWriter, wg := StreamManager(func(val string) error {
+		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err := h.srv.Down(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+		pkg.CloseFile(pipeWriter)
+		return err
 	}
-	return &connect.Response[v1.Empty]{}, nil
+	pkg.CloseFile(pipeWriter)
+
+	wg.Wait() // all data must be sent
+	return nil
 }
 
-func (h *Handler) Remove(ctx context.Context, c *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error) {
-	if err := h.srv.Down(ctx, c.Msg.GetFilename()); err != nil {
-		return nil, err
+func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+	pipeWriter, wg := StreamManager(func(val string) error {
+		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err := h.srv.Restart(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+		pkg.CloseFile(pipeWriter)
+		return err
 	}
-	return &connect.Response[v1.Empty]{}, nil
+	pkg.CloseFile(pipeWriter)
+
+	wg.Wait() // all data must be sent
+	return nil
+}
+
+func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+	pipeWriter, wg := StreamManager(func(val string) error {
+		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err := h.srv.Update(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+		pkg.CloseFile(pipeWriter)
+		return err
+	}
+	pkg.CloseFile(pipeWriter)
+
+	wg.Wait() // all data must be sent
+	return nil
 }
 
 func (h *Handler) Stats(ctx context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.StatsResponse], error) {
@@ -73,15 +140,8 @@ func (h *Handler) Stats(ctx context.Context, _ *connect.Request[v1.Empty]) (*con
 	}), nil
 }
 
-func (h *Handler) Update(ctx context.Context, c *connect.Request[v1.ComposeFile]) (*connect.Response[v1.Empty], error) {
-	if err := h.srv.Update(ctx, c.Msg.GetFilename()); err != nil {
-		return nil, err
-	}
-	return &connect.Response[v1.Empty]{}, nil
-}
-
-func (h *Handler) List(ctx context.Context, c *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
-	result, err := h.srv.ListStack(ctx, c.Msg.GetFilename())
+func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+	result, err := h.srv.ListStack(ctx, req.Msg.GetFilename())
 	if err != nil {
 		return nil, err
 	}
@@ -110,4 +170,31 @@ func (h *Handler) List(ctx context.Context, c *connect.Request[v1.ComposeFile]) 
 	}
 
 	return connect.NewResponse(&v1.ListResponse{List: dockerResult}), err
+}
+
+func StreamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitGroup) {
+	pipeReader, pipeWriter := io.Pipe()
+	wg := sync.WaitGroup{}
+	// Start a goroutine that reads from the pipe, splits the data into lines,
+	// and sends each line as a message on the response stream.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer pkg.CloseFile(pipeReader)
+
+		scanner := bufio.NewScanner(pipeReader)
+		for scanner.Scan() {
+			err := streamFn(scanner.Text())
+			if err != nil {
+				log.Warn().Err(err).Msg("Failed to send message to stream")
+				return
+			}
+		}
+		// If the scanner stops because of an error, log it.
+		if err := scanner.Err(); err != nil {
+			log.Error().Err(err).Msg("Error reading from pipe for streaming")
+		}
+	}()
+
+	return pipeWriter, &wg
 }
