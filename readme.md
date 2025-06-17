@@ -42,6 +42,26 @@ Dockman follows a simple, opinionated structure:
 └── related configuration files
 ```
 
+Example, if using caddy and crowdsec
+
+UI will show:
+
+```
+router-compose.yaml
+├── Caddyfile
+├── .env
+└── acquis.yaml
+```
+
+But internally everything is stored flatly
+```
+tree .
+
+├── router-compose.yaml
+├── Caddyfile
+├── acquis.yaml
+├── .env
+```
 No directories, no complex paths—everything in a flat folder. 
 This approach keeps everything organized and predictable, 
 making it easy to locate and manage your compose files.
