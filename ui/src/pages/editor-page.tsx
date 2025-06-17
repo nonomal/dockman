@@ -9,7 +9,9 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import {Save as SaveIcon,} from '@mui/icons-material';
+import CheckIcon from '@mui/icons-material/Check';
+import ErrorIcon from '@mui/icons-material/Error';
+import {Save as SaveIcon, Schedule,} from '@mui/icons-material';
 import {useCallback, useEffect, useRef, useState} from "react";
 import {callRPC, downloadFile, uploadFile, useClient} from "../lib/api.ts";
 import * as monacoEditor from "monaco-editor";
@@ -32,6 +34,9 @@ export function EditorPage({selectedPage}: EditorProps) {
     const [commitMessage, setCommitMessage] = useState("")
     const [openCommitDialog, setOpenCommitDialog] = useState(false)
 
+    const [status, setStatus] = useState('idle'); // 'idle', 'typing', 'saving', 'success', 'error'
+    const debounceTimeout = useRef<null | number>(null);
+
     const fetchDataCallback = useCallback(async () => {
         if (selectedPage !== "") {
             const {file, err} = await downloadFile(selectedPage)
@@ -47,42 +52,93 @@ export function EditorPage({selectedPage}: EditorProps) {
         fetchDataCallback().then()
     }, [fetchDataCallback, selectedPage, showWarning]);
 
-    const saveFile = () => {
-        setLoading(true)
-        uploadFile(selectedPage, getContents()).then(value => {
-            if (value) {
-                showError(value)
-                return;
-            }
-            showSuccess("Saved successfully");
-        }).finally(() => {
-            setLoading(false)
-        })
+    const commitAndSave = async () => {
+        const {err} = await callRPC(
+            () => gitClient.commit(
+                {
+                    file: {name: selectedPage},
+                    message: commitMessage.trim()
+                })
+        )
+        if (err) {
+            showError(`error saving file ${err}`)
+            return;
+        }
+
+        showSuccess("saved and commited");
     }
 
-    const handleAddCancel = () => {
-        setCommitMessage('');
-        setOpenCommitDialog(false);
+    const saveFile = (val: string) => {
+        setLoading(true);
+        uploadFile(selectedPage, val).then(err => {
+            if (err) {
+                showError(`Autosave failed: ${err}`);
+                return;
+            }
+
+            setStatus("success")
+        }).finally(() => {
+            setLoading(false);
+            setTimeout(() => setStatus("idle"), 2000)
+        });
+    }
+
+    function handleEditorChange(value: string | undefined): void {
+        // When typing starts, clear any existing debounce timer
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
+        }
+
+        // Set the status to 'typing' immediately
+        setStatus('typing');
+        setFileContent(value!);
+
+        // Set a new timer. If the user keeps typing, this timer will be cleared and reset.
+        // If they stop, the timer will fire, triggering the save.
+        debounceTimeout.current = setTimeout(() => {
+            saveFile(value!);
+        }, 1000); // 1-second delay
+    }
+
+    // When the status becomes 'success' or 'error', revert to 'idle' after a delay
+    useEffect(() => {
+        if (status === 'success' || status === 'error') {
+            const timer = setTimeout(() => {
+                setStatus('idle');
+            }, 3000); // Show the checkmark or error for 3 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [status]);
+
+    const StatusIndicator = () => {
+        switch (status) {
+            case 'typing':
+                return <><CircularProgress size={20} sx={{mr: 1.5}}/> Typing...</>;
+            case 'saving':
+                return <><CircularProgress size={20} sx={{mr: 1.5}}/> Saving...</>;
+            case 'success':
+                return <><CheckIcon color="success" sx={{mr: 1.5}}/> Saved</>;
+            case 'error':
+                return <><ErrorIcon color="error" sx={{mr: 1.5}}/> Save Failed</>;
+            case 'idle':
+            default:
+                return <><Schedule color="primary" sx={{mr: 1.5}}/> Idle</>;
+        }
     };
+
+    function handleEditorDidMount(
+        editor: monacoEditor.editor.IStandaloneCodeEditor
+    ): void {
+        editorRef.current = editor
+        // editor.onDidChangeModelContent(() => {
+        //     const currentValue = editor.getValue();
+        //     setFileContent(currentValue);
+        // });
+    }
 
     const handleCommitConfirm = () => {
         if (commitMessage.trim()) {
-            uploadFile(selectedPage, getContents()).then((err) => {
-                if (err) {
-                    showError(`error saving file ${err}`)
-                    return;
-                }
-
-                callRPC(() => gitClient
-                    .commit({file: {name: selectedPage}, message: commitMessage.trim()}))
-                    .then(() => {
-                        if (err) {
-                            showError(err, {duration: 5000})
-                        } else {
-                            showSuccess("saved and commited")
-                        }
-                    })
-            }).finally(() => {
+            commitAndSave().finally(() => {
                 setCommitMessage('');
                 setOpenCommitDialog(false);
                 fetchDataCallback().then()
@@ -90,54 +146,15 @@ export function EditorPage({selectedPage}: EditorProps) {
         }
     };
 
-    const getContents = () => {
-        if (!editorRef.current) {
-            showWarning("Editor is uninitialized")
-            throw Error("Editor is uninitialized")
-        }
-        return editorRef.current!.getValue();
-    }
-
-    function handleEditorChange(): void {}
-
-    function handleEditorDidMount(
-        editor: monacoEditor.editor.IStandaloneCodeEditor
-    ): void {
-        editorRef.current = editor
-    }
-
-    // const handleEditingComplete = useCallback((value: string) => {
-    //     console.log('Editing complete:', value);
-    //     // Your logic here - save to server, validate, etc.
-    // }, []);
-
-    // const debouncedEditingComplete = useCallback(
-    //     debounce((value: string) => {
-    //         handleEditingComplete(value);
-    //     }, 500),
-    //     [handleEditingComplete]
-    // );
-    //
-    // const handleEditorChange = (value: string | undefined) => {
-    //     if (value !== undefined) {
-    //         setFileContent(value);
-    //         debouncedEditingComplete(value);
-    //     }
-    // };
+    const handleCommitCancel = () => {
+        setCommitMessage('');
+        setOpenCommitDialog(false);
+    };
 
     return (
         <>
             <Box sx={{p: 3, height: '100%', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
                 <Box sx={{mb: 2, display: 'flex', alignItems: 'center', gap: 3}}>
-                    <Button
-                        variant="contained"
-                        disabled={loading}
-                        onClick={saveFile}
-                        startIcon={loading ? <CircularProgress size={20} color="inherit"/> : <SaveIcon/>}
-                    >
-                        Save
-                    </Button>
-
                     <Button
                         variant="contained"
                         disabled={loading}
@@ -148,10 +165,14 @@ export function EditorPage({selectedPage}: EditorProps) {
                     >
                         Commit
                     </Button>
-
-                    <Typography variant="h6" noWrap component="div">
+                    <Typography variant="body1" noWrap component="div">
                         {selectedPage}
                     </Typography>
+                    <Box sx={{height: '32px', display: 'flex', alignItems: 'center'}}>
+                        <Typography variant="body2" color="text.secondary" sx={{display: 'flex', alignItems: 'center'}}>
+                            <StatusIndicator/>
+                        </Typography>
+                    </Box>
                 </Box>
                 <Box
                     sx={{
@@ -174,7 +195,7 @@ export function EditorPage({selectedPage}: EditorProps) {
                 </Box>
             </Box>
 
-            <Dialog open={openCommitDialog} onClose={handleAddCancel}>
+            <Dialog open={openCommitDialog} onClose={handleCommitCancel}>
                 <DialogTitle>Commit {selectedPage}</DialogTitle>
                 <DialogContent>
                     <TextField
@@ -204,7 +225,7 @@ export function EditorPage({selectedPage}: EditorProps) {
                         }}
                     /> </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleAddCancel}>Cancel</Button>
+                    <Button onClick={handleCommitCancel}>Cancel</Button>
                     <Button onClick={handleCommitConfirm} variant="contained">
                         Commit
                     </Button>
