@@ -8,6 +8,7 @@ import {
     Divider,
     Drawer,
     IconButton,
+    InputAdornment,
     List,
     ListItemButton,
     ListItemIcon,
@@ -17,10 +18,19 @@ import {
     Typography,
 } from '@mui/material';
 
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {FileService} from "../gen/files/v1/files_pb.ts";
 import {callRPC, useClient} from "../lib/api.ts";
-import {Add as AddIcon, Dashboard, Delete as DeleteIcon, Description as FileIcon,} from '@mui/icons-material';
+import {
+    Add as AddIcon,
+    AttachFileRounded,
+    Dashboard,
+    Delete as DeleteIcon,
+    Description as FileIcon,
+    Logout,
+    Search,
+    Settings,
+} from '@mui/icons-material';
 import {useSnackbar} from "./snackbar.tsx";
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
@@ -61,7 +71,33 @@ export function NavSidebar() {
         fetchData().then()
     }, [fetchData]);
 
-    const handleAddClick = (parentName: string) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const filteredFiles = useMemo(() => {
+        if (!searchQuery) return files;
+        const lowerCaseQuery = searchQuery.toLowerCase();
+
+        return files
+            .map(group => {
+                const isParentMatch = group.name.toLowerCase().includes(lowerCaseQuery);
+                const matchingChildren = group.children.filter(child =>
+                    child.toLowerCase().includes(lowerCaseQuery)
+                );
+
+                if (isParentMatch || matchingChildren.length > 0) {
+                    return {
+                        ...group,
+                        children: isParentMatch ? group.children : matchingChildren,
+                    };
+                }
+                return null;
+            })
+            .filter((group): group is FileComponent => group !== null);
+    }, [files, searchQuery]);
+
+    const handleAddDialog = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, parentName: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         setCurrentParent(parentName);
         setAddDialogOpen(true);
     };
@@ -85,7 +121,15 @@ export function NavSidebar() {
             })
     };
 
-    const handleDelete = (filename: string) => {
+    const handleAddCancel = () => {
+        setNewChildName('');
+        setAddDialogOpen(false);
+    };
+
+    const handleDelete = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, filename: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         callRPC(() => composeClient.delete({filename: filename}))
             .then(({err}) => {
                 if (err) {
@@ -106,10 +150,11 @@ export function NavSidebar() {
         }
     };
 
-    const handleAddCancel = () => {
-        setNewChildName('');
-        setAddDialogOpen(false);
-    };
+    const handleLogout = () => {
+        // Implement your logout logic here
+        alert("Logout clicked!");
+        // For example: navigate('/login');
+    }
 
     return (
         <>
@@ -118,70 +163,120 @@ export function NavSidebar() {
                 variant="permanent"
                 anchor="left"
             >
-                <Toolbar>
-                    <Box component="img" sx={{height: 40, width: 40, mr: 2}} alt="Logo" src="/dockmanTBD.png"/>
-                    <Typography variant="h5" noWrap>Dockman</Typography>
-                </Toolbar>
-                <Divider/>
-                <List>
-                    <ListItemButton component={RouterLink} to="/" selected={location.pathname === '/'}>
-                        <ListItemIcon><Dashboard/></ListItemIcon>
-                        <ListItemText slotProps={{primary: {variant: 'h6'}}} primary="Dashboard"/>
-                    </ListItemButton>
-                </List>
-                <Divider/>
-                <Toolbar>
-                    <Typography variant="h6" noWrap sx={{flexGrow: 1}}>Files</Typography>
-                    <Button startIcon={<AddIcon/>} onClick={() => handleAddClick("")}>Add</Button>
-                </Toolbar>
-                <Divider/>
-                <List>{
-                    files.map((item) => (
-                        <React.Fragment key={item.name}>
-                            <ListItemButton component={RouterLink} to={`/files/${item.name}`}
-                                            selected={location.pathname === `/files/${item.name}`}>
-                                <ListItemIcon><FileIcon/></ListItemIcon>
-                                <ListItemText primary={item.name}/>
-                                <IconButton size="small" onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleAddClick(item.name);
-                                }}><AddIcon/></IconButton>
-                                <IconButton size="small" onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleDelete(item.name);
-                                }}><DeleteIcon/></IconButton>
-                            </ListItemButton>
-                            {item.children && (
-                                <List disablePadding sx={{pl: 4}}>
-                                    {item.children.map((child) => (
-                                        <ListItemButton key={child} component={RouterLink} to={`/files/${child}`}
-                                                        selected={location.pathname === `/files/${child}`}>
-                                            <ListItemIcon><FileIcon/></ListItemIcon>
-                                            <ListItemText primary={child}/>
-                                            <IconButton size="small" onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                handleDelete(child);
-                                            }}><DeleteIcon/></IconButton>
-                                        </ListItemButton>
-                                    ))}
-                                </List>
-                            )}
-                        </React.Fragment>
-                    ))}
-                </List>
+                <Box>
+                    <Toolbar>
+                        <Box component="img" sx={{height: 40, width: 40, mr: 2}} alt="Logo" src="/dockmanTBD.png"/>
+                        <Typography variant="h5" noWrap>Dockman</Typography>
+                    </Toolbar>
+                    <Divider/>
+                    <List>
+                        <ListItemButton component={RouterLink} to="/" selected={location.pathname === '/'}>
+                            <ListItemIcon><Dashboard/></ListItemIcon>
+                            <ListItemText slotProps={{primary: {variant: 'h6'}}} primary="Dashboard"/>
+                        </ListItemButton>
+                    </List>
+                    <Divider/>
+                    <Toolbar>
+                        <Typography variant="h6" noWrap sx={{flexGrow: 1}}>Files</Typography>
+                        <Button startIcon={<AddIcon/>} onClick={(e) => handleAddDialog(e, "")}>Add</Button>
+                    </Toolbar>
+                    <Divider/>
+                    <Box sx={{px: 2, py: 1}}>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            placeholder="Search files..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search/>
+                                        </InputAdornment>
+                                    ),
+                                },
+                            }}
+                        />
+                    </Box>
+                    <Divider/>
+                </Box>
+                <Box sx={{overflowY: 'auto', flexGrow: 1}}>
+                    <List>
+                        {filteredFiles.map((item) => (
+                            <React.Fragment key={item.name}>
+                                <ListItemButton
+                                    component={RouterLink}
+                                    to={`/files/${item.name}`}
+                                    selected={location.pathname === `/files/${item.name}`}
+                                >
+                                    <ListItemIcon><FileIcon/></ListItemIcon>
+                                    <ListItemText primary={item.name}/>
+                                    <IconButton size="small" onClick={(e) => {
+                                        handleAddDialog(e, item.name);
+                                    }}><AddIcon/></IconButton>
+                                    <IconButton size="small" onClick={(e) => {
+                                        handleDelete(e, item.name);
+                                    }}><DeleteIcon/></IconButton>
+                                </ListItemButton>
+                                {item.children && (
+                                    <List disablePadding sx={{pl: 4}}>
+                                        {item.children.map((child) => (
+                                            <ListItemButton
+                                                key={child}
+                                                component={RouterLink}
+                                                to={`/files/${child}`}
+                                                selected={location.pathname === `/files/${child}`}
+                                            >
+                                                <ListItemIcon><AttachFileRounded
+                                                    sx={{fontSize: '1.25rem'}}/></ListItemIcon>
+                                                <ListItemText primary={child}/>
+                                                <IconButton size="small" onClick={(e) => {
+                                                    handleDelete(e, child);
+                                                }}><DeleteIcon/></IconButton>
+                                            </ListItemButton>
+                                        ))}
+                                    </List>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </List>
+                </Box>
+
+                <Box>
+                    <Divider/>
+                    <List>
+                        <ListItemButton
+                            selected={location.pathname === `/settings`}
+                            component={RouterLink} to="/settings"
+                        >
+                            <ListItemIcon><Settings/></ListItemIcon>
+                            <ListItemText primary="Settings"/>
+                        </ListItemButton>
+                        <ListItemButton onClick={handleLogout}>
+                            <ListItemIcon><Logout/></ListItemIcon>
+                            <ListItemText primary="Logout"/>
+                        </ListItemButton>
+                    </List>
+                </Box>
             </Drawer>
+
             <Dialog open={addDialogOpen} onClose={handleAddCancel} fullWidth>
                 <DialogTitle>{currentParent ? `Add subfile to "${currentParent}"` : "Add new root file"}</DialogTitle>
                 <DialogContent>
-                    <TextField autoFocus margin="dense" label="File Name" fullWidth variant="outlined"
+                    <TextField autoFocus fullWidth
+                               margin="dense"
+                               label="File Name"
+                               variant="outlined"
                                value={newChildName} onChange={(e) => setNewChildName(e.target.value)}
-                               onKeyDown={(e) => e.key === 'Enter' && handleAddConfirm()}/>
+                               onKeyDown={(e) => e.key === 'Enter' && handleAddConfirm()}
+                    />
                 </DialogContent>
-                <DialogActions><Button onClick={handleAddCancel}>Cancel</Button><Button onClick={handleAddConfirm}
-                                                                                        variant="contained">Add</Button></DialogActions>
+                <DialogActions>
+                    <Button onClick={handleAddCancel}>Cancel</Button>
+                    <Button onClick={handleAddConfirm} variant="contained">Add</Button>
+                </DialogActions>
             </Dialog>
         </>
     );

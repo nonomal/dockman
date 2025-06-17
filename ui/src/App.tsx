@@ -4,6 +4,7 @@ import {FileManagerPage} from "./pages/file-manager.tsx";
 import {BrowserRouter, Outlet, Route, Routes} from "react-router-dom";
 import {DashboardPage} from "./pages/dashboard-page.tsx";
 import {NavSidebar} from "./components/sidebar.tsx";
+import {SettingsPage} from "./pages/settings-page.tsx";
 
 export default function App() {
     return (
@@ -15,6 +16,7 @@ export default function App() {
                         <Route path="/" element={<HomePage/>}>
                             <Route index element={<DashboardPage/>}/>
                             <Route path="files/:filename" element={<FileManagerPage/>}/>
+                            <Route path="settings" element={<SettingsPage/>}/>
                         </Route>
                     </Routes>
                 </BrowserRouter>
@@ -22,7 +24,6 @@ export default function App() {
         </SnackbarProvider>
     );
 }
-
 
 function HomePage() {
     return (
@@ -34,7 +35,6 @@ function HomePage() {
         </Box>
     );
 }
-
 
 const darkTheme = createTheme({
     palette: {
