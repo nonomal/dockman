@@ -40,8 +40,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
     const {showSuccess, showWarning} = useSnackbar();
 
     const [terminalMessages, setTerminalMessages] = useState<string[]>([]);
-    const [isTerminalOpen, setIsTerminalOpen] = useState(false);
-    const [isTerminalMinimized, setIsTerminalMinimized] = useState(false);
+    const [isTerminalMinimized, setIsTerminalMinimized] = useState(true);
     const [terminalTitle, setTerminalTitle] = useState('');
 
     const [error, setError] = useState<string>("");
@@ -86,7 +85,6 @@ export function DeployPage({selectedPage}: DeployPageProps) {
             setTerminalMessages([]);
             setTerminalTitle(`${selectedPage}`);
             setIsTerminalMinimized(false);
-            setIsTerminalOpen(true);
 
             for await (const mes of logStream) {
                 setTerminalMessages(prevMessages => [...prevMessages, mes.message]);
@@ -297,11 +295,10 @@ export function DeployPage({selectedPage}: DeployPageProps) {
 
             {/* Terminal Popup Component */}
             <TerminalPopup
-                isOpen={isTerminalOpen}
+                isOpen={true}
                 isMinimized={isTerminalMinimized}
                 messages={terminalMessages}
                 title={terminalTitle}
-                onClose={() => setIsTerminalOpen(false)}
                 onMinimizeToggle={() => setIsTerminalMinimized(prev => !prev)}
             />
 

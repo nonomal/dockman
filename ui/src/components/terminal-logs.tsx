@@ -1,6 +1,5 @@
 import {useEffect, useRef} from 'react';
 import {Box, IconButton, Paper, Typography} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import MinimizeIcon from '@mui/icons-material/Minimize';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 
@@ -9,11 +8,10 @@ interface TerminalPopupProps {
     messages: string[];
     isOpen: boolean;
     isMinimized: boolean;
-    onClose: () => void;
     onMinimizeToggle: () => void;
 }
 
-const TerminalPopup = ({title, messages, isOpen, isMinimized, onClose, onMinimizeToggle}: TerminalPopupProps) => {
+const TerminalPopup = ({title, messages, isOpen, isMinimized, onMinimizeToggle}: TerminalPopupProps) => {
     const terminalBodyRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to the bottom when new messages are added
@@ -65,9 +63,6 @@ const TerminalPopup = ({title, messages, isOpen, isMinimized, onClose, onMinimiz
                 <Box>
                     <IconButton size="small" onClick={onMinimizeToggle} sx={{color: 'primary.contrastText'}}>
                         {isMinimized ? <OpenInFullIcon fontSize="small"/> : <MinimizeIcon fontSize="small"/>}
-                    </IconButton>
-                    <IconButton size="small" onClick={onClose} sx={{color: 'primary.contrastText', ml: 1}}>
-                        <CloseIcon fontSize="small"/>
                     </IconButton>
                 </Box>
             </Box>
