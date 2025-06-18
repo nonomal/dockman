@@ -28,7 +28,7 @@ export function FileManagerPage() {
                     <Tab label="Deploy" disabled={!(filename.endsWith(".yml") || filename.endsWith(".yaml"))}/>
                 </Tabs>
             </Box>
-            {tabValue === 0 && <EditorPage selectedPage={filename}/>}
+            {tabValue === 0 && <EditorPage key={filename} selectedPage={filename}/>}
             {tabValue === 1 && <DeployPage selectedPage={filename}/>}
         </>
     );

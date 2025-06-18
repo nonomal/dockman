@@ -89,18 +89,22 @@ func registerHandlers(mux *http.ServeMux, config *ServerConfig) io.Closer {
 	services := initServices(config)
 
 	endpoints := []func() (string, http.Handler){
+		// files
 		func() (string, http.Handler) {
 			return filesrpc.NewFileServiceHandler(files.NewHandler(services.file))
 		},
 		func() (string, http.Handler) {
 			return files.NewFileHandler(services.file).RegisterHandler()
 		},
+		// docker
 		func() (string, http.Handler) {
 			return dockerpc.NewDockerServiceHandler(docker.NewHandler(services.docker))
 		},
+		// git
 		func() (string, http.Handler) {
 			return gitrpc.NewGitServiceHandler(git.NewHandler(services.git))
 		},
+		func() (string, http.Handler) { return git.NewFileHandler(services.git).RegisterHandler() },
 	}
 
 	for _, svc := range endpoints {
