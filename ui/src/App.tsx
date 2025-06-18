@@ -29,7 +29,13 @@ function HomePage() {
     return (
         <Box sx={{display: 'flex', height: '100vh', overflow: 'hidden'}}>
             <NavSidebar/>
-            <Box component="main" sx={{flexGrow: 1, height: '100vh', display: 'flex', flexDirection: 'column'}}>
+            <Box component="main" sx={{
+                flexGrow: 1,
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: 0, // <-- Add this line
+            }}>
                 <Outlet/>
             </Box>
         </Box>

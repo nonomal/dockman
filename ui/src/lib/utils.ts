@@ -27,14 +27,15 @@ export const getLanguageFromExtension = (filename?: string): string => {
     return languageMap[extension] || 'plaintext';
 };
 
-export const formatBytes = (bytes: number, decimals = 2) => {
+export const formatBytes = (bytes: number | bigint, decimals = 2) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(Number(bytes)) / Math.log(k));
+    return parseFloat((Number(bytes) / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
+
 
 export const formatPercent = (value: number) => `${value.toFixed(2)}%`;
 
