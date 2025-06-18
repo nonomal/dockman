@@ -21,42 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Empty struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Empty) Reset() {
-	*x = Empty{}
-	mi := &file_git_v1_git_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Empty) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Empty) ProtoMessage() {}
-
-func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_git_v1_git_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
-func (*Empty) Descriptor() ([]byte, []int) {
-	return file_git_v1_git_proto_rawDescGZIP(), []int{0}
-}
-
 type CommitQuery struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
@@ -67,7 +31,7 @@ type CommitQuery struct {
 
 func (x *CommitQuery) Reset() {
 	*x = CommitQuery{}
-	mi := &file_git_v1_git_proto_msgTypes[1]
+	mi := &file_git_v1_git_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -79,7 +43,7 @@ func (x *CommitQuery) String() string {
 func (*CommitQuery) ProtoMessage() {}
 
 func (x *CommitQuery) ProtoReflect() protoreflect.Message {
-	mi := &file_git_v1_git_proto_msgTypes[1]
+	mi := &file_git_v1_git_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -92,7 +56,7 @@ func (x *CommitQuery) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitQuery.ProtoReflect.Descriptor instead.
 func (*CommitQuery) Descriptor() ([]byte, []int) {
-	return file_git_v1_git_proto_rawDescGZIP(), []int{1}
+	return file_git_v1_git_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CommitQuery) GetFile() *File {
@@ -118,7 +82,7 @@ type CommitList struct {
 
 func (x *CommitList) Reset() {
 	*x = CommitList{}
-	mi := &file_git_v1_git_proto_msgTypes[2]
+	mi := &file_git_v1_git_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -130,7 +94,7 @@ func (x *CommitList) String() string {
 func (*CommitList) ProtoMessage() {}
 
 func (x *CommitList) ProtoReflect() protoreflect.Message {
-	mi := &file_git_v1_git_proto_msgTypes[2]
+	mi := &file_git_v1_git_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -143,7 +107,7 @@ func (x *CommitList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitList.ProtoReflect.Descriptor instead.
 func (*CommitList) Descriptor() ([]byte, []int) {
-	return file_git_v1_git_proto_rawDescGZIP(), []int{2}
+	return file_git_v1_git_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CommitList) GetCommits() []*Commit {
@@ -166,7 +130,7 @@ type Commit struct {
 
 func (x *Commit) Reset() {
 	*x = Commit{}
-	mi := &file_git_v1_git_proto_msgTypes[3]
+	mi := &file_git_v1_git_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -178,7 +142,7 @@ func (x *Commit) String() string {
 func (*Commit) ProtoMessage() {}
 
 func (x *Commit) ProtoReflect() protoreflect.Message {
-	mi := &file_git_v1_git_proto_msgTypes[3]
+	mi := &file_git_v1_git_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -191,7 +155,7 @@ func (x *Commit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Commit.ProtoReflect.Descriptor instead.
 func (*Commit) Descriptor() ([]byte, []int) {
-	return file_git_v1_git_proto_rawDescGZIP(), []int{3}
+	return file_git_v1_git_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Commit) GetHash() string {
@@ -238,7 +202,7 @@ type File struct {
 
 func (x *File) Reset() {
 	*x = File{}
-	mi := &file_git_v1_git_proto_msgTypes[4]
+	mi := &file_git_v1_git_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -250,7 +214,7 @@ func (x *File) String() string {
 func (*File) ProtoMessage() {}
 
 func (x *File) ProtoReflect() protoreflect.Message {
-	mi := &file_git_v1_git_proto_msgTypes[4]
+	mi := &file_git_v1_git_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -263,7 +227,7 @@ func (x *File) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use File.ProtoReflect.Descriptor instead.
 func (*File) Descriptor() ([]byte, []int) {
-	return file_git_v1_git_proto_rawDescGZIP(), []int{4}
+	return file_git_v1_git_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *File) GetName() string {
@@ -273,12 +237,47 @@ func (x *File) GetName() string {
 	return ""
 }
 
+type Empty struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Empty) Reset() {
+	*x = Empty{}
+	mi := &file_git_v1_git_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Empty) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Empty) ProtoMessage() {}
+
+func (x *Empty) ProtoReflect() protoreflect.Message {
+	mi := &file_git_v1_git_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
+func (*Empty) Descriptor() ([]byte, []int) {
+	return file_git_v1_git_proto_rawDescGZIP(), []int{4}
+}
+
 var File_git_v1_git_proto protoreflect.FileDescriptor
 
 const file_git_v1_git_proto_rawDesc = "" +
 	"\n" +
-	"\x10git/v1/git.proto\x12\x06git.v1\"\a\n" +
-	"\x05Empty\"I\n" +
+	"\x10git/v1/git.proto\x12\x06git.v1\"I\n" +
 	"\vCommitQuery\x12 \n" +
 	"\x04file\x18\x01 \x01(\v2\f.git.v1.FileR\x04file\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"6\n" +
@@ -292,7 +291,8 @@ const file_git_v1_git_proto_rawDesc = "" +
 	"\x04when\x18\x05 \x01(\tR\x04when\x12\x18\n" +
 	"\amessage\x18\x06 \x01(\tR\amessage\"\x1a\n" +
 	"\x04File\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name2o\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\a\n" +
+	"\x05Empty2o\n" +
 	"\n" +
 	"GitService\x121\n" +
 	"\vListCommits\x12\f.git.v1.File\x1a\x12.git.v1.CommitList\"\x00\x12.\n" +
@@ -314,19 +314,19 @@ func file_git_v1_git_proto_rawDescGZIP() []byte {
 
 var file_git_v1_git_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_git_v1_git_proto_goTypes = []any{
-	(*Empty)(nil),       // 0: git.v1.Empty
-	(*CommitQuery)(nil), // 1: git.v1.CommitQuery
-	(*CommitList)(nil),  // 2: git.v1.CommitList
-	(*Commit)(nil),      // 3: git.v1.Commit
-	(*File)(nil),        // 4: git.v1.File
+	(*CommitQuery)(nil), // 0: git.v1.CommitQuery
+	(*CommitList)(nil),  // 1: git.v1.CommitList
+	(*Commit)(nil),      // 2: git.v1.Commit
+	(*File)(nil),        // 3: git.v1.File
+	(*Empty)(nil),       // 4: git.v1.Empty
 }
 var file_git_v1_git_proto_depIdxs = []int32{
-	4, // 0: git.v1.CommitQuery.file:type_name -> git.v1.File
-	3, // 1: git.v1.CommitList.commits:type_name -> git.v1.Commit
-	4, // 2: git.v1.GitService.ListCommits:input_type -> git.v1.File
-	1, // 3: git.v1.GitService.Commit:input_type -> git.v1.CommitQuery
-	2, // 4: git.v1.GitService.ListCommits:output_type -> git.v1.CommitList
-	0, // 5: git.v1.GitService.Commit:output_type -> git.v1.Empty
+	3, // 0: git.v1.CommitQuery.file:type_name -> git.v1.File
+	2, // 1: git.v1.CommitList.commits:type_name -> git.v1.Commit
+	3, // 2: git.v1.GitService.ListCommits:input_type -> git.v1.File
+	0, // 3: git.v1.GitService.Commit:input_type -> git.v1.CommitQuery
+	1, // 4: git.v1.GitService.ListCommits:output_type -> git.v1.CommitList
+	4, // 5: git.v1.GitService.Commit:output_type -> git.v1.Empty
 	4, // [4:6] is the sub-list for method output_type
 	2, // [2:4] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

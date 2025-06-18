@@ -10,20 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file git/v1/git.proto.
  */
 export const file_git_v1_git: GenFile = /*@__PURE__*/
-  fileDesc("ChBnaXQvdjEvZ2l0LnByb3RvEgZnaXQudjEiBwoFRW1wdHkiOgoLQ29tbWl0UXVlcnkSGgoEZmlsZRgBIAEoCzIMLmdpdC52MS5GaWxlEg8KB21lc3NhZ2UYAiABKAkiLQoKQ29tbWl0TGlzdBIfCgdjb21taXRzGAEgAygLMg4uZ2l0LnYxLkNvbW1pdCJUCgZDb21taXQSDAoEaGFzaBgBIAEoCRIOCgZhdXRob3IYAiABKAkSDQoFZW1haWwYBCABKAkSDAoEd2hlbhgFIAEoCRIPCgdtZXNzYWdlGAYgASgJIhQKBEZpbGUSDAoEbmFtZRgBIAEoCTJvCgpHaXRTZXJ2aWNlEjEKC0xpc3RDb21taXRzEgwuZ2l0LnYxLkZpbGUaEi5naXQudjEuQ29tbWl0TGlzdCIAEi4KBkNvbW1pdBITLmdpdC52MS5Db21taXRRdWVyeRoNLmdpdC52MS5FbXB0eSIAQnoKCmNvbS5naXQudjFCCEdpdFByb3RvUAFaKWdpdGh1Yi5jb20vUkEzNDEvZG9ja21hbi9nZW5lcmF0ZWQvZ2l0L3YxogIDR1hYqgIGR2l0LlYxygIGR2l0XFYx4gISR2l0XFYxXEdQQk1ldGFkYXRh6gIHR2l0OjpWMWIGcHJvdG8z");
-
-/**
- * @generated from message git.v1.Empty
- */
-export type Empty = Message<"git.v1.Empty"> & {
-};
-
-/**
- * Describes the message git.v1.Empty.
- * Use `create(EmptySchema)` to create a new message.
- */
-export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-  messageDesc(file_git_v1_git, 0);
+  fileDesc("ChBnaXQvdjEvZ2l0LnByb3RvEgZnaXQudjEiOgoLQ29tbWl0UXVlcnkSGgoEZmlsZRgBIAEoCzIMLmdpdC52MS5GaWxlEg8KB21lc3NhZ2UYAiABKAkiLQoKQ29tbWl0TGlzdBIfCgdjb21taXRzGAEgAygLMg4uZ2l0LnYxLkNvbW1pdCJUCgZDb21taXQSDAoEaGFzaBgBIAEoCRIOCgZhdXRob3IYAiABKAkSDQoFZW1haWwYBCABKAkSDAoEd2hlbhgFIAEoCRIPCgdtZXNzYWdlGAYgASgJIhQKBEZpbGUSDAoEbmFtZRgBIAEoCSIHCgVFbXB0eTJvCgpHaXRTZXJ2aWNlEjEKC0xpc3RDb21taXRzEgwuZ2l0LnYxLkZpbGUaEi5naXQudjEuQ29tbWl0TGlzdCIAEi4KBkNvbW1pdBITLmdpdC52MS5Db21taXRRdWVyeRoNLmdpdC52MS5FbXB0eSIAQnoKCmNvbS5naXQudjFCCEdpdFByb3RvUAFaKWdpdGh1Yi5jb20vUkEzNDEvZG9ja21hbi9nZW5lcmF0ZWQvZ2l0L3YxogIDR1hYqgIGR2l0LlYxygIGR2l0XFYx4gISR2l0XFYxXEdQQk1ldGFkYXRh6gIHR2l0OjpWMWIGcHJvdG8z");
 
 /**
  * @generated from message git.v1.CommitQuery
@@ -45,7 +32,7 @@ export type CommitQuery = Message<"git.v1.CommitQuery"> & {
  * Use `create(CommitQuerySchema)` to create a new message.
  */
 export const CommitQuerySchema: GenMessage<CommitQuery> = /*@__PURE__*/
-  messageDesc(file_git_v1_git, 1);
+  messageDesc(file_git_v1_git, 0);
 
 /**
  * @generated from message git.v1.CommitList
@@ -62,7 +49,7 @@ export type CommitList = Message<"git.v1.CommitList"> & {
  * Use `create(CommitListSchema)` to create a new message.
  */
 export const CommitListSchema: GenMessage<CommitList> = /*@__PURE__*/
-  messageDesc(file_git_v1_git, 2);
+  messageDesc(file_git_v1_git, 1);
 
 /**
  * @generated from message git.v1.Commit
@@ -99,7 +86,7 @@ export type Commit = Message<"git.v1.Commit"> & {
  * Use `create(CommitSchema)` to create a new message.
  */
 export const CommitSchema: GenMessage<Commit> = /*@__PURE__*/
-  messageDesc(file_git_v1_git, 3);
+  messageDesc(file_git_v1_git, 2);
 
 /**
  * @generated from message git.v1.File
@@ -116,6 +103,19 @@ export type File = Message<"git.v1.File"> & {
  * Use `create(FileSchema)` to create a new message.
  */
 export const FileSchema: GenMessage<File> = /*@__PURE__*/
+  messageDesc(file_git_v1_git, 3);
+
+/**
+ * @generated from message git.v1.Empty
+ */
+export type Empty = Message<"git.v1.Empty"> & {
+};
+
+/**
+ * Describes the message git.v1.Empty.
+ * Use `create(EmptySchema)` to create a new message.
+ */
+export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
   messageDesc(file_git_v1_git, 4);
 
 /**
