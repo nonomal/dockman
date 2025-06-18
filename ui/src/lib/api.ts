@@ -55,10 +55,18 @@ export async function uploadFile(filename: string, contents: string): Promise<st
     }
 }
 
+export async function downloadFileAtCommit(filename: string, commitId: string): Promise<{ file: string; err: string }> {
+    return download(`api/git/load/${encodeURIComponent(filename)}/${encodeURIComponent(commitId)}`);
+}
+
 export async function downloadFile(filename: string): Promise<{ file: string; err: string }> {
+    return download(`api/file/load/${encodeURIComponent(filename)}`)
+}
+
+async function download(subPath: string) {
     try {
         const response = await fetch(
-            `${API_URL}/api/file/load/${encodeURIComponent(filename)}`,
+            `${API_URL}/${subPath}`,
             {cache: 'no-cache'}
         );
         if (!response.ok) {
@@ -66,8 +74,8 @@ export async function downloadFile(filename: string): Promise<{ file: string; er
         }
         const fileData = await response.text()
         return {file: fileData, err: ""};
-    } catch (error: any) {
-        console.error(`Error: ${error.message}`);
-        return {file: "", err: error.toString()};
+    } catch (error: unknown) {
+        console.error(`Error: ${(error as Error).toString()}`);
+        return {file: "", err: (error as Error).toString()};
     }
 }

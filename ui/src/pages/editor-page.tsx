@@ -18,6 +18,8 @@ import * as monacoEditor from "monaco-editor";
 import {GitService} from "../gen/git/v1/git_pb.ts";
 import {useSnackbar} from "../components/snackbar.tsx";
 import {MonacoEditor} from "../components/editor.tsx";
+import {CommitList} from "../components/commit-list.tsx";
+import {DiffViewer} from "../components/diff.tsx";
 
 interface EditorProps {
     selectedPage: string;
@@ -27,7 +29,7 @@ type SaveState = 'idle' | 'typing' | 'saving' | 'success' | 'error'
 
 export function EditorPage({selectedPage}: EditorProps) {
     const gitClient = useClient(GitService);
-    const {showSuccess, showError, showWarning} = useSnackbar();
+    const {showSuccess, showError} = useSnackbar();
 
     const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>(null);
     const [fileContent, setFileContent] = useState("")
@@ -35,6 +37,9 @@ export function EditorPage({selectedPage}: EditorProps) {
     const [loading, setLoading] = useState(false)
     const [commitMessage, setCommitMessage] = useState("")
     const [openCommitDialog, setOpenCommitDialog] = useState(false)
+    const [commitListKey, setCommitListKey] = useState(0);
+
+    const [diffCommitId, setDiffCommitId] = useState("")
 
     const [status, setStatus] = useState<SaveState>('idle');
     const debounceTimeout = useRef<null | number>(null);
@@ -52,7 +57,8 @@ export function EditorPage({selectedPage}: EditorProps) {
 
     useEffect(() => {
         fetchDataCallback().then()
-    }, [fetchDataCallback, selectedPage, showWarning]);
+    }, [fetchDataCallback]);
+
 
     const commitAndSave = async () => {
         const {err} = await callRPC(
@@ -67,6 +73,7 @@ export function EditorPage({selectedPage}: EditorProps) {
             return;
         }
 
+        setCommitListKey(prevState => prevState + 1) // rerender commit list
         showSuccess("saved and commited");
     }
 
@@ -81,7 +88,6 @@ export function EditorPage({selectedPage}: EditorProps) {
             setStatus("success")
         }).finally(() => {
             setLoading(false);
-            setTimeout(() => setStatus("idle"), 2000)
         });
     }
 
@@ -107,7 +113,7 @@ export function EditorPage({selectedPage}: EditorProps) {
         if (status === 'success' || status === 'error') {
             const timer = setTimeout(() => {
                 setStatus('idle');
-            }, 3000); // Show the checkmark or error for 3 seconds
+            }, 2000); // Show the checkmark or error for 3 seconds
             return () => clearTimeout(timer);
         }
     }, [status]);
@@ -176,24 +182,50 @@ export function EditorPage({selectedPage}: EditorProps) {
                         </Typography>
                     </Box>
                 </Box>
-                <Box
-                    sx={{
-                        flexGrow: 1,
-                        border: '1px dashed',
-                        borderColor: 'rgba(255, 255, 255, 0.23)',
-                        borderRadius: 1,
-                        p: 1,
+                <Box sx={{display: 'flex', flexDirection: 'row', gap: 2, height: '85vh'}}>
+                    <Box
+                        sx={{
+                            flexGrow: 1,
+                            border: '1px dashed',
+                            borderColor: 'rgba(255, 255, 255, 0.23)',
+                            borderRadius: 1,
+                            p: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'rgba(0,0,0,0.1)'
+                        }}
+                    >
+                        {diffCommitId ? (
+                            <DiffViewer
+                                selectedFile={selectedPage}
+                                commitId={diffCommitId}
+                                currentContent={fileContent}
+                            />
+                        ) : (
+                            <MonacoEditor
+                                selectedPage={selectedPage}
+                                fileContent={fileContent}
+                                handleEditorChange={handleEditorChange}
+                                handleEditorDidMount={handleEditorDidMount}
+                            />
+                        )}
+                    </Box>
+                    <Box sx={{
+                        width: 270,
+                        flexShrink: 0,
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: 'rgba(0,0,0,0.1)'
-                    }}
-                >
-                    <MonacoEditor selectedPage={selectedPage}
-                                  handleEditorChange={handleEditorChange}
-                                  fileContent={fileContent}
-                                  handleEditorDidMount={handleEditorDidMount}
-                    />
+                        flexDirection: 'column'
+                    }}>
+                        <CommitList
+                            key={commitListKey}
+                            chooseCommit={commit => {
+                                setDiffCommitId(commit)
+                            }}
+                            selectedCommit={diffCommitId}
+                            selectedFile={selectedPage}
+                        />
+                    </Box>
                 </Box>
             </Box>
 

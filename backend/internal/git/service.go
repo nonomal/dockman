@@ -5,6 +5,7 @@ import (
 	"github.com/RA341/dockman/internal/files"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/rs/zerolog/log"
 	"io"
@@ -116,6 +117,32 @@ func (s *Service) CommitFileGroup(commitMessage string, filename string) error {
 	}
 
 	return nil
+}
+
+func (s *Service) LoadFileAtCommit(filePath, commitId string) (string, error) {
+	hash := plumbing.NewHash(commitId)
+	commit, err := s.repo.CommitObject(hash)
+	if err != nil {
+		return "", fmt.Errorf("failed to get commit %s: %w", commitId, err)
+	}
+
+	tree, err := commit.Tree()
+	if err != nil {
+		return "", fmt.Errorf("failed to get tree from commit: %w", err)
+	}
+
+	file, err := tree.File(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to get file %s from commit %s: %w", filePath, commitId, err)
+	}
+
+	// Get file contents
+	content, err := file.Contents()
+	if err != nil {
+		return "", fmt.Errorf("failed to read file contents: %w", err)
+	}
+
+	return content, nil
 }
 
 func (s *Service) ListCommitByFile(filePath string) ([]*object.Commit, error) {

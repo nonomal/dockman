@@ -9,8 +9,6 @@ service GitService {
   rpc Commit(CommitQuery) returns (Empty) {}
 }
 
-message Empty {}
-
 message CommitQuery {
   File file = 1;
   string message = 2;
@@ -31,3 +29,5 @@ message Commit {
 message File {
   string name = 1;
 }
+
+message Empty {}
