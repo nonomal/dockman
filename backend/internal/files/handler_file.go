@@ -13,17 +13,17 @@ type FileHandler struct {
 	srv *Service
 }
 
-func NewFileHandler(service *Service) *FileHandler {
-	return &FileHandler{srv: service}
+func NewFileHandler(service *Service) http.Handler {
+	hand := &FileHandler{srv: service}
+	return hand.register()
 }
 
-func (h *FileHandler) RegisterHandler() (string, http.Handler) {
-	basePath := "/api/file"
+func (h *FileHandler) register() http.Handler {
 	subMux := http.NewServeMux()
-
 	subMux.HandleFunc("POST /save", h.SaveFile)
 	subMux.HandleFunc("GET /load/{filename}", h.LoadFile)
-	return basePath + "/", http.StripPrefix(basePath, subMux)
+
+	return subMux
 }
 
 func (h *FileHandler) SaveFile(w http.ResponseWriter, r *http.Request) {

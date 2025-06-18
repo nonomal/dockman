@@ -13,7 +13,7 @@ type Handler struct {
 	srv *Service
 }
 
-func NewHandler(service *Service) *Handler {
+func NewConnectHandler(service *Service) *Handler {
 	return &Handler{srv: service}
 }
 

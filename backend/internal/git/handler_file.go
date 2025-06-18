@@ -12,16 +12,15 @@ type FileHandler struct {
 	srv *Service
 }
 
-func NewFileHandler(service *Service) *FileHandler {
-	return &FileHandler{srv: service}
+func NewFileHandler(service *Service) http.Handler {
+	hand := FileHandler{srv: service}
+	return hand.registerPaths()
 }
 
-func (h *FileHandler) RegisterHandler() (string, http.Handler) {
-	basePath := "/api/git"
+func (h *FileHandler) registerPaths() http.Handler {
 	subMux := http.NewServeMux()
-
 	subMux.HandleFunc("GET /load/{filename}/{commitId}", h.LoadFileAtCommit)
-	return basePath + "/", http.StripPrefix(basePath, subMux)
+	return subMux
 }
 
 func (h *FileHandler) LoadFileAtCommit(w http.ResponseWriter, r *http.Request) {
