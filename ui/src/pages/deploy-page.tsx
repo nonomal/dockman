@@ -100,11 +100,11 @@ export function DeployPage({selectedPage}: DeployPageProps) {
         }
     }
 
-    const deployHandler = (actionName: string, handler: () => AsyncIterable<ComposeActionResponse>) => {
-        handleActionStart(actionName);
+    const deployHandler = (buttonName: string, actionName: string, handler: () => AsyncIterable<ComposeActionResponse>) => {
+        handleActionStart(buttonName);
         const logStream = handler();
         startActionStream(logStream, actionName).finally(() => {
-            handleActionEnd(actionName);
+            handleActionEnd(buttonName);
         });
     }
 
@@ -165,6 +165,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                         disabled={!selectedPage || loadingStates[action.name]}
                         onClick={() => {
                             deployHandler(
+                                action.name,
                                 action.message,
                                 () => action.action({filename: selectedPage})
                             )
