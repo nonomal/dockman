@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file auth/v1/auth.proto.
  */
 export const file_auth_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChJhdXRoL3YxL2F1dGgucHJvdG8SB2F1dGgudjEiKgoEVXNlchIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSIHCgVFbXB0eTI3CgtBdXRoU2VydmljZRIoCgVMb2dpbhINLmF1dGgudjEuVXNlchoOLmF1dGgudjEuRW1wdHkiAEKBAQoLY29tLmF1dGgudjFCCUF1dGhQcm90b1ABWipnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vZ2VuZXJhdGVkL2F1dGgvdjGiAgNBWFiqAgdBdXRoLlYxygIHQXV0aFxWMeICE0F1dGhcVjFcR1BCTWV0YWRhdGHqAghBdXRoOjpWMWIGcHJvdG8z");
+  fileDesc("ChJhdXRoL3YxL2F1dGgucHJvdG8SB2F1dGgudjEiKgoEVXNlchIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSIHCgVFbXB0eTJjCgtBdXRoU2VydmljZRIoCgVMb2dpbhINLmF1dGgudjEuVXNlchoOLmF1dGgudjEuRW1wdHkiABIqCgZMb2dvdXQSDi5hdXRoLnYxLkVtcHR5Gg4uYXV0aC52MS5FbXB0eSIAQoEBCgtjb20uYXV0aC52MUIJQXV0aFByb3RvUAFaKmdpdGh1Yi5jb20vUkEzNDEvZG9ja21hbi9nZW5lcmF0ZWQvYXV0aC92MaICA0FYWKoCB0F1dGguVjHKAgdBdXRoXFYx4gITQXV0aFxWMVxHUEJNZXRhZGF0YeoCCEF1dGg6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message auth.v1.User
@@ -57,6 +57,14 @@ export const AuthService: GenService<{
   login: {
     methodKind: "unary";
     input: typeof UserSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc auth.v1.AuthService.Logout
+   */
+  logout: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
     output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/

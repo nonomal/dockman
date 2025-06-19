@@ -12,7 +12,9 @@ import (
 var frontendDir embed.FS
 
 func main() {
+	config := cmd.LoadConfig()
 	cmd.StartServer(
+		cmd.WithConfig(config), // start with config loaded from  args/envs
 		cmd.WithUI(setupFrontend()),
 		cmd.WithPort(8877),
 	)

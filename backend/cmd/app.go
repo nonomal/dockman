@@ -11,6 +11,7 @@ import (
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -36,6 +37,7 @@ func NewApp(conf *ServerConfig) (*App, error) {
 	gitSrv := git.NewService(absComposeRoot, fileSrv.Fdb)
 	dockerSrv := docker.NewService(absComposeRoot)
 
+	log.Info().Msg("Dockman initialized successfully")
 	return &App{
 		Config: conf,
 		Auth:   authSrv,
@@ -59,7 +61,7 @@ func (a *App) Close() error {
 // registerRoutes sets up all the HTTP handlers for the application.
 func (a *App) registerRoutes(mux *http.ServeMux) {
 	connectAuth := connect.WithInterceptors()
-	if a.Config.auth {
+	if a.Config.Auth {
 		connectAuth = connect.WithInterceptors(auth.NewInterceptor(a.Auth))
 	}
 
@@ -109,7 +111,7 @@ func (a *App) registerHttpHandler(basePath string, subMux http.Handler) (string,
 	}
 
 	baseHandler := http.StripPrefix(strings.TrimSuffix(basePath, "/"), subMux)
-	if a.Config.auth {
+	if a.Config.Auth {
 		httpAuth := auth.NewHttpAuthMiddleware(a.Auth)
 		baseHandler = httpAuth(baseHandler)
 	}

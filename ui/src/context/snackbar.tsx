@@ -1,11 +1,6 @@
-import React, {createContext, type ReactNode, useContext, useState} from 'react';
+import React, {type ReactNode, useState} from 'react';
 import {Alert, type AlertColor, Snackbar} from '@mui/material';
-
-interface SnackbarOptions {
-    severity?: AlertColor;
-    duration?: number;
-    action?: ReactNode;
-}
+import {SnackbarContext, type SnackbarContextType, type SnackbarOptions} from './providers';
 
 interface SnackbarState {
     open: boolean;
@@ -15,20 +10,9 @@ interface SnackbarState {
     action: ReactNode;
 }
 
-interface SnackbarContextType {
-    showSnackbar: (message: string, options?: SnackbarOptions) => void;
-    showSuccess: (message: string, options?: Omit<SnackbarOptions, 'severity'>) => void;
-    showError: (message: string, options?: Omit<SnackbarOptions, 'severity'>) => void;
-    showWarning: (message: string, options?: Omit<SnackbarOptions, 'severity'>) => void;
-    showInfo: (message: string, options?: Omit<SnackbarOptions, 'severity'>) => void;
-    hideSnackbar: (event?: React.SyntheticEvent | Event, reason?: string) => void;
-}
-
 interface SnackbarProviderProps {
     children: ReactNode;
 }
-
-const SnackbarContext = createContext<SnackbarContextType | undefined>(undefined);
 
 export const SnackbarProvider: React.FC<SnackbarProviderProps> = ({children}) => {
     const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -103,13 +87,4 @@ export const SnackbarProvider: React.FC<SnackbarProviderProps> = ({children}) =>
             </Snackbar>
         </SnackbarContext.Provider>
     );
-};
-
-// Custom hook to use the snackbar
-export const useSnackbar = (): SnackbarContextType => {
-    const context = useContext(SnackbarContext);
-    if (!context) {
-        throw new Error('useSnackbar must be used within a SnackbarProvider');
-    }
-    return context;
 };

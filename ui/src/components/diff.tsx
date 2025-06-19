@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from "react";
 import {downloadFileAtCommit} from "../lib/api.ts";
-import {useSnackbar} from "./snackbar.tsx";
+import {useSnackbar} from "../context/providers.ts";
 import {DiffEditor} from "@monaco-editor/react";
 import {Box, CircularProgress, Typography} from "@mui/material";
 import {getLanguageFromExtension} from "../lib/utils.ts";

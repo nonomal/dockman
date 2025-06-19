@@ -117,9 +117,10 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"\a\n" +
-	"\x05Empty27\n" +
+	"\x05Empty2c\n" +
 	"\vAuthService\x12(\n" +
-	"\x05Login\x12\r.auth.v1.User\x1a\x0e.auth.v1.Empty\"\x00B\x81\x01\n" +
+	"\x05Login\x12\r.auth.v1.User\x1a\x0e.auth.v1.Empty\"\x00\x12*\n" +
+	"\x06Logout\x12\x0e.auth.v1.Empty\x1a\x0e.auth.v1.Empty\"\x00B\x81\x01\n" +
 	"\vcom.auth.v1B\tAuthProtoP\x01Z*github.com/RA341/dockman/generated/auth/v1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var (
@@ -141,9 +142,11 @@ var file_auth_v1_auth_proto_goTypes = []any{
 }
 var file_auth_v1_auth_proto_depIdxs = []int32{
 	0, // 0: auth.v1.AuthService.Login:input_type -> auth.v1.User
-	1, // 1: auth.v1.AuthService.Login:output_type -> auth.v1.Empty
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	1, // 1: auth.v1.AuthService.Logout:input_type -> auth.v1.Empty
+	1, // 2: auth.v1.AuthService.Login:output_type -> auth.v1.Empty
+	1, // 3: auth.v1.AuthService.Logout:output_type -> auth.v1.Empty
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

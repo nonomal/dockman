@@ -3,7 +3,7 @@ import {Box, CircularProgress, Paper, Typography, useTheme,} from '@mui/material
 import {CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis,} from 'recharts';
 import {useClient} from '../lib/api.ts';
 import {DockerService} from '../gen/docker/v1/docker_pb.ts';
-import {useSnackbar} from '../components/snackbar';
+import {useSnackbar} from '../context/providers.ts';
 import {callRPC} from '../lib/api';
 import {ContainersTable} from '../components/containers-table';
 

@@ -6,6 +6,7 @@ option go_package = "github.com/RA341/dockman/generated/auth/v1";
 
 service AuthService {
   rpc Login(User) returns (Empty) {}
+  rpc Logout(Empty) returns (Empty) {}
 }
 
 message User {

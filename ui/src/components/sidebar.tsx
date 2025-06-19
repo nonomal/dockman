@@ -31,7 +31,7 @@ import {
     Search,
     Settings,
 } from '@mui/icons-material';
-import {useSnackbar} from "./snackbar.tsx";
+import {useAuth, useSnackbar} from "../context/providers.ts";
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
 interface FileComponent {
@@ -150,10 +150,10 @@ export function NavSidebar() {
         }
     };
 
+    const {logout} = useAuth()
     const handleLogout = () => {
-        // Implement your logout logic here
-        alert("Logout clicked!");
-        // For example: navigate('/login');
+        logout()
+        navigate('/');
     }
 
     return (

@@ -11,12 +11,8 @@ import (
 	"net/http"
 )
 
-func StartServer(opt ...ServerOpt) {
-	config := &ServerConfig{}
-	for _, o := range opt {
-		o(config)
-	}
-	log.Info().Any("config", config).Msg("loaded config")
+func StartServer(opts ...ServerOpt) {
+	config := parseConfig(opts...)
 
 	router := http.NewServeMux()
 
