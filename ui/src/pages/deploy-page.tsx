@@ -80,7 +80,7 @@ export function DeployPage({selectedPage}: DeployPageProps) {
         setError("");
     };
 
-    async function startActionStream(logStream: AsyncIterable<ComposeActionResponse>) {
+    async function startActionStream(logStream: AsyncIterable<ComposeActionResponse>, actionName: string) {
         try {
             setTerminalMessages([]);
             setTerminalTitle(`${selectedPage}`);
@@ -90,74 +90,54 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                 setTerminalMessages(prevMessages => [...prevMessages, mes.message]);
             }
 
-            showSuccess('Deployment started successfully!')
+            showSuccess(`Deployment ${actionName} successfully!`)
         } catch (error: unknown) {
             if (error instanceof ConnectError) {
-                setError(`Failed to start deployment\n${error.code} ${error.name}: ${error.message}`);
+                setError(`Failed to ${actionName} deployment\n${error.code} ${error.name}: ${error.message}`);
             } else {
-                setError(`Failed to start deployment\nUnknown Error: ${(error as Error).toString()}`);
+                setError(`Failed to ${actionName} deployment\nUnknown Error: ${(error as Error).toString()}`);
             }
         }
+    }
+
+    const deployHandler = (actionName: string, handler: () => AsyncIterable<ComposeActionResponse>) => {
+        handleActionStart(actionName);
+        const logStream = handler();
+        startActionStream(logStream, actionName).finally(() => {
+            handleActionEnd(actionName);
+        });
     }
 
     const deployActions = [
         {
             name: 'start',
+            message: "started",
             icon: <PlayArrowIcon/>,
-            handler: async () => {
-                handleActionStart('start');
-                const logStream = dockerService.start({filename: selectedPage});
-                startActionStream(logStream).finally(() => {
-                    handleActionEnd('start');
-                });
-            }
+            action: dockerService.start,
         },
         {
             name: 'stop',
+            message: "stopped",
             icon: <StopIcon/>,
-            handler: async () => {
-                handleActionStart('stop');
-                const logStream = dockerService.stop({filename: selectedPage});
-                startActionStream(logStream).finally(() => {
-                    handleActionEnd('stop');
-                });
-            }
+            action: dockerService.stop,
         },
         {
             name: 'remove',
+            message: "removed",
             icon: <DeleteIcon/>,
-            handler: async () => {
-                handleActionStart('remove');
-
-                const logStream = dockerService.remove({filename: selectedPage});
-                startActionStream(logStream).finally(() => {
-                    handleActionEnd('remove');
-                });
-            }
+            action: dockerService.remove,
         },
         {
             name: 'restart',
+            message: "restarted",
             icon: <RestartAltIcon/>,
-            handler: async () => {
-                handleActionStart('restart');
-
-                const logStream = dockerService.restart({filename: selectedPage});
-                startActionStream(logStream).finally(() => {
-                    handleActionEnd('restart');
-                });
-            }
+            action: dockerService.restart,
         },
         {
             name: 'update',
+            message: "updated",
             icon: <UpdateIcon/>,
-            handler: async () => {
-                handleActionStart('update');
-
-                const logStream = dockerService.update({filename: selectedPage});
-                startActionStream(logStream).finally(() => {
-                    handleActionEnd('update');
-                });
-            }
+            action: dockerService.update,
         },
     ];
 
@@ -183,7 +163,12 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                         key={action.name}
                         variant="outlined"
                         disabled={!selectedPage || loadingStates[action.name]}
-                        onClick={action.handler}
+                        onClick={() => {
+                            deployHandler(
+                                action.message,
+                                () => action.action({filename: selectedPage})
+                            )
+                        }}
                         startIcon={loadingStates[action.name] ?
                             <CircularProgress size={20} color="inherit"/> : action.icon}
                     >
