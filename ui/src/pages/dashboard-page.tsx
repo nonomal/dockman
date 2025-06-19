@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {Box, CircularProgress, Paper, Typography, useTheme,} from '@mui/material';
-import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,} from 'recharts';
+import {CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis,} from 'recharts';
 import {useClient} from '../lib/api.ts';
 import {DockerService} from '../gen/docker/v1/docker_pb.ts';
 import {useSnackbar} from '../components/snackbar';
@@ -8,10 +8,10 @@ import {callRPC} from '../lib/api';
 import {ContainersTable} from '../components/containers-table';
 
 // Original Interfaces from the prompt
-interface StatsResponse {
-    system: { CPU: number; memInBytes: bigint };
-    containers: ContainerStats[];
-}
+// interface StatsResponse {
+//     system: { CPU: number; memInBytes: bigint };
+//     containers: ContainerStats[];
+// }
 
 export interface ContainerStats {
     id: string;
@@ -63,7 +63,7 @@ const formatRate = (bytesPerSecond: number) => {
     return `${bytesPerSecond.toFixed(2)} MB/s`;
 };
 
-const ChartContainer: React.FC<{ title: string; children: React.ReactNode }> = ({title, children}) => (
+const ChartContainer: React.FC<{ title: string; children: React.ReactNode }> = ({title}) => (
     <Paper
         sx={{
             p: 2,
@@ -77,9 +77,8 @@ const ChartContainer: React.FC<{ title: string; children: React.ReactNode }> = (
             {title}
         </Typography>
         <Box sx={{flexGrow: 1, minWidth: 0}}> {/* minWidth: 0 for the inner box as well */}
-            <ResponsiveContainer width="100%" height="100%">
-                {children}
-            </ResponsiveContainer>
+            {/*<ResponsiveContainer width="100%" height="100%">*/}
+            {/*</ResponsiveContainer>*/}
         </Box>
     </Paper>
 );
