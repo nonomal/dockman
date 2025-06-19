@@ -20,7 +20,7 @@ func NewConnectHandler(srv *Service) *Handler {
 	return &Handler{srv: srv}
 }
 
-func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Start(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
 	pipeWriter, wg := StreamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
@@ -28,7 +28,7 @@ func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile
 		return nil
 	})
 
-	if err := h.srv.Up(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+	if err := h.srv.Up(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
 		pkg.CloseFile(pipeWriter)
 		return err
 	}
@@ -38,7 +38,7 @@ func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile
 	return nil
 }
 
-func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Stop(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
 	pipeWriter, wg := StreamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
@@ -46,7 +46,7 @@ func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile]
 		return nil
 	})
 
-	if err := h.srv.Stop(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+	if err := h.srv.Stop(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
 		pkg.CloseFile(pipeWriter)
 		return err
 	}
@@ -56,7 +56,7 @@ func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile]
 	return nil
 }
 
-func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Remove(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
 	pipeWriter, wg := StreamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
@@ -64,7 +64,7 @@ func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFil
 		return nil
 	})
 
-	if err := h.srv.Down(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+	if err := h.srv.Down(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
 		pkg.CloseFile(pipeWriter)
 		return err
 	}
@@ -74,7 +74,7 @@ func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFil
 	return nil
 }
 
-func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Restart(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
 	pipeWriter, wg := StreamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
@@ -82,7 +82,7 @@ func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFi
 		return nil
 	})
 
-	if err := h.srv.Restart(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+	if err := h.srv.Restart(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
 		pkg.CloseFile(pipeWriter)
 		return err
 	}
@@ -92,7 +92,7 @@ func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFi
 	return nil
 }
 
-func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Update(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
 	pipeWriter, wg := StreamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
@@ -100,7 +100,7 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 		return nil
 	})
 
-	if err := h.srv.Update(ctx, req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
+	if err := h.srv.Update(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
 		pkg.CloseFile(pipeWriter)
 		return err
 	}
@@ -187,7 +187,6 @@ func StreamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitG
 			err := streamFn(scanner.Text())
 			if err != nil {
 				log.Warn().Err(err).Msg("Failed to send message to stream")
-				return
 			}
 		}
 		// If the scanner stops because of an error, log it.
