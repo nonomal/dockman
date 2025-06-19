@@ -25,7 +25,6 @@ type App struct {
 	Docker *docker.Service
 }
 
-// NewApp creates and initializes a new App instance with all its dependencies.
 func NewApp(conf *ServerConfig) (*App, error) {
 	absComposeRoot, err := filepath.Abs(strings.TrimSpace(conf.ComposeRoot))
 	if err != nil {
@@ -47,7 +46,6 @@ func NewApp(conf *ServerConfig) (*App, error) {
 	}, nil
 }
 
-// Close gracefully shuts down the application's services.
 func (a *App) Close() error {
 	if err := a.File.Close(); err != nil {
 		return fmt.Errorf("failed to close file service: %w", err)
@@ -58,7 +56,6 @@ func (a *App) Close() error {
 	return nil
 }
 
-// registerRoutes sets up all the HTTP handlers for the application.
 func (a *App) registerRoutes(mux *http.ServeMux) {
 	connectAuth := connect.WithInterceptors()
 	if a.Config.Auth {
