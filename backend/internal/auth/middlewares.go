@@ -28,7 +28,6 @@ func NewHttpAuthMiddleware(srv *Service) func(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-
 }
 
 func getCookie(name string, cookies []*http.Cookie) (*http.Cookie, error) {

@@ -48,12 +48,12 @@ func checkPassword(inputPassword string, hashedPassword string) bool {
 	return true
 }
 
-func encryptPassword(password []byte) string {
-	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+func encryptPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("unable to generate passoword")
 	}
-	return string(hashedPassword)
+	return string(hashedPassword), nil
 }
 
 func hashString(input string) string {

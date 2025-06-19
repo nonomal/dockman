@@ -20,11 +20,14 @@ type MemAuthDB struct {
 }
 
 func (m *MemAuthDB) NewUser(username string, password string) (*User, error) {
-	hashedPass := hashString(password)
+	pass, err := encryptPassword(password)
+	if err != nil {
+		return nil, err
+	}
 
 	m.mem[username] = &User{
 		Username: username,
-		Password: hashedPass,
+		Password: pass,
 		Token:    "",
 	}
 
