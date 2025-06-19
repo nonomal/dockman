@@ -2,9 +2,12 @@ FROM node:23-alpine AS front
 
 WORKDIR /frontend
 
-COPY ui .
+COPY ui/package-lock.json .
+COPY ui/package.json .
 
 RUN npm i
+
+COPY ui .
 
 RUN npm run build
 
