@@ -2,8 +2,7 @@ package cmd
 
 import (
 	"github.com/rs/zerolog/log"
-	"net/http"
-	"os"
+	"io/fs"
 	"strings"
 )
 
@@ -13,7 +12,7 @@ type ServerConfig struct {
 	allowedOriginsString string // hide this when printing config
 	ComposeRoot          string
 	UIPath               string
-	uiHandler            http.Handler // hide this when printing config
+	uiFS                 fs.FS // hide this when printing config
 	Auth                 bool
 }
 
@@ -25,7 +24,7 @@ func parseConfig(opts ...ServerOpt) *ServerConfig {
 		o(config)
 	}
 	// final checks
-	if config.uiHandler == nil {
+	if config.uiFS == nil {
 		WithUIPath(config.UIPath)(config)
 	}
 	if len(config.AllowedOrigins) == 0 {
@@ -52,19 +51,10 @@ func WithConfig(conf *ServerConfig) ServerOpt {
 }
 
 func WithUIPath(path string) ServerOpt {
-	handler := loadUiHandler(path)
+	handler := LoadFileUI(path)
 	return func(o *ServerConfig) {
-		o.uiHandler = handler
+		o.uiFS = handler
 	}
-}
-
-func loadUiHandler(path string) http.Handler {
-	root, err := os.OpenRoot(path)
-	if err != nil {
-		log.Fatal().Err(err).Str("path", path).Msg("failed to open file for UI")
-	}
-	handler := http.FileServer(http.FS(root.FS()))
-	return handler
 }
 
 func WithPort(port int) ServerOpt {
@@ -73,9 +63,9 @@ func WithPort(port int) ServerOpt {
 	}
 }
 
-func WithUI(handler http.Handler) ServerOpt {
+func WithUI(handler fs.FS) ServerOpt {
 	return func(o *ServerConfig) {
-		o.uiHandler = handler
+		o.uiFS = handler
 	}
 }
 
