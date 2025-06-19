@@ -2,13 +2,15 @@ name: dockman
 services:
   dockman:
     container_name: dockman
-    image: ghcr.io/ra341/dockman:latest
+#    image: ghcr.io/ra341/dockman:latest
     build:
       dockerfile: Dockerfile
       context: ../
     volumes:
       - ./stacks:/compose
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKMAN_AUTH_ENABLE=true
     ports:
       - "8080:8866"
     restart: always
