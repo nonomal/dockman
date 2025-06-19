@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error';
-import {Commit, Schedule,} from '@mui/icons-material';
+import {Commit,} from '@mui/icons-material';
 import {useCallback, useEffect, useRef, useState} from "react";
 import {callRPC, downloadFile, uploadFile, useClient} from "../lib/api.ts";
 import * as monacoEditor from "monaco-editor";
@@ -53,12 +53,11 @@ export function EditorPage({selectedPage}: EditorProps) {
                 setFileContent(file)
             }
         }
-    }, [selectedPage, showError]);
+    }, [selectedPage]);
 
     useEffect(() => {
         fetchDataCallback().then()
     }, [fetchDataCallback]);
-
 
     const commitAndSave = async () => {
         const {err} = await callRPC(
@@ -130,7 +129,7 @@ export function EditorPage({selectedPage}: EditorProps) {
                 return <><ErrorIcon color="error" sx={{mr: 1.5}}/> Save Failed</>;
             case 'idle':
             default:
-                return <><Schedule color="primary" sx={{mr: 1.5}}/> Idle</>;
+                return <></>; // no status icon for idle
         }
     };
 
