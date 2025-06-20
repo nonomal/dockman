@@ -5,6 +5,7 @@ import type {Theme} from '@mui/material/styles';
 const defaultMessages = [
     'Sometimes science is more art than science.',
     'Generating witty dialog...',
+    'Nothing is true, everything is permitted',
     'Swapping time and space...',
     'Spinning up the hamster...',
     'Shoveling coal...',

@@ -8,6 +8,7 @@ import {SettingsPage} from "./pages/settings-page.tsx";
 import {AuthProvider} from "./context/auth.tsx";
 import {AuthPage} from './pages/auth-page.tsx';
 import {useAuth} from "./context/providers.ts";
+import NotFoundPage from "./components/not-found.tsx";
 
 export default function App() {
     return (
@@ -25,6 +26,8 @@ export default function App() {
                                     <Route path="settings" element={<SettingsPage/>}/>
                                 </Route>
                             </Route>
+                            <Route path="/not-found" element={<NotFoundPage/>}/>
+                            <Route path="*" element={<NotFoundPage/>}/>
                         </Routes>
                     </BrowserRouter>
                 </AuthProvider>
@@ -32,6 +35,7 @@ export default function App() {
         </ThemeProvider>
     );
 }
+
 
 const PrivateRoute = () => {
     const {isAuthenticated, isLoading} = useAuth();

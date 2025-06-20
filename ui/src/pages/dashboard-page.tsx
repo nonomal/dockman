@@ -247,7 +247,7 @@ export const DashboardPage = () => {
                 alignItems: 'center',
                 height: '100vh',
             }}>
-                <EntertainingLoader intervalDuration={1000}/>
+                <EntertainingLoader intervalDuration={1100}/>
             </Box>
         );
     }

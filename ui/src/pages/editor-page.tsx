@@ -186,7 +186,7 @@ export function EditorPage({selectedPage}: EditorProps) {
                     display: 'flex',
                     flexDirection: 'row',
                     gap: 2,
-                    flexGrow: 1 /* Use flexGrow instead of fixed height */
+                    flexGrow: 1
                 }}>
                     <Box
                         sx={{
