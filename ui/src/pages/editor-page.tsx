@@ -6,6 +6,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Fade,
     TextField,
     Typography
 } from "@mui/material";
@@ -181,40 +182,58 @@ export function EditorPage({selectedPage}: EditorProps) {
                         </Typography>
                     </Box>
                 </Box>
-                <Box sx={{display: 'flex', flexDirection: 'row', gap: 2, height: '85vh'}}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 2,
+                    flexGrow: 1 /* Use flexGrow instead of fixed height */
+                }}>
                     <Box
                         sx={{
                             flexGrow: 1,
+                            position: 'relative', // This contains the absolutely positioned child.
+                            display: 'flex',      // Use flex to make the inner content fill this box.
                             border: '1px dashed',
                             borderColor: 'rgba(255, 255, 255, 0.23)',
                             borderRadius: 1,
-                            p: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
                             backgroundColor: 'rgba(0,0,0,0.1)'
                         }}
                     >
-                        {diffCommitId ? (
-                            <DiffViewer
-                                selectedFile={selectedPage}
-                                commitId={diffCommitId}
-                                currentContent={fileContent}
-                            />
-                        ) : (
-                            <MonacoEditor
-                                selectedPage={selectedPage}
-                                fileContent={fileContent}
-                                handleEditorChange={handleEditorChange}
-                                handleEditorDidMount={handleEditorDidMount}
-                            />
-                        )}
+                        <Fade in={true} key={diffCommitId ? 'diff' : 'editor'} timeout={280}>
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    p: 0.2, // Padding is applied here, inside the border.
+                                    display: 'flex'
+                                }}
+                            >
+                                {diffCommitId ? (
+                                    <DiffViewer
+                                        selectedFile={selectedPage}
+                                        commitId={diffCommitId}
+                                        currentContent={fileContent}
+                                    />
+                                ) : (
+                                    <MonacoEditor
+                                        selectedPage={selectedPage}
+                                        fileContent={fileContent}
+                                        handleEditorChange={handleEditorChange}
+                                        handleEditorDidMount={handleEditorDidMount}
+                                    />
+                                )}
+                            </Box>
+                        </Fade>
                     </Box>
                     <Box sx={{
                         width: 270,
                         flexShrink: 0,
                         display: 'flex',
                         flexDirection: 'column'
+
                     }}>
                         <CommitList
                             key={commitListKey}
