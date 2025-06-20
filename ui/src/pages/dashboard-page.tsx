@@ -1,11 +1,12 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Box, CircularProgress, Paper, Typography, useTheme,} from '@mui/material';
+import {Box, Fade, Paper, Typography, useTheme,} from '@mui/material';
 import {CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis,} from 'recharts';
 import {useClient} from '../lib/api.ts';
 import {DockerService} from '../gen/docker/v1/docker_pb.ts';
 import {useSnackbar} from '../context/providers.ts';
 import {callRPC} from '../lib/api';
 import {ContainersTable} from '../components/containers-table';
+import EntertainingLoader from "../components/dashboard-loader.tsx";
 
 // Original Interfaces from the prompt
 // interface StatsResponse {
@@ -163,8 +164,6 @@ const DiskIoChart = ({data}: { data: ChartDataPoint[] }) => (
     </ChartContainer>
 );
 
-// --- Main Dashboard Component ---
-
 export const DashboardPage = () => {
     const dockerClient = useClient(DockerService);
     const {showError} = useSnackbar();
@@ -240,11 +239,15 @@ export const DashboardPage = () => {
         const interval = setInterval(fetchStats, 5000);
         return () => clearInterval(interval);
     }, [fetchStats]);
-
     if (loading) {
         return (
-            <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 3}}>
-                <CircularProgress/>
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+            }}>
+                <EntertainingLoader intervalDuration={1000}/>
             </Box>
         );
     }
@@ -260,31 +263,33 @@ export const DashboardPage = () => {
     }
 
     return (
-        <Box sx={{p: 3, flexGrow: 1}}>
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 3, // This replaces the Grid spacing prop
-                    mb: 3,
-                }}
-            >
-                {/* Each chart is wrapped in a Box with explicit width */}
-                <Box sx={{width: {xs: '100%', lg: 'calc(50% - 12px)'}}}>
-                    <CpuChart data={history}/>
+        <Fade in={true}>
+            <Box sx={{p: 3, flexGrow: 1}}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 3, // This replaces the Grid spacing prop
+                        mb: 3,
+                    }}
+                >
+                    {/* Each chart is wrapped in a Box with explicit width */}
+                    <Box sx={{width: {xs: '100%', lg: 'calc(50% - 12px)'}}}>
+                        <CpuChart data={history}/>
+                    </Box>
+                    <Box sx={{width: {xs: '100%', lg: 'calc(50% - 12px)'}}}>
+                        <MemoryChart data={history}/>
+                    </Box>
+                    <Box sx={{width: {xs: '100%', lg: 'calc(50% - 12px)'}}}>
+                        <NetworkIoChart data={history}/>
+                    </Box>
+                    <Box sx={{width: {xs: '100%', lg: 'calc(50% - 12px)'}}}>
+                        <DiskIoChart data={history}/>
+                    </Box>
                 </Box>
-                <Box sx={{width: {xs: '100%', lg: 'calc(50% - 12px)'}}}>
-                    <MemoryChart data={history}/>
-                </Box>
-                <Box sx={{width: {xs: '100%', lg: 'calc(50% - 12px)'}}}>
-                    <NetworkIoChart data={history}/>
-                </Box>
-                <Box sx={{width: {xs: '100%', lg: 'calc(50% - 12px)'}}}>
-                    <DiskIoChart data={history}/>
-                </Box>
-            </Box>
 
-            <ContainersTable containers={containers}/>
-        </Box>
+                <ContainersTable containers={containers}/>
+            </Box>
+        </Fade>
     );
 };
