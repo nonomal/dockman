@@ -1,6 +1,6 @@
 # Dockman
 
-**⚠️ Warning: This software is currently in alpha. While it works (I'm personally using it to manage my server), expect
+**⚠️ Warning: Dockman is currently in alpha. While it works (I'm personally using it to manage my server), expect
 bugs and breaking changes.**
 
 Dockman is a tool designed to simplify the management of Docker Compose files,
@@ -14,16 +14,54 @@ It provides a straightforward way to edit, track, and back up your compose confi
 ![img.png](.github/img/deploy.png)
 ![img.png](.github/img/dashboard.png)
 
-## Table of Contents
+## Contents
 
-- [Philosophy](#philosophy)
-    - [How It Compares](#how-it-compares)
-    - [Who It's For](#who-its-for)
 - [Usage](#usage)
 - [WIP Features](#wip-features)
+- [Philosophy](#philosophy)
+    - [How It Compares](#how-it-compares)
 - [Feedback](#feedback)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Usage
+
+Use the following to get Dockman running.
+
+It is very important that the path for your stacks directory is the same in the three locations marked below.
+
+* 1️⃣ The host side of the volume (/path/to/stacks)
+* 2️⃣ The container side of the volume (/path/to/stacks)
+* 3️⃣ The path for the --cr command flag (/path/to/stacks)
+
+All three must be identical for Dockman to locate and manage your compose files correctly.
+
+```yaml
+  dockman:
+    container_name: dockman
+    image: ghcr.io/ra341/dockman:dev
+    volumes:
+      #  1️⃣                 2️⃣
+      - /path/to/stacks:/path/to/stacks
+      - /var/run/docker.sock:/var/run/docker.sock
+    command:
+      - "./dockman"
+      - "--ui=dist"
+      #  3️⃣
+      - "--cr=/path/to/stacks"
+    ports:
+      - "8866:8866"
+    restart: always
+```
+
+## WIP Features
+
+* **Easy Editing with LSP Support:** Integrated Language Server Protocol (LSP) for enhanced editing features like
+  autocompletion and syntax validation.
+* **Git Tracking:** Built-in Git support to track changes in your compose files, providing version history and easy
+  rollbacks.
+* **Painless Backup/Restore:** Simple, reliable commands for backing up and restoring your entire Docker Compose setup
+  using git.
 
 ## Philosophy
 
@@ -65,6 +103,16 @@ No directories, no complex paths—everything in a flat folder.
 This approach keeps everything organized and predictable,
 making it easy to locate and manage your compose files.
 
+Dockman isn't for everyone, and that's by design. It's built for users who:
+
+- Prefer direct file editing over GUI abstractions
+- Want a clean, purpose-built interface
+- Value simplicity over feature breadth
+
+If this matches your workflow, I'd appreciate a star on the project.
+
+Even if it doesn't, I'd love to hear your [feedback](#feedback).
+
 ## How It Compares
 
 **vs. [Portainer](https://github.com/portainer/portainer)**: Dockman delivers a focused, minimalist experience designed
@@ -76,57 +124,6 @@ embraces direct compose file editing—like working with your favorite text edit
 hands-on control over your configurations.
 
 The project takes inspiration from both these excellent tools.
-
-## Who It's For
-
-Dockman isn't for everyone, and that's by design. It's built for users who:
-
-- Prefer direct file editing over GUI abstractions
-- Want a clean, purpose-built interface
-- Value simplicity over feature breadth
-
-If this matches your workflow, I'd appreciate a star on the project.
-
-Even if it doesn't, I'd love to hear your [feedback](#feedback).
-
-## Usage
-
-Use the following to get Dockman running.
-
-It is very important that the path for your stacks directory is the same in the three locations marked below.
-
-* 1️⃣ The host side of the volume (/path/to/stacks)
-* 2️⃣ The container side of the volume (/path/to/stacks)
-* 3️⃣ The path for the --cr command flag (/path/to/stacks)
-
-All three must be identical for Dockman to locate and manage your compose files correctly.
-
-```yaml
-  dockman:
-    container_name: dockman
-    image: ghcr.io/ra341/dockman:dev
-    volumes:
-      #  1️⃣                 2️⃣
-      - /path/to/stacks:/path/to/stacks
-      - /var/run/docker.sock:/var/run/docker.sock
-    command:
-      - "./dockman"
-      - "--ui=dist"
-      #  3️⃣
-      - "--cr=/path/to/stacks"
-    ports:
-      - "8866:8866"
-    restart: always
-```
-
-## WIP Features
-
-* **Easy Editing with LSP Support:** Integrated Language Server Protocol (LSP) for enhanced editing features like
-  autocompletion and syntax validation.
-* **Git Tracking:** Built-in Git support to track changes in your compose files, providing version history and easy
-  rollbacks.
-* **Painless Backup/Restore:** Simple, reliable commands for backing up and restoring your entire Docker Compose setup
-  using git.
 
 ## Feedback
 
