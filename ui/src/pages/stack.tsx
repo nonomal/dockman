@@ -1,9 +1,8 @@
-// components/CenteredMessage.tsx
 import React, {type SyntheticEvent, useEffect, useMemo, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {StackEditor} from "./stack-editor.tsx";
 import {StackDeploy} from "./stack-deploy.tsx";
-import {Box, CircularProgress, Tab, Tabs, Typography} from '@mui/material';
+import {Box, CircularProgress, Fade, Tab, Tabs, Typography} from '@mui/material';
 import {StatStacksPage} from "./stack-stats.tsx";
 import {callRPC, useClient} from "../lib/api.ts";
 import {FileService} from "../gen/files/v1/files_pb.ts";
@@ -11,7 +10,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 interface TabDetails {
     label: string;
-    component: React.ReactNode;
+    component: React.ReactElement;
 }
 
 export function Stack() {
@@ -107,7 +106,13 @@ export function Stack() {
                     ))}
                 </Tabs>
             </Box>
-            {activePanel}
+            {activePanel && (
+                <Fade in={true} timeout={200} key={currentTab} >
+                    <Box sx={{flexGrow: 1, overflow: 'auto'}}>
+                        {activePanel}
+                    </Box>
+                </Fade>
+            )}
         </>
     );
 }
