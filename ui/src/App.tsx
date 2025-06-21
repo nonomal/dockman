@@ -1,6 +1,6 @@
 import {Box, createTheme, CssBaseline, ThemeProvider} from '@mui/material';
 import {SnackbarProvider} from "./context/snackbar.tsx";
-import {FileManagerPage} from "./pages/file-manager.tsx";
+import {StackPage} from "./pages/stack-view.tsx";
 import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
 import {DashboardPage} from "./pages/dashboard-page.tsx";
 import {NavSidebar} from "./components/sidebar.tsx";
@@ -22,7 +22,7 @@ export default function App() {
                             <Route element={<PrivateRoute/>}>
                                 <Route path="/" element={<HomePage/>}>
                                     <Route index element={<DashboardPage/>}/>
-                                    <Route path="files/:filename" element={<FileManagerPage/>}/>
+                                    <Route path="files/:filename/:selectedTab?" element={<StackPage/>}/>
                                     <Route path="settings" element={<SettingsPage/>}/>
                                 </Route>
                             </Route>

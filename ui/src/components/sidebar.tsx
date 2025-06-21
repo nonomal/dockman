@@ -34,6 +34,8 @@ import {
 import {useAuth, useSnackbar} from "../context/providers.ts";
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
+// todo refactor file bar into its own component out of navbar
+
 interface FileComponent {
     name: string;
     children: string[];
@@ -145,7 +147,7 @@ export function NavSidebar() {
             })
 
         // If the deleted file was the active one, navigate to dashboard
-        if (location.pathname === `/files/${filename}`) {
+        if (location.pathname.startsWith(`/files/${filename}`)) {
             navigate('/');
         }
     };
@@ -226,8 +228,8 @@ export function NavSidebar() {
                                             <ListItemButton
                                                 key={child}
                                                 component={RouterLink}
-                                                to={`/files/${child}`}
-                                                selected={location.pathname === `/files/${child}`}
+                                                to={`/files/${child}/editor`}
+                                                selected={location.pathname.startsWith(`/files/${child}`)}
                                             >
                                                 <ListItemIcon><AttachFileRounded
                                                     sx={{fontSize: '1.25rem'}}/></ListItemIcon>

@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogTitle,
     Paper,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -201,6 +202,8 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                                         <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Status</TableCell>
                                         <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Image</TableCell>
                                         <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Ports</TableCell>
+                                        <TableCell
+                                            sx={{fontWeight: 'bold', color: 'text.secondary'}}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
 
@@ -240,6 +243,46 @@ export function DeployPage({selectedPage}: DeployPageProps) {
                                                 <Typography variant="body2" fontWeight="500">
                                                     {formatPorts(container.ports)}
                                                 </Typography>
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                <Stack direction="row" spacing={1}>
+                                                    {/* Start Button */}
+                                                    <PlayArrowIcon
+                                                        aria-label="start container"
+                                                        color="success"
+                                                        onClick={() => {
+                                                        }}
+                                                    >
+                                                    </PlayArrowIcon>
+
+                                                    {/* Stop Button */}
+                                                    <StopIcon
+                                                        aria-label="stop container"
+                                                        color="error"
+                                                        onClick={() => {
+                                                        }}
+                                                    >
+                                                        <StopIcon/>
+                                                    </StopIcon>
+                                                    <RestartAltIcon
+                                                        aria-label="restart container"
+                                                        color="primary"
+                                                        onClick={() => {
+                                                        }}
+                                                    >
+                                                        <RestartAltIcon/>
+                                                    </RestartAltIcon>
+
+                                                    {/* Delete Button */}
+                                                    <DeleteIcon
+                                                        aria-label="delete container"
+                                                        color="warning"
+                                                        onClick={() => {
+                                                        }}
+                                                    >
+                                                        <DeleteIcon/>
+                                                    </DeleteIcon>
+                                                </Stack>
                                             </TableCell>
                                         </TableRow>
                                     ))}
