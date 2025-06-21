@@ -18,6 +18,9 @@ import (
 	"strings"
 )
 
+// stolen from
+// https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
+
 type ComposeService struct {
 	composeRoot string
 	daemon      *client.Client
@@ -83,9 +86,6 @@ func (s *ComposeService) Update(ctx context.Context, filename string, opts ...Op
 		}
 
 		log.Info().Str("stack", project.Name).Msgf("New images were downloaded, updating stack")
-		if err = s.downStack(ctx, cli, project); err != nil {
-			return err
-		}
 
 		if err = s.startStack(ctx, cli, project); err != nil {
 			return err

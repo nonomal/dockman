@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/rs/zerolog/log"
 	"io"
+	"net"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ func NewConnectHandler(srv *Service) *Handler {
 }
 
 func (h *Handler) Start(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
-	pipeWriter, wg := StreamManager(func(val string) error {
+	pipeWriter, wg := streamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
 		}
@@ -39,7 +40,7 @@ func (h *Handler) Start(_ context.Context, req *connect.Request[v1.ComposeFile],
 }
 
 func (h *Handler) Stop(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
-	pipeWriter, wg := StreamManager(func(val string) error {
+	pipeWriter, wg := streamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
 		}
@@ -57,7 +58,7 @@ func (h *Handler) Stop(_ context.Context, req *connect.Request[v1.ComposeFile], 
 }
 
 func (h *Handler) Remove(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
-	pipeWriter, wg := StreamManager(func(val string) error {
+	pipeWriter, wg := streamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
 		}
@@ -75,7 +76,7 @@ func (h *Handler) Remove(_ context.Context, req *connect.Request[v1.ComposeFile]
 }
 
 func (h *Handler) Restart(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
-	pipeWriter, wg := StreamManager(func(val string) error {
+	pipeWriter, wg := streamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
 		}
@@ -93,7 +94,7 @@ func (h *Handler) Restart(_ context.Context, req *connect.Request[v1.ComposeFile
 }
 
 func (h *Handler) Update(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
-	pipeWriter, wg := StreamManager(func(val string) error {
+	pipeWriter, wg := streamManager(func(val string) error {
 		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
 			return err
 		}
@@ -140,6 +141,11 @@ func (h *Handler) Stats(ctx context.Context, _ *connect.Request[v1.Empty]) (*con
 	}), nil
 }
 
+func isIPV4(ip string) bool {
+	parsedIP := net.ParseIP(ip)
+	return parsedIP != nil && parsedIP.To4() != nil
+}
+
 func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
 	result, err := h.srv.ListStack(ctx, req.Msg.GetFilename())
 	if err != nil {
@@ -149,30 +155,19 @@ func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]
 	var dockerResult []*v1.ContainerList
 	for _, stack := range result {
 		var portSlice []*v1.Port
-		for _, v := range stack.Ports {
-			portSlice = append(portSlice, &v1.Port{
-				Public:  int32(v.PublicPort),
-				Private: int32(v.PrivatePort),
-				Host:    v.IP,
-				Type:    v.Type,
-			})
+		for _, p := range stack.Ports {
+			if isIPV4(p.IP) {
+				// ignore ipv6 ports no one uses it anyway
+				portSlice = append(portSlice, toRPCPort(p))
+			}
 		}
-
-		res := &v1.ContainerList{
-			Id:        stack.ID,
-			ImageID:   stack.ImageID,
-			ImageName: stack.Image,
-			Status:    stack.Status,
-			Name:      stack.Names[0],
-			Ports:     portSlice,
-		}
-		dockerResult = append(dockerResult, res)
+		dockerResult = append(dockerResult, toRPContainer(stack, portSlice))
 	}
 
 	return connect.NewResponse(&v1.ListResponse{List: dockerResult}), err
 }
 
-func StreamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitGroup) {
+func streamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitGroup) {
 	pipeReader, pipeWriter := io.Pipe()
 	wg := sync.WaitGroup{}
 	// Start a goroutine that reads from the pipe, splits the data into lines,
@@ -196,4 +191,25 @@ func StreamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitG
 	}()
 
 	return pipeWriter, &wg
+}
+
+func toRPCPort(p container.Port) *v1.Port {
+	return &v1.Port{
+		Public:  int32(p.PublicPort),
+		Private: int32(p.PrivatePort),
+		Host:    p.IP,
+		Type:    p.Type,
+	}
+}
+
+func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerList {
+	return &v1.ContainerList{
+		Id:        stack.ID,
+		ImageID:   stack.ImageID,
+		ImageName: stack.Image,
+		Status:    stack.Status,
+		Name:      stack.Names[0],
+		Ports:     portSlice,
+	}
+
 }
