@@ -18,16 +18,17 @@ func NewConnectHandler(service *Service) *Handler {
 }
 
 func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
-	flist, err := h.srv.List()
+	fileList, err := h.srv.List()
 	if err != nil {
 		return nil, err
 	}
 
 	var resp []*v1.FileGroup
-	for _, key := range slices.Sorted(maps.Keys(flist)) {
+	for _, key := range slices.Sorted(maps.Keys(fileList)) {
+		slices.Sort(fileList[key])
 		resp = append(resp, &v1.FileGroup{
 			Root:     key,
-			SubFiles: flist[key],
+			SubFiles: fileList[key],
 		})
 	}
 
