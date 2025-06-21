@@ -3,7 +3,7 @@ import {Box, Fade, Paper, Typography, useTheme,} from '@mui/material';
 import {CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis,} from 'recharts';
 import {useClient} from '../lib/api.ts';
 import {DockerService} from '../gen/docker/v1/docker_pb.ts';
-import {useSnackbar} from '../context/providers.ts';
+import {useSnackbar} from '../hooks/snackbar.ts';
 import {callRPC} from '../lib/api';
 import {ContainersTable} from '../components/containers-table';
 import EntertainingLoader from "../components/dashboard-loader.tsx";
@@ -247,7 +247,7 @@ export const DashboardPage = () => {
                 alignItems: 'center',
                 height: '100vh',
             }}>
-                <EntertainingLoader intervalDuration={1100}/>
+                <EntertainingLoader/>
             </Box>
         );
     }

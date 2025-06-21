@@ -1,7 +1,7 @@
 import React, {type SyntheticEvent, useEffect, useMemo} from 'react';
 import {useNavigate, useParams} from 'react-router-dom'; // 1. Import useNavigate
-import {EditorPage} from "./editor-page.tsx";
-import {DeployPage} from "./deploy-page.tsx";
+import {StackEditor} from "./stack-editor.tsx";
+import {StackDeploy} from "./stack-deploy.tsx";
 import {Box, Tab, Tabs, Typography} from '@mui/material';
 import {StatStacksPage} from "./stack-stats.tsx";
 
@@ -10,7 +10,7 @@ interface TabDetails {
     component: React.ReactNode;
 }
 
-export function StackPage() {
+export function Stack() {
     const {filename, selectedTab} = useParams<{ filename: string; selectedTab: string }>();
     const navigate = useNavigate();
 
@@ -20,13 +20,13 @@ export function StackPage() {
 
         map.set('editor', {
             label: 'Editor',
-            component: <EditorPage key={filename!} selectedPage={filename!}/>
+            component: <StackEditor key={filename!} selectedPage={filename!}/>
         });
 
         if (isComposeFile) {
             map.set('deploy', {
                 label: 'Deploy',
-                component: <DeployPage selectedPage={filename!}/>
+                component: <StackDeploy selectedPage={filename!}/>
             });
             map.set('stats', {
                 label: 'Stats',

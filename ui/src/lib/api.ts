@@ -55,6 +55,18 @@ export async function uploadFile(filename: string, contents: string): Promise<st
     }
 }
 
+export async function pingWithAuth() {
+    try {
+        console.log("Checking authentication status with server...");
+        const response = await fetch('/auth/ping');
+        console.log(`Server response isOK: ${response.ok}`);
+        return response.ok
+    } catch (error) {
+        console.error("Authentication check failed:", error);
+        return false
+    }
+}
+
 export async function downloadFileAtCommit(filename: string, commitId: string): Promise<{ file: string; err: string }> {
     return download(`api/git/load/${encodeURIComponent(filename)}/${encodeURIComponent(commitId)}`);
 }

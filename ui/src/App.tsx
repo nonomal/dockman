@@ -1,13 +1,13 @@
 import {Box, createTheme, CssBaseline, ThemeProvider} from '@mui/material';
-import {SnackbarProvider} from "./context/snackbar.tsx";
-import {StackPage} from "./pages/stack-view.tsx";
+import {SnackbarProvider} from "./hooks/snackbar-context.tsx";
+import {Stack} from "./pages/stack.tsx";
 import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
 import {DashboardPage} from "./pages/dashboard-page.tsx";
 import {NavSidebar} from "./components/sidebar.tsx";
 import {SettingsPage} from "./pages/settings-page.tsx";
-import {AuthProvider} from "./context/auth.tsx";
+import {AuthProvider} from "./hooks/auth-context.tsx";
 import {AuthPage} from './pages/auth-page.tsx';
-import {useAuth} from "./context/providers.ts";
+import {useAuth} from "./hooks/auth.ts";
 import NotFoundPage from "./components/not-found.tsx";
 
 export default function App() {
@@ -22,7 +22,7 @@ export default function App() {
                             <Route element={<PrivateRoute/>}>
                                 <Route path="/" element={<HomePage/>}>
                                     <Route index element={<DashboardPage/>}/>
-                                    <Route path="files/:filename/:selectedTab?" element={<StackPage/>}/>
+                                    <Route path="files/:filename/:selectedTab?" element={<Stack/>}/>
                                     <Route path="settings" element={<SettingsPage/>}/>
                                 </Route>
                             </Route>

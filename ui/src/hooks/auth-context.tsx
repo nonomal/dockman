@@ -1,12 +1,12 @@
 import React, {type ReactNode, useCallback, useEffect, useMemo, useState} from 'react';
-import {AuthContext} from './providers';
-import {callRPC, useClient} from "../lib/api.ts";
+import {AuthContext} from './auth.ts';
+import {callRPC, pingWithAuth, useClient} from "../lib/api.ts";
 import {AuthService} from "../gen/auth/v1/auth_pb.ts";
 
 export interface AuthProviderProps {
     children: ReactNode;
 }
-;
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -21,20 +21,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         setIsLoading(true);
 
         const checkAuthStatus = async () => {
-            try {
-                console.log("Checking authentication status with server...");
-                const response = await fetch('/auth/ping');
-                setIsAuthenticated(response.ok);
-                console.log(`Server response OK: ${response.ok}. isAuthenticated is now: ${response.ok}`);
-            } catch (error) {
-                console.error("Authentication check failed:", error);
-                setIsAuthenticated(false);
-            } finally {
+            pingWithAuth().then(value => {
+                setIsAuthenticated(value);
+                console.log(`isAuthenticated is now: ${value}`)
+            }).finally(() => {
                 setIsLoading(false);
-            }
+            });
         };
 
-        checkAuthStatus();
+        checkAuthStatus().then();
     }, [authVersion]);
 
     const userClient = useClient(AuthService)

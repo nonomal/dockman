@@ -2,7 +2,8 @@ import React, {useState} from 'react';
 import {Box, Button, Container, Paper, TextField, Typography,} from '@mui/material';
 import {callRPC, useClient} from "../lib/api.ts";
 import {AuthService} from "../gen/auth/v1/auth_pb.ts";
-import {useAuth, useSnackbar} from "../context/providers.ts";
+import {useAuth} from "../hooks/auth.ts";
+import {useSnackbar} from "../hooks/snackbar.ts";
 import {useNavigate} from "react-router-dom";
 
 export function AuthPage() {

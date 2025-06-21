@@ -11,7 +11,7 @@ const defaultMessages = [
     'Shoveling coal...',
     'Definitely not mining crypto...',
     'KEEP SUMMER SAFE',
-    'you fucked with squirrels morty...',
+    'You fucked with squirrels morty...',
 ];
 
 interface EntertainingLoaderProps {
@@ -30,24 +30,21 @@ function getRandomIndex(len: number) {
 
 const EntertainingLoader: FC<EntertainingLoaderProps> = ({
                                                              messages = defaultMessages,
-                                                             intervalDuration = 900,
+                                                             intervalDuration = 1200,
                                                              sx,
                                                          }) => {
-    const [messageIndex, setMessageIndex] = useState(
-        // Start with a random message right away
-        getRandomIndex(messages.length)
-    );
+
+    const [messageIndex, setMessageIndex] = useState(getRandomIndex(messages.length));
 
     useEffect(() => {
         const interval = setInterval(() => {
-            // On each tick, just pick a new random index. No need to check the previous one.
             const nextIndex = getRandomIndex(messages.length);
             setMessageIndex(nextIndex);
         }, intervalDuration);
 
 
         return () => clearInterval(interval);
-    }, [messages.length, intervalDuration]); // Effect dependencies are typed and safe
+    }, [messages.length, intervalDuration]);
 
     return (
         <Box
@@ -60,16 +57,39 @@ const EntertainingLoader: FC<EntertainingLoaderProps> = ({
                 ...sx,
             }}
         >
-            {/*<CircularProgress/>*/}
             <Box sx={{mt: 2, height: '24px', textAlign: 'center'}}>
                 <Fade in={true} key={messageIndex}>
-                    <Typography variant="h6" color="text.secondary">
+                    <Typography
+                        variant="h4"
+                        sx={{
+                            ...shimmerAnimation,
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            backgroundImage: 'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.2) 100%)',
+                            backgroundSize: '200% auto',
+                            backgroundClip: 'text',
+                            textFillColor: 'transparent',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            animation: 'shimmer 6s linear infinite',
+                        }}
+                    >
                         {messages[messageIndex]}
                     </Typography>
                 </Fade>
             </Box>
         </Box>
     );
+};
+
+const shimmerAnimation = {
+    '@keyframes shimmer': {
+        '0%': {
+            backgroundPosition: '-200% 0',
+        },
+        '100%': {
+            backgroundPosition: '200% 0',
+        },
+    },
 };
 
 export default EntertainingLoader;

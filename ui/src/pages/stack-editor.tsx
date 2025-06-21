@@ -17,7 +17,7 @@ import {useCallback, useEffect, useRef, useState} from "react";
 import {callRPC, downloadFile, uploadFile, useClient} from "../lib/api.ts";
 import * as monacoEditor from "monaco-editor";
 import {GitService} from "../gen/git/v1/git_pb.ts";
-import {useSnackbar} from "../context/providers.ts";
+import {useSnackbar} from "../hooks/snackbar.ts";
 import {MonacoEditor} from "../components/editor.tsx";
 import {CommitList} from "../components/commit-list.tsx";
 import {DiffViewer} from "../components/diff.tsx";
@@ -28,7 +28,7 @@ interface EditorProps {
 
 type SaveState = 'idle' | 'typing' | 'saving' | 'success' | 'error'
 
-export function EditorPage({selectedPage}: EditorProps) {
+export function StackEditor({selectedPage}: EditorProps) {
     const gitClient = useClient(GitService);
     const {showSuccess, showError} = useSnackbar();
 

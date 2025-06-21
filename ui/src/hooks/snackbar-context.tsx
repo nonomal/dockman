@@ -1,6 +1,6 @@
 import React, {type ReactNode, useState} from 'react';
 import {Alert, type AlertColor, Snackbar} from '@mui/material';
-import {SnackbarContext, type SnackbarContextType, type SnackbarOptions} from './providers';
+import {SnackbarContext, type SnackbarContextType, type SnackbarOptions} from './snackbar.ts';
 
 interface SnackbarState {
     open: boolean;

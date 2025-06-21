@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {type Commit, GitService} from "../gen/git/v1/git_pb";
 import {callRPC, useClient} from "../lib/api";
-import {useSnackbar} from "../context/providers.ts";
+import {useSnackbar} from "../hooks/snackbar.ts";
 import {
     Accordion,
     AccordionDetails,

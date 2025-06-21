@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import {type ComposeActionResponse, type ContainerList, DockerService, type Port} from "../gen/docker/v1/docker_pb.ts";
 import {callRPC, useClient} from '../lib/api.ts';
-import {useSnackbar} from "../context/providers.ts";
+import {useSnackbar} from "../hooks/snackbar.ts";
 import {trim} from "../lib/utils.ts";
 import {ConnectError} from "@connectrpc/connect";
 import TerminalPopup from "../components/terminal-logs.tsx";
@@ -36,7 +36,7 @@ interface DeployPageProps {
     selectedPage: string
 }
 
-export function DeployPage({selectedPage}: DeployPageProps) {
+export function StackDeploy({selectedPage}: DeployPageProps) {
     const dockerService = useClient(DockerService);
     const {showSuccess, showWarning} = useSnackbar();
 
