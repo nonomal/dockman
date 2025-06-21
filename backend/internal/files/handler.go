@@ -47,6 +47,20 @@ func (h *Handler) Create(_ context.Context, c *connect.Request[v1.CreateFile]) (
 
 	return &connect.Response[v1.Empty]{}, nil
 }
+
+func (h *Handler) Exists(_ context.Context, req *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
+	ok, err := h.srv.Exists(req.Msg.GetFilename())
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		return nil, fmt.Errorf("file not found")
+	}
+
+	return &connect.Response[v1.Empty]{}, nil
+}
+
 func (h *Handler) Delete(_ context.Context, c *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
 	filename, err := getFile(c.Msg)
 	if err != nil {
@@ -58,76 +72,12 @@ func (h *Handler) Delete(_ context.Context, c *connect.Request[v1.File]) (*conne
 	}
 
 	return &connect.Response[v1.Empty]{}, nil
-
 }
 
 func (h *Handler) Rename(ctx context.Context, c *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
 	//TODO implement me
 	panic("implement me")
 }
-
-//func (h *Handler) UpdateContents(_ context.Context, stream *connect.ClientStream[comprpc.FileTransfer]) (*connect.Response[comprpc.Empty], error) {
-//	stream.Receive()
-//	filename := stream.Msg().GetFilename()
-//	if filename == "" {
-//		return nil, fmt.Errorf("filename not received no data was written")
-//	}
-//
-//	err := h.srv.Save(filename)
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer closeFile(file)
-//
-//	for stream.Receive() {
-//		_, err := writer.Write(stream.Msg().GetChunkData())
-//		if err != nil {
-//			return nil, err
-//		}
-//	}
-//	if err = stream.Err(); err != nil {
-//		return nil, connect.NewError(connect.CodeUnknown, err)
-//	}
-//
-//	if err = writer.Flush(); err != nil {
-//		return nil, err
-//	}
-//
-//	return &connect.Response[comprpc.Empty]{}, nil
-//}
-//
-//func (h *Handler) LoadContents(_ context.Context, req *connect.Request[comprpc.File], stream *connect.ServerStream[comprpc.FileTransfer]) error {
-//	reader, closer, err := h.srv.Load(req.Msg.GetFilename())
-//	if err != nil {
-//		return err
-//	}
-//	defer closeFile(closer)
-//
-//	// 5kb chunks
-//	const chunkSize = 5 * 1024
-//	buffer := make([]byte, chunkSize)
-//	for {
-//		n, err := reader.Read(buffer)
-//		if n > 0 {
-//			if err := stream.Send(
-//				&comprpc.FileTransfer{
-//					FileInfo: &comprpc.FileTransfer_ChunkData{ChunkData: buffer[:n]},
-//				},
-//			); err != nil {
-//				return err
-//			}
-//		}
-//
-//		if err != nil {
-//			if err == io.EOF {
-//				break
-//			}
-//			return err
-//		}
-//	}
-//
-//	return nil
-//}
 
 func getFile(c *v1.File) (string, error) {
 	msg := c.GetFilename()

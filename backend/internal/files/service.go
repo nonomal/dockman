@@ -99,6 +99,14 @@ func (s *Service) Create(fileName, parent string) error {
 	return nil
 }
 
+func (s *Service) Exists(filename string) (bool, error) {
+	ok, err := s.Fdb.Exists(filename)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
+}
+
 func (s *Service) Delete(fileName string) error {
 	fullpath := s.getPath(fileName)
 	if err := os.RemoveAll(fullpath); err != nil {

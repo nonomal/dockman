@@ -305,7 +305,6 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
                 )}
             </Box>
 
-            {/* --- Bottom Bar --- */}
             <Box
                 sx={{
                     p: 2,

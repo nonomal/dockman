@@ -23,8 +23,8 @@ export const FileItem = React.memo(({group, onAdd, onDelete}: FileItemProps) => 
         <>
             <ListItemButton
                 component={RouterLink}
-                to={`/files/${group.name}`}
-                selected={location.pathname === `/files/${group.name}`}
+                to={`/files/${group.name}/editor`}
+                selected={location.pathname.startsWith(`/files/${group.name}`)}
             >
                 <ListItemIcon><FileIcon/></ListItemIcon>
                 <ListItemText primary={group.name}/>

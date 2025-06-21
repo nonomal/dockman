@@ -1,9 +1,13 @@
-import React, {type SyntheticEvent, useEffect, useMemo} from 'react';
-import {useNavigate, useParams} from 'react-router-dom'; // 1. Import useNavigate
+// components/CenteredMessage.tsx
+import React, {type SyntheticEvent, useEffect, useMemo, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
 import {StackEditor} from "./stack-editor.tsx";
 import {StackDeploy} from "./stack-deploy.tsx";
-import {Box, Tab, Tabs, Typography} from '@mui/material';
+import {Box, CircularProgress, Tab, Tabs, Typography} from '@mui/material';
 import {StatStacksPage} from "./stack-stats.tsx";
+import {callRPC, useClient} from "../lib/api.ts";
+import {FileService} from "../gen/files/v1/files_pb.ts";
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 interface TabDetails {
     label: string;
@@ -13,24 +17,54 @@ interface TabDetails {
 export function Stack() {
     const {filename, selectedTab} = useParams<{ filename: string; selectedTab: string }>();
     const navigate = useNavigate();
+    const fileService = useClient(FileService);
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [fileError, setFileError] = useState("");
+
+    useEffect(() => {
+        setIsLoading(true);
+        setFileError("");
+
+        if (!filename) {
+            setFileError("No filename provided in the URL.");
+            setIsLoading(false);
+            return;
+        }
+
+        callRPC(() => fileService.exists({filename: filename}))
+            .then(value => {
+                if (value.err) {
+                    console.error("API error checking file existence:", value.err);
+                    setFileError(`An API error occurred: ${value.err}`);
+                }
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+
+    }, [filename, fileService]);
 
     const tabsMap: Map<string, TabDetails> = useMemo(() => {
-        const isComposeFile = filename?.endsWith(".yml") || filename?.endsWith(".yaml");
+        // Return an empty map if there's no filename to avoid errors
+        if (!filename) return new Map();
+
+        const isComposeFile = filename.endsWith(".yml") || filename.endsWith(".yaml");
         const map = new Map<string, TabDetails>();
 
         map.set('editor', {
             label: 'Editor',
-            component: <StackEditor key={filename!} selectedPage={filename!}/>
+            component: <StackEditor key={filename} selectedPage={filename}/>
         });
 
         if (isComposeFile) {
             map.set('deploy', {
                 label: 'Deploy',
-                component: <StackDeploy selectedPage={filename!}/>
+                component: <StackDeploy selectedPage={filename}/>
             });
             map.set('stats', {
                 label: 'Stats',
-                component: <StatStacksPage selectedPage={filename!}/>
+                component: <StatStacksPage selectedPage={filename}/>
             });
         }
 
@@ -43,20 +77,27 @@ export function Stack() {
         navigate(`/files/${filename}/${newKey}`);
     };
 
-    const activePanel = tabsMap.get(currentTab)?.component;
-
     useEffect(() => {
-        if (selectedTab && !tabsMap.has(selectedTab)) {
-            // for bad URL: /files/file.txt/invalid-tab
-            // redirect them to the default tab.
+        if (selectedTab && tabsMap.size > 0 && !tabsMap.has(selectedTab)) {
             navigate(`/files/${filename}/editor`, {replace: true});
         }
     }, [filename, selectedTab, tabsMap, navigate]);
 
-    if (!filename) {
-        return <Typography sx={{p: 3}}>Error: No filename provided.</Typography>;
+    if (isLoading) {
+        return <CenteredMessage icon={<CircularProgress/>} title=""/>;
     }
 
+    if (fileError) {
+        return (
+            <CenteredMessage
+                icon={<ErrorOutlineIcon color="error" sx={{fontSize: 60}}/>}
+                title={`Unable to load file: ${filename}`}
+                message={fileError}
+            />
+        );
+    }
+
+    const activePanel = tabsMap.get(currentTab)?.component;
     return (
         <>
             <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
@@ -68,5 +109,34 @@ export function Stack() {
             </Box>
             {activePanel}
         </>
+    );
+}
+
+interface CenteredMessageProps {
+    icon?: React.ReactNode;
+    title: string;
+    message?: string;
+}
+
+export function CenteredMessage({icon, title, message}: CenteredMessageProps) {
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '80vh',
+                textAlign: 'center',
+                p: 3,
+                color: 'text.secondary', // Use a softer color for the text
+            }}
+        >
+            {icon && <Box sx={{mb: 2}}>{icon}</Box>}
+            <Typography variant="h5" component="h2" gutterBottom sx={{color: 'text.primary'}}>
+                {title}
+            </Typography>
+            {message && <Typography variant="body1">{message}</Typography>}
+        </Box>
     );
 }

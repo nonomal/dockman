@@ -39,6 +39,8 @@ const (
 	FileServiceListProcedure = "/files.v1.FileService/List"
 	// FileServiceDeleteProcedure is the fully-qualified name of the FileService's Delete RPC.
 	FileServiceDeleteProcedure = "/files.v1.FileService/Delete"
+	// FileServiceExistsProcedure is the fully-qualified name of the FileService's Exists RPC.
+	FileServiceExistsProcedure = "/files.v1.FileService/Exists"
 	// FileServiceRenameProcedure is the fully-qualified name of the FileService's Rename RPC.
 	FileServiceRenameProcedure = "/files.v1.FileService/Rename"
 )
@@ -49,6 +51,7 @@ type FileServiceClient interface {
 	Create(context.Context, *connect.Request[v1.CreateFile]) (*connect.Response[v1.Empty], error)
 	List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error)
 	Delete(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
+	Exists(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
 	Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error)
 }
 
@@ -81,6 +84,12 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(fileServiceMethods.ByName("Delete")),
 			connect.WithClientOptions(opts...),
 		),
+		exists: connect.NewClient[v1.File, v1.Empty](
+			httpClient,
+			baseURL+FileServiceExistsProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("Exists")),
+			connect.WithClientOptions(opts...),
+		),
 		rename: connect.NewClient[v1.RenameFile, v1.Empty](
 			httpClient,
 			baseURL+FileServiceRenameProcedure,
@@ -95,6 +104,7 @@ type fileServiceClient struct {
 	create *connect.Client[v1.CreateFile, v1.Empty]
 	list   *connect.Client[v1.Empty, v1.ListResponse]
 	delete *connect.Client[v1.File, v1.Empty]
+	exists *connect.Client[v1.File, v1.Empty]
 	rename *connect.Client[v1.RenameFile, v1.Empty]
 }
 
@@ -113,6 +123,11 @@ func (c *fileServiceClient) Delete(ctx context.Context, req *connect.Request[v1.
 	return c.delete.CallUnary(ctx, req)
 }
 
+// Exists calls files.v1.FileService.Exists.
+func (c *fileServiceClient) Exists(ctx context.Context, req *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
+	return c.exists.CallUnary(ctx, req)
+}
+
 // Rename calls files.v1.FileService.Rename.
 func (c *fileServiceClient) Rename(ctx context.Context, req *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
 	return c.rename.CallUnary(ctx, req)
@@ -124,6 +139,7 @@ type FileServiceHandler interface {
 	Create(context.Context, *connect.Request[v1.CreateFile]) (*connect.Response[v1.Empty], error)
 	List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error)
 	Delete(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
+	Exists(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
 	Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error)
 }
 
@@ -152,6 +168,12 @@ func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(fileServiceMethods.ByName("Delete")),
 		connect.WithHandlerOptions(opts...),
 	)
+	fileServiceExistsHandler := connect.NewUnaryHandler(
+		FileServiceExistsProcedure,
+		svc.Exists,
+		connect.WithSchema(fileServiceMethods.ByName("Exists")),
+		connect.WithHandlerOptions(opts...),
+	)
 	fileServiceRenameHandler := connect.NewUnaryHandler(
 		FileServiceRenameProcedure,
 		svc.Rename,
@@ -166,6 +188,8 @@ func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption
 			fileServiceListHandler.ServeHTTP(w, r)
 		case FileServiceDeleteProcedure:
 			fileServiceDeleteHandler.ServeHTTP(w, r)
+		case FileServiceExistsProcedure:
+			fileServiceExistsHandler.ServeHTTP(w, r)
 		case FileServiceRenameProcedure:
 			fileServiceRenameHandler.ServeHTTP(w, r)
 		default:
@@ -187,6 +211,10 @@ func (UnimplementedFileServiceHandler) List(context.Context, *connect.Request[v1
 
 func (UnimplementedFileServiceHandler) Delete(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("files.v1.FileService.Delete is not implemented"))
+}
+
+func (UnimplementedFileServiceHandler) Exists(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("files.v1.FileService.Exists is not implemented"))
 }
 
 func (UnimplementedFileServiceHandler) Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {

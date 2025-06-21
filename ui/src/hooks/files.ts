@@ -31,7 +31,7 @@ export function useFiles() {
             setFiles(res);
         }
         setIsLoading(false);
-    }, [client, showError]);
+    }, [client]);
 
     useEffect(() => {
         fetchFiles().then();
@@ -46,7 +46,7 @@ export function useFiles() {
             await fetchFiles(); // Refetch after successful creation
         }
         // do not add showError, showSuccess will cause infinite refreshes if request fails
-    }, [client, fetchFiles]);
+    }, [client]);
 
     const deleteFile = useCallback(async (filename: string, currentPath: string) => {
         const {err} = await callRPC(() => client.delete({filename}));
@@ -61,7 +61,7 @@ export function useFiles() {
             await fetchFiles(); // Refetch after successful deletion
         }
         // do not add showError, showSuccess will cause infinite refreshes if request fails
-    }, [client, fetchFiles, navigate]);
+    }, [client, fetchFiles]);
 
     return {files, isLoading, addFile, deleteFile, refetch: fetchFiles};
 }

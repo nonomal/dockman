@@ -376,11 +376,12 @@ const file_files_v1_files_proto_rawDesc = "" +
 	"\x06parent\x18\x02 \x01(\tR\x06parent\"\"\n" +
 	"\x04File\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\"\a\n" +
-	"\x05Empty2\xd3\x01\n" +
+	"\x05Empty2\x80\x02\n" +
 	"\vFileService\x121\n" +
 	"\x06Create\x12\x14.files.v1.CreateFile\x1a\x0f.files.v1.Empty\"\x00\x121\n" +
 	"\x04List\x12\x0f.files.v1.Empty\x1a\x16.files.v1.ListResponse\"\x00\x12+\n" +
-	"\x06Delete\x12\x0e.files.v1.File\x1a\x0f.files.v1.Empty\"\x00\x121\n" +
+	"\x06Delete\x12\x0e.files.v1.File\x1a\x0f.files.v1.Empty\"\x00\x12+\n" +
+	"\x06Exists\x12\x0e.files.v1.File\x1a\x0f.files.v1.Empty\"\x00\x121\n" +
 	"\x06Rename\x12\x14.files.v1.RenameFile\x1a\x0f.files.v1.Empty\"\x00B\x88\x01\n" +
 	"\fcom.files.v1B\n" +
 	"FilesProtoP\x01Z+github.com/RA341/dockman/generated/files/v1\xa2\x02\x03FXX\xaa\x02\bFiles.V1\xca\x02\bFiles\\V1\xe2\x02\x14Files\\V1\\GPBMetadata\xea\x02\tFiles::V1b\x06proto3"
@@ -415,13 +416,15 @@ var file_files_v1_files_proto_depIdxs = []int32{
 	4, // 4: files.v1.FileService.Create:input_type -> files.v1.CreateFile
 	6, // 5: files.v1.FileService.List:input_type -> files.v1.Empty
 	5, // 6: files.v1.FileService.Delete:input_type -> files.v1.File
-	3, // 7: files.v1.FileService.Rename:input_type -> files.v1.RenameFile
-	6, // 8: files.v1.FileService.Create:output_type -> files.v1.Empty
-	1, // 9: files.v1.FileService.List:output_type -> files.v1.ListResponse
-	6, // 10: files.v1.FileService.Delete:output_type -> files.v1.Empty
-	6, // 11: files.v1.FileService.Rename:output_type -> files.v1.Empty
-	8, // [8:12] is the sub-list for method output_type
-	4, // [4:8] is the sub-list for method input_type
+	5, // 7: files.v1.FileService.Exists:input_type -> files.v1.File
+	3, // 8: files.v1.FileService.Rename:input_type -> files.v1.RenameFile
+	6, // 9: files.v1.FileService.Create:output_type -> files.v1.Empty
+	1, // 10: files.v1.FileService.List:output_type -> files.v1.ListResponse
+	6, // 11: files.v1.FileService.Delete:output_type -> files.v1.Empty
+	6, // 12: files.v1.FileService.Exists:output_type -> files.v1.Empty
+	6, // 13: files.v1.FileService.Rename:output_type -> files.v1.Empty
+	9, // [9:14] is the sub-list for method output_type
+	4, // [4:9] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
 	4, // [4:4] is the sub-list for extension extendee
 	0, // [0:4] is the sub-list for field type_name
