@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Box,
     Button,
@@ -8,6 +8,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Link,
     Paper,
     Stack,
     Table,
@@ -16,6 +17,7 @@ import {
     TableContainer,
     TableHead,
     TableRow,
+    Tooltip,
     Typography
 } from '@mui/material';
 import {
@@ -149,11 +151,46 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
         return 'default';
     };
 
-    const formatPorts = (ports: Port[]): string => {
+    const formatPorts = (ports: Port[]) => {
         if (!ports || ports.length === 0) {
-            return '—';
+            return <>—</>;
         }
-        return ports.map(p => `${p.host}:${p.public} → :${p.private}/${p.type}`).join(', ');
+        return (
+            <>
+                {ports.map((p, index) => (
+                        <React.Fragment key={`${p.host}-${p.public}-${p.private}`}>
+                            <Tooltip title={`Public Port`} arrow>
+                                <Link
+                                    href={`http://${p.host}:${p.public}`}
+                                    target="_blank" // Opens the link in a new tab
+                                    rel="noopener noreferrer" // Security
+                                    sx={{textDecoration: 'none'}} // Removes the default underline
+                                >
+                                    <Box
+                                        component="span"
+                                        sx={{
+                                            color: 'success.main',
+                                            cursor: 'pointer', // Changed from 'help' to 'pointer' for a link
+                                            '&:hover': {
+                                                textDecoration: 'underline', // Add underline on hover for affordance
+                                            },
+                                        }}
+                                    >
+                                        {p.host}:{p.public}
+                                    </Box>
+                                </Link>
+                            </Tooltip> {' → '}
+                            <Tooltip title="Internal container port" arrow>
+                                <Box component="span" sx={{color: 'info.main', cursor: 'pointer',}}>
+                                    :{p.private}/{p.type}
+                                </Box>
+                            </Tooltip>
+                            {index < ports.length - 1 && ', '}
+                        </React.Fragment>
+                    )
+                )}
+            </>
+        );
     };
 
     return (
@@ -184,122 +221,116 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
                     flexGrow: 1,
                     border: '2px dashed',
                     borderColor: 'rgba(255, 255, 255, 0.23)',
-                    borderRadius: 1,
-                    p: 2,
+                    borderRadius: 4,
                     display: 'flex',
                     flexDirection: 'column',
-                    backgroundColor: 'rgba(0,0,0,0.1)'
+                    backgroundColor: 'rgb(41,41,41)',
+                    overflow: 'hidden'
                 }}
             >
-                {selectedPage ? (
-                    containers.length > 0 ? (
-                        <TableContainer component={Paper} sx={{boxShadow: 3, borderRadius: 2}}>
-                            <Table sx={{minWidth: 650}} aria-label="docker containers table">
-                                {/* Table Header */}
-                                <TableHead>
-                                    <TableRow sx={{'& th': {border: 0}}}>
-                                        <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Name</TableCell>
-                                        <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Status</TableCell>
-                                        <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Image</TableCell>
-                                        <TableCell sx={{fontWeight: 'bold', color: 'text.secondary'}}>Ports</TableCell>
-                                        <TableCell
-                                            sx={{fontWeight: 'bold', color: 'text.secondary'}}>Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
+                {selectedPage && containers.length > 0 ? (
+                    // 1. Give the TableContainer a specific maximum height.
+                    //    This creates the "viewport" for scrolling.
+                    <TableContainer
+                        component={Paper}
+                        sx={{
+                            maxHeight: 440,
+                            boxShadow: 3,
+                            borderRadius: 2,
+                        }}
+                    >
+                        {/* 2. Add the `stickyHeader` prop to the Table. */}
+                        <Table stickyHeader aria-label="sticky header docker containers table">
+                            <TableHead>
+                                {/* 3. It's good practice to set a background on the header cells
+                           so scrolling content doesn't show through. */}
+                                <TableRow>
+                                    <TableCell
+                                        sx={{fontWeight: 'bold', backgroundColor: 'background.paper'}}>Name</TableCell>
+                                    <TableCell sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: 'background.paper'
+                                    }}>Status</TableCell>
+                                    <TableCell
+                                        sx={{fontWeight: 'bold', backgroundColor: 'background.paper'}}>Image</TableCell>
+                                    <TableCell
+                                        sx={{fontWeight: 'bold', backgroundColor: 'background.paper'}}>Ports</TableCell>
+                                    <TableCell sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: 'background.paper'
+                                    }}>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
 
-                                {/* Table Body */}
-                                <TableBody>
-                                    {containers.map((container) => (
-                                        <TableRow
-                                            key={container.id}
-                                            sx={{'&:last-child td, &:last-child th': {border: 0}}}
-                                        >
-                                            {/* Name Cell */}
-                                            <TableCell component="th" scope="row">
-                                                <Typography variant="body1"
-                                                            fontWeight="500">{trim(container.name, "/")}</Typography>
-                                            </TableCell>
-
-                                            {/* Status Cell */}
-                                            <TableCell>
-                                                <Chip
-                                                    label={container.status}
-                                                    color={getStatusChipColor(container.status)}
-                                                    size="small"
-                                                    sx={{textTransform: 'capitalize'}}
+                            {/* This TableBody will now be the scrollable part within the container */}
+                            <TableBody>
+                                {containers.map((container) => (
+                                    <TableRow
+                                        hover // Adds a nice hover effect
+                                        key={container.id}
+                                        sx={{'&:last-child td, &:last-child th': {border: 0}}}
+                                    >
+                                        <TableCell component="th" scope="row">
+                                            <Typography variant="body1"
+                                                        fontWeight="500">{trim(container.name, "/")}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                label={container.status}
+                                                color={getStatusChipColor(container.status)}
+                                                size="small"
+                                                sx={{textTransform: 'capitalize'}}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" color="text.secondary"
+                                                        sx={{wordBreak: 'break-all'}}>
+                                                {container.imageName}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>{formatPorts(container.ports)}</TableCell>
+                                        <TableCell align="right">
+                                            <Stack direction="row" spacing={1}>
+                                                <PlayArrowIcon
+                                                    aria-label="start container"
+                                                    color="success"
+                                                    onClick={() => {
+                                                    }}
+                                                    sx={{cursor: 'pointer'}}
                                                 />
-                                            </TableCell>
-
-                                            {/* Image Cell */}
-                                            <TableCell>
-                                                <Typography variant="body2" color="text.secondary"
-                                                            sx={{wordBreak: 'break-all'}}>
-                                                    {container.imageName}
-                                                </Typography>
-                                            </TableCell>
-
-                                            {/* Ports Cell */}
-                                            <TableCell>
-                                                <Typography variant="body2" fontWeight="500">
-                                                    {formatPorts(container.ports)}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Stack direction="row" spacing={1}>
-                                                    {/* Start Button */}
-                                                    <PlayArrowIcon
-                                                        aria-label="start container"
-                                                        color="success"
-                                                        onClick={() => {
-                                                        }}
-                                                    >
-                                                    </PlayArrowIcon>
-
-                                                    {/* Stop Button */}
-                                                    <StopIcon
-                                                        aria-label="stop container"
-                                                        color="error"
-                                                        onClick={() => {
-                                                        }}
-                                                    >
-                                                        <StopIcon/>
-                                                    </StopIcon>
-                                                    <RestartAltIcon
-                                                        aria-label="restart container"
-                                                        color="primary"
-                                                        onClick={() => {
-                                                        }}
-                                                    >
-                                                        <RestartAltIcon/>
-                                                    </RestartAltIcon>
-
-                                                    {/* Delete Button */}
-                                                    <DeleteIcon
-                                                        aria-label="delete container"
-                                                        color="warning"
-                                                        onClick={() => {
-                                                        }}
-                                                    >
-                                                        <DeleteIcon/>
-                                                    </DeleteIcon>
-                                                </Stack>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    ) : (
-                        <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
-                            <Typography variant="h6" color="text.secondary">
-                                No containers found for this deployment.
-                            </Typography>
-                        </Box>
-                    )
+                                                <StopIcon
+                                                    aria-label="stop container"
+                                                    color="error"
+                                                    onClick={() => {
+                                                    }}
+                                                    sx={{cursor: 'pointer'}}
+                                                />
+                                                <RestartAltIcon
+                                                    aria-label="restart container"
+                                                    color="primary"
+                                                    onClick={() => {
+                                                    }}
+                                                    sx={{cursor: 'pointer'}}
+                                                />
+                                                <DeleteIcon
+                                                    aria-label="delete container"
+                                                    color="warning"
+                                                    onClick={() => {
+                                                    }}
+                                                    sx={{cursor: 'pointer'}}
+                                                />
+                                            </Stack>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
                 ) : (
+                    // ... your other conditional rendering ...
                     <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
                         <Typography variant="h5" color="text.secondary">
-                            Select a page
+                            {selectedPage ? 'No containers found...' : 'Select a page'}
                         </Typography>
                     </Box>
                 )}
