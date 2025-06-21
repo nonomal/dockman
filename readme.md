@@ -1,6 +1,6 @@
 # Dockman
 
-**⚠️ Warning: Dockman is currently in alpha. While it works (I'm personally using it to manage my server), expect
+**⚠️ Warning: Dockman is still under development. While it works (I'm personally using it to manage my server), expect
 bugs and breaking changes.**
 
 Dockman is a tool designed to simplify the management of Docker Compose files,
