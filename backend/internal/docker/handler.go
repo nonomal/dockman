@@ -2,6 +2,7 @@ package docker
 
 import (
 	"bufio"
+	"cmp"
 	"connectrpc.com/connect"
 	"context"
 	v1 "github.com/RA341/dockman/generated/docker/v1"
@@ -10,6 +11,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"io"
 	"net"
+	"slices"
+	"strings"
 	"sync"
 )
 
@@ -111,39 +114,104 @@ func (h *Handler) Update(_ context.Context, req *connect.Request[v1.ComposeFile]
 	return nil
 }
 
-func (h *Handler) Stats(ctx context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.StatsResponse], error) {
-	systemInfo, containers, err := h.srv.GetStats(ctx, container.ListOptions{})
+func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
+	file := req.Msg.GetFile()
+
+	var containers []ContainerStats
+	var err error
+	if file != nil {
+		containers, err = h.srv.StatStack(ctx, file.Filename)
+	} else {
+		containers, err = h.srv.GetStats(ctx, container.ListOptions{})
+	}
 	if err != nil {
 		return nil, err
 	}
 
+	field := req.Msg.GetSortBy().Enum()
+	if field == nil {
+		field = v1.SORT_FIELD_NAME.Enum()
+	}
+	// returns in desc order
+	fn := getSortFn(*field)
+	containers = slices.SortedStableFunc(slices.Values(containers), fn)
+
+	orderby := *req.Msg.Order.Enum()
+
 	var stats []*v1.ContainerStats
-	for _, cont := range containers {
-		stats = append(stats, &v1.ContainerStats{
-			Id:          cont.ID,
-			Name:        cont.Name,
-			CpuUsage:    cont.CPUUsage,
-			MemoryUsage: cont.MemoryUsage,
-			MemoryLimit: cont.MemoryLimit,
-			NetworkRx:   cont.NetworkRx,
-			NetworkTx:   cont.NetworkTx,
-			BlockRead:   cont.BlockRead,
-			BlockWrite:  cont.BlockWrite,
-		})
+	if orderby == v1.ORDER_ASC {
+		// rev dsc list
+		for i := len(containers) - 1; i >= 0; i-- {
+			stats = append(stats, ToRPCStat(containers[i]))
+		}
+	} else {
+		// containers already in dsc order
+		for _, cont := range containers {
+			stats = append(stats, ToRPCStat(cont))
+		}
 	}
 
 	return connect.NewResponse(&v1.StatsResponse{
 		System: &v1.SystemInfo{
-			CPU:        systemInfo.CPU,
-			MemInBytes: systemInfo.Memory.Used,
+			//	CPU:        systemInfo.CPU,
+			//	MemInBytes: systemInfo.Memory.Used,
 		},
 		Containers: stats,
 	}), nil
 }
 
+func ToRPCStat(cont ContainerStats) *v1.ContainerStats {
+	return &v1.ContainerStats{
+		Id:          cont.ID,
+		Name:        strings.TrimPrefix(cont.Name, "/"),
+		CpuUsage:    cont.CPUUsage,
+		MemoryUsage: cont.MemoryUsage,
+		MemoryLimit: cont.MemoryLimit,
+		NetworkRx:   cont.NetworkRx,
+		NetworkTx:   cont.NetworkTx,
+		BlockRead:   cont.BlockRead,
+		BlockWrite:  cont.BlockWrite,
+	}
+}
+
 func isIPV4(ip string) bool {
 	parsedIP := net.ParseIP(ip)
 	return parsedIP != nil && parsedIP.To4() != nil
+}
+
+func getSortFn(field v1.SORT_FIELD) func(a, b ContainerStats) int {
+	switch field {
+	case v1.SORT_FIELD_CPU:
+		return func(a, b ContainerStats) int {
+			return cmp.Compare(b.CPUUsage, a.CPUUsage)
+		}
+	case v1.SORT_FIELD_MEM:
+		return func(a, b ContainerStats) int {
+			return cmp.Compare(b.MemoryUsage, a.MemoryUsage)
+		}
+	case v1.SORT_FIELD_NETWORK_RX:
+		return func(a, b ContainerStats) int {
+			return cmp.Compare(b.NetworkRx, a.NetworkRx)
+		}
+	case v1.SORT_FIELD_NETWORK_TX:
+		return func(a, b ContainerStats) int {
+			return cmp.Compare(b.NetworkTx, a.NetworkTx)
+		}
+	case v1.SORT_FIELD_DISK_W:
+		return func(a, b ContainerStats) int {
+			return cmp.Compare(b.BlockWrite, a.BlockWrite)
+		}
+	case v1.SORT_FIELD_DISK_R:
+		return func(a, b ContainerStats) int {
+			return cmp.Compare(b.BlockRead, a.BlockRead)
+		}
+	case v1.SORT_FIELD_NAME:
+		fallthrough
+	default:
+		return func(a, b ContainerStats) int {
+			return cmp.Compare(b.Name, a.Name)
+		}
+	}
 }
 
 func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {

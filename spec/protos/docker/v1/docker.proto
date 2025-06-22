@@ -11,8 +11,7 @@ service DockerService {
   rpc Restart(ComposeFile) returns (stream ComposeActionResponse) {}
   rpc Update(ComposeFile) returns (stream ComposeActionResponse) {}
   rpc List(ComposeFile) returns (ListResponse) {}
-
-  rpc Stats(Empty) returns (StatsResponse) {}
+  rpc Stats(StatsRequest) returns (StatsResponse) {}
 }
 
 message ComposeActionResponse {
@@ -22,6 +21,27 @@ message ComposeActionResponse {
 message StatsResponse {
   SystemInfo system = 1;
   repeated ContainerStats containers = 2;
+}
+
+enum SORT_FIELD {
+  NAME = 0;
+  CPU = 1;
+  MEM = 2;
+  NETWORK_RX = 3;
+  NETWORK_TX = 4;
+  DISK_R = 5;
+  DISK_W = 6;
+}
+
+enum ORDER {
+  DSC = 0; // default val
+  ASC = 1;
+}
+
+message StatsRequest {
+  ComposeFile file = 1;
+  SORT_FIELD sortBy = 2;
+  ORDER order = 3;
 }
 
 message SystemInfo {

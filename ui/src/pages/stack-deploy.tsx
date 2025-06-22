@@ -1,5 +1,5 @@
 // PortMapping.tsx
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
     Box,
     Button,
@@ -62,6 +62,16 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
         }
     }, [terminalMessages, isLogsPanelMinimized]);
 
+    const fetchContainers = useCallback(async () => {
+        const {val, err} = await callRPC(() => dockerService.list({filename: selectedPage}));
+        if (err) {
+            // Don't show a snackbar on every poll failure
+            console.warn(`Failed to refresh containers: ${err}`);
+            setContainers([]);
+        } else {
+            setContainers(val?.list || []);
+        }
+    }, [dockerService, selectedPage])
 
     useEffect(() => {
         if (!selectedPage) {
@@ -69,21 +79,10 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
             return;
         }
 
-        const fetchContainers = async () => {
-            const {val, err} = await callRPC(() => dockerService.list({filename: selectedPage}));
-            if (err) {
-                // Don't show a snackbar on every poll failure
-                console.warn(`Failed to refresh containers: ${err}`);
-                setContainers([]);
-            } else {
-                setContainers(val?.list || []);
-            }
-        };
-
-        fetchContainers();
+        fetchContainers().then();
         const intervalId = setInterval(fetchContainers, 5000);
         return () => clearInterval(intervalId);
-    }, [selectedPage, dockerService]);
+    }, [selectedPage, fetchContainers]);
 
     const handleActionStart = (actionName: string) => {
         setLoadingStates(prev => ({...prev, [actionName]: true}));
@@ -106,7 +105,8 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
             for await (const mes of logStream) {
                 setTerminalMessages(prevMessages => [...prevMessages, mes.message]);
             }
-
+            // minimize on success
+            setTimeout(() => setIsLogsPanelMinimized(true), 1300)
             showSuccess(`Deployment ${actionName} successfully!`)
         } catch (error: unknown) {
             if (error instanceof ConnectError) {
@@ -115,6 +115,7 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
                 setError(`Failed to ${actionName} deployment\nUnknown Error: ${(error as Error).toString()}`);
             }
         }
+        fetchContainers().then()
     }
 
     const deployHandler = (buttonName: string, messageName: string, handler: () => AsyncIterable<ComposeActionResponse>) => {
@@ -250,14 +251,14 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
                                                 </TableCell>
                                                 <TableCell align="right">
                                                     <Stack direction="row" spacing={1}>
-                                                        <PlayArrowIcon aria-label="start container" color="success"
-                                                                       sx={{cursor: 'pointer'}}/>
-                                                        <StopIcon aria-label="stop container" color="error"
-                                                                  sx={{cursor: 'pointer'}}/>
-                                                        <RestartAltIcon aria-label="restart container" color="primary"
-                                                                        sx={{cursor: 'pointer'}}/>
-                                                        <DeleteIcon aria-label="delete container" color="warning"
-                                                                    sx={{cursor: 'pointer'}}/>
+                                                        {/*<PlayArrowIcon aria-label="start container" color="success"*/}
+                                                        {/*               sx={{cursor: 'pointer'}}/>*/}
+                                                        {/*<StopIcon aria-label="stop container" color="error"*/}
+                                                        {/*          sx={{cursor: 'pointer'}}/>*/}
+                                                        {/*<RestartAltIcon aria-label="restart container" color="primary"*/}
+                                                        {/*                sx={{cursor: 'pointer'}}/>*/}
+                                                        {/*<DeleteIcon aria-label="delete container" color="warning"*/}
+                                                        {/*            sx={{cursor: 'pointer'}}/>*/}
                                                     </Stack>
                                                 </TableCell>
                                             </TableRow>

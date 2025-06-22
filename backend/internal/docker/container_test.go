@@ -15,7 +15,7 @@ func TestStats(t *testing.T) {
 
 	service := ContainerService{daemon: opts}
 
-	systemInfo, containerInfo, err := service.GetStats(context.Background(), container.ListOptions{})
+	containerInfo, err := service.GetStats(context.Background(), container.ListOptions{})
 	require.NoError(t, err)
 
 	// Calculate resources used by the host system *only*.

@@ -26,8 +26,8 @@ func NewService(composeRoot string) *Service {
 		log.Fatal().Err(err).Msg("error initializing docker client")
 	}
 
-	composeClient := newComposeService(composeRoot, dockerClient)
 	containerClient := &ContainerService{daemon: dockerClient}
+	composeClient := newComposeService(composeRoot, containerClient)
 
 	return &Service{
 		ContainerService: containerClient,

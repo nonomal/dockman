@@ -2,15 +2,15 @@
 // @generated from file docker/v1/docker.proto (package docker.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file docker/v1/docker.proto.
  */
 export const file_docker_v1_docker: GenFile = /*@__PURE__*/
-  fileDesc("ChZkb2NrZXIvdjEvZG9ja2VyLnByb3RvEglkb2NrZXIudjEiKAoVQ29tcG9zZUFjdGlvblJlc3BvbnNlEg8KB21lc3NhZ2UYASABKAkiZQoNU3RhdHNSZXNwb25zZRIlCgZzeXN0ZW0YASABKAsyFS5kb2NrZXIudjEuU3lzdGVtSW5mbxItCgpjb250YWluZXJzGAIgAygLMhkuZG9ja2VyLnYxLkNvbnRhaW5lclN0YXRzIi0KClN5c3RlbUluZm8SCwoDQ1BVGAEgASgBEhIKCm1lbUluQnl0ZXMYAiABKAQiNgoMTGlzdFJlc3BvbnNlEiYKBGxpc3QYASADKAsyGC5kb2NrZXIudjEuQ29udGFpbmVyTGlzdCKOAQoNQ29udGFpbmVyTGlzdBIKCgJpZBgBIAEoCRIPCgdpbWFnZUlEGAIgASgJEhEKCWltYWdlTmFtZRgDIAEoCRIOCgZzdGF0dXMYBCABKAkSDAoEbmFtZRgFIAEoCRIPCgdjcmVhdGVkGAYgASgJEh4KBXBvcnRzGAcgAygLMg8uZG9ja2VyLnYxLlBvcnQiugEKDkNvbnRhaW5lclN0YXRzEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEQoJY3B1X3VzYWdlGAMgASgBEhQKDG1lbW9yeV91c2FnZRgEIAEoBBIUCgxtZW1vcnlfbGltaXQYBSABKAQSEgoKbmV0d29ya19yeBgGIAEoBBISCgpuZXR3b3JrX3R4GAcgASgEEhIKCmJsb2NrX3JlYWQYCCABKAQSEwoLYmxvY2tfd3JpdGUYCSABKAQiQwoEUG9ydBIOCgZwdWJsaWMYASABKAUSDwoHcHJpdmF0ZRgCIAEoBRIMCgRob3N0GAMgASgJEgwKBHR5cGUYBCABKAkiBwoFRW1wdHkiHwoLQ29tcG9zZUZpbGUSEAoIZmlsZW5hbWUYASABKAky5wMKDURvY2tlclNlcnZpY2USRQoFU3RhcnQSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaIC5kb2NrZXIudjEuQ29tcG9zZUFjdGlvblJlc3BvbnNlIgAwARJECgRTdG9wEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGiAuZG9ja2VyLnYxLkNvbXBvc2VBY3Rpb25SZXNwb25zZSIAMAESRgoGUmVtb3ZlEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGiAuZG9ja2VyLnYxLkNvbXBvc2VBY3Rpb25SZXNwb25zZSIAMAESRwoHUmVzdGFydBIWLmRvY2tlci52MS5Db21wb3NlRmlsZRogLmRvY2tlci52MS5Db21wb3NlQWN0aW9uUmVzcG9uc2UiADABEkYKBlVwZGF0ZRIWLmRvY2tlci52MS5Db21wb3NlRmlsZRogLmRvY2tlci52MS5Db21wb3NlQWN0aW9uUmVzcG9uc2UiADABEjkKBExpc3QSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaFy5kb2NrZXIudjEuTGlzdFJlc3BvbnNlIgASNQoFU3RhdHMSEC5kb2NrZXIudjEuRW1wdHkaGC5kb2NrZXIudjEuU3RhdHNSZXNwb25zZSIAQo8BCg1jb20uZG9ja2VyLnYxQgtEb2NrZXJQcm90b1ABWixnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vZ2VuZXJhdGVkL2RvY2tlci92MaICA0RYWKoCCURvY2tlci5WMcoCCURvY2tlclxWMeICFURvY2tlclxWMVxHUEJNZXRhZGF0YeoCCkRvY2tlcjo6VjFiBnByb3RvMw");
+  fileDesc("ChZkb2NrZXIvdjEvZG9ja2VyLnByb3RvEglkb2NrZXIudjEiKAoVQ29tcG9zZUFjdGlvblJlc3BvbnNlEg8KB21lc3NhZ2UYASABKAkiZQoNU3RhdHNSZXNwb25zZRIlCgZzeXN0ZW0YASABKAsyFS5kb2NrZXIudjEuU3lzdGVtSW5mbxItCgpjb250YWluZXJzGAIgAygLMhkuZG9ja2VyLnYxLkNvbnRhaW5lclN0YXRzInwKDFN0YXRzUmVxdWVzdBIkCgRmaWxlGAEgASgLMhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlEiUKBnNvcnRCeRgCIAEoDjIVLmRvY2tlci52MS5TT1JUX0ZJRUxEEh8KBW9yZGVyGAMgASgOMhAuZG9ja2VyLnYxLk9SREVSIi0KClN5c3RlbUluZm8SCwoDQ1BVGAEgASgBEhIKCm1lbUluQnl0ZXMYAiABKAQiNgoMTGlzdFJlc3BvbnNlEiYKBGxpc3QYASADKAsyGC5kb2NrZXIudjEuQ29udGFpbmVyTGlzdCKOAQoNQ29udGFpbmVyTGlzdBIKCgJpZBgBIAEoCRIPCgdpbWFnZUlEGAIgASgJEhEKCWltYWdlTmFtZRgDIAEoCRIOCgZzdGF0dXMYBCABKAkSDAoEbmFtZRgFIAEoCRIPCgdjcmVhdGVkGAYgASgJEh4KBXBvcnRzGAcgAygLMg8uZG9ja2VyLnYxLlBvcnQiugEKDkNvbnRhaW5lclN0YXRzEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEQoJY3B1X3VzYWdlGAMgASgBEhQKDG1lbW9yeV91c2FnZRgEIAEoBBIUCgxtZW1vcnlfbGltaXQYBSABKAQSEgoKbmV0d29ya19yeBgGIAEoBBISCgpuZXR3b3JrX3R4GAcgASgEEhIKCmJsb2NrX3JlYWQYCCABKAQSEwoLYmxvY2tfd3JpdGUYCSABKAQiQwoEUG9ydBIOCgZwdWJsaWMYASABKAUSDwoHcHJpdmF0ZRgCIAEoBRIMCgRob3N0GAMgASgJEgwKBHR5cGUYBCABKAkiBwoFRW1wdHkiHwoLQ29tcG9zZUZpbGUSEAoIZmlsZW5hbWUYASABKAkqYAoKU09SVF9GSUVMRBIICgROQU1FEAASBwoDQ1BVEAESBwoDTUVNEAISDgoKTkVUV09SS19SWBADEg4KCk5FVFdPUktfVFgQBBIKCgZESVNLX1IQBRIKCgZESVNLX1cQBioZCgVPUkRFUhIHCgNEU0MQABIHCgNBU0MQATLuAwoNRG9ja2VyU2VydmljZRJFCgVTdGFydBIWLmRvY2tlci52MS5Db21wb3NlRmlsZRogLmRvY2tlci52MS5Db21wb3NlQWN0aW9uUmVzcG9uc2UiADABEkQKBFN0b3ASFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaIC5kb2NrZXIudjEuQ29tcG9zZUFjdGlvblJlc3BvbnNlIgAwARJGCgZSZW1vdmUSFi5kb2NrZXIudjEuQ29tcG9zZUZpbGUaIC5kb2NrZXIudjEuQ29tcG9zZUFjdGlvblJlc3BvbnNlIgAwARJHCgdSZXN0YXJ0EhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGiAuZG9ja2VyLnYxLkNvbXBvc2VBY3Rpb25SZXNwb25zZSIAMAESRgoGVXBkYXRlEhYuZG9ja2VyLnYxLkNvbXBvc2VGaWxlGiAuZG9ja2VyLnYxLkNvbXBvc2VBY3Rpb25SZXNwb25zZSIAMAESOQoETGlzdBIWLmRvY2tlci52MS5Db21wb3NlRmlsZRoXLmRvY2tlci52MS5MaXN0UmVzcG9uc2UiABI8CgVTdGF0cxIXLmRvY2tlci52MS5TdGF0c1JlcXVlc3QaGC5kb2NrZXIudjEuU3RhdHNSZXNwb25zZSIAQo8BCg1jb20uZG9ja2VyLnYxQgtEb2NrZXJQcm90b1ABWixnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vZ2VuZXJhdGVkL2RvY2tlci92MaICA0RYWKoCCURvY2tlci5WMcoCCURvY2tlclxWMeICFURvY2tlclxWMVxHUEJNZXRhZGF0YeoCCkRvY2tlcjo6VjFiBnByb3RvMw");
 
 /**
  * @generated from message docker.v1.ComposeActionResponse
@@ -52,6 +52,33 @@ export const StatsResponseSchema: GenMessage<StatsResponse> = /*@__PURE__*/
   messageDesc(file_docker_v1_docker, 1);
 
 /**
+ * @generated from message docker.v1.StatsRequest
+ */
+export type StatsRequest = Message<"docker.v1.StatsRequest"> & {
+  /**
+   * @generated from field: docker.v1.ComposeFile file = 1;
+   */
+  file?: ComposeFile;
+
+  /**
+   * @generated from field: docker.v1.SORT_FIELD sortBy = 2;
+   */
+  sortBy: SORT_FIELD;
+
+  /**
+   * @generated from field: docker.v1.ORDER order = 3;
+   */
+  order: ORDER;
+};
+
+/**
+ * Describes the message docker.v1.StatsRequest.
+ * Use `create(StatsRequestSchema)` to create a new message.
+ */
+export const StatsRequestSchema: GenMessage<StatsRequest> = /*@__PURE__*/
+  messageDesc(file_docker_v1_docker, 2);
+
+/**
  * @generated from message docker.v1.SystemInfo
  */
 export type SystemInfo = Message<"docker.v1.SystemInfo"> & {
@@ -73,7 +100,7 @@ export type SystemInfo = Message<"docker.v1.SystemInfo"> & {
  * Use `create(SystemInfoSchema)` to create a new message.
  */
 export const SystemInfoSchema: GenMessage<SystemInfo> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 2);
+  messageDesc(file_docker_v1_docker, 3);
 
 /**
  * @generated from message docker.v1.ListResponse
@@ -90,7 +117,7 @@ export type ListResponse = Message<"docker.v1.ListResponse"> & {
  * Use `create(ListResponseSchema)` to create a new message.
  */
 export const ListResponseSchema: GenMessage<ListResponse> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 3);
+  messageDesc(file_docker_v1_docker, 4);
 
 /**
  * @generated from message docker.v1.ContainerList
@@ -137,7 +164,7 @@ export type ContainerList = Message<"docker.v1.ContainerList"> & {
  * Use `create(ContainerListSchema)` to create a new message.
  */
 export const ContainerListSchema: GenMessage<ContainerList> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 4);
+  messageDesc(file_docker_v1_docker, 5);
 
 /**
  * ContainerInfo holds metrics for a single Docker container.
@@ -214,7 +241,7 @@ export type ContainerStats = Message<"docker.v1.ContainerStats"> & {
  * Use `create(ContainerStatsSchema)` to create a new message.
  */
 export const ContainerStatsSchema: GenMessage<ContainerStats> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 5);
+  messageDesc(file_docker_v1_docker, 6);
 
 /**
  * @generated from message docker.v1.Port
@@ -246,7 +273,7 @@ export type Port = Message<"docker.v1.Port"> & {
  * Use `create(PortSchema)` to create a new message.
  */
 export const PortSchema: GenMessage<Port> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 6);
+  messageDesc(file_docker_v1_docker, 7);
 
 /**
  * @generated from message docker.v1.Empty
@@ -259,7 +286,7 @@ export type Empty = Message<"docker.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 7);
+  messageDesc(file_docker_v1_docker, 8);
 
 /**
  * @generated from message docker.v1.ComposeFile
@@ -276,7 +303,76 @@ export type ComposeFile = Message<"docker.v1.ComposeFile"> & {
  * Use `create(ComposeFileSchema)` to create a new message.
  */
 export const ComposeFileSchema: GenMessage<ComposeFile> = /*@__PURE__*/
-  messageDesc(file_docker_v1_docker, 8);
+  messageDesc(file_docker_v1_docker, 9);
+
+/**
+ * @generated from enum docker.v1.SORT_FIELD
+ */
+export enum SORT_FIELD {
+  /**
+   * @generated from enum value: NAME = 0;
+   */
+  NAME = 0,
+
+  /**
+   * @generated from enum value: CPU = 1;
+   */
+  CPU = 1,
+
+  /**
+   * @generated from enum value: MEM = 2;
+   */
+  MEM = 2,
+
+  /**
+   * @generated from enum value: NETWORK_RX = 3;
+   */
+  NETWORK_RX = 3,
+
+  /**
+   * @generated from enum value: NETWORK_TX = 4;
+   */
+  NETWORK_TX = 4,
+
+  /**
+   * @generated from enum value: DISK_R = 5;
+   */
+  DISK_R = 5,
+
+  /**
+   * @generated from enum value: DISK_W = 6;
+   */
+  DISK_W = 6,
+}
+
+/**
+ * Describes the enum docker.v1.SORT_FIELD.
+ */
+export const SORT_FIELDSchema: GenEnum<SORT_FIELD> = /*@__PURE__*/
+  enumDesc(file_docker_v1_docker, 0);
+
+/**
+ * @generated from enum docker.v1.ORDER
+ */
+export enum ORDER {
+  /**
+   * default val
+   *
+   * @generated from enum value: DSC = 0;
+   */
+  DSC = 0,
+
+  /**
+   * @generated from enum value: ASC = 1;
+   */
+  ASC = 1,
+}
+
+/**
+ * Describes the enum docker.v1.ORDER.
+ */
+export const ORDERSchema: GenEnum<ORDER> = /*@__PURE__*/
+  enumDesc(file_docker_v1_docker, 1);
 
 /**
  * @generated from service docker.v1.DockerService
@@ -335,7 +431,7 @@ export const DockerService: GenService<{
    */
   stats: {
     methodKind: "unary";
-    input: typeof EmptySchema;
+    input: typeof StatsRequestSchema;
     output: typeof StatsResponseSchema;
   },
 }> = /*@__PURE__*/

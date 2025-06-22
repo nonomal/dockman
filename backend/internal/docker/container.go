@@ -23,8 +23,8 @@ type SystemInfo struct {
 	Memory *mem.VirtualMemoryStat
 }
 
-// ContainerInfo holds metrics for a single Docker container.
-type ContainerInfo struct {
+// ContainerStats holds metrics for a single Docker container.
+type ContainerStats struct {
 	ID          string
 	Name        string
 	CPUUsage    float64
@@ -55,18 +55,25 @@ func (s *ContainerService) ListContainers(ctx context.Context, filter container.
 	return containers, nil
 }
 
-func (s *ContainerService) StatContainers(ctx context.Context, filter container.ListOptions) ([]*ContainerInfo, error) {
+func (s *ContainerService) StatContainers(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
 	containers, err := s.ListContainers(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("could not list containers: %w", err)
 	}
 
-	var statsList []*ContainerInfo
 	if len(containers) == 0 {
-		return statsList, nil
+		return []ContainerStats{}, nil
 	}
 
-	contChan := make(chan *ContainerInfo, len(containers))
+	statsList := s.GetStatsFromContainerList(ctx, containers)
+
+	return statsList, nil
+}
+
+func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
+	var statsList []ContainerStats
+
+	contChan := make(chan ContainerStats, len(containers))
 	var wg sync.WaitGroup
 
 	for _, cont := range containers {
@@ -91,33 +98,33 @@ func (s *ContainerService) StatContainers(ctx context.Context, filter container.
 		statsList = append(statsList, c)
 	}
 
-	return statsList, nil
+	return statsList
 }
 
-func (s *ContainerService) ConvertStats(ctx context.Context, info container.Summary) (*ContainerInfo, error) {
+func (s *ContainerService) ConvertStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
 	contId := info.ID[:12]
 	// Get the resource usage statistics for the cont.
 	// The `stream` argument is set to `false` to get a single snapshot and not a continuous stream.
 	stats, err := s.daemon.ContainerStats(ctx, info.ID, false)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
+		return ContainerStats{}, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
 	}
 	defer pkg.CloseFile(stats.Body)
 
 	body, err := io.ReadAll(stats.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read body for cont %s: %w", contId, err)
+		return ContainerStats{}, fmt.Errorf("failed to read body for cont %s: %w", contId, err)
 	}
 	var statsJSON container.StatsResponse
 	if err := json.Unmarshal(body, &statsJSON); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal body for cont %s: %w", contId, err)
+		return ContainerStats{}, fmt.Errorf("failed to unmarshal body for cont %s: %w", contId, err)
 	}
 
 	cpuPercent := formatCPU(statsJSON)
 	rx, tx := formatNetwork(statsJSON)
 	blkRead, blkWrite := formatDiskIO(statsJSON)
 
-	return &ContainerInfo{
+	return ContainerStats{
 		ID:          contId,
 		Name:        info.Names[0],
 		CPUUsage:    cpuPercent,
@@ -130,18 +137,18 @@ func (s *ContainerService) ConvertStats(ctx context.Context, info container.Summ
 	}, nil
 }
 
-func (s *ContainerService) GetStats(ctx context.Context, filter container.ListOptions) (*SystemInfo, []*ContainerInfo, error) {
-	systemInfo, err := getSystemInfo()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get system info: %w", err)
-	}
+func (s *ContainerService) GetStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
+	//systemInfo, err := getSystemInfo()
+	//if err != nil {
+	//	return nil, nil, fmt.Errorf("failed to get system info: %w", err)
+	//}
 
 	containerInfo, err := s.StatContainers(ctx, filter)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get container stats: %w", err)
+		return nil, fmt.Errorf("failed to get container stats: %w", err)
 	}
 
-	return systemInfo, containerInfo, nil
+	return containerInfo, nil
 }
 
 // getSystemInfo collects and returns the current system-wide metrics.

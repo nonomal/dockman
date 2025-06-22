@@ -11,7 +11,6 @@ import (
 	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
 	"path/filepath"
 	"reflect"
@@ -23,13 +22,13 @@ import (
 
 type ComposeService struct {
 	composeRoot string
-	daemon      *client.Client
+	client      *ContainerService
 }
 
-func newComposeService(composeRoot string, client *client.Client) *ComposeService {
+func newComposeService(composeRoot string, client *ContainerService) *ComposeService {
 	return &ComposeService{
 		composeRoot: composeRoot,
-		daemon:      client,
+		client:      client,
 	}
 }
 
@@ -95,15 +94,16 @@ func (s *ComposeService) Update(ctx context.Context, filename string, opts ...Op
 	})
 }
 
-func (s *ComposeService) StatStack(ctx context.Context, filename string, opts ...Opts) ([]api.ContainerSummary, error) {
-	var result []api.ContainerSummary
+func (s *ComposeService) StatStack(ctx context.Context, filename string, opts ...Opts) ([]ContainerStats, error) {
+	var result []ContainerStats
 	err := s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		ps, err := cli.Ps(ctx, project.Name, api.PsOptions{})
+		stackList, err := s.listStack(ctx, cli, project, false)
 		if err != nil {
 			return err
 		}
 
-		result = ps
+		result = s.client.GetStatsFromContainerList(ctx, stackList)
+
 		return nil
 	})
 	if err != nil {
@@ -116,23 +116,32 @@ func (s *ComposeService) StatStack(ctx context.Context, filename string, opts ..
 func (s *ComposeService) ListStack(ctx context.Context, filename string, opts ...Opts) ([]container.Summary, error) {
 	var result []container.Summary
 	err := s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		containerFilters := filters.NewArgs()
-		projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
-		containerFilters.Add("label", projectLabel)
-
 		var err error
-		result, err = s.daemon.ContainerList(ctx, container.ListOptions{
-			All:     true, // all containers (running and stopped).
-			Filters: containerFilters,
-		})
+		result, err = s.listStack(ctx, cli, project, true)
 		if err != nil {
-			return fmt.Errorf("failed to list containers for project '%s': %w", project.Name, err)
+			return err
 		}
-
 		return nil
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	return result, nil
+}
+
+// showAll: all containers (running and stopped).
+func (s *ComposeService) listStack(ctx context.Context, composeCli api.Service, project *types.Project, showAll bool) ([]container.Summary, error) {
+	containerFilters := filters.NewArgs()
+	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
+	containerFilters.Add("label", projectLabel)
+
+	result, err := s.client.daemon.ContainerList(ctx, container.ListOptions{
+		All:     showAll,
+		Filters: containerFilters,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list containers for project '%s': %w", project.Name, err)
 	}
 
 	return result, nil
@@ -192,7 +201,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 			continue
 		}
 
-		imageInspect, err := s.daemon.ImageInspect(ctx, service.Image)
+		imageInspect, err := s.client.daemon.ImageInspect(ctx, service.Image)
 		if err != nil {
 			// Image might not exist locally yet
 			digests[serviceName] = ""
@@ -212,7 +221,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 
 func (s *ComposeService) withComposeCli(opts *ComposeConfig, execFn func(composeCli api.Service) error) error {
 	if opts.dockerHost == "" {
-		opts.dockerHost = s.daemon.DaemonHost()
+		opts.dockerHost = s.client.daemon.DaemonHost()
 	}
 
 	dockerCli, err := command.NewDockerCli(

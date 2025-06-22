@@ -57,7 +57,7 @@ type DockerServiceClient interface {
 	Restart(context.Context, *connect.Request[v1.ComposeFile]) (*connect.ServerStreamForClient[v1.ComposeActionResponse], error)
 	Update(context.Context, *connect.Request[v1.ComposeFile]) (*connect.ServerStreamForClient[v1.ComposeActionResponse], error)
 	List(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error)
-	Stats(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.StatsResponse], error)
+	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 }
 
 // NewDockerServiceClient constructs a client for the docker.v1.DockerService service. By default,
@@ -107,7 +107,7 @@ func NewDockerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(dockerServiceMethods.ByName("List")),
 			connect.WithClientOptions(opts...),
 		),
-		stats: connect.NewClient[v1.Empty, v1.StatsResponse](
+		stats: connect.NewClient[v1.StatsRequest, v1.StatsResponse](
 			httpClient,
 			baseURL+DockerServiceStatsProcedure,
 			connect.WithSchema(dockerServiceMethods.ByName("Stats")),
@@ -124,7 +124,7 @@ type dockerServiceClient struct {
 	restart *connect.Client[v1.ComposeFile, v1.ComposeActionResponse]
 	update  *connect.Client[v1.ComposeFile, v1.ComposeActionResponse]
 	list    *connect.Client[v1.ComposeFile, v1.ListResponse]
-	stats   *connect.Client[v1.Empty, v1.StatsResponse]
+	stats   *connect.Client[v1.StatsRequest, v1.StatsResponse]
 }
 
 // Start calls docker.v1.DockerService.Start.
@@ -158,7 +158,7 @@ func (c *dockerServiceClient) List(ctx context.Context, req *connect.Request[v1.
 }
 
 // Stats calls docker.v1.DockerService.Stats.
-func (c *dockerServiceClient) Stats(ctx context.Context, req *connect.Request[v1.Empty]) (*connect.Response[v1.StatsResponse], error) {
+func (c *dockerServiceClient) Stats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
 	return c.stats.CallUnary(ctx, req)
 }
 
@@ -170,7 +170,7 @@ type DockerServiceHandler interface {
 	Restart(context.Context, *connect.Request[v1.ComposeFile], *connect.ServerStream[v1.ComposeActionResponse]) error
 	Update(context.Context, *connect.Request[v1.ComposeFile], *connect.ServerStream[v1.ComposeActionResponse]) error
 	List(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error)
-	Stats(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.StatsResponse], error)
+	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 }
 
 // NewDockerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -271,6 +271,6 @@ func (UnimplementedDockerServiceHandler) List(context.Context, *connect.Request[
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker.v1.DockerService.List is not implemented"))
 }
 
-func (UnimplementedDockerServiceHandler) Stats(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.StatsResponse], error) {
+func (UnimplementedDockerServiceHandler) Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker.v1.DockerService.Stats is not implemented"))
 }

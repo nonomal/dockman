@@ -107,8 +107,14 @@ export function Stack() {
                 </Tabs>
             </Box>
             {activePanel && (
-                <Fade in={true} timeout={200} key={currentTab} >
-                    <Box sx={{flexGrow: 1, overflow: 'auto'}}>
+                <Fade in={true} timeout={200} key={currentTab}>
+                    <Box sx={{
+                        flexGrow: 1,
+                        overflow: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '100%',
+                    }}>
                         {activePanel}
                     </Box>
                 </Fade>
