@@ -24,7 +24,7 @@ It provides a straightforward way to edit, track, and back up your compose confi
 - [Contributing](#contributing)
 - [License](#license)
 
-## Usage
+## Install
 
 Use the following to get Dockman running.
 
