@@ -16,7 +16,7 @@ It provides a straightforward way to edit, track, and back up your compose confi
 
 ## Contents
 
-- [Usage](#usage)
+- [Install](#Install)
 - [WIP Features](#wip-features)
 - [Philosophy](#philosophy)
     - [How It Compares](#how-it-compares)
