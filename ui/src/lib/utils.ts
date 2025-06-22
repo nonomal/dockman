@@ -17,19 +17,37 @@ export const getImageHomePageUrl = (imageName: string): string => {
         cleanName = cleanName.substring(0, tagIndex);
     }
 
-    // Check if it's a custom registry or Docker Hub
-    const firstPart = cleanName.split('/')[0];
+    const nameSplit = cleanName.split('/');
+    const firstPart = nameSplit[0];
     const isCustomRegistry = firstPart.includes('.') || firstPart.includes(':');
 
+    const customRegistryMap: Record<string, (image: string[]) => string> = {
+        "lscr.io": (splits: string[]) => {
+            // expected ["lscr.io", "linuxserver", "radarr"] <- get last part
+            return `https://docs.linuxserver.io/images/docker-${splits[2]}`;
+        },
+    };
+
     if (isCustomRegistry) {
-        // For other registries, the best we can do is link to the registry itself with https
+        const registryDomain = nameSplit[0];
+        const customUrl = customRegistryMap[registryDomain];
+        if (customUrl) {
+            // For known custom registries with special URL patterns
+            return customUrl(nameSplit);
+        }
+        // For other registries, link to the registry itself
         return `https://${cleanName}`;
     } else {
-        // It's a Docker Hub image. Prepend the Docker Hub URL.
-        return `https://hub.docker.com/_/${cleanName}`;
+        // It's a Docker Hub image
+        if (nameSplit.length === 1) {
+            // Official Docker Hub image (e.g., "nginx")
+            return `https://hub.docker.com/_/${cleanName}`;
+        } else {
+            // User/organization image (e.g., "user/image")
+            return `https://hub.docker.com/r/${cleanName}`;
+        }
     }
-};
-
+}
 
 export const getStatusChipColor = (status: string): "success" | "warning" | "default" | "error" => {
     if (status.toLowerCase().startsWith('up')) return 'success';
