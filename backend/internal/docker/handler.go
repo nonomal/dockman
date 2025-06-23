@@ -225,6 +225,7 @@ func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]
 		var portSlice []*v1.Port
 		for _, p := range stack.Ports {
 			if isIPV4(p.IP) {
+				p.IP = h.srv.localAddress // use the local addr found from docker
 				// ignore ipv6 ports no one uses it anyway
 				portSlice = append(portSlice, toRPCPort(p))
 			}
