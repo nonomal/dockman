@@ -18,7 +18,7 @@ func LoadConfig() *ServerConfig {
 	conf := &ServerConfig{}
 
 	uiPathFromEnv := getEnv(denv("UI_PATH"), "dist")
-	composeRootFromEnv := getEnv(denv("COMPOSE_ROOT"), "./compose")
+	composeRootFromEnv := getEnv(denv("COMPOSE_ROOT"), "compose")
 	authEnabledFromEnv := getEnvAsBool(denv("AUTH_ENABLE"), false)
 	originsFromEnv := getEnv(denv("ORIGINS"), "*")
 
