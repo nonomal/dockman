@@ -249,6 +249,9 @@ func (s *ComposeService) withProject(
 ) error {
 	return s.withComposeCli(opts, func(composeCli api.Service) error {
 		filename = filepath.Join(s.composeRoot, filename)
+		// will be the parent dir of the compose file else equal to compose root
+		workingDir := filepath.Dir(filename)
+
 		options, err := cli.NewProjectOptions(
 			[]string{filename},
 			// important maintain this order to load .env: workingdir -> env -> os -> load dot env
@@ -257,6 +260,7 @@ func (s *ComposeService) withProject(
 			cli.WithOsEnv,
 			cli.WithDotEnv,
 			cli.WithDefaultProfiles(),
+			cli.WithWorkingDirectory(workingDir),
 			cli.WithResolvedPaths(true),
 		)
 		if err != nil {
