@@ -34,6 +34,7 @@ export function FileList() {
 
     const handleAddConfirm = (filename: string) => {
         addFile(filename, dialogState.parent).then()
+        closeAddDialog()
     };
 
     const handleDelete = (filename: string) => {

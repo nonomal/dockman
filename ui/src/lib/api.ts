@@ -35,7 +35,7 @@ export async function uploadFile(filename: string, contents: string): Promise<st
         const formData = new FormData();
         const file = new File([contents], filename);
 
-        formData.append('contents', file, filename);
+        formData.append('contents', file, btoa(filename));
 
         const response = await fetch(`${API_URL}/api/file/save`, {
             method: 'POST',

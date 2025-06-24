@@ -38,7 +38,7 @@ export function useFiles() {
     }, [fetchFiles]);
 
     const addFile = useCallback(async (filename: string, parent: string) => {
-        const {err} = await callRPC(() => client.create({file: {filename}, parent}));
+        const {err} = await callRPC(() => client.create({filename: `${parent}/${filename}`}));
         if (err) {
             showError(`Error saving file: ${err}`);
         } else {
