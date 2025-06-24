@@ -54,6 +54,14 @@ func (s *ContainerService) ListContainers(ctx context.Context, filter container.
 
 	return containers, nil
 }
+func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
+	return s.daemon.ContainerLogs(ctx, containerID, container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+		Details:    true,
+	})
+}
 
 func (s *ContainerService) StatContainers(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
 	containers, err := s.ListContainers(ctx, filter)

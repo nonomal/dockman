@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"connectrpc.com/connect"
 	"context"
+	"fmt"
 	v1 "github.com/RA341/dockman/generated/docker/v1"
 	"github.com/RA341/dockman/pkg"
 	"github.com/docker/docker/api/types/container"
@@ -114,6 +115,63 @@ func (h *Handler) Update(_ context.Context, req *connect.Request[v1.ComposeFile]
 	return nil
 }
 
+func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.LogsRequest], responseStream *connect.ServerStream[v1.ContainerLogStream]) error {
+	if req.Msg.GetContainerID() == "" {
+		return fmt.Errorf("container id is required")
+	}
+
+	logsReader, err := h.srv.ContainerLogs(ctx, req.Msg.GetContainerID())
+	if err != nil {
+		return err
+	}
+	defer pkg.CloseFile(logsReader)
+
+	scanner := bufio.NewScanner(logsReader)
+	for scanner.Scan() {
+		if err = responseStream.Send(&v1.ContainerLogStream{Message: scanner.Bytes()}); err != nil {
+			log.Warn().Err(err).Msg("Failed to send message to stream")
+		}
+	}
+
+	// If the scanner stops because of an error
+	if err = scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+	result, err := h.srv.ListStack(ctx, req.Msg.GetFilename())
+	if err != nil {
+		return nil, err
+	}
+
+	var dockerResult []*v1.ContainerList
+	for _, stack := range result {
+		var portSlice []*v1.Port
+		for _, p := range stack.Ports {
+			if isIPV4(p.IP) {
+				p.IP = h.srv.localAddress // use the local addr found from docker
+				// ignore ipv6 ports no one uses it anyway
+				portSlice = append(portSlice, toRPCPort(p))
+			}
+		}
+
+		slices.SortFunc(portSlice, func(port1 *v1.Port, port2 *v1.Port) int {
+			if cmpResult := cmp.Compare(port1.Public, port2.Public); cmpResult != 0 {
+				return cmpResult
+			}
+			// ports are equal, compare by type 'tcp or udp'
+			return cmp.Compare(port1.Type, port2.Type)
+		})
+
+		dockerResult = append(dockerResult, toRPContainer(stack, portSlice))
+	}
+
+	return connect.NewResponse(&v1.ListResponse{List: dockerResult}), err
+}
+
 func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
 	file := req.Msg.GetFile()
 
@@ -134,7 +192,7 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 	}
 	// returns in desc order
 	fn := getSortFn(*field)
-	containers = slices.SortedStableFunc(slices.Values(containers), fn)
+	slices.SortFunc(containers, fn)
 
 	orderby := *req.Msg.Order.Enum()
 
@@ -214,28 +272,6 @@ func getSortFn(field v1.SORT_FIELD) func(a, b ContainerStats) int {
 	}
 }
 
-func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
-	result, err := h.srv.ListStack(ctx, req.Msg.GetFilename())
-	if err != nil {
-		return nil, err
-	}
-
-	var dockerResult []*v1.ContainerList
-	for _, stack := range result {
-		var portSlice []*v1.Port
-		for _, p := range stack.Ports {
-			if isIPV4(p.IP) {
-				p.IP = h.srv.localAddress // use the local addr found from docker
-				// ignore ipv6 ports no one uses it anyway
-				portSlice = append(portSlice, toRPCPort(p))
-			}
-		}
-		dockerResult = append(dockerResult, toRPContainer(stack, portSlice))
-	}
-
-	return connect.NewResponse(&v1.ListResponse{List: dockerResult}), err
-}
-
 func streamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitGroup) {
 	pipeReader, pipeWriter := io.Pipe()
 	wg := sync.WaitGroup{}
@@ -273,12 +309,11 @@ func toRPCPort(p container.Port) *v1.Port {
 
 func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerList {
 	return &v1.ContainerList{
+		Name:      strings.TrimPrefix(stack.Names[0], "/"),
 		Id:        stack.ID,
 		ImageID:   stack.ImageID,
 		ImageName: stack.Image,
 		Status:    stack.Status,
-		Name:      stack.Names[0],
 		Ports:     portSlice,
 	}
-
 }
