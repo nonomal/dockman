@@ -105,7 +105,7 @@ export function StackEditor({selectedPage}: EditorProps) {
         // If they stop, the timer will fire, triggering the save.
         debounceTimeout.current = setTimeout(() => {
             saveFile(value!);
-        }, 800); // 1-second delay
+        }, 500); // delay before save
     }
 
     // When the status becomes 'success' or 'error', revert to 'idle' after a delay
@@ -121,7 +121,7 @@ export function StackEditor({selectedPage}: EditorProps) {
     const StatusIndicator = () => {
         switch (status) {
             case 'typing':
-                return <><CircularProgress size={20} sx={{mr: 1.5}}/> Typing...</>;
+                return <>Typing...</>;
             case 'saving':
                 return <><CircularProgress size={20} sx={{mr: 1.5}}/> Saving...</>;
             case 'success':
