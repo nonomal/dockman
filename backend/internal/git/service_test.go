@@ -231,7 +231,7 @@ func TestService_Commit(t *testing.T) {
 
 func createTestRepo(t *testing.T, repoPath string) (*git.Repository, *Service) {
 	file := files.NewService(repoPath)
-	srv := NewService(repoPath, file.Fdb)
+	srv := NewService(repoPath)
 
 	createAndWriteFile(t, repoPath, "README.md", "# Test Repository")
 
@@ -325,7 +325,7 @@ func TestService(t *testing.T) {
 	require.NoError(t, err)
 	root = abs
 	fil := files.NewService(root)
-	gitc := NewService(root, fil.Fdb)
+	gitc := NewService(root)
 
 	t.Cleanup(func() {
 		//err := fil.Close()
@@ -336,10 +336,10 @@ func TestService(t *testing.T) {
 
 	result := GenerateFileHierarchy(3, 2)
 	for parent, child := range result {
-		err := fil.Create(parent, "")
+		err := fil.Create(parent)
 		require.NoError(t, err)
 		for _, c := range child {
-			err := fil.Create(c, parent)
+			err := fil.Create(c)
 			require.NoError(t, err)
 		}
 	}

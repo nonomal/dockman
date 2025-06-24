@@ -2,7 +2,6 @@ package git
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/internal/files"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -17,21 +16,15 @@ type Service struct {
 	authToken string
 	repoPath  string
 	repo      *git.Repository
-	fileMan   files.FileDB
+	//fileMan   files.FileDB
 }
 
-func NewService(root string, fileMan files.FileDB) *Service {
+func NewService(root string) *Service {
 	repo, err := initializeGit(root)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create git service")
 	}
-
-	srv := &Service{repo: repo, fileMan: fileMan, repoPath: root}
-	if err := srv.CheckDockmanDBStatus(files.BoltFileDBName); err != nil {
-		log.Fatal().Err(err).Msg("Failed to check dockman to vcs")
-	}
-
-	return srv
+	return &Service{repo: repo, repoPath: root}
 }
 
 func initializeGit(root string) (*git.Repository, error) {
@@ -75,8 +68,7 @@ func (s *Service) Commit(commitMessage string, fileList ...string) error {
 			continue
 		}
 
-		_, err := tree.Add(file)
-		if err != nil {
+		if _, err := tree.Add(file); err != nil {
 			return fmt.Errorf("failed to add file: %w", err)
 		}
 	}
@@ -106,15 +98,15 @@ func (s *Service) Commit(commitMessage string, fileList ...string) error {
 }
 
 func (s *Service) CommitFileGroup(commitMessage string, filename string) error {
-	fileList, err := s.fileMan.GetFileGroup(filename)
-	if err != nil {
-		return err
-	}
+	//fileList, err := s.fileMan.GetFileGroup(filename)
+	//if err != nil {
+	//	return err
+	//}
 
-	err = s.Commit(commitMessage, fileList...)
-	if err != nil {
-		return err
-	}
+	//err = s.Commit(commitMessage, fileList...)
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -145,6 +137,37 @@ func (s *Service) LoadFileAtCommit(filePath, commitId string) (string, error) {
 	return content, nil
 }
 
+func (s *Service) WithWorkTree(execFn func(worktree *git.Worktree) error) error {
+	worktree, err := s.repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	return execFn(worktree)
+}
+func (s *Service) ListFiles() error {
+	err := s.WithWorkTree(func(worktree *git.Worktree) error {
+		status, err := worktree.Status()
+		if err != nil {
+			return err
+		}
+
+		for filename, stat := range status {
+
+			//stat.Staging
+			//stat.Worktree
+			log.Debug().Msgf("File %s stats: %v", filename, stat)
+		}
+		//ps, err := gitignore.NewMatcher(fs, nil)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Service) ListCommitByFile(filePath string) ([]*object.Commit, error) {
 	opts := &git.LogOptions{
 		FileName: &filePath,
@@ -167,40 +190,6 @@ func (s *Service) ListCommitByFile(filePath string) ([]*object.Commit, error) {
 	}
 
 	return commitList, nil
-}
-
-func (s *Service) CheckDockmanDBStatus(filename string) error {
-	worktree, err := s.repo.Worktree()
-	if err != nil {
-		return err
-	}
-
-	status, err := worktree.Status()
-	if err != nil {
-		return err
-	}
-
-	var commitMessage = ""
-
-	if fileStatus, exists := status[filename]; exists {
-		if fileStatus.Staging == git.Untracked {
-			log.Info().Str("file", filename).Msg("File is untracked")
-			commitMessage = "added dockman db"
-		} else if fileStatus.Staging == git.Modified {
-			log.Info().Str("file", filename).Msg("File is modified")
-			commitMessage = "updated dockman db"
-		}
-	}
-
-	if commitMessage != "" {
-		if err := s.Commit(commitMessage, filename); err != nil {
-			return err
-		}
-	} else {
-		log.Info().Str("file", filename).Msg("File is clean (no changes)")
-	}
-
-	return err
 }
 
 // EditUserConfig updates user configuration, skipping empty parameters

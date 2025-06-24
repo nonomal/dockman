@@ -17,6 +17,11 @@ func NewConnectHandler(srv *Service) *Handler {
 }
 
 func (h *Handler) ListCommits(_ context.Context, c *connect.Request[v1.File]) (*connect.Response[v1.CommitList], error) {
+	//err := h.srv.ListFiles()
+	//if err != nil {
+	//	return nil, err
+	//}
+
 	file, err := h.srv.ListCommitByFile(c.Msg.Name)
 	if err != nil {
 		return nil, err
