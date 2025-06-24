@@ -26,7 +26,7 @@ interface GroupedCommits {
     [date: string]: Commit[];
 }
 
-export function CommitList({selectedFile, selectedCommit, chooseCommit}: CommitListProps) {
+export function GitCommitList({selectedFile, selectedCommit, chooseCommit}: CommitListProps) {
     const gitClient = useClient(GitService); // useClient is now mocked
     const {showError} = useSnackbar(); // useSnackbar is now mocked
     const [commits, setCommits] = useState<Commit[]>([]);

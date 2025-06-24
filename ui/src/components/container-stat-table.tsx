@@ -30,7 +30,7 @@ interface ContainersTableProps {
     containers: ContainerStats[];
 }
 
-export const ContainersStatTable = ({containers, onFieldClick, activeSortField, order}: ContainersTableProps) => {
+export const ContainerStatTable = ({containers, onFieldClick, activeSortField, order}: ContainersTableProps) => {
     const handleSortRequest = (field: SORT_FIELD) => {
         // If the same field is clicked again, toggle the order. Otherwise, default to DSC.
         const isAsc = activeSortField === field && order === ORDER.ASC;

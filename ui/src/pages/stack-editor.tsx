@@ -19,7 +19,7 @@ import * as monacoEditor from "monaco-editor";
 import {GitService} from "../gen/git/v1/git_pb.ts";
 import {useSnackbar} from "../hooks/snackbar.ts";
 import {MonacoEditor} from "../components/editor.tsx";
-import {CommitList} from "../components/commit-list.tsx";
+import {GitCommitList} from "../components/git-commit-list.tsx";
 import {DiffViewer} from "../components/diff.tsx";
 
 interface EditorProps {
@@ -235,7 +235,7 @@ export function StackEditor({selectedPage}: EditorProps) {
                         flexDirection: 'column'
 
                     }}>
-                        <CommitList
+                        <GitCommitList
                             key={commitListKey}
                             chooseCommit={commit => {
                                 setDiffCommitId(commit)

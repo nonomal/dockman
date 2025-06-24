@@ -4,7 +4,7 @@ import {useClient} from '../lib/api.ts';
 import {type ContainerStats, DockerService, ORDER, SORT_FIELD} from '../gen/docker/v1/docker_pb.ts';
 import {useSnackbar} from '../hooks/snackbar.ts';
 import {callRPC} from '../lib/api';
-import {ContainersStatTable} from '../components/containers-stat-table.tsx';
+import {ContainerStatTable} from '../components/container-stat-table.tsx';
 import EntertainingLoader from "../components/dashboard-loader.tsx";
 
 export const DashboardPage = () => {
@@ -59,8 +59,8 @@ export const DashboardPage = () => {
     return (
         <Fade in={true}>
             <Box sx={{p: 1.5, flexGrow: 1, overflow: 'auto'}}>
-                {/*<ContainersStatChart containers={containers}/>*/}
-                <ContainersStatTable order={orderBy} activeSortField={field} onFieldClick={(field, orderBy) => {
+                {/*<ContainerStatChart containers={containers}/>*/}
+                <ContainerStatTable order={orderBy} activeSortField={field} onFieldClick={(field, orderBy) => {
                     setField(field);
                     setOrderBy(orderBy);
                     fetchStats().then();

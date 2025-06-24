@@ -1,5 +1,5 @@
 import React, {type SyntheticEvent, useEffect, useMemo, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {StackEditor} from "./stack-editor.tsx";
 import {StackDeploy} from "./stack-deploy.tsx";
 import {Box, CircularProgress, Fade, Tab, Tabs, Typography} from '@mui/material';
@@ -14,9 +14,13 @@ interface TabDetails {
 }
 
 export function Stack() {
-    const {filename, selectedTab} = useParams<{ filename: string; selectedTab: string }>();
+    const {file, child} = useParams<{ file: string; child?: string }>();
     const navigate = useNavigate();
     const fileService = useClient(FileService);
+    const [searchParams] = useSearchParams();
+    const selectedTab = searchParams.get('tab') || 'editor' // Default to 'editor' if not present
+
+    const filename = child ? `${file}/${child}` : file
 
     const [isLoading, setIsLoading] = useState(true);
     const [fileError, setFileError] = useState("");
@@ -31,6 +35,8 @@ export function Stack() {
             return;
         }
 
+        console.log(filename)
+
         callRPC(() => fileService.exists({filename: filename}))
             .then(value => {
                 if (value.err) {
@@ -42,7 +48,7 @@ export function Stack() {
                 setIsLoading(false);
             });
 
-    }, [filename, fileService]);
+    }, [filename, fileService, child]);
 
     const tabsMap: Map<string, TabDetails> = useMemo(() => {
         // Return an empty map if there's no filename to avoid errors
@@ -73,12 +79,12 @@ export function Stack() {
     const currentTab = selectedTab ?? 'editor';
 
     const handleTabChange = (_event: SyntheticEvent, newKey: string) => {
-        navigate(`/files/${filename}/${newKey}`);
+        navigate(`/files/${filename}?tab=${newKey}`);
     };
 
     useEffect(() => {
         if (selectedTab && tabsMap.size > 0 && !tabsMap.has(selectedTab)) {
-            navigate(`/files/${filename}/editor`, {replace: true});
+            navigate(`/files/${filename}?tab=editor`, {replace: true});
         }
     }, [filename, selectedTab, tabsMap, navigate]);
 

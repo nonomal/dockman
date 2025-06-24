@@ -4,7 +4,7 @@ import {callRPC, useClient} from '../lib/api';
 import {type ContainerStats, DockerService, ORDER, SORT_FIELD} from '../gen/docker/v1/docker_pb';
 import {useSnackbar} from "../hooks/snackbar.ts";
 import EntertainingLoader from "../components/dashboard-loader.tsx";
-import {ContainersStatTable} from "../components/containers-stat-table.tsx";
+import {ContainerStatTable} from "../components/container-stat-table.tsx";
 
 
 interface StackStatsProps {
@@ -63,8 +63,8 @@ export function StatStacksPage({selectedPage}: StackStatsProps) {
 
     return (
         <Box sx={{p: 3, flexGrow: 1}}>
-            {/*<ContainersStatChart containers={containers}/>*/}
-            <ContainersStatTable
+            {/*<ContainerStatChart containers={containers}/>*/}
+            <ContainerStatTable
                 containers={containers}
                 activeSortField={field}
                 order={orderBy}

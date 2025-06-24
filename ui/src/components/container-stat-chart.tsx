@@ -11,7 +11,7 @@ interface ContainersChartProps {
     containers: ContainerStats[];
 }
 
-export function ContainersStatChart({containers}: ContainersChartProps) {
+export function ContainerStatChart({containers}: ContainersChartProps) {
     // State to store historical data for charts
     const [history, setHistory] = useState<Record<string, Omit<ContainerStats, 'id' | 'name'> & {
         timestamp: Date

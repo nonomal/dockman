@@ -22,7 +22,8 @@ export default function App() {
                             <Route element={<PrivateRoute/>}>
                                 <Route path="/" element={<HomePage/>}>
                                     <Route index element={<DashboardPage/>}/>
-                                    <Route path="files/:filename/:selectedTab?" element={<Stack/>}/>
+                                    <Route path="files/:file/:child" element={<Stack/>}/>
+                                    <Route path="files/:file" element={<Stack/>}/>
                                     <Route path="settings" element={<SettingsPage/>}/>
                                 </Route>
                             </Route>
