@@ -34,4 +34,4 @@ COPY --from=front /frontend/dist/ ./dist
 
 EXPOSE 8866
 
-CMD "./dockman"
+CMD ["./dockman"]
