@@ -35,8 +35,6 @@ export function Stack() {
             return;
         }
 
-        console.log(filename)
-
         callRPC(() => fileService.exists({filename: filename}))
             .then(value => {
                 if (value.err) {

@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import {
     Box,
     Button,
@@ -11,7 +11,7 @@ import {
     Typography
 } from '@mui/material';
 import {Add as AddIcon, Search as SearchIcon} from '@mui/icons-material';
-import {useLocation} from 'react-router-dom';
+import {useLocation, useParams} from 'react-router-dom';
 import type {FileGroup} from '../hooks/files.ts';
 import {useFiles} from "../hooks/files.ts";
 import {FileItem} from './file-item.tsx';
@@ -19,10 +19,34 @@ import {AddFileDialog} from "./file-dialog.tsx";
 
 export function FileList() {
     const location = useLocation();
+    const {file: currentDir} = useParams<{ file: string }>();
     const {files, isLoading, addFile, deleteFile} = useFiles();
+
+    // holds the names of all open directories.
+    const [openDirs, setOpenDirs] = useState(new Set<string>());
 
     const [searchQuery, setSearchQuery] = useState('');
     const [dialogState, setDialogState] = useState<{ open: boolean; parent: string }>({open: false, parent: ''});
+
+    // if you navigate to a file, its parent directory opens automatically.
+    useEffect(() => {
+        if (currentDir) {
+            // Add the current directory from the URL to the set of open directories
+            setOpenDirs(prevOpenDirs => new Set(prevOpenDirs).add(currentDir));
+        }
+    }, [currentDir]); // only when the URL parameter changes
+
+    const handleToggle = useCallback((dirName: string) => {
+        setOpenDirs(prevOpenDirs => {
+            const newOpenDirs = new Set(prevOpenDirs);
+            if (newOpenDirs.has(dirName)) {
+                newOpenDirs.delete(dirName); // If it's open, close it
+            } else {
+                newOpenDirs.add(dirName); // If it's closed, open it
+            }
+            return newOpenDirs;
+        });
+    }, []);
 
     const openAddDialog = (parentName: string) => {
         setDialogState({open: true, parent: parentName});
@@ -61,7 +85,7 @@ export function FileList() {
         <>
             <Toolbar>
                 <Typography variant="h6" noWrap sx={{flexGrow: 1}}>Files</Typography>
-                <Button startIcon={<AddIcon/>} onClick={() => openAddDialog('')}>Add Root</Button>
+                <Button startIcon={<AddIcon/>} onClick={() => openAddDialog('')}>Add</Button>
             </Toolbar>
             <Divider/>
             <Box sx={{px: 2, py: 1}}>
@@ -84,7 +108,7 @@ export function FileList() {
             <Divider/>
 
             <Box sx={{overflowY: 'auto', flexGrow: 1}}>
-                {isLoading ? (
+                {files.length === 0 && isLoading  ? (
                     <Box display="flex" justifyContent="center" alignItems="center" height="100%">
                         <CircularProgress/>
                     </Box>
@@ -96,6 +120,8 @@ export function FileList() {
                                 group={group}
                                 onAdd={openAddDialog}
                                 onDelete={handleDelete}
+                                isOpen={openDirs.has(group.name)}
+                                onToggle={handleToggle}
                             />
                         ))}
                     </List>

@@ -1,5 +1,4 @@
-import React, {useState} from 'react';
-import {Link as RouterLink, useLocation, useParams} from 'react-router-dom';
+import {Link as RouterLink, useLocation} from 'react-router-dom';
 import {Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemText} from '@mui/material';
 import {
     Add as AddIcon,
@@ -10,22 +9,20 @@ import {
     ExpandMore,
     Folder as FolderIcon
 } from '@mui/icons-material';
-import type {FileGroup} from '../hooks/files';
+import type {FileGroup} from "../hooks/files.ts";
+import React from "react";
 
-interface FileItemProps {
+export interface FileItemProps {
     group: FileGroup;
-    onAdd: (parentName: string) => void;
-    onDelete: (fileName: string) => void;
+    onAdd: (name: string) => void;
+    onDelete: (name: string) => void;
+    isOpen: boolean;
+    onToggle: (name: string) => void;
 }
 
-export const FileItem = React.memo(({group, onAdd, onDelete}: FileItemProps) => {
+export const FileItem = React.memo(({group, onAdd, onDelete, isOpen, onToggle}: FileItemProps) => {
     const location = useLocation();
-    const {file} = useParams<{ file: string; child?: string }>();
     const isDirectory = group.children.length !== 0;
-
-    // A directory is considered "active" if any of its children are the current path
-    const isChildSelected = isDirectory && group.name == file
-    const [isOpen, setIsOpen] = useState(isChildSelected);
 
     const handleActionClick = (e: React.MouseEvent, action: () => void) => {
         e.preventDefault();
@@ -35,14 +32,14 @@ export const FileItem = React.memo(({group, onAdd, onDelete}: FileItemProps) => 
 
     const handleToggle = () => {
         if (isDirectory) {
-            setIsOpen(!isOpen);
+            onToggle(group.name);
         }
     };
 
     const ParentProps = !isDirectory ? {
         component: RouterLink,
         to: `/files/${group.name}?tab=editor`,
-        selected: location.pathname == `/files/${group.name}`,
+        selected: location.pathname === `/files/${group.name}`,
     } : {
         onClick: handleToggle,
     };
@@ -73,24 +70,25 @@ export const FileItem = React.memo(({group, onAdd, onDelete}: FileItemProps) => 
                 <Collapse in={isOpen} timeout="auto" unmountOnExit>
                     <List disablePadding sx={{pl: 4}}>
                         {group.children.map((child: string) => {
-                            const childPath = `/files/${group.name}/${child}`
+                            const childBase = `${group.name}/${child}`;
+                            const childPath = `/files/${childBase}`;
                             return (
                                 <ListItemButton
                                     key={child}
                                     component={RouterLink}
                                     to={`${childPath}?tab=editor`}
-                                    selected={location.pathname == childPath}
+                                    selected={location.pathname === childPath}
                                 >
                                     <ListItemIcon><ArticleIcon sx={{fontSize: '1.25rem'}}/></ListItemIcon>
                                     <ListItemText primary={child}/>
                                     <IconButton
                                         size="small"
-                                        onClick={(e) => handleActionClick(e, () => onDelete(child))}
+                                        onClick={(e) => handleActionClick(e, () => onDelete(childBase))}
                                     >
                                         <DeleteIcon fontSize="small"/>
                                     </IconButton>
                                 </ListItemButton>
-                            )
+                            );
                         })}
                     </List>
                 </Collapse>
