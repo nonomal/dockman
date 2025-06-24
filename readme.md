@@ -30,9 +30,9 @@ Get Dockman up and running with the Docker Compose configuration below.
 
 **Critical**: The stacks directory path must be identical in all three locations:
 
-* 1️⃣ The host side of the volume `/path/to/stacks`
-* 2️⃣ The container side of the volume `/path/to/stacks)`
-* 3️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
+* 1️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
+* 2️⃣ The host side of the volume `/path/to/stacks`
+* 3️⃣ The container side of the volume `/path/to/stacks)`
 
 This path consistency is essential for Dockman to properly locate and manage your compose files.
 
@@ -75,7 +75,6 @@ services:
 ## Getting Help
 
 Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/discussions).
-
 
 ## WIP Features
 
