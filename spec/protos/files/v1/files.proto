@@ -6,16 +6,11 @@ option go_package = "github.com/RA341/dockman/generated/files/v1";
 
 service FileService {
   // root file management
-  rpc Create(CreateFile) returns (Empty) {}
+  rpc Create(File) returns (Empty) {}
   rpc List(Empty) returns (ListResponse) {}
   rpc Delete(File) returns (Empty) {}
   rpc Exists(File) returns (Empty) {}
   rpc Rename(RenameFile) returns (Empty) {}
-}
-
-message SubReq {
-  string groupName = 1;
-  string subFilename = 2;
 }
 
 message ListResponse {
@@ -30,11 +25,6 @@ message FileGroup {
 message RenameFile {
   File oldFile = 1;
   File newFile = 2;
-}
-
-message CreateFile {
-  File file = 1;
-  string parent = 2;
 }
 
 message File {

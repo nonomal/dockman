@@ -21,58 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type SubReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GroupName     string                 `protobuf:"bytes,1,opt,name=groupName,proto3" json:"groupName,omitempty"`
-	SubFilename   string                 `protobuf:"bytes,2,opt,name=subFilename,proto3" json:"subFilename,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SubReq) Reset() {
-	*x = SubReq{}
-	mi := &file_files_v1_files_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SubReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SubReq) ProtoMessage() {}
-
-func (x *SubReq) ProtoReflect() protoreflect.Message {
-	mi := &file_files_v1_files_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SubReq.ProtoReflect.Descriptor instead.
-func (*SubReq) Descriptor() ([]byte, []int) {
-	return file_files_v1_files_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *SubReq) GetGroupName() string {
-	if x != nil {
-		return x.GroupName
-	}
-	return ""
-}
-
-func (x *SubReq) GetSubFilename() string {
-	if x != nil {
-		return x.SubFilename
-	}
-	return ""
-}
-
 type ListResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Groups        []*FileGroup           `protobuf:"bytes,1,rep,name=groups,proto3" json:"groups,omitempty"`
@@ -82,7 +30,7 @@ type ListResponse struct {
 
 func (x *ListResponse) Reset() {
 	*x = ListResponse{}
-	mi := &file_files_v1_files_proto_msgTypes[1]
+	mi := &file_files_v1_files_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -94,7 +42,7 @@ func (x *ListResponse) String() string {
 func (*ListResponse) ProtoMessage() {}
 
 func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_files_v1_files_proto_msgTypes[1]
+	mi := &file_files_v1_files_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -107,7 +55,7 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_files_v1_files_proto_rawDescGZIP(), []int{1}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ListResponse) GetGroups() []*FileGroup {
@@ -127,7 +75,7 @@ type FileGroup struct {
 
 func (x *FileGroup) Reset() {
 	*x = FileGroup{}
-	mi := &file_files_v1_files_proto_msgTypes[2]
+	mi := &file_files_v1_files_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -139,7 +87,7 @@ func (x *FileGroup) String() string {
 func (*FileGroup) ProtoMessage() {}
 
 func (x *FileGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_files_v1_files_proto_msgTypes[2]
+	mi := &file_files_v1_files_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -152,7 +100,7 @@ func (x *FileGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileGroup.ProtoReflect.Descriptor instead.
 func (*FileGroup) Descriptor() ([]byte, []int) {
-	return file_files_v1_files_proto_rawDescGZIP(), []int{2}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *FileGroup) GetRoot() string {
@@ -179,7 +127,7 @@ type RenameFile struct {
 
 func (x *RenameFile) Reset() {
 	*x = RenameFile{}
-	mi := &file_files_v1_files_proto_msgTypes[3]
+	mi := &file_files_v1_files_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +139,7 @@ func (x *RenameFile) String() string {
 func (*RenameFile) ProtoMessage() {}
 
 func (x *RenameFile) ProtoReflect() protoreflect.Message {
-	mi := &file_files_v1_files_proto_msgTypes[3]
+	mi := &file_files_v1_files_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +152,7 @@ func (x *RenameFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameFile.ProtoReflect.Descriptor instead.
 func (*RenameFile) Descriptor() ([]byte, []int) {
-	return file_files_v1_files_proto_rawDescGZIP(), []int{3}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RenameFile) GetOldFile() *File {
@@ -221,58 +169,6 @@ func (x *RenameFile) GetNewFile() *File {
 	return nil
 }
 
-type CreateFile struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
-	Parent        string                 `protobuf:"bytes,2,opt,name=parent,proto3" json:"parent,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateFile) Reset() {
-	*x = CreateFile{}
-	mi := &file_files_v1_files_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateFile) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateFile) ProtoMessage() {}
-
-func (x *CreateFile) ProtoReflect() protoreflect.Message {
-	mi := &file_files_v1_files_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateFile.ProtoReflect.Descriptor instead.
-func (*CreateFile) Descriptor() ([]byte, []int) {
-	return file_files_v1_files_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *CreateFile) GetFile() *File {
-	if x != nil {
-		return x.File
-	}
-	return nil
-}
-
-func (x *CreateFile) GetParent() string {
-	if x != nil {
-		return x.Parent
-	}
-	return ""
-}
-
 type File struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
@@ -282,7 +178,7 @@ type File struct {
 
 func (x *File) Reset() {
 	*x = File{}
-	mi := &file_files_v1_files_proto_msgTypes[5]
+	mi := &file_files_v1_files_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -294,7 +190,7 @@ func (x *File) String() string {
 func (*File) ProtoMessage() {}
 
 func (x *File) ProtoReflect() protoreflect.Message {
-	mi := &file_files_v1_files_proto_msgTypes[5]
+	mi := &file_files_v1_files_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -307,7 +203,7 @@ func (x *File) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use File.ProtoReflect.Descriptor instead.
 func (*File) Descriptor() ([]byte, []int) {
-	return file_files_v1_files_proto_rawDescGZIP(), []int{5}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *File) GetFilename() string {
@@ -325,7 +221,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_files_v1_files_proto_msgTypes[6]
+	mi := &file_files_v1_files_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -337,7 +233,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_files_v1_files_proto_msgTypes[6]
+	mi := &file_files_v1_files_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -350,17 +246,14 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_files_v1_files_proto_rawDescGZIP(), []int{6}
+	return file_files_v1_files_proto_rawDescGZIP(), []int{4}
 }
 
 var File_files_v1_files_proto protoreflect.FileDescriptor
 
 const file_files_v1_files_proto_rawDesc = "" +
 	"\n" +
-	"\x14files/v1/files.proto\x12\bfiles.v1\"H\n" +
-	"\x06SubReq\x12\x1c\n" +
-	"\tgroupName\x18\x01 \x01(\tR\tgroupName\x12 \n" +
-	"\vsubFilename\x18\x02 \x01(\tR\vsubFilename\";\n" +
+	"\x14files/v1/files.proto\x12\bfiles.v1\";\n" +
 	"\fListResponse\x12+\n" +
 	"\x06groups\x18\x01 \x03(\v2\x13.files.v1.FileGroupR\x06groups\";\n" +
 	"\tFileGroup\x12\x12\n" +
@@ -369,16 +262,12 @@ const file_files_v1_files_proto_rawDesc = "" +
 	"\n" +
 	"RenameFile\x12(\n" +
 	"\aoldFile\x18\x01 \x01(\v2\x0e.files.v1.FileR\aoldFile\x12(\n" +
-	"\anewFile\x18\x02 \x01(\v2\x0e.files.v1.FileR\anewFile\"H\n" +
-	"\n" +
-	"CreateFile\x12\"\n" +
-	"\x04file\x18\x01 \x01(\v2\x0e.files.v1.FileR\x04file\x12\x16\n" +
-	"\x06parent\x18\x02 \x01(\tR\x06parent\"\"\n" +
+	"\anewFile\x18\x02 \x01(\v2\x0e.files.v1.FileR\anewFile\"\"\n" +
 	"\x04File\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\"\a\n" +
-	"\x05Empty2\x80\x02\n" +
-	"\vFileService\x121\n" +
-	"\x06Create\x12\x14.files.v1.CreateFile\x1a\x0f.files.v1.Empty\"\x00\x121\n" +
+	"\x05Empty2\xfa\x01\n" +
+	"\vFileService\x12+\n" +
+	"\x06Create\x12\x0e.files.v1.File\x1a\x0f.files.v1.Empty\"\x00\x121\n" +
 	"\x04List\x12\x0f.files.v1.Empty\x1a\x16.files.v1.ListResponse\"\x00\x12+\n" +
 	"\x06Delete\x12\x0e.files.v1.File\x1a\x0f.files.v1.Empty\"\x00\x12+\n" +
 	"\x06Exists\x12\x0e.files.v1.File\x1a\x0f.files.v1.Empty\"\x00\x121\n" +
@@ -398,36 +287,33 @@ func file_files_v1_files_proto_rawDescGZIP() []byte {
 	return file_files_v1_files_proto_rawDescData
 }
 
-var file_files_v1_files_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_files_v1_files_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_files_v1_files_proto_goTypes = []any{
-	(*SubReq)(nil),       // 0: files.v1.SubReq
-	(*ListResponse)(nil), // 1: files.v1.ListResponse
-	(*FileGroup)(nil),    // 2: files.v1.FileGroup
-	(*RenameFile)(nil),   // 3: files.v1.RenameFile
-	(*CreateFile)(nil),   // 4: files.v1.CreateFile
-	(*File)(nil),         // 5: files.v1.File
-	(*Empty)(nil),        // 6: files.v1.Empty
+	(*ListResponse)(nil), // 0: files.v1.ListResponse
+	(*FileGroup)(nil),    // 1: files.v1.FileGroup
+	(*RenameFile)(nil),   // 2: files.v1.RenameFile
+	(*File)(nil),         // 3: files.v1.File
+	(*Empty)(nil),        // 4: files.v1.Empty
 }
 var file_files_v1_files_proto_depIdxs = []int32{
-	2, // 0: files.v1.ListResponse.groups:type_name -> files.v1.FileGroup
-	5, // 1: files.v1.RenameFile.oldFile:type_name -> files.v1.File
-	5, // 2: files.v1.RenameFile.newFile:type_name -> files.v1.File
-	5, // 3: files.v1.CreateFile.file:type_name -> files.v1.File
-	4, // 4: files.v1.FileService.Create:input_type -> files.v1.CreateFile
-	6, // 5: files.v1.FileService.List:input_type -> files.v1.Empty
-	5, // 6: files.v1.FileService.Delete:input_type -> files.v1.File
-	5, // 7: files.v1.FileService.Exists:input_type -> files.v1.File
-	3, // 8: files.v1.FileService.Rename:input_type -> files.v1.RenameFile
-	6, // 9: files.v1.FileService.Create:output_type -> files.v1.Empty
-	1, // 10: files.v1.FileService.List:output_type -> files.v1.ListResponse
-	6, // 11: files.v1.FileService.Delete:output_type -> files.v1.Empty
-	6, // 12: files.v1.FileService.Exists:output_type -> files.v1.Empty
-	6, // 13: files.v1.FileService.Rename:output_type -> files.v1.Empty
-	9, // [9:14] is the sub-list for method output_type
-	4, // [4:9] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	1, // 0: files.v1.ListResponse.groups:type_name -> files.v1.FileGroup
+	3, // 1: files.v1.RenameFile.oldFile:type_name -> files.v1.File
+	3, // 2: files.v1.RenameFile.newFile:type_name -> files.v1.File
+	3, // 3: files.v1.FileService.Create:input_type -> files.v1.File
+	4, // 4: files.v1.FileService.List:input_type -> files.v1.Empty
+	3, // 5: files.v1.FileService.Delete:input_type -> files.v1.File
+	3, // 6: files.v1.FileService.Exists:input_type -> files.v1.File
+	2, // 7: files.v1.FileService.Rename:input_type -> files.v1.RenameFile
+	4, // 8: files.v1.FileService.Create:output_type -> files.v1.Empty
+	0, // 9: files.v1.FileService.List:output_type -> files.v1.ListResponse
+	4, // 10: files.v1.FileService.Delete:output_type -> files.v1.Empty
+	4, // 11: files.v1.FileService.Exists:output_type -> files.v1.Empty
+	4, // 12: files.v1.FileService.Rename:output_type -> files.v1.Empty
+	8, // [8:13] is the sub-list for method output_type
+	3, // [3:8] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_files_v1_files_proto_init() }
@@ -441,7 +327,7 @@ func file_files_v1_files_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_files_v1_files_proto_rawDesc), len(file_files_v1_files_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

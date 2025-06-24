@@ -47,6 +47,8 @@ const (
 	DockerServiceListProcedure = "/docker.v1.DockerService/List"
 	// DockerServiceStatsProcedure is the fully-qualified name of the DockerService's Stats RPC.
 	DockerServiceStatsProcedure = "/docker.v1.DockerService/Stats"
+	// DockerServiceLogsProcedure is the fully-qualified name of the DockerService's Logs RPC.
+	DockerServiceLogsProcedure = "/docker.v1.DockerService/Logs"
 )
 
 // DockerServiceClient is a client for the docker.v1.DockerService service.
@@ -58,6 +60,7 @@ type DockerServiceClient interface {
 	Update(context.Context, *connect.Request[v1.ComposeFile]) (*connect.ServerStreamForClient[v1.ComposeActionResponse], error)
 	List(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error)
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
+	Logs(context.Context, *connect.Request[v1.LogsRequest]) (*connect.ServerStreamForClient[v1.ContainerLogStream], error)
 }
 
 // NewDockerServiceClient constructs a client for the docker.v1.DockerService service. By default,
@@ -113,6 +116,12 @@ func NewDockerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(dockerServiceMethods.ByName("Stats")),
 			connect.WithClientOptions(opts...),
 		),
+		logs: connect.NewClient[v1.LogsRequest, v1.ContainerLogStream](
+			httpClient,
+			baseURL+DockerServiceLogsProcedure,
+			connect.WithSchema(dockerServiceMethods.ByName("Logs")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -125,6 +134,7 @@ type dockerServiceClient struct {
 	update  *connect.Client[v1.ComposeFile, v1.ComposeActionResponse]
 	list    *connect.Client[v1.ComposeFile, v1.ListResponse]
 	stats   *connect.Client[v1.StatsRequest, v1.StatsResponse]
+	logs    *connect.Client[v1.LogsRequest, v1.ContainerLogStream]
 }
 
 // Start calls docker.v1.DockerService.Start.
@@ -162,6 +172,11 @@ func (c *dockerServiceClient) Stats(ctx context.Context, req *connect.Request[v1
 	return c.stats.CallUnary(ctx, req)
 }
 
+// Logs calls docker.v1.DockerService.Logs.
+func (c *dockerServiceClient) Logs(ctx context.Context, req *connect.Request[v1.LogsRequest]) (*connect.ServerStreamForClient[v1.ContainerLogStream], error) {
+	return c.logs.CallServerStream(ctx, req)
+}
+
 // DockerServiceHandler is an implementation of the docker.v1.DockerService service.
 type DockerServiceHandler interface {
 	Start(context.Context, *connect.Request[v1.ComposeFile], *connect.ServerStream[v1.ComposeActionResponse]) error
@@ -171,6 +186,7 @@ type DockerServiceHandler interface {
 	Update(context.Context, *connect.Request[v1.ComposeFile], *connect.ServerStream[v1.ComposeActionResponse]) error
 	List(context.Context, *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error)
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
+	Logs(context.Context, *connect.Request[v1.LogsRequest], *connect.ServerStream[v1.ContainerLogStream]) error
 }
 
 // NewDockerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -222,6 +238,12 @@ func NewDockerServiceHandler(svc DockerServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(dockerServiceMethods.ByName("Stats")),
 		connect.WithHandlerOptions(opts...),
 	)
+	dockerServiceLogsHandler := connect.NewServerStreamHandler(
+		DockerServiceLogsProcedure,
+		svc.Logs,
+		connect.WithSchema(dockerServiceMethods.ByName("Logs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/docker.v1.DockerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DockerServiceStartProcedure:
@@ -238,6 +260,8 @@ func NewDockerServiceHandler(svc DockerServiceHandler, opts ...connect.HandlerOp
 			dockerServiceListHandler.ServeHTTP(w, r)
 		case DockerServiceStatsProcedure:
 			dockerServiceStatsHandler.ServeHTTP(w, r)
+		case DockerServiceLogsProcedure:
+			dockerServiceLogsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -273,4 +297,8 @@ func (UnimplementedDockerServiceHandler) List(context.Context, *connect.Request[
 
 func (UnimplementedDockerServiceHandler) Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker.v1.DockerService.Stats is not implemented"))
+}
+
+func (UnimplementedDockerServiceHandler) Logs(context.Context, *connect.Request[v1.LogsRequest], *connect.ServerStream[v1.ContainerLogStream]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("docker.v1.DockerService.Logs is not implemented"))
 }

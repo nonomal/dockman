@@ -12,10 +12,19 @@ service DockerService {
   rpc Update(ComposeFile) returns (stream ComposeActionResponse) {}
   rpc List(ComposeFile) returns (ListResponse) {}
   rpc Stats(StatsRequest) returns (StatsResponse) {}
+  rpc Logs(LogsRequest) returns (stream ContainerLogStream) {}
+}
+
+message LogsRequest {
+  string containerID = 1;
 }
 
 message ComposeActionResponse {
   string message = 1;
+}
+
+message ContainerLogStream {
+  bytes message = 1;
 }
 
 message StatsResponse {

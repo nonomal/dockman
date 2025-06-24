@@ -48,7 +48,7 @@ const (
 // FileServiceClient is a client for the files.v1.FileService service.
 type FileServiceClient interface {
 	// root file management
-	Create(context.Context, *connect.Request[v1.CreateFile]) (*connect.Response[v1.Empty], error)
+	Create(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
 	List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error)
 	Delete(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
 	Exists(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
@@ -66,7 +66,7 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	fileServiceMethods := v1.File_files_v1_files_proto.Services().ByName("FileService").Methods()
 	return &fileServiceClient{
-		create: connect.NewClient[v1.CreateFile, v1.Empty](
+		create: connect.NewClient[v1.File, v1.Empty](
 			httpClient,
 			baseURL+FileServiceCreateProcedure,
 			connect.WithSchema(fileServiceMethods.ByName("Create")),
@@ -101,7 +101,7 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // fileServiceClient implements FileServiceClient.
 type fileServiceClient struct {
-	create *connect.Client[v1.CreateFile, v1.Empty]
+	create *connect.Client[v1.File, v1.Empty]
 	list   *connect.Client[v1.Empty, v1.ListResponse]
 	delete *connect.Client[v1.File, v1.Empty]
 	exists *connect.Client[v1.File, v1.Empty]
@@ -109,7 +109,7 @@ type fileServiceClient struct {
 }
 
 // Create calls files.v1.FileService.Create.
-func (c *fileServiceClient) Create(ctx context.Context, req *connect.Request[v1.CreateFile]) (*connect.Response[v1.Empty], error) {
+func (c *fileServiceClient) Create(ctx context.Context, req *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
 	return c.create.CallUnary(ctx, req)
 }
 
@@ -136,7 +136,7 @@ func (c *fileServiceClient) Rename(ctx context.Context, req *connect.Request[v1.
 // FileServiceHandler is an implementation of the files.v1.FileService service.
 type FileServiceHandler interface {
 	// root file management
-	Create(context.Context, *connect.Request[v1.CreateFile]) (*connect.Response[v1.Empty], error)
+	Create(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
 	List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error)
 	Delete(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
 	Exists(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error)
@@ -201,7 +201,7 @@ func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption
 // UnimplementedFileServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedFileServiceHandler struct{}
 
-func (UnimplementedFileServiceHandler) Create(context.Context, *connect.Request[v1.CreateFile]) (*connect.Response[v1.Empty], error) {
+func (UnimplementedFileServiceHandler) Create(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("files.v1.FileService.Create is not implemented"))
 }
 
