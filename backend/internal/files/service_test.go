@@ -12,12 +12,12 @@ func TestService_Create(t *testing.T) {
 	require.FileExists(t, filepath.Join(baseFolder, BoltFileDBName))
 
 	parent := "test2.yaml"
-	err := srv.Create(parent, "")
+	err := srv.Create(parent)
 	require.NoError(t, err)
 	require.FileExists(t, filepath.Join(baseFolder, parent))
 
 	child := "child.txt"
-	err = srv.Create(child, parent)
+	err = srv.Create(child)
 	require.NoError(t, err)
 	require.FileExists(t, filepath.Join(baseFolder, child))
 
@@ -26,6 +26,6 @@ func TestService_Create(t *testing.T) {
 	//require.Equal(t, parent, gotParent)
 
 	// duplicate
-	err = srv.Create(parent, "")
+	err = srv.Create(parent)
 	require.Error(t, err, "")
 }

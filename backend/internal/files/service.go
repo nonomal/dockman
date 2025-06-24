@@ -1,20 +1,20 @@
 package files
 
 import (
-	"fmt"
 	"github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
+	"sync"
 )
 
 type Service struct {
 	composeRoot string
-	Fdb         FileDB
 }
 
-func NewService(composeRoot string, importPatterns ...string) *Service {
+func NewService(composeRoot string) *Service {
 	if !filepath.IsAbs(composeRoot) {
 		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
 	}
@@ -23,97 +23,82 @@ func NewService(composeRoot string, importPatterns ...string) *Service {
 		log.Fatal().Err(err).Str("compose-root", composeRoot).Msg("failed to create compose root folder")
 	}
 
-	srv := &Service{
+	return &Service{
 		composeRoot: composeRoot,
-		Fdb:         NewBoltConfig(composeRoot),
 	}
-
-	importPatterns = append(importPatterns, "*.yaml", "*.yml") //default
-	if err := srv.AutoImport(importPatterns...); err != nil {
-		log.Fatal().Err(err).Msg("failed to auto import files")
-	}
-
-	return srv
 }
 
 func (s *Service) Close() error {
-	return s.Fdb.Close()
-}
-
-func (s *Service) AutoImport(globPatterns ...string) error {
-	dirs, err := os.ReadDir(s.composeRoot)
-	if err != nil {
-		return err
-	}
-
-	for _, dir := range dirs {
-		if dir.IsDir() {
-			log.Info().Str("dir", dir.Name()).Msg("will not import directories")
-			continue
-		}
-
-		filename := dir.Name()
-		if filename == BoltFileDBName {
-			continue
-		}
-
-		ok, err := s.Fdb.Exists(filename)
-		if err != nil {
-			return err
-		}
-		if ok {
-			continue // already being tracked
-		}
-
-		for _, ext := range globPatterns {
-			match, err := filepath.Match(ext, filename)
-			if err != nil {
-				return err
-			}
-
-			if match {
-				// add as parent
-				if err = s.Fdb.Insert(filename, ""); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
 	return nil
 }
 
 func (s *Service) List() (map[string][]string, error) {
-	return s.Fdb.List()
+	topLevelEntries, err := os.ReadDir(s.composeRoot)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string][]string, len(topLevelEntries))
+
+	wg := &sync.WaitGroup{}
+	subDirChan := make(chan dirResult, len(topLevelEntries))
+
+	for _, entry := range topLevelEntries {
+		entryName := entry.Name()
+		if slices.Contains(ignoredFiles, entryName) {
+			continue
+		}
+
+		if !entry.IsDir() {
+			result[entryName] = []string{}
+			continue
+		}
+
+		wg.Add(1)
+		go func(entryName string) {
+			defer wg.Done()
+			fullPath := s.WithPath(entryName)
+			files, err := listFiles(fullPath)
+
+			subDirChan <- dirResult{
+				fileList: files,
+				dirname:  entryName,
+				err:      err,
+			}
+		}(entryName)
+	}
+
+	go func() {
+		wg.Wait()
+		close(subDirChan)
+	}()
+
+	for item := range subDirChan {
+		if item.err != nil {
+			return nil, item.err
+		}
+		result[item.dirname] = item.fileList
+	}
+
+	return result, nil
 }
 
-func (s *Service) Create(fileName, parent string) error {
+func (s *Service) Create(fileName string) error {
 	if err := s.createFile(fileName); err != nil {
 		return err
 	}
-
-	if err := s.Fdb.Insert(fileName, parent); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func (s *Service) Exists(filename string) (bool, error) {
-	ok, err := s.Fdb.Exists(filename)
-	if err != nil {
-		return false, err
+func (s *Service) Exists(filename string) error {
+	if _, err := os.Stat(s.WithPath(filename)); err != nil {
+		return err
 	}
-	return ok, nil
+	return nil
 }
 
 func (s *Service) Delete(fileName string) error {
-	fullpath := s.getPath(fileName)
+	fullpath := s.WithPath(fileName)
 	if err := os.RemoveAll(fullpath); err != nil {
-		return err
-	}
-
-	if err := s.Fdb.Delete(fileName); err != nil {
 		return err
 	}
 
@@ -121,30 +106,20 @@ func (s *Service) Delete(fileName string) error {
 }
 
 func (s *Service) Save(filename string, destWriter io.Reader) error {
-	return s.withFile(filename, func(filename string) error {
-		filename = s.getPath(filename)
+	filename = s.WithPath(filename)
+	read, err := io.ReadAll(destWriter)
+	if err != nil {
+		return err
+	}
 
-		read, err := io.ReadAll(destWriter)
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(filename, read, os.ModePerm)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	if err = os.WriteFile(filename, read, os.ModePerm); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *Service) Load(filename string) (string, error) {
-	if err := s.withFile(
-		filename,
-		func(filename string) error { return nil },
-	); err != nil {
-		return "", err
-	}
-	return s.getPath(filename), nil
+func (s *Service) LoadFilePath(filename string) (string, error) {
+	return s.WithPath(filename), nil
 }
 
 func (s *Service) createFile(filename string) error {
@@ -158,23 +133,34 @@ func (s *Service) createFile(filename string) error {
 }
 
 func (s *Service) openFile(filename string) (*os.File, error) {
-	filename = s.getPath(filename)
+	filename = s.WithPath(filename)
 	return os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 }
 
-func (s *Service) getPath(filename string) string {
+func (s *Service) WithPath(filename string) string {
 	return filepath.Join(s.composeRoot, filename)
 }
 
-// checks verifies file existence
-func (s *Service) withFile(filename string, execFn func(filename string) error) error {
-	ok, err := s.Fdb.Exists(filename)
+type dirResult struct {
+	fileList []string
+	dirname  string
+	err      error
+}
+
+var ignoredFiles = []string{".git"}
+
+func listFiles(path string) ([]string, error) {
+	subEntries, err := os.ReadDir(path)
 	if err != nil {
-		return err
-	}
-	if !ok {
-		return fmt.Errorf("file %s does not exist", filename)
+		return nil, err
 	}
 
-	return execFn(filename)
+	filesInSubDir := make([]string, 0, len(subEntries))
+	for _, subEntry := range subEntries {
+		if !subEntry.IsDir() {
+			filesInSubDir = append(filesInSubDir, subEntry.Name())
+		}
+	}
+
+	return filesInSubDir, nil
 }

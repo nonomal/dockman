@@ -1,6 +1,7 @@
 package files
 
 import (
+	b64 "encoding/base64"
 	"github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -42,7 +43,13 @@ func (h *FileHandler) SaveFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer pkg.CloseFile(file)
 
-	err = h.srv.Save(meta.Filename, file)
+	decodedFileName, err := b64.StdEncoding.DecodeString(meta.Filename)
+	if err != nil {
+		http.Error(w, "Error converting file name from base64", http.StatusBadRequest)
+		return
+	}
+
+	err = h.srv.Save(string(decodedFileName), file)
 	if err != nil {
 		log.Error().Err(err).Msg("Error saving file")
 		http.Error(w, "Error saving file", http.StatusInternalServerError)
@@ -60,7 +67,7 @@ func (h *FileHandler) LoadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	cleanPath := filepath.Clean(fileName)
 
-	fullPath, err := h.srv.Load(cleanPath)
+	fullPath, err := h.srv.LoadFilePath(cleanPath)
 	if err != nil {
 		log.Error().Err(err).Str("path", cleanPath).Msg("Error loading file")
 		http.Error(w, "Filename not found", http.StatusBadRequest)

@@ -32,17 +32,20 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connec
 		})
 	}
 
+	slices.SortFunc(resp, func(a, b *v1.FileGroup) int {
+		return len(b.SubFiles) - len(a.SubFiles)
+	})
+
 	return connect.NewResponse(&v1.ListResponse{Groups: resp}), nil
 }
 
-func (h *Handler) Create(_ context.Context, c *connect.Request[v1.CreateFile]) (*connect.Response[v1.Empty], error) {
-	filename, err := getFile(c.Msg.GetFile())
+func (h *Handler) Create(_ context.Context, c *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
+	filename, err := getFile(c.Msg)
 	if err != nil {
 		return nil, err
 	}
-	parent := c.Msg.GetParent()
 
-	if err := h.srv.Create(filename, parent); err != nil {
+	if err := h.srv.Create(filename); err != nil {
 		return nil, err
 	}
 
@@ -50,13 +53,8 @@ func (h *Handler) Create(_ context.Context, c *connect.Request[v1.CreateFile]) (
 }
 
 func (h *Handler) Exists(_ context.Context, req *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
-	ok, err := h.srv.Exists(req.Msg.GetFilename())
-	if err != nil {
+	if err := h.srv.Exists(req.Msg.GetFilename()); err != nil {
 		return nil, err
-	}
-
-	if !ok {
-		return nil, fmt.Errorf("file not found")
 	}
 
 	return &connect.Response[v1.Empty]{}, nil
@@ -75,9 +73,8 @@ func (h *Handler) Delete(_ context.Context, c *connect.Request[v1.File]) (*conne
 	return &connect.Response[v1.Empty]{}, nil
 }
 
-func (h *Handler) Rename(ctx context.Context, c *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
-	//TODO implement me
-	panic("implement me")
+func (h *Handler) Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
+	return nil, fmt.Errorf("unimplemented")
 }
 
 func getFile(c *v1.File) (string, error) {

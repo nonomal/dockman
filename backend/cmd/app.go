@@ -33,7 +33,7 @@ func NewApp(conf *ServerConfig) (*App, error) {
 
 	authSrv := auth.NewService()
 	fileSrv := files.NewService(absComposeRoot)
-	gitSrv := git.NewService(absComposeRoot, fileSrv.Fdb)
+	gitSrv := git.NewService(absComposeRoot)
 	dockerSrv := docker.NewService(absComposeRoot)
 
 	log.Info().Msg("Dockman initialized successfully")
