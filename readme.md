@@ -18,7 +18,7 @@ It provides a straightforward way to edit, track, and back up your compose confi
 
 - [Install](#Install)
 - [WIP Features](#wip-features)
-- [Philosophy](#philosophy)
+- [Why](#why-dockman)
     - [How It Compares](#how-it-compares)
 - [Feedback](#feedback)
 - [Contributing](#contributing)
@@ -26,33 +26,56 @@ It provides a straightforward way to edit, track, and back up your compose confi
 
 ## Install
 
-Use the following to get Dockman running.
+Get Dockman up and running with the Docker Compose configuration below.
 
-It is very important that the path for your stacks directory is the same in the three locations marked below.
+**Critical**: The stacks directory path must be identical in all three locations:
 
-* 1️⃣ The host side of the volume (/path/to/stacks)
-* 2️⃣ The container side of the volume (/path/to/stacks)
-* 3️⃣ The path for the --cr command flag (/path/to/stacks)
+* 1️⃣ The host side of the volume `/path/to/stacks`
+* 2️⃣ The container side of the volume `/path/to/stacks)`
+* 3️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
 
-All three must be identical for Dockman to locate and manage your compose files correctly.
+This path consistency is essential for Dockman to properly locate and manage your compose files.
 
 ```yaml
+services:
   dockman:
     container_name: dockman
     image: ghcr.io/ra341/dockman:dev
+    environment:
+      # 1️⃣
+      - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
     volumes:
-      #  1️⃣                 2️⃣
+      #  2️⃣              3️⃣                
       - /path/to/stacks:/path/to/stacks
       - /var/run/docker.sock:/var/run/docker.sock
-    command:
-      - "./dockman"
-      - "--ui=dist"
-      #  3️⃣
-      - "--cr=/path/to/stacks"
     ports:
       - "8866:8866"
     restart: always
 ```
+
+### Example with Actual Path
+
+Replace `/path/to/stacks` with your actual directory path:
+
+```yaml
+services:
+  dockman:
+    container_name: dockman
+    image: ghcr.io/ra341/dockman:dev
+    environment:
+      - DOCKMAN_COMPOSE_ROOT=/home/user/docker-stacks
+    volumes:
+      - /home/user/docker-stacks:/home/user/docker-stacks
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8866:8866"
+    restart: always
+```
+
+## Getting Help
+
+Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/discussions).
+
 
 ## WIP Features
 
@@ -63,55 +86,19 @@ All three must be identical for Dockman to locate and manage your compose files 
 * **Painless Backup/Restore:** Simple, reliable commands for backing up and restoring your entire Docker Compose setup
   using git.
 
-## Philosophy
+## Why Dockman
 
-I created Dockman to fill a specific gap in my homelab workflow.
-While excellent Docker management tools exist,
-I needed something that aligned with my particular approach.
+I built Dockman to solve a specific problem in my homelab setup. While there are excellent Docker management tools
+available, none quite matched how I prefer to work.
 
-Dockman follows a simple, opinionated structure:
+Dockman is designed for people who:
 
-```
-{purpose}-compose.yaml
-├── supporting .env files
-└── related configuration files
-```
+- Prefer editing configuration files directly over GUI abstractions
+- Want a clean, focused interface without unnecessary complexity
+- Value simplicity and purpose over comprehensive feature sets
 
-Example, if using caddy and crowdsec
-
-UI will show:
-
-```
-router-compose.yaml
-├── Caddyfile
-├── .env
-└── acquis.yaml
-```
-
-But internally everything is stored flatly
-
-```
-tree .
-
-├── router-compose.yaml
-├── Caddyfile
-├── acquis.yaml
-├── .env
-```
-
-No directories, no complex paths—everything in a flat folder.
-This approach keeps everything organized and predictable,
-making it easy to locate and manage your compose files.
-
-Dockman isn't for everyone, and that's by design. It's built for users who:
-
-- Prefer direct file editing over GUI abstractions
-- Want a clean, purpose-built interface
-- Value simplicity over feature breadth
-
-If this matches your workflow, I'd appreciate a star on the project.
-
-Even if it doesn't, I'd love to hear your [feedback](#feedback).
+If this resonates with your workflow, I'd appreciate a star.
+Even if it doesn't fit your needs, I'd welcome your [feedback](#feedback) to help improve it.
 
 ## How It Compares
 
@@ -133,19 +120,45 @@ If you spot a bug, have an idea for a feature, or just want to share your though
 I'd especially love to hear what you think about a couple of things:
 
 * The File and Folder Structure
-    * Right now, all the files are just stored in a flat structure.
-    * It works, but if you have a better idea for how to organize everything, please open an issue and let me know!
 
 * The UI
-    * I'm not a UI expert, in fact I hate HTML/CSS in general. The current interface is mostly built by Material-UI and
+    * I'm not a UI expert, in fact I hate HTML/CSS in general. The current interface is mostly built using Material-UI
+      and
       Gemini.
     * If you have ideas on how to make it look better or easier to use, I'm all ears. Feel free to open an issue with
       your suggestions.
 
 ## Contributing
 
-Contributions are welcome. Please feel free to submit a pull request or open an issue to discuss proposed changes or
-provide feedback.
+Dockman is built with Go for the backend and React for the frontend.
+
+### Project Structure
+
+- **[backend](backend)**: The Go backend service
+    - **[spec](spec)**: Proto files for the Connect-RPC API [more info](spec/readme.md).
+- **[frontend](ui)**: The React frontend application
+- **[install](install)**: Installation scripts and documentation (WIP)
+
+### Getting Started
+
+Before contributing, make sure you have:
+
+- Go 1.24+ installed
+- Node.js 22+ and npm/yarn
+- Docker for testing/updating generated code
+
+### How to Contribute
+
+Whether you're fixing a bug, adding a feature, or improving documentation:
+
+1. **Start with an issue** - Open an issue first to discuss your idea
+2. **Fork and branch** - Create a feature branch from `main`
+3. **Submit a PR** - Include a clear description of what you've changed
+
+### Questions?
+
+Not sure where to start? Open an issue tagged with `question` or `help wanted`. I'm happy to help guide new contributors
+through the codebase.
 
 ## License
 
