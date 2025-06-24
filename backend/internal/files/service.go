@@ -1,6 +1,7 @@
 package files
 
 import (
+	"fmt"
 	"github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"io"
@@ -76,7 +77,11 @@ func (s *Service) List() (map[string][]string, error) {
 		if item.err != nil {
 			return nil, item.err
 		}
-		result[item.dirname] = item.fileList
+
+		if len(item.fileList) != 0 {
+			// do not send empty dirs
+			result[item.dirname] = item.fileList
+		}
 	}
 
 	return result, nil
@@ -90,9 +95,14 @@ func (s *Service) Create(fileName string) error {
 }
 
 func (s *Service) Exists(filename string) error {
-	if _, err := os.Stat(s.WithPath(filename)); err != nil {
+	stat, err := os.Stat(s.WithPath(filename))
+	if err != nil {
 		return err
 	}
+	if stat.IsDir() {
+		return fmt.Errorf("%s is a directory, cannot be opened", filename)
+	}
+
 	return nil
 }
 
@@ -123,7 +133,13 @@ func (s *Service) LoadFilePath(filename string) (string, error) {
 }
 
 func (s *Service) createFile(filename string) error {
-	f, err := s.openFile(filename)
+	filename = s.WithPath(filename)
+	baseDir := filepath.Dir(filename)
+	if err := os.MkdirAll(baseDir, 0755); err != nil {
+		return err
+	}
+
+	f, err := openFile(filename)
 	if err != nil {
 		return err
 	}
@@ -132,8 +148,7 @@ func (s *Service) createFile(filename string) error {
 	return nil
 }
 
-func (s *Service) openFile(filename string) (*os.File, error) {
-	filename = s.WithPath(filename)
+func openFile(filename string) (*os.File, error) {
 	return os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 }
 

@@ -1,6 +1,7 @@
 package files
 
 import (
+	"cmp"
 	"connectrpc.com/connect"
 	"context"
 	"fmt"
@@ -33,7 +34,11 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connec
 	}
 
 	slices.SortFunc(resp, func(a, b *v1.FileGroup) int {
-		return len(b.SubFiles) - len(a.SubFiles)
+		if res := len(b.SubFiles) - len(a.SubFiles); res != 0 {
+			return res
+		}
+		// sort alphabetically
+		return cmp.Compare(a.Root, b.Root)
 	})
 
 	return connect.NewResponse(&v1.ListResponse{Groups: resp}), nil

@@ -230,7 +230,7 @@ func TestService_Commit(t *testing.T) {
 }
 
 func createTestRepo(t *testing.T, repoPath string) (*git.Repository, *Service) {
-	file := files.NewService(repoPath)
+	//file := files.NewService(repoPath)
 	srv := NewService(repoPath)
 
 	createAndWriteFile(t, repoPath, "README.md", "# Test Repository")
