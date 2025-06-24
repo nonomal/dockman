@@ -45,7 +45,7 @@ interface FileIconProps {
 }
 
 const FileIcon: React.FC<FileIconProps> = ({filename}) => {
-    if (filename.endsWith('compose.yaml')) {
+    if (filename.endsWith('compose.yaml') || filename.endsWith('compose.yml') ) {
         return <DockerComposeIcon/>;
     }
     if (filename.endsWith('.yaml') || filename.endsWith('.yml')) {
