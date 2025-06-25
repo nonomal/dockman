@@ -7,14 +7,7 @@ Dockman is a tool designed to simplify the management of Docker Compose files,
 particularly for homelab environments.
 It provides a straightforward way to edit, track, and back up your compose configurations.
 
-## Screenshots
-
 ![output](https://github.com/user-attachments/assets/a7ff09ee-119e-46d8-a71d-6aa494c2d0c2)
-
-![img.png](.github/img/editor.png)
-![img.png](.github/img/diffs.png)
-![img.png](.github/img/deploy.png)
-![img.png](.github/img/dashboard.png)
 
 ## Contents
 
