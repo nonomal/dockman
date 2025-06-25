@@ -2,8 +2,8 @@ package cmd
 
 import (
 	connectcors "connectrpc.com/cors"
-	"embed"
 	"fmt"
+	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/pkg"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -16,22 +16,20 @@ import (
 	"strings"
 )
 
-func StartServer(opts ...ServerOpt) {
-	config := parseConfig(opts...)
-
+func StartServer() {
 	router := http.NewServeMux()
 
-	app, err := NewApp(config)
+	app, err := NewApp(config.C)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed setting up app")
 	}
 	defer pkg.CloseFile(app)
 
 	app.registerRoutes(router)
-	router.Handle("/", newSpaHandler(config.uiFS))
+	router.Handle("/", newSpaHandler(config.C.GetUIFS()))
 
 	middleware := cors.New(cors.Options{
-		AllowedOrigins:      config.AllowedOrigins,
+		AllowedOrigins:      config.C.GetAllowedOrigins(),
 		AllowPrivateNetwork: true,
 		AllowedMethods:      connectcors.AllowedMethods(),
 		AllowedHeaders:      append(connectcors.AllowedHeaders(), "Authorization"),
@@ -39,9 +37,9 @@ func StartServer(opts ...ServerOpt) {
 	})
 	finalMux := middleware.Handler(router)
 
-	log.Info().Int("port", config.Port).Msg("Starting server...")
+	log.Info().Int("port", config.C.Port).Msg("Starting server...")
 	err = http.ListenAndServe(
-		fmt.Sprintf(":%d", config.Port),
+		fmt.Sprintf(":%d", config.C.Port),
 		h2c.NewHandler(finalMux, &http2.Server{}),
 	)
 	if err != nil {
@@ -78,24 +76,4 @@ func newSpaHandler(staticFS fs.FS) http.Handler {
 		staticFS:   staticFS,
 		fileServer: http.FileServer(http.FS(staticFS)),
 	}
-}
-
-func LoadFileUI(path string) fs.FS {
-	root, err := os.OpenRoot(path)
-	if err != nil {
-		log.Fatal().Err(err).Str("path", path).Msg("failed to open file for UI")
-	}
-
-	return root.FS()
-}
-
-func LoadEmbeddedUI(uiFs embed.FS) fs.FS {
-	log.Debug().Msg("Loading frontend from embedded FS")
-
-	subFS, err := fs.Sub(uiFs, "dist")
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to setup frontend fs")
-	}
-
-	return subFS
 }

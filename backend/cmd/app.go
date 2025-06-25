@@ -8,6 +8,7 @@ import (
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
 	gitrpc "github.com/RA341/dockman/generated/git/v1/v1connect"
 	"github.com/RA341/dockman/internal/auth"
+	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
@@ -18,14 +19,14 @@ import (
 )
 
 type App struct {
-	Config *ServerConfig
+	Config *config.AppConfig
 	Auth   *auth.Service
 	File   *files.Service
 	Git    *git.Service
 	Docker *docker.Service
 }
 
-func NewApp(conf *ServerConfig) (*App, error) {
+func NewApp(conf *config.AppConfig) (*App, error) {
 	absComposeRoot, err := filepath.Abs(strings.TrimSpace(conf.ComposeRoot))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path for compose root: %w", err)

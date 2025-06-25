@@ -1,4 +1,4 @@
-package cmd
+package config
 
 import (
 	"flag"
@@ -12,15 +12,16 @@ func denv(envName string) string {
 	return fmt.Sprintf("%s_%s", base, envName)
 }
 
-// LoadConfig loads configuration from defaults, environment variables,
+// loadConfigFromArgs loads configuration from defaults, environment variables,
 // and command-line arguments.
-func LoadConfig() *ServerConfig {
-	conf := &ServerConfig{}
+func loadConfigFromArgs() *AppConfig {
+	conf := &AppConfig{}
 
 	uiPathFromEnv := getEnv(denv("UI_PATH"), "dist")
 	composeRootFromEnv := getEnv(denv("COMPOSE_ROOT"), "compose")
 	authEnabledFromEnv := getEnvAsBool(denv("AUTH_ENABLE"), false)
 	originsFromEnv := getEnv(denv("ORIGINS"), "*")
+	localAddrFromEnv := getEnv(denv("MACHINE_ADDR"), "0.0.0.0")
 
 	flag.StringVar(
 		&conf.UIPath,
@@ -30,7 +31,14 @@ func LoadConfig() *ServerConfig {
 	)
 
 	flag.StringVar(
-		&conf.allowedOriginsString,
+		&conf.LocalAddr,
+		"ma",
+		localAddrFromEnv,
+		"Local IP address of the machine running dockman: e.g 192.168.1.23",
+	)
+
+	flag.StringVar(
+		&conf.AllowedOrigins,
 		"origins",
 		originsFromEnv,
 		"configure allowed origins for the api, expects a csv of origins. eg. example.com,localhost:8080",
