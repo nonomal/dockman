@@ -13,12 +13,24 @@ interface TabDetails {
     component: React.ReactElement;
 }
 
+enum TabType {
+    EDITOR,
+    DEPLOY,
+    STATS,
+}
+
+function parseTabType(input: string | null): TabType {
+    const tabValueInt = parseInt(input ?? '0', 10)
+    const isValidTab = TabType[tabValueInt] !== undefined
+    return isValidTab ? tabValueInt : TabType.EDITOR
+}
+
 export function Stack() {
     const {file, child} = useParams<{ file: string; child?: string }>();
     const navigate = useNavigate();
     const fileService = useClient(FileService);
     const [searchParams] = useSearchParams();
-    const selectedTab = searchParams.get('tab') || 'editor' // Default to 'editor' if not present
+    const selectedTab = parseTabType(searchParams.get('tab') ?? "0")
 
     const filename = child ? `${file}/${child}` : file
 
@@ -48,24 +60,22 @@ export function Stack() {
 
     }, [filename, fileService, child]);
 
-    const tabsMap: Map<string, TabDetails> = useMemo(() => {
-        // Return an empty map if there's no filename to avoid errors
-        if (!filename) return new Map();
+    const tabsList: TabDetails[] = useMemo(() => {
+        if (!filename) return [];
 
         const isComposeFile = filename.endsWith(".yml") || filename.endsWith(".yaml");
-        const map = new Map<string, TabDetails>();
+        const map: TabDetails[] = []
 
-        map.set('editor', {
+        map.push({
             label: 'Editor',
             component: <StackEditor key={filename} selectedPage={filename}/>
-        });
-
+        })
         if (isComposeFile) {
-            map.set('deploy', {
+            map.push({
                 label: 'Deploy',
                 component: <StackDeploy selectedPage={filename}/>
             });
-            map.set('stats', {
+            map.push({
                 label: 'Stats',
                 component: <StatStacksPage selectedPage={filename}/>
             });
@@ -81,10 +91,10 @@ export function Stack() {
     };
 
     useEffect(() => {
-        if (selectedTab && tabsMap.size > 0 && !tabsMap.has(selectedTab)) {
-            navigate(`/files/${filename}?tab=editor`, {replace: true});
+        if (selectedTab && tabsList.length > 0) {
+            navigate(`/files/${filename}?tab=${selectedTab}`, {replace: true});
         }
-    }, [filename, selectedTab, tabsMap, navigate]);
+    }, [filename, selectedTab, tabsList, navigate]);
 
     if (isLoading) {
         return <CenteredMessage icon={<CircularProgress/>} title=""/>;
@@ -100,12 +110,18 @@ export function Stack() {
         );
     }
 
-    const activePanel = tabsMap.get(currentTab)?.component;
+    const activePanel = tabsList[currentTab].component;
     return (
         <>
             <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
-                <Tabs value={currentTab} onChange={handleTabChange}>
-                    {Array.from(tabsMap.entries()).map(([key, details]) => (
+                <Tabs value={currentTab} onChange={handleTabChange} slotProps={{
+                    indicator: {
+                        sx: {
+                            transition: '0.09s',
+                        }
+                    }
+                }}>
+                    {tabsList.map((details, key) => (
                         <Tab key={key} value={key} label={details.label}/>
                     ))}
                 </Tabs>
