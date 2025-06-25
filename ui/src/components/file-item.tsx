@@ -63,7 +63,7 @@ export const FileItem = React.memo(({group, onAdd, onDelete, isOpen, onToggle}: 
                 </ListItemButton>
 
                 {isDirectory && (
-                    <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                    <Collapse in={isOpen} timeout={125} unmountOnExit>
                         <List disablePadding sx={{pl: 4}}>
                             {group.children.map((child: string) => {
                                 const childBase = `${group.name}/${child}`;

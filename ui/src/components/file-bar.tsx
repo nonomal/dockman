@@ -6,6 +6,7 @@ import {
     Divider,
     InputAdornment,
     List,
+    styled,
     TextField,
     Toolbar,
     Typography
@@ -84,7 +85,14 @@ export function FileList() {
     }, [files, searchQuery]);
 
     return (
-        <>
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                overflow: 'hidden'
+            }}
+        >
             <Toolbar>
                 <Typography variant="h6" noWrap sx={{flexGrow: 1}}>Files</Typography>
                 <Button startIcon={<AddIcon/>} onClick={() => openAddDialog('')}>Add</Button>
@@ -109,7 +117,7 @@ export function FileList() {
             </Box>
             <Divider/>
 
-            <Box sx={{overflowY: 'auto', flexGrow: 1}}>
+            <StyledScrollbarBox sx={{flexGrow: 1}}>
                 {files.length === 0 && isLoading ? (
                     <Box display="flex" justifyContent="center" alignItems="center" height="100%">
                         <CircularProgress/>
@@ -128,7 +136,7 @@ export function FileList() {
                         ))}
                     </List>
                 )}
-            </Box>
+            </StyledScrollbarBox>
 
             <AddFileDialog
                 open={dialogState.open}
@@ -136,6 +144,28 @@ export function FileList() {
                 onConfirm={handleAddConfirm}
                 parentName={dialogState.parent}
             />
-        </>
+        </Box> // Close the main container Box
     );
 }
+
+const StyledScrollbarBox = styled(Box)(({theme}) => ({
+    overflowY: 'auto',
+    scrollbarGutter: 'stable',
+    // Use theme colors for better theming support
+    scrollbarWidth: 'thin',
+    scrollbarColor: `${theme.palette.grey[400]} transparent`,
+
+    '&::-webkit-scrollbar': {
+        width: '6px',
+    },
+    '&::-webkit-scrollbar-track': {
+        background: 'transparent', // Makes the track invisible
+    },
+    '&::-webkit-scrollbar-thumb': {
+        backgroundColor: theme.palette.grey[400],
+        borderRadius: '3px',
+    },
+    '&::-webkit-scrollbar-thumb:hover': {
+        backgroundColor: theme.palette.grey[500],
+    },
+}));
