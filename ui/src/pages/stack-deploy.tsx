@@ -49,17 +49,24 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
         setLogTitle
     } = useDockerActions();
 
+    const [isLogPanelMinimized, setIsLogPanelMinimized] = useState(true);
+
     // State for individual container logs, separate from compose action logs
     const [containerLogStream, setContainerLogStream] = useState<AsyncIterable<ContainerLogStream> | null>(null);
 
     const handleComposeAction = (name: typeof deployActionsConfig[number]['name'], message: string) => {
+        setIsLogPanelMinimized(false)
         performAction(
             name,
             () => dockerService[name]({filename: selectedPage}),
             message,
             selectedPage
         ).then(() => {
-            refreshContainers() // Refresh container list after action completes
+            refreshContainers()
+            if (!actionError) {
+                // hide on success
+                setTimeout(() => setIsLogPanelMinimized(true), 1000)
+            }
         });
     };
 
@@ -69,6 +76,7 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
         if (actionLogStream) setActionLogStream(null);
         // Set the individual container log stream
         setContainerLogStream(dockerService.logs({containerID: containerId}));
+        setIsLogPanelMinimized(false);
     };
 
     // Determine which stream to pass to the logs panel
@@ -110,7 +118,13 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
                 </Box>
             </Box>
 
-            <LogsPanel title={logTitle} logStream={currentLogStream}/>
+            <LogsPanel
+                title={logTitle}
+                logStream={currentLogStream}
+                isMinimized={isLogPanelMinimized}
+                onToggle={() => setIsLogPanelMinimized(prev => !prev)}
+                onClose={() => setIsLogPanelMinimized(true)}
+            />
 
             {/* Error Dialog */}
             <Dialog open={!!actionError} onClose={clearActionError}>

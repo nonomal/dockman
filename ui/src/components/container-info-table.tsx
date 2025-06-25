@@ -18,7 +18,7 @@ import {
 import {PlayArrow as PlayArrowIcon} from '@mui/icons-material';
 import {type ContainerList, type Port} from '../gen/docker/v1/docker_pb.ts';
 import {getImageHomePageUrl, getStatusChipColor, trim} from '../lib/utils.ts';
-import { ContainerPort } from './container-port.tsx';
+import {ContainerPort} from './container-port.tsx';
 
 interface ContainerTableProps {
     containers: ContainerList[];
@@ -74,18 +74,28 @@ export function ContainerTable({containers, onShowLogs}: ContainerTableProps) {
                                 <Chip label={container.status} color={getStatusChipColor(container.status)} size="small"
                                       sx={{textTransform: 'capitalize'}}/>
                             </TableCell>
+
                             <TableCell>
-                                <Link href={getImageHomePageUrl(container.imageName)} target="_blank"
-                                      rel="noopener noreferrer" sx={{textDecoration: 'none', color: 'primary.main'}}>
-                                    <Tooltip title="Open image page">
-                                        <Typography variant="body2" sx={{
-                                            wordBreak: 'break-all',
-                                            '&:hover': {textDecoration: 'underline', color: 'primary.main'}
-                                        }}>
+                                <Tooltip title="Open image website" arrow>
+                                    <Link
+                                        href={getImageHomePageUrl(container.imageName)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        sx={{textDecoration: 'none', color: 'primary.main'}}
+                                    >
+                                        <Typography
+                                            variant="body2"
+                                            component="span"
+                                            sx={{
+                                                wordBreak: 'break-all',
+                                                // The hover effect is still good here
+                                                '&:hover': {textDecoration: 'underline'}
+                                            }}
+                                        >
                                             {container.imageName}
                                         </Typography>
-                                    </Tooltip>
-                                </Link>
+                                    </Link>
+                                </Tooltip>
                             </TableCell>
                             <TableCell width={360}>
                                 {formatPorts(container.ports)}

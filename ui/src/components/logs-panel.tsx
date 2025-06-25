@@ -1,29 +1,23 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef} from 'react';
 import {Box, Button, IconButton, Paper, Typography} from '@mui/material';
-import {Close as CloseIcon, Terminal as TerminalIcon} from '@mui/icons-material';
-import LogsTerminal, {type TerminalHandle} from './logs-terminal.tsx';
-import {type ComposeActionResponse, type ContainerLogStream} from "../gen/docker/v1/docker_pb.ts";
+import CloseIcon from '@mui/icons-material/Close';
+import TerminalIcon from '@mui/icons-material/Terminal';
+import LogsTerminal, {type TerminalHandle} from './logs-terminal';
 
-interface LogsPanelProps {
-    title: string;
-    logStream: AsyncIterable<ContainerLogStream | ComposeActionResponse> | null;
+export interface LogsPanelProps {
+    title?: string;
+    logStream: AsyncIterable<{ message: Uint8Array | string }> | null;
+    isMinimized: boolean;
+    onToggle: () => void;
+    onClose: () => void;
 }
 
-export function LogsPanel({title, logStream}: LogsPanelProps) {
-    const [isMinimized, setIsMinimized] = useState(true);
+export function LogsPanel({title, logStream, isMinimized, onToggle, onClose}: LogsPanelProps) {
     const terminalRef = useRef<TerminalHandle>(null);
 
-    // Automatically open the panel when a new log stream is provided
-    useEffect(() => {
-        if (logStream) {
-            setIsMinimized(false);
-        }
-    }, [logStream]);
-
-    // Fit the terminal when the panel opens
     useEffect(() => {
         if (!isMinimized) {
-            // A small delay allows the transition to finish before fitting.
+            // A small delay allows the CSS transition to start before fitting the terminal.
             const timer = setTimeout(() => terminalRef.current?.fit(), 150);
             return () => clearTimeout(timer);
         }
@@ -59,7 +53,7 @@ export function LogsPanel({title, logStream}: LogsPanelProps) {
                     <Typography variant="body2" sx={{textTransform: 'uppercase', fontWeight: 'bold'}}>
                         {title || 'LOGS'}
                     </Typography>
-                    <IconButton size="large" onClick={() => setIsMinimized(true)} title="Close Panel">
+                    <IconButton size="large" onClick={onClose} title="Close Panel">
                         <CloseIcon fontSize="small" sx={{color: 'white'}}/>
                     </IconButton>
                 </Box>
@@ -77,7 +71,7 @@ export function LogsPanel({title, logStream}: LogsPanelProps) {
                 zIndex: 1201
             }}>
                 <Button color="inherit" size="large" startIcon={<TerminalIcon/>}
-                        onClick={() => setIsMinimized(prev => !prev)}
+                        onClick={() => onToggle()}
                         sx={{textTransform: 'none', height: '100%', borderRadius: 0}}>
                     Logs
                 </Button>

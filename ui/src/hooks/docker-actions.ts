@@ -48,6 +48,7 @@ export function useDockerActions() {
         actionError,
         actionLogStream,
         logTitle,
+        setActionError,
         performAction,
         clearActionError,
         setActionLogStream, // Allow parent to override stream for individual logs

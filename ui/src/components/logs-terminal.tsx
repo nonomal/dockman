@@ -44,6 +44,8 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>(({logStr
         xterm.loadAddon(addon);
         xterm.open(terminalRef.current);
         addon.fit();
+        // hide cursor
+        xterm.write('\x1b[?25l');
 
         // Use ResizeObserver for more robust fitting
         const resizeObserver = new ResizeObserver(() => {
