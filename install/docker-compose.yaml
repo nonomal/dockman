@@ -12,6 +12,7 @@ services:
     environment:
       - DOCKMAN_COMPOSE_ROOT=/stacks
       - DOCKMAN_AUTH_ENABLE=false
+      - DOCKMAN_MACHINE_ADDR=192.168.50.111
     ports:
       - "8432:8866"
     restart: always
