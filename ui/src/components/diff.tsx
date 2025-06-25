@@ -61,18 +61,6 @@ export function DiffViewer({commitId, currentContent, selectedFile}: DiffViewPro
                 <Typography
                     variant="caption"
                     sx={{
-                        color: '#4ade80', // Green color
-                        flex: 1,
-                        textAlign: 'center',
-                        fontSize: '0.8rem',
-                        fontWeight: 'bold',
-                    }}
-                >
-                    Yours
-                </Typography>
-                <Typography
-                    variant="caption"
-                    sx={{
                         color: '#60a5fa', // Blue color
                         flex: 1,
                         textAlign: 'center',
@@ -82,6 +70,18 @@ export function DiffViewer({commitId, currentContent, selectedFile}: DiffViewPro
                 >
                     Commit: {commitId.substring(0, 7)}
                 </Typography>
+                <Typography
+                    variant="caption"
+                    sx={{
+                        color: '#4ade80', // Green color
+                        flex: 1,
+                        textAlign: 'center',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                    }}
+                >
+                    Yours
+                </Typography>
             </Box>
 
             {/* Diff Editor Wrapper: Add minHeight: 0 for robust flex scaling */}
@@ -89,8 +89,8 @@ export function DiffViewer({commitId, currentContent, selectedFile}: DiffViewPro
                 <DiffEditor
                     height="100%"
                     theme="vs-dark"
-                    original={currentContent}
-                    modified={commitContent}
+                    original={commitContent}
+                    modified={currentContent}
                     language={getLanguageFromExtension(selectedFile)}
                     options={{
                         readOnly: true,

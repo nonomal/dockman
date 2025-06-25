@@ -103,7 +103,6 @@ export function AddFileDialog({open, onClose, onConfirm, parentName}: AddFileDia
                     onKeyDown={handleKeyDown}
                     error={!!error}
                     helperText={error || helperTextContent}
-                    // --- 3. Add Spacing between TextField and HelperText ---
                     sx={{
                         '& .MuiFormHelperText-root': {
                             mt: 1, // Adds 8px margin-top
@@ -112,7 +111,6 @@ export function AddFileDialog({open, onClose, onConfirm, parentName}: AddFileDia
                 />
             </DialogContent>
 
-            {/* --- 4. Dialog Actions with Icons and improved spacing --- */}
             <DialogActions sx={{px: 3, py: 2, gap: 1.5}}>
                 <Button onClick={onClose} startIcon={<Cancel/>}>
                     Cancel

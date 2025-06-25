@@ -47,7 +47,7 @@ export function useFiles() {
         if (err) {
             showError(`Error saving file: ${err}`);
         } else {
-            showSuccess(`File "${filename}" saved successfully.`);
+            showSuccess(`${filename} created.`);
             await fetchFiles(); // Refetch after successful creation
             navigate(`/files/${filename}`);
         }
@@ -59,7 +59,7 @@ export function useFiles() {
         if (err) {
             showError(`Error deleting file: ${err}`);
         } else {
-            showSuccess(`File "${filename}" deleted.`);
+            showSuccess(`${filename} deleted.`);
             // If the user is currently viewing the deleted file, navigate away
             if (currentPath.startsWith(`/files/${filename}`)) {
                 navigate('/');

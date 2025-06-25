@@ -103,10 +103,10 @@ func (s *Service) CommitFileGroup(commitMessage string, filename string) error {
 	//	return err
 	//}
 
-	//err = s.Commit(commitMessage, fileList...)
-	//if err != nil {
-	//	return err
-	//}
+	err := s.Commit(commitMessage, filename)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

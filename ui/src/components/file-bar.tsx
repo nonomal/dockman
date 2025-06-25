@@ -34,7 +34,7 @@ export function FileList() {
             // Add the current directory from the URL to the set of open directories
             setOpenDirs(prevOpenDirs => new Set(prevOpenDirs).add(currentDir));
         }
-    }, [currentDir]); // only when the URL parameter changes
+    }, [currentDir]);
 
     const handleToggle = useCallback((dirName: string) => {
         setOpenDirs(prevOpenDirs => {
@@ -53,12 +53,14 @@ export function FileList() {
     };
 
     const closeAddDialog = () => {
-        setDialogState({open: false, parent: ''})
+        // use a function to prevent modifying state before closing the dialog
+        setDialogState(() => ({open: false, parent: ''}))
     };
 
     const handleAddConfirm = (filename: string) => {
-        addFile(filename, dialogState.parent).then()
-        closeAddDialog()
+        addFile(filename, dialogState.parent).then(() => {
+            closeAddDialog()
+        })
     };
 
     const handleDelete = (filename: string) => {
@@ -108,7 +110,7 @@ export function FileList() {
             <Divider/>
 
             <Box sx={{overflowY: 'auto', flexGrow: 1}}>
-                {files.length === 0 && isLoading  ? (
+                {files.length === 0 && isLoading ? (
                     <Box display="flex" justifyContent="center" alignItems="center" height="100%">
                         <CircularProgress/>
                     </Box>
