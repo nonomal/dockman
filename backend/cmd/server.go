@@ -26,7 +26,7 @@ func StartServer() {
 	defer pkg.CloseFile(app)
 
 	app.registerRoutes(router)
-	router.Handle("/", newSpaHandler(config.C.GetUIFS()))
+	router.Handle("/", newSpaHandler(config.C.UIFS))
 
 	middleware := cors.New(cors.Options{
 		AllowedOrigins:      config.C.GetAllowedOrigins(),
