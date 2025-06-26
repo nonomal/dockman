@@ -6,8 +6,10 @@ import LogsTerminal, {type TerminalHandle} from './logs-terminal';
 
 export interface LogsPanelProps {
     title?: string;
-    logStream: AsyncIterable<{ message: Uint8Array | string }> | null;
+    logStream: AsyncIterable<string> | null;
     isMinimized: boolean;
+    onError?: (mes: string) => void;
+    onSuccess?: () => void;
     onToggle: () => void;
     onClose: () => void;
 }
