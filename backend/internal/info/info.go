@@ -110,7 +110,7 @@ func PrintInfo() {
 	// ignore the warning this will be set when compiling
 	if Branch != "unknown" && CommitInfo != "unknown" {
 		fmt.Println(dashDivider)
-		var baseRepo = fmt.Sprintf("https://github.com/RA341/gouda")
+		var baseRepo = fmt.Sprintf("https://github.com/RA341/dockman")
 		branchURL := fmt.Sprintf("%s/tree/%s", baseRepo, Branch)
 		commitURL := fmt.Sprintf("%s/commit/%s", baseRepo, CommitInfo)
 

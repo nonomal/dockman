@@ -89,7 +89,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VERSION=${{ steps.meta.outputs.version || inputs.version_tag }}
+            VERSION=${{ inputs.version_tag  || steps.meta.outputs.version }}
             COMMIT_INFO=${{ github.sha }}
             BRANCH=${{ inputs.source_branch || 'unknown' }}
 
