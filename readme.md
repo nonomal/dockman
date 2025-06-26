@@ -53,7 +53,7 @@ Replace `/path/to/stacks` with your actual directory path:
 services:
   dockman:
     container_name: dockman
-    image: ghcr.io/ra341/dockman:dev
+    image: ghcr.io/ra341/dockman:latest
     environment:
       - DOCKMAN_COMPOSE_ROOT=/home/user/docker-stacks
     volumes:
