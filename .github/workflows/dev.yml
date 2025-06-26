@@ -4,10 +4,8 @@ on:
   push:
     branches:
       - main # publish a dev build on main
-    paths: # trigger only when source code changes
-      - .github/workflows/dev.yml
+    paths:
       - .github/workflows/action-docker.yml
-      - action-docker.yml
       - backend/**
       - ui/**
 
