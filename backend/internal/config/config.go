@@ -2,11 +2,10 @@ package config
 
 import (
 	"embed"
-	"encoding/json"
-	"fmt"
 	"github.com/rs/zerolog/log"
 	"io/fs"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -17,13 +16,9 @@ type AppConfig struct {
 	AllowedOrigins string
 	ComposeRoot    string
 	UIPath         string
-	uiFS           fs.FS // hide this when printing config
+	UIFS           fs.FS `json:"-"`
 	Auth           bool
 	LocalAddr      string
-}
-
-func (c *AppConfig) GetUIFS() fs.FS {
-	return c.uiFS
 }
 
 func (c *AppConfig) GetAllowedOrigins() []string {
@@ -34,12 +29,37 @@ func (c *AppConfig) GetAllowedOrigins() []string {
 	return elems
 }
 
-func (c *AppConfig) PrettyJSON() {
-	b, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		log.Fatal().Err(err).Msg("Error marshalling config JSON")
+func (c *AppConfig) PrettyPrint() {
+	// Flatten the struct into a list of KeyValue pairs.
+	// We start with an empty prefix for the top-level keys.
+	pairs := flattenStruct(reflect.ValueOf(c), "")
+
+	// Find the length of the longest key for alignment.
+	maxKeyLength := 0
+	for _, p := range pairs {
+		if len(p.Key) > maxKeyLength {
+			maxKeyLength = len(p.Key)
+		}
 	}
-	fmt.Println(string(b))
+
+	// Format each pair into a colored, aligned string.
+	var contentBuilder strings.Builder
+	for i, p := range pairs {
+		// Colorize the key and add padding
+		coloredKey := colorize(p.Key, ColorBlue+ColorBold)
+		padding := strings.Repeat(" ", maxKeyLength-len(p.Key))
+
+		contentBuilder.WriteString(coloredKey)
+		contentBuilder.WriteString(":  ")
+		contentBuilder.WriteString(padding)
+		contentBuilder.WriteString(p.Value) // Value is already colored
+
+		if i < len(pairs)-1 {
+			contentBuilder.WriteString("\n")
+		}
+	}
+
+	printInBox("Config", contentBuilder.String())
 }
 
 // LoadConfig sets global app config
@@ -52,16 +72,15 @@ func parseConfig(opts ...ServerOpt) *AppConfig {
 	for _, o := range opts {
 		o(config)
 	}
-
 	loadDefaultIfNotSet(config)
-	config.PrettyJSON()
+	config.PrettyPrint()
 
 	return config
 }
 
 // final checks
 func loadDefaultIfNotSet(config *AppConfig) {
-	if config.uiFS == nil {
+	if config.UIFS == nil {
 		WithUIFromFile(config.UIPath)(config)
 	}
 
@@ -76,13 +95,6 @@ func loadDefaultIfNotSet(config *AppConfig) {
 
 type ServerOpt func(o *AppConfig)
 
-// WithOrigins expects a csv of origins
-func WithOrigins(origins string) ServerOpt {
-	return func(o *AppConfig) {
-
-	}
-}
-
 func WithUIFromFile(path string) ServerOpt {
 	root, err := os.OpenRoot(path)
 	if err != nil {
@@ -90,7 +102,7 @@ func WithUIFromFile(path string) ServerOpt {
 	}
 
 	return func(o *AppConfig) {
-		o.uiFS = root.FS()
+		o.UIFS = root.FS()
 	}
 }
 
@@ -102,6 +114,6 @@ func WithUIFromEmbedded(uiFs embed.FS) ServerOpt {
 	}
 
 	return func(o *AppConfig) {
-		o.uiFS = subFS
+		o.UIFS = subFS
 	}
 }
