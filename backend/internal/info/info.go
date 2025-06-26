@@ -31,7 +31,7 @@ const (
 // generated from https://patorjk.com/software/taag/#p=testall&f=Graffiti&t=dockman%0A
 var headers = []string{
 	// contains some characters that mess with multiline strings leave this alone
-	" \n         8I                         ,dPYb,                                                 \n         8I                         IP'`Yb\n\t8I                         I8  8I\n\t8I                         I8  8bgg,\n\t,gggg,8I    ,ggggg,      ,gggg,  I8 dP\" \"8   ,ggg,,ggg,,ggg,     ,gggg,gg   ,ggg,,ggg,\n\tdP\"  \"Y8I   dP\"  \"Y8ggg  dP\"  \"Yb I8d8bggP\"  ,8\" \"8P\" \"8P\" \"8,   dP\"  \"Y8I  ,8\" \"8P\" \"8, \n\ti8'    ,8I  i8'    ,8I   i8'       I8P' \"Yb,  I8   8I   8I   8I  i8'    ,8I  I8   8I   8I \n\t,d8,   ,d8b,,d8,   ,d8'  ,d8,_    _,d8    `Yb,,dP   8I   8I   Yb,,d8,   ,d8b,,dP   8I   Yb,\n\tP\"Y8888P\"`Y8P\"Y8888P\"    P\"\"Y8888PP88P      Y88P'   8I   8I   `Y8P\"Y8888P\"`Y88P'   8I   `Y8\n",
+	"\n _ .-') _                          .-. .-')  _   .-')      ('-.         .-') _  \n( (  OO) )                         \\  ( OO )( '.( OO )_   ( OO ).-.    ( OO ) ) \n \\     .'_  .-'),-----.    .-----. ,--. ,--. ,--.   ,--.) / . --. /,--./ ,--,'  \n ,`'--..._)( OO'  .-.  '  '  .--./ |  .'   / |   `.'   |  | \\-.  \\ |   \\ |  |\\  \n |  |  \\  '/   |  | |  |  |  |('-. |      /, |         |.-'-'  |  ||    \\|  | ) \n |  |   ' |\\_) |  |\\|  | /_) |OO  )|     ' _)|  |'.'|  | \\| |_.'  ||  .     |/  \n |  |   / :  \\ |  | |  | ||  |`-'| |  .   \\  |  |   |  |  |  .-.  ||  |\\    |   \n |  '--'  /   `'  '-'  '(_'  '--'\\ |  |\\   \\ |  |   |  |  |  | |  ||  | \\   |   \n `-------'      `-----'    `-----' `--' '--' `--'   `--'  `--' `--'`--'  `--'   \n",
 	`
        /$$                     /$$                                        
       | $$                    | $$                                        
@@ -104,7 +104,6 @@ func PrintInfo() {
 
 	printField("Branch", Branch)
 	printField("CommitInfo", CommitInfo)
-	printField("Source Hash", SourceHash)
 	printField("GoVersion", GoVersion)
 
 	// ignore the warning this will be set when compiling
