@@ -1,6 +1,6 @@
 import {Editor} from "@monaco-editor/react";
-import {getLanguageFromExtension} from "../lib/utils.ts";
 import * as monacoEditor from "monaco-editor";
+import {getLanguageFromExtension} from "../lib/editor.ts";
 
 
 interface MonacoEditorProps {
@@ -35,3 +35,4 @@ export const MonacoEditor = ({
         />
     )
 }
+
