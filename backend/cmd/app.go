@@ -12,11 +12,18 @@ import (
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
+	"github.com/RA341/dockman/internal/info"
+	logger "github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"path/filepath"
 	"strings"
 )
+
+func init() {
+	info.PrintInfo()
+	logger.ConsoleLogger()
+}
 
 type App struct {
 	Config *config.AppConfig
