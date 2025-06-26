@@ -1,8 +1,5 @@
 # Dockman
 
-**⚠️ Warning: Dockman is still under development. While it works (I'm personally using it to manage my server), expect
-bugs and breaking changes.**
-
 Dockman is a tool designed to simplify the management of Docker Compose files,
 particularly for homelab environments.
 It provides a straightforward way to edit, track, and back up your compose configurations.
@@ -35,7 +32,7 @@ This path consistency is essential for Dockman to properly locate and manage you
 services:
   dockman:
     container_name: dockman
-    image: ghcr.io/ra341/dockman:dev
+    image: ghcr.io/ra341/dockman:latest
     environment:
       # 1️⃣
       - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
