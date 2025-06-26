@@ -6,9 +6,9 @@ require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
 	github.com/compose-spec/compose-go/v2 v2.6.5
-	github.com/docker/cli v28.2.2+incompatible
+	github.com/docker/cli v28.3.0+incompatible
 	github.com/docker/compose/v2 v2.37.3
-	github.com/docker/docker v28.2.2+incompatible
+	github.com/docker/docker v28.3.0+incompatible
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.34.0
