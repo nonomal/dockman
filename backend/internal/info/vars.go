@@ -10,6 +10,5 @@ var (
 	CommitInfo = "unknown"
 	BuildDate  = "unknown"
 	Branch     = "unknown"
-	SourceHash = "unknown"
 	GoVersion  = runtime.Version()
 )
