@@ -3,8 +3,6 @@ package info
 import (
 	"fmt"
 	"math/rand/v2"
-	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -96,8 +94,7 @@ func PrintInfo() {
 	}
 
 	printField("Version", Version)
-	printField("Flavour", string(Flavour))
-	printField("BinaryPath", filepath.Base(os.Args[0]))
+	printField("Flavour", Flavour)
 	printField("BuildDate", formatTime(BuildDate))
 
 	fmt.Println(equalDivider)

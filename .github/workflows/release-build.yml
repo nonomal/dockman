@@ -22,6 +22,7 @@ jobs:
       version_tag: ${{ github.event.inputs.tag_name }}
       is_latest: true
       source_branch: ${{ github.ref_name }}
+      title: 'Dockman'
     secrets: inherit
 
 # todo native builds
