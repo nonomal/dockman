@@ -50,7 +50,7 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
         message: ''
     })
     const closeErrorDialog = () => {
-        setComposeErrorDialog(() => ({dialog: false, message: ""}))
+        setComposeErrorDialog(prev => ({...prev, dialog: false}))
     }
     const showErrorDialog = (message: string) => {
         setComposeErrorDialog(() => ({dialog: true, message}))
