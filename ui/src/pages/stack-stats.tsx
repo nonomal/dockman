@@ -39,7 +39,7 @@ export function StatStacksPage({selectedPage}: StackStatsProps) {
 
     useEffect(() => {
         fetchStats().then();
-        const interval = setInterval(fetchStats, 5000);
+        const interval = setInterval(fetchStats, 2000);
         return () => clearInterval(interval);
     }, [fetchStats]);
 
