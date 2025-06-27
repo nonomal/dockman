@@ -2,6 +2,7 @@ package config
 
 import (
 	"embed"
+	"fmt"
 	"github.com/rs/zerolog/log"
 	"io/fs"
 	"os"
@@ -11,14 +12,17 @@ import (
 
 var C *AppConfig
 
+// AppConfig tags are parsed by processStruct
 type AppConfig struct {
-	Port           int
-	AllowedOrigins string
-	ComposeRoot    string
-	UIPath         string
-	UIFS           fs.FS `json:"-"`
-	Auth           bool
-	LocalAddr      string
+	Port           int    `config:"flag=port,env=PORT,default=8866,usage=Port to run the server on."`
+	AllowedOrigins string `config:"flag=origins,env=ORIGINS,default=*,usage=Allowed origins for the API (CSV)."`
+	ComposeRoot    string `config:"flag=cr,env=COMPOSE_ROOT,default=compose,usage=Root directory for compose files."`
+	UIPath         string `config:"flag=ui,env=UI_PATH,default=dist,usage=Path to frontend files."`
+	Auth           bool   `config:"flag=auth,env=AUTH_ENABLE,default=false,usage=Enable authentication."`
+	LocalAddr      string `config:"flag=ma,env=MACHINE_ADDR,default=0.0.0.0,usage=Local machine IP address."`
+
+	// UIFS has no 'config' tag, so it will be ignored by the loader.
+	UIFS fs.FS `json:"-"`
 }
 
 func (c *AppConfig) GetAllowedOrigins() []string {
@@ -36,28 +40,66 @@ func (c *AppConfig) PrettyPrint() {
 
 	// Find the length of the longest key for alignment.
 	maxKeyLength := 0
+	maxValueLength := 0
+	maxHelpLength := 0
 	for _, p := range pairs {
 		if len(p.Key) > maxKeyLength {
 			maxKeyLength = len(p.Key)
 		}
+
+		// strip ANSI color codes to get the true visible length of the value.
+		cleanValue := ansiRegex.ReplaceAllString(p.Value, "")
+		if len(cleanValue) > maxValueLength {
+			maxValueLength = len(cleanValue)
+		}
+
+		cleanHelpValue := ansiRegex.ReplaceAllString(p.HelpMessage, "")
+		if len(cleanHelpValue) > maxHelpLength {
+			maxHelpLength = len(cleanHelpValue)
+		}
 	}
 
 	// Format each pair into a colored, aligned string.
+	redEnvLabel := colorize("Env:", ColorRed+ColorUnderline)
 	var contentBuilder strings.Builder
 	for i, p := range pairs {
-		// Colorize the key and add padding
-		coloredKey := colorize(p.Key, ColorBlue+ColorBold)
-		padding := strings.Repeat(" ", maxKeyLength-len(p.Key))
+		// Calculate padding for the key column
+		keyPadding := strings.Repeat(" ", maxKeyLength-len(p.Key))
 
+		// Calculate padding for the value column
+		cleanValue := ansiRegex.ReplaceAllString(p.Value, "")
+		valuePadding := strings.Repeat(" ", maxValueLength-len(cleanValue))
+
+		// Colorize parts for readability
+		coloredKey := colorize(p.Key, ColorBlue+ColorBold)
+
+		cleanHelp := ansiRegex.ReplaceAllString(p.HelpMessage, "")
+		helpPadding := strings.Repeat(" ", maxHelpLength-len(cleanHelp))
+
+		// Assemble the line with calculated padding
+		// Format: [Key]:[Padding]  [Value][Padding]   [Help]
 		contentBuilder.WriteString(coloredKey)
-		contentBuilder.WriteString(":  ")
-		contentBuilder.WriteString(padding)
-		contentBuilder.WriteString(p.Value) // Value is already colored
+		contentBuilder.WriteString(":")
+		contentBuilder.WriteString(keyPadding)
+		contentBuilder.WriteString("  ") // Separator between key and value
+
+		contentBuilder.WriteString(p.Value)
+		contentBuilder.WriteString(valuePadding)
+		contentBuilder.WriteString("  ") // Separator between value and help
+
+		contentBuilder.WriteString(p.HelpMessage)
+		contentBuilder.WriteString(helpPadding)
+		contentBuilder.WriteString("  ") // Separator between help and env
+
+		contentBuilder.WriteString(fmt.Sprintf("%s %s", redEnvLabel, p.EnvName))
 
 		if i < len(pairs)-1 {
 			contentBuilder.WriteString("\n")
 		}
 	}
+
+	ms := colorize("To modify config, set the respective", ColorMagenta+ColorBold)
+	contentBuilder.WriteString(fmt.Sprintf("\n\n%s %s", ms, redEnvLabel))
 
 	printInBox("Config", contentBuilder.String())
 }
@@ -68,7 +110,11 @@ func LoadConfig(opts ...ServerOpt) {
 }
 
 func parseConfig(opts ...ServerOpt) *AppConfig {
-	config := loadConfigFromArgs() // load args/envs
+	config, err := Load() // load args/envs
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error parsing config")
+	}
+
 	for _, o := range opts {
 		o(config)
 	}

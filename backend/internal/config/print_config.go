@@ -11,19 +11,24 @@ import (
 
 // --- ANSI Color Constants ---
 const (
-	ColorReset = "\033[0m"
-	ColorBold  = "\033[1m"
+	ColorReset     = "\033[0m"
+	ColorBold      = "\033[1m"
+	ColorUnderline = "\033[4m"
 
-	ColorBlue    = "\033[34m" // For keys
+	ColorRed     = "\033[31m"
 	ColorGreen   = "\033[32m" // For string values
 	ColorYellow  = "\033[33m" // For bools
+	ColorBlue    = "\033[34m" // For keys
 	ColorMagenta = "\033[35m" // For numbers
+	ColorCyan    = "\033[36m"
 )
 
 // KeyValue A simple struct to hold our flattened key-value pairs before formatting.
 type KeyValue struct {
-	Key   string
-	Value string
+	Key         string
+	Value       string
+	HelpMessage string
+	EnvName     string
 }
 
 // flattenStruct recursively traverses a struct and returns a flat list of KeyValue pairs.
@@ -51,6 +56,15 @@ func flattenStruct(v reflect.Value, prefix string) []KeyValue {
 			keyName = fieldT.Name // Fallback to field name
 		}
 
+		configTag := fieldT.Tag.Get("config")
+		if configTag == "" {
+			continue // Skip fields without the config tag
+		}
+		configTags := parseTag(configTag)
+		usage := configTags["usage"]
+		envName := colorize(fmt.Sprintf("%s_%s", envPrefix, configTags["env"]), ColorCyan)
+		message := fmt.Sprintf("%s", colorize(usage, ColorBlue))
+
 		// Create the full key path (e.g., "database.host")
 		fullKey := keyName
 		if prefix != "" {
@@ -70,14 +84,18 @@ func flattenStruct(v reflect.Value, prefix string) []KeyValue {
 				sliceItems = append(sliceItems, formatSimpleValue(fieldV.Index(j)))
 			}
 			pairs = append(pairs, KeyValue{
-				Key:   fullKey,
-				Value: strings.Join(sliceItems, ", "),
+				Key:         fullKey,
+				Value:       strings.Join(sliceItems, ", "),
+				HelpMessage: message,
+				EnvName:     envName,
 			})
 		default:
 			// Handle simple types
 			pairs = append(pairs, KeyValue{
-				Key:   fullKey,
-				Value: formatSimpleValue(fieldV),
+				Key:         fullKey,
+				Value:       formatSimpleValue(fieldV),
+				HelpMessage: message,
+				EnvName:     envName,
 			})
 		}
 	}
