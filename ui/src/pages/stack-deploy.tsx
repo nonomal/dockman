@@ -178,7 +178,6 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
                 logStream={logStream}
                 isMinimized={isLogPanelMinimized}
                 onToggle={() => setIsLogPanelMinimized(prev => !prev)}
-                onClose={() => setIsLogPanelMinimized(true)}
             />
 
             {/* Error Dialog */}
