@@ -29,7 +29,7 @@ export function useDockerContainers(selectedPage: string) {
 
     useEffect(() => {
         fetchContainers().then();
-        const intervalId = setInterval(fetchContainers, 5000);
+        const intervalId = setInterval(fetchContainers, 3000);
         return () => clearInterval(intervalId);
     }, [fetchContainers]);
 
