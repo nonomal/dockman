@@ -28,7 +28,7 @@ func NewConnectHandler(srv *Service) *Handler {
 
 func (h *Handler) Start(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.LogsMessage{Message: fmt.Sprintf("%s\n", val)}); err != nil {
+		if err := responseStream.Send(&v1.LogsMessage{Message: fmt.Sprintf(val)}); err != nil {
 			return err
 		}
 		return nil
@@ -278,7 +278,7 @@ func streamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitG
 
 		scanner := bufio.NewScanner(pipeReader)
 		for scanner.Scan() {
-			err := streamFn(scanner.Text())
+			err := streamFn(fmt.Sprintf("%s\n", scanner.Text()))
 			if err != nil {
 				log.Warn().Err(err).Msg("Failed to send message to stream")
 			}
