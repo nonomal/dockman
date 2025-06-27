@@ -12,64 +12,80 @@ export interface TerminalHandle {
 }
 
 const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>(({logStream}, ref) => {
-    const terminalRef = useRef<HTMLDivElement>(null);
-    const term = useRef<Terminal | null>(null);
-    const fitAddon = useRef<FitAddon | null>(null);
+        const terminalRef = useRef<HTMLDivElement>(null);
+        const term = useRef<Terminal | null>(null);
+        const fitAddon = useRef<FitAddon | null>(null);
 
-    useImperativeHandle(ref, () => ({
-        fit: () => fitAddon.current?.fit(),
-    }));
+        useImperativeHandle(ref, () => ({
+            fit: () => fitAddon.current?.fit(),
+        }));
 
-    useEffect(() => {
-        if (!terminalRef.current) return;
+        useEffect(() => {
+            if (!terminalRef.current) return;
 
-        const xterm = new Terminal({
-            cursorBlink: false,
-            disableStdin: true,
-            convertEol: true,
-            scrollback: 2500,
-            theme: {background: '#1E1E1E', foreground: '#CCCCCC'},
-            fontFamily: 'monospace',
-        });
+            const xterm = new Terminal({
+                cursorBlink: false,
+                disableStdin: true,
+                convertEol: true,
+                scrollback: 2500,
+                theme: {background: '#1E1E1E', foreground: '#CCCCCC'},
+                fontFamily: 'monospace',
+                lineHeight: 1.5,
+            });
+            xterm.onKey(({domEvent}) => {
+                // Check for Ctrl+C or Cmd+C
+                if ((domEvent.ctrlKey || domEvent.metaKey) && domEvent.key === 'c') {
+                    const selection = xterm.getSelection();
+                    if (selection) {
+                        navigator.clipboard.writeText(selection).then();
+                    } else {
+                        // Since disableStdin is true, we don't need to do anything else.
+                        // We have successfully intercepted the key press.
+                        // Example of writing to a backend process
+                        // pty.write(key);
+                    }
+                }
+            })
 
-        const addon = new FitAddon();
-        fitAddon.current = addon;
-        term.current = xterm;
+            const addon = new FitAddon();
+            fitAddon.current = addon;
+            term.current = xterm;
 
-        xterm.loadAddon(addon);
-        xterm.open(terminalRef.current);
-        addon.fit();
-        xterm.write('\x1b[?25l'); // hide cursor
-
-        // Use ResizeObserver for more robust fitting
-        const resizeObserver = new ResizeObserver(() => {
+            xterm.loadAddon(addon);
+            xterm.open(terminalRef.current);
             addon.fit();
-        });
-        resizeObserver.observe(terminalRef.current);
+            xterm.write('\x1b[?25l'); // hide cursor
 
-        return () => {
-            resizeObserver.disconnect();
-            xterm.dispose();
-            term.current = null;
-        };
-    }, []);
+            // Use ResizeObserver for more robust fitting
+            const resizeObserver = new ResizeObserver(() => {
+                addon.fit();
+            });
+            resizeObserver.observe(terminalRef.current);
 
-    useEffect(() => {
-        if (!logStream || !term.current) return;
+            return () => {
+                resizeObserver.disconnect();
+                xterm.dispose();
+                term.current = null;
+            };
+        }, []);
 
-        const currentTerm = term.current;
-        currentTerm.clear();
+        useEffect(() => {
+            if (!logStream || !term.current) return;
 
-        const processStream = async () => {
-            for await (const item of logStream) {
-                currentTerm.write(item)
-            }
-        };
+            const currentTerm = term.current;
+            currentTerm.clear();
 
-        processStream().then();
-    }, [logStream]);
+            const processStream = async () => {
+                for await (const item of logStream) {
+                    currentTerm.write(item)
+                }
+            };
 
-    return <div ref={terminalRef} style={{width: '100%', height: '100%'}}/>;
-});
+            processStream().then();
+        }, [logStream]);
+
+        return <div ref={terminalRef} style={{width: '100%', height: '100%'}}/>;
+    })
+;
 
 export default LogsTerminal;
