@@ -5,26 +5,22 @@ package docker.v1;
 option go_package = "github.com/RA341/dockman/generated/docker/v1";
 
 service DockerService {
-  rpc Start(ComposeFile) returns (stream ComposeActionResponse) {}
-  rpc Stop(ComposeFile) returns (stream ComposeActionResponse) {}
-  rpc Remove(ComposeFile) returns (stream ComposeActionResponse) {}
-  rpc Restart(ComposeFile) returns (stream ComposeActionResponse) {}
-  rpc Update(ComposeFile) returns (stream ComposeActionResponse) {}
+  rpc Start(ComposeFile) returns (stream LogsMessage) {}
+  rpc Stop(ComposeFile) returns (stream LogsMessage) {}
+  rpc Remove(ComposeFile) returns (stream LogsMessage) {}
+  rpc Restart(ComposeFile) returns (stream LogsMessage) {}
+  rpc Update(ComposeFile) returns (stream LogsMessage) {}
   rpc List(ComposeFile) returns (ListResponse) {}
   rpc Stats(StatsRequest) returns (StatsResponse) {}
-  rpc Logs(LogsRequest) returns (stream ContainerLogStream) {}
+  rpc Logs(ContainerLogsRequest) returns (stream LogsMessage) {}
 }
 
-message LogsRequest {
+message ContainerLogsRequest {
   string containerID = 1;
 }
 
-message ComposeActionResponse {
+message LogsMessage {
   string message = 1;
-}
-
-message ContainerLogStream {
-  bytes message = 1;
 }
 
 message StatsResponse {

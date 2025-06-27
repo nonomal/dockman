@@ -62,7 +62,7 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>(({logStr
 
         const processStream = async () => {
             for await (const item of logStream) {
-                currentTerm.write(`${item}\n`)
+                currentTerm.write(item)
             }
         };
 

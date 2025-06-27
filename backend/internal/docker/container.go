@@ -54,6 +54,16 @@ func (s *ContainerService) ListContainers(ctx context.Context, filter container.
 
 	return containers, nil
 }
+
+func (s *ContainerService) GetStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
+	containerInfo, err := s.StatContainers(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container stats: %w", err)
+	}
+
+	return containerInfo, nil
+}
+
 func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
 	return s.daemon.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
@@ -88,7 +98,7 @@ func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, contai
 		wg.Add(1)
 		go func(cont container.Summary) {
 			defer wg.Done()
-			stats, err := s.ConvertStats(ctx, cont)
+			stats, err := s.getStats(ctx, cont)
 			if err != nil {
 				log.Warn().Err(err).Str("container", cont.ID[:12]).Msg("could not convert stats, skipping...")
 				return
@@ -109,11 +119,11 @@ func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, contai
 	return statsList
 }
 
-func (s *ContainerService) ConvertStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
+func (s *ContainerService) getStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
 	contId := info.ID[:12]
 	// Get the resource usage statistics for the cont.
 	// The `stream` argument is set to `false` to get a single snapshot and not a continuous stream.
-	stats, err := s.daemon.ContainerStats(ctx, info.ID, false)
+	stats, err := s.daemon.ContainerStatsOneShot(ctx, info.ID)
 	if err != nil {
 		return ContainerStats{}, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
 	}
@@ -143,20 +153,6 @@ func (s *ContainerService) ConvertStats(ctx context.Context, info container.Summ
 		BlockRead:   blkRead,
 		BlockWrite:  blkWrite,
 	}, nil
-}
-
-func (s *ContainerService) GetStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
-	//systemInfo, err := getSystemInfo()
-	//if err != nil {
-	//	return nil, nil, fmt.Errorf("failed to get system info: %w", err)
-	//}
-
-	containerInfo, err := s.StatContainers(ctx, filter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get container stats: %w", err)
-	}
-
-	return containerInfo, nil
 }
 
 // getSystemInfo collects and returns the current system-wide metrics.

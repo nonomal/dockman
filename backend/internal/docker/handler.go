@@ -9,6 +9,7 @@ import (
 	v1 "github.com/RA341/dockman/generated/docker/v1"
 	"github.com/RA341/dockman/pkg"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net"
@@ -25,9 +26,9 @@ func NewConnectHandler(srv *Service) *Handler {
 	return &Handler{srv: srv}
 }
 
-func (h *Handler) Start(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Start(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+		if err := responseStream.Send(&v1.LogsMessage{Message: fmt.Sprintf("%s\n", val)}); err != nil {
 			return err
 		}
 		return nil
@@ -43,9 +44,9 @@ func (h *Handler) Start(_ context.Context, req *connect.Request[v1.ComposeFile],
 	return nil
 }
 
-func (h *Handler) Stop(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Stop(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+		if err := responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
 			return err
 		}
 		return nil
@@ -61,9 +62,9 @@ func (h *Handler) Stop(_ context.Context, req *connect.Request[v1.ComposeFile], 
 	return nil
 }
 
-func (h *Handler) Remove(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Remove(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+		if err := responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
 			return err
 		}
 		return nil
@@ -79,9 +80,9 @@ func (h *Handler) Remove(_ context.Context, req *connect.Request[v1.ComposeFile]
 	return nil
 }
 
-func (h *Handler) Restart(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Restart(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+		if err := responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
 			return err
 		}
 		return nil
@@ -97,9 +98,9 @@ func (h *Handler) Restart(_ context.Context, req *connect.Request[v1.ComposeFile
 	return nil
 }
 
-func (h *Handler) Update(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.ComposeActionResponse]) error {
+func (h *Handler) Update(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.ComposeActionResponse{Message: val}); err != nil {
+		if err := responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
 			return err
 		}
 		return nil
@@ -115,7 +116,7 @@ func (h *Handler) Update(_ context.Context, req *connect.Request[v1.ComposeFile]
 	return nil
 }
 
-func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.LogsRequest], responseStream *connect.ServerStream[v1.ContainerLogStream]) error {
+func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLogsRequest], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	if req.Msg.GetContainerID() == "" {
 		return fmt.Errorf("container id is required")
 	}
@@ -126,15 +127,8 @@ func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.LogsRequest]
 	}
 	defer pkg.CloseFile(logsReader)
 
-	scanner := bufio.NewScanner(logsReader)
-	for scanner.Scan() {
-		if err = responseStream.Send(&v1.ContainerLogStream{Message: scanner.Bytes()}); err != nil {
-			log.Warn().Err(err).Msg("Failed to send message to stream")
-		}
-	}
-
-	// If the scanner stops because of an error
-	if err = scanner.Err(); err != nil {
+	writer := &ContainerLogWriter{responseStream: responseStream}
+	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
 		return err
 	}
 
@@ -316,4 +310,15 @@ func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerL
 		Status:    stack.Status,
 		Ports:     portSlice,
 	}
+}
+
+type ContainerLogWriter struct {
+	responseStream *connect.ServerStream[v1.LogsMessage]
+}
+
+func (l *ContainerLogWriter) Write(p []byte) (n int, err error) {
+	if err := l.responseStream.Send(&v1.LogsMessage{Message: string(p)}); err != nil {
+		return 0, err
+	}
+	return len(p), nil
 }

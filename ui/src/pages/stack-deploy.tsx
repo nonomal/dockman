@@ -16,13 +16,13 @@ import {
     Stop as StopIcon,
     Update as UpdateIcon
 } from '@mui/icons-material';
-import {type ContainerLogStream, DockerService} from "../gen/docker/v1/docker_pb.ts";
 import {useClient} from '../lib/api.ts';
 import {useDockerContainers} from "../hooks/containers.ts";
 import {ContainerTable} from "../components/container-info-table.tsx";
 import {LogsPanel} from "../components/logs-panel.tsx";
 import {useSnackbar} from "../hooks/snackbar.ts";
 import {Code, ConnectError} from "@connectrpc/connect";
+import {DockerService} from "../gen/docker/v1/docker_pb.ts";
 
 const deployActionsConfig = [
     {name: 'start', message: "started", icon: <PlayArrowIcon/>},
@@ -56,7 +56,6 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
         setComposeErrorDialog(() => ({dialog: true, message}))
     }
 
-    const decoder = useRef(new TextDecoder('utf-8'));
     const [logStream, setLogStream] = useState<AsyncIterable<string> | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -90,7 +89,7 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
     const handleContainerLogs = (containerId: string, containerName: string) => {
         manageStream({
             getStream: signal => dockerService.logs({containerID: containerId}, {signal: signal}),
-            transform: item => containerLogToString(item, decoder.current),
+            transform: item => item.message,
             panelTitle: `Logs - ${containerName}`,
         })
     };
@@ -195,25 +194,6 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
     );
 }
 
-
-function containerLogToString(data: ContainerLogStream, decoder: TextDecoder) {
-    if (data.message.length <= 8) {
-        return "";
-    }
-    /*
-      Docker logs needs a way to send both standard output (stdout) and standard error (stderr) over the same single data stream.
-      it multiplexes the streams by prepending an 8-byte header to log data.
-      The header is structured:
-        Byte 0: Stream type.
-        0x01 means the following payload is from stdout.
-        0x02 means the following payload is from stderr.
-        Bytes 1-3: Reserved for future use (currently all zeroes).
-        Bytes 4-7: A 32-bit unsigned integer in big-endian format, representing the size (length) of the log message payload that follows.
-        The actual log content is everything AFTER the 8-byte header.
-    * */
-    const payload = data.message.slice(8);
-    return decoder.decode(payload, {stream: true});
-}
 
 interface TransformAsyncIterableOptions<T, U> {
     transform: (item: T) => U | Promise<U>;
