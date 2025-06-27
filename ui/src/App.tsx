@@ -7,8 +7,9 @@ import {NavSidebar} from "./components/sidebar.tsx";
 import {SettingsPage} from "./pages/settings-page.tsx";
 import {AuthProvider} from "./hooks/auth-context.tsx";
 import {AuthPage} from './pages/auth-page.tsx';
-import {useAuth} from "./hooks/auth.ts";
 import NotFoundPage from "./components/not-found.tsx";
+import React from 'react';
+import {useAuth} from "./hooks/auth.ts";
 
 export default function App() {
     return (
@@ -37,12 +38,40 @@ export default function App() {
     );
 }
 
+const styles: { [key: string]: React.CSSProperties } = {
+    loadingWrapper: {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontFamily: 'sans-serif',
+    },
+    spinner: {
+        border: '4px solid rgba(0, 0, 0, 0.1)',
+        width: '36px',
+        height: '36px',
+        borderRadius: '50%',
+        borderLeftColor: '#09f', // Or your brand color
+        animation: 'spin 1s ease infinite',
+        marginBottom: '20px',
+    },
+    loadingText: {
+        fontSize: '1.1rem',
+        color: '#555',
+    }
+};
 
 const PrivateRoute = () => {
     const {isAuthenticated, isLoading} = useAuth();
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return (
+            <div style={styles.loadingWrapper}>
+                <div style={styles.spinner}></div>
+                <p style={styles.loadingText}>Verifying your session...</p>
+            </div>
+        )
     }
 
     return isAuthenticated ? <Outlet/> : <Navigate to="/auth"/>;
