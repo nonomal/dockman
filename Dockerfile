@@ -35,6 +35,7 @@ ENV COMMIT_INFO=${COMMIT_INFO}
 ENV BRANCH=${BRANCH}
 
 RUN go build -ldflags "-s -w \
+             -X github.com/RA341/dockman/internal/info.Flavour=Docker \
              -X github.com/RA341/dockman/internal/info.Version=${VERSION} \
              -X github.com/RA341/dockman/internal/info.CommitInfo=${COMMIT_INFO} \
              -X github.com/RA341/dockman/internal/info.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
