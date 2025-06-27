@@ -19,6 +19,7 @@ devr:
 # docker compose up using the test compose in install
 [working-directory('install')]
 comp:
+    docker compose pull
     docker compose up --build --force-recreate
 
 # no cache docker build
