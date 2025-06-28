@@ -1,5 +1,5 @@
 import React, {type ReactNode, useCallback, useEffect, useMemo, useState} from 'react';
-import {AuthContext} from './auth.ts';
+import {AuthContext} from '../hooks/auth.ts';
 import {callRPC, pingWithAuth, useClient} from "../lib/api.ts";
 import {AuthService} from "../gen/auth/v1/auth_pb.ts";
 

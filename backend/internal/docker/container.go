@@ -121,8 +121,6 @@ func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, contai
 
 func (s *ContainerService) getStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
 	contId := info.ID[:12]
-	// Get the resource usage statistics for the cont.
-	// The `stream` argument is set to `false` to get a single snapshot and not a continuous stream.
 	stats, err := s.daemon.ContainerStatsOneShot(ctx, info.ID)
 	if err != nil {
 		return ContainerStats{}, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
