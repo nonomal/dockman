@@ -173,20 +173,22 @@ func (s *Service) ListCommitByFile(filePath string) ([]*object.Commit, error) {
 		FileName: &filePath,
 	}
 
+	var commitList []*object.Commit
+
 	cIter, err := s.repo.Log(opts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get commit iterator for file %s: %w", filePath, err)
+		log.Debug().Err(err).Str("file", filePath).Msg("could not get commit iterator for file")
+		return commitList, nil
 	}
 	defer cIter.Close()
-
-	var commitList []*object.Commit
 
 	err = cIter.ForEach(func(c *object.Commit) error {
 		commitList = append(commitList, c)
 		return nil
 	})
 	if err != nil && err != io.EOF {
-		return nil, fmt.Errorf("error while iterating commits for file: %w", err)
+		log.Warn().Err(err).Str("file", filePath).Msg("error while iterating commits")
+		return commitList, nil
 	}
 
 	return commitList, nil
