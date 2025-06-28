@@ -17,7 +17,7 @@ import {
     Update as UpdateIcon
 } from '@mui/icons-material';
 import {useClient} from '../lib/api.ts';
-import {useDockerContainers} from "../hooks/containers.ts";
+import {useDockerContainers} from "../hooks/container.ts";
 import {ContainerTable} from "../components/container-info-table.tsx";
 import {LogsPanel} from "../components/logs-panel.tsx";
 import {useSnackbar} from "../hooks/snackbar.ts";
@@ -38,12 +38,15 @@ interface DeployPageProps {
 
 export function StackDeploy({selectedPage}: DeployPageProps) {
     const dockerService = useClient(DockerService);
-    const {containers, refresh: refreshContainers} = useDockerContainers(selectedPage);
+    const {containers, fetchContainers, loading} = useDockerContainers(selectedPage);
     const {showSuccess} = useSnackbar()
-    const [activeAction, setActiveAction] = useState<string | null>(null);
 
     const [panelTitle, setPanelTitle] = useState("Logs")
+    const [activeAction, setActiveAction] = useState<string | null>(null);
+    const [logStream, setLogStream] = useState<AsyncIterable<string> | null>(null);
     const [isLogPanelMinimized, setIsLogPanelMinimized] = useState(true);
+
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const [composeErrorDialog, setComposeErrorDialog] = useState<{ dialog: boolean; message: string }>({
         dialog: false,
@@ -56,15 +59,12 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
         setComposeErrorDialog(() => ({dialog: true, message}))
     }
 
-    const [logStream, setLogStream] = useState<AsyncIterable<string> | null>(null);
-    const abortControllerRef = useRef<AbortController | null>(null);
-
     useEffect(() => {
         return () => {
             // If there's an active controller when the component unmounts, abort it.
             abortControllerRef.current?.abort("Component unmounted");
         };
-    }, []); // Empty dependency array means this runs only on mount and unmount
+    }, []);
 
     const handleComposeAction = (name: typeof deployActionsConfig[number]['name'], message: string) => {
         setActiveAction(name)
@@ -81,7 +81,7 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
             },
             onFinalize: () => {
                 setActiveAction('')
-                refreshContainers().then()
+                fetchContainers().then()
             }
         })
     };
@@ -109,15 +109,14 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
             onFinalize?: () => void;
         }) => {
 
+        // close prev stream
         abortControllerRef.current?.abort("User started a new action");
-
         const newController = new AbortController();
         abortControllerRef.current = newController;
 
         setPanelTitle(panelTitle);
 
         const sourceStream = getStream(newController.signal);
-
         const transformedStream = transformAsyncIterable(sourceStream, {
             transform,
             onComplete: () => {
@@ -169,7 +168,7 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
                     borderColor: 'rgba(255, 255, 255, 0.23)', borderRadius: 3, display: 'flex',
                     flexDirection: 'column', backgroundColor: 'rgb(41,41,41)'
                 }}>
-                    <ContainerTable containers={containers} onShowLogs={handleContainerLogs}/>
+                    <ContainerTable containers={containers} loading={loading} onShowLogs={handleContainerLogs}/>
                 </Box>
             </Box>
 
