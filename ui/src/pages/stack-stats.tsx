@@ -12,7 +12,10 @@ export function StatStacksPage({selectedPage}: StackStatsProps) {
 
     return (
         <Box sx={{p: 3, flexGrow: 1}}>
-            <ContainerStatChart containers={containers}/>
+            {containers.length !== 0 ?
+                <ContainerStatChart containers={containers}/> :
+                <></>
+            }
             <ContainerStatTable
                 loading={loading}
                 containers={containers}

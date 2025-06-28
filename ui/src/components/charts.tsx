@@ -1,18 +1,11 @@
 import {useTheme} from '@mui/material';
 import {ResponsiveLine} from "@nivo/line";
+import {memo, useMemo} from 'react';
+import type {ChartSerie} from "./container-stat-chart.tsx";
 
-export interface DataPoint {
-    x: number | string | Date;
-    y: number | null;
-}
-
-export interface DataSeries {
-    id: string | number;
-    data: DataPoint[];
-    color?: string;
-}
-
-export type NivoData = DataSeries[];
+// Using Nivo's exported 'Serie' type is a good practice.
+// Renaming to NivoData for consistency with the parent component.
+export type NivoData = ChartSerie[];
 
 interface StatLineChartProps {
     data: NivoData;
@@ -20,114 +13,122 @@ interface StatLineChartProps {
     legend?: string;
 }
 
-export function StatLineChart({data, yFormat = " >-.2f", legend = "value"}: StatLineChartProps) {
-    const theme = useTheme();
+export const StatLineChart = memo(
+    function StatLineChart({
+                               data,
+                               yFormat = " >-.2s", // Changed default to be more general (e.g., for bytes)
+                               legend = "value"
+                           }: StatLineChartProps) {
+        const theme = useTheme();
 
-    // Best graph for this data is a time-series line chart
-    return (
-        <ResponsiveLine
-            data={data}
-            margin={{top: 20, right: 20, bottom: 60, left: 80}}
-            xScale={{
-                type: 'time',
-                format: 'native', // Use native Date objects
-                precision: 'second',
-            }}
-            xFormat="time:%Y-%m-%d %H:%M:%S"
-            yScale={{
-                type: 'linear',
-                min: 'auto',
-                max: 'auto',
-                stacked: false,
-                reverse: false,
-            }}
-            yFormat={yFormat}
-            axisTop={null}
-            axisRight={null}
-            axisBottom={{
-                tickSize: 5,
-                tickPadding: 5,
-                tickRotation: 0,
-                format: '%H:%M', // Show time on x-axis
-                legend: 'Time',
-                legendOffset: 36,
-                legendPosition: 'middle',
-            }}
-            axisLeft={{
-                tickSize: 5,
-                tickPadding: 5,
-                tickRotation: 0,
-                format: yFormat,
-                legend: legend,
-                legendOffset: -60,
-                legendPosition: 'middle',
-            }}
-            theme={{
-                axis: {
-                    ticks: {
-                        text: {
-                            fill: theme.palette.text.secondary,
-                        },
-                    },
-                    legend: {
-                        text: {
-                            fill: theme.palette.text.primary,
-                        },
+        const nivoTheme = useMemo(() => ({
+            axis: {
+                ticks: {
+                    text: {
+                        fill: theme.palette.text.secondary,
+                        fontSize: 12,
                     },
                 },
-                tooltip: {
-                    container: {
-                        background: theme.palette.background.paper,
-                        color: theme.palette.text.primary,
-                    },
-                },
-                legends: {
+                legend: {
                     text: {
                         fill: theme.palette.text.primary,
-                    }
-                }
-            }}
-            colors={{scheme: 'category10'}}
-            pointSize={10}
-            pointColor={{theme: 'background'}}
-            pointBorderWidth={2}
-            pointBorderColor={{from: 'serieColor'}}
-            pointLabelYOffset={-12}
-            useMesh={true}
-            enableSlices="x"
-            sliceTooltip={({slice}) => (
-                <div style={{
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                    },
+                },
+            },
+            tooltip: {
+                container: {
                     background: theme.palette.background.paper,
-                    padding: '9px 12px',
+                    color: theme.palette.text.primary,
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: '4px',
-                }}>
-                    {slice.points.map(point => (
-                        <div key={point.id} style={{
-                            color: point.color,
-                            padding: '3px 0',
-                        }}>
-                            <strong>{point.id}</strong>: {point.data.yFormatted}
-                        </div>
-                    ))}
-                </div>
-            )}
-            legends={[
-                {
-                    anchor: 'bottom',
-                    direction: 'row',
-                    justify: false,
-                    translateX: 0,
-                    translateY: 50,
-                    itemsSpacing: 0,
-                    itemDirection: 'left-to-right',
-                    itemWidth: 150,
-                    itemHeight: 20,
-                    itemOpacity: 0.75,
-                    symbolSize: 12,
-                    symbolShape: 'circle',
                 },
-            ]}
-        />
-    );
-}
+            },
+            legends: {
+                text: {
+                    fill: theme.palette.text.primary,
+                }
+            },
+            crosshair: {
+                line: {
+                    stroke: theme.palette.divider,
+                    strokeWidth: 1,
+                    strokeOpacity: 0.75,
+                },
+            },
+        }), [theme]);
+
+        return (
+            <ResponsiveLine
+                data={data}
+                theme={nivoTheme}
+                margin={{top: 20, right: 20, bottom: 60, left: 70}}
+                xScale={{
+                    type: 'time',
+                    format: 'native',
+                    precision: 'second',
+                }}
+                xFormat="time:%Y-%m-%d %H:%M:%S"
+                yScale={{
+                    type: 'linear',
+                    min: 'auto',
+                    max: 'auto',
+                    stacked: false,
+                    reverse: false,
+                }}
+                yFormat={yFormat}
+                axisTop={null}
+                axisRight={null}
+                axisBottom={{
+                    tickSize: 5,
+                    tickPadding: 5,
+                    tickRotation: 0,
+                    format: '%H:%M', // Keep the concise time format
+                    legend: 'Time',
+                    legendOffset: 45,
+                    legendPosition: 'middle',
+                }}
+                axisLeft={{
+                    tickSize: 5,
+                    tickPadding: 5,
+                    tickRotation: 0,
+                    format: yFormat,
+                    legend: legend,
+                    legendOffset: -60,
+                    legendPosition: 'middle',
+                }}
+                colors={{scheme: 'category10'}}
+                pointSize={6}
+                pointColor={{theme: 'background'}}
+                pointBorderWidth={2}
+                pointBorderColor={{from: 'serieColor'}}
+                useMesh={true}
+                enableSlices="x"
+                legends={[
+                    {
+                        anchor: 'bottom',
+                        direction: 'row',
+                        justify: false,
+                        translateX: 0,
+                        translateY: 60, // Increased offset to not overlap with axis legend
+                        itemsSpacing: 10, // Added spacing between items
+                        itemDirection: 'left-to-right',
+                        itemWidth: 120, // Adjusted width
+                        itemHeight: 20,
+                        itemOpacity: 0.75,
+                        symbolSize: 12,
+                        symbolShape: 'circle',
+                        effects: [
+                            {
+                                on: 'hover',
+                                style: {
+                                    itemOpacity: 1, // Full opacity on hover
+                                },
+                            },
+                        ],
+                    },
+                ]}
+            />
+        );
+    });

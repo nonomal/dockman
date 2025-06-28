@@ -9,7 +9,10 @@ export const DashboardPage = () => {
     return (
         <Fade in={true}>
             <Box sx={{p: 1.5, flexGrow: 1, overflow: 'auto'}}>
-                <ContainerStatChart containers={containers}/>
+                {containers.length !== 0 ?
+                    <ContainerStatChart containers={containers}/> :
+                    <></>
+                }
                 <ContainerStatTable
                     loading={loading}
                     order={orderBy}
