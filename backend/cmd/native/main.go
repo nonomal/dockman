@@ -10,8 +10,7 @@ import (
 var frontendDir embed.FS
 
 func main() {
-	config.LoadConfig(
+	cmd.StartServer(
 		config.WithUIFromEmbedded(frontendDir),
 	)
-	cmd.StartServer()
 }

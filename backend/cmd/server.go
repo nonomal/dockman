@@ -16,8 +16,8 @@ import (
 	"strings"
 )
 
-func StartServer() {
-	router := http.NewServeMux()
+func StartServer(opt ...config.ServerOpt) {
+	config.LoadConfig(opt...)
 
 	app, err := NewApp(config.C)
 	if err != nil {
@@ -25,6 +25,7 @@ func StartServer() {
 	}
 	defer pkg.CloseFile(app)
 
+	router := http.NewServeMux()
 	app.registerRoutes(router)
 	router.Handle("/", newSpaHandler(config.C.UIFS))
 
