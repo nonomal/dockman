@@ -38,46 +38,6 @@ export function ContainerTable({containers, onShowLogs, loading}: ContainerTable
 
     const isEmpty = !loading && containers.length === 0;
 
-    function displayRows() {
-        return containers.map((container) => (
-            <TableRow hover key={container.id} sx={{'&:last-child td, &:last-child th': {border: 0}}}>
-                <TableCell component="th" scope="row">
-                    <Typography variant="body1" fontWeight="500">{container.name}</Typography>
-                </TableCell>
-                <TableCell>
-                    <Chip label={container.status} color={getStatusChipColor(container.status)}
-                          size="small" sx={{textTransform: 'capitalize'}}/>
-                </TableCell>
-                <TableCell>
-                    <Tooltip title="Open image website" arrow>
-                        <Link href={getImageHomePageUrl(container.imageName)} target="_blank"
-                              rel="noopener noreferrer"
-                              sx={{textDecoration: 'none', color: 'primary.main'}}>
-                            <Typography variant="body2" component="span" sx={{
-                                wordBreak: 'break-all',
-                                '&:hover': {textDecoration: 'underline'}
-                            }}>
-                                {container.imageName}
-                            </Typography>
-                        </Link>
-                    </Tooltip>
-                </TableCell>
-                <TableCell width={360}>
-                    {formatPorts(container.ports)}
-                </TableCell>
-                <TableCell align="right">
-                    <Stack direction="row" spacing={1} justifyContent="flex-end">
-                        <Tooltip title="Show container logs">
-                            <DocumentScannerOutlined aria-label="Show container logs" color="primary"
-                                                     onClick={() => onShowLogs(container.id, container.name)}
-                                                     sx={{cursor: 'pointer'}}/>
-                        </Tooltip>
-                    </Stack>
-                </TableCell>
-            </TableRow>
-        ));
-    }
-
     return (
         <TableContainer component={Paper} sx={{flexGrow: 1, boxShadow: 3, borderRadius: 2}}>
             <Table stickyHeader aria-label="docker containers table">
@@ -115,19 +75,54 @@ export function ContainerTable({containers, onShowLogs, loading}: ContainerTable
                                     </Box>
                                 </TableCell>
                             </TableRow>
-                        ) : displayRows()
-                        }
+                        ) : containers.map((container) => (
+                                <TableRow hover key={container.id} sx={{'&:last-child td, &:last-child th': {border: 0}}}>
+                                    <TableCell component="th" scope="row">
+                                        <Typography variant="body1" fontWeight="500">{container.name}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip label={container.status} color={getStatusChipColor(container.status)}
+                                              size="small" sx={{textTransform: 'capitalize'}}/>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Tooltip title="Open image website" arrow>
+                                            <Link href={getImageHomePageUrl(container.imageName)} target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  sx={{textDecoration: 'none', color: 'primary.main'}}>
+                                                <Typography variant="body2" component="span" sx={{
+                                                    wordBreak: 'break-all',
+                                                    '&:hover': {textDecoration: 'underline'}
+                                                }}>
+                                                    {container.imageName}
+                                                </Typography>
+                                            </Link>
+                                        </Tooltip>
+                                    </TableCell>
+                                    <TableCell width={360}>
+                                        {formatPorts(container.ports)}
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                            <Tooltip title="Show container logs">
+                                                <DocumentScannerOutlined aria-label="Show container logs" color="primary"
+                                                                         onClick={() => onShowLogs(container.id, container.name)}
+                                                                         sx={{cursor: 'pointer'}}/>
+                                            </Tooltip>
+                                        </Stack>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        )}
                     </TableBody>
                 )}
             </Table>
-
         </TableContainer>
     )
 }
 
 const tableHeaderStyles = {
-    fontWeight: 'bold', backgroundColor:
-        'background.paper'
+    fontWeight: 'bold',
+    backgroundColor: 'background.paper'
 }
 
 const formatPorts = (ports: Port[]) => {
