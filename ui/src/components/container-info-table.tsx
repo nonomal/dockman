@@ -102,7 +102,7 @@ export function ContainerTable({containers, onShowLogs, loading}: ContainerTable
                                         {formatPorts(container.ports)}
                                     </TableCell>
                                     <TableCell align="right">
-                                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                        <Stack direction="row" spacing={1} justifyContent="flex-start">
                                             <Tooltip title="Show container logs">
                                                 <DocumentScannerOutlined aria-label="Show container logs" color="primary"
                                                                          onClick={() => onShowLogs(container.id, container.name)}
