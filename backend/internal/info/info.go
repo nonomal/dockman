@@ -85,7 +85,7 @@ func PrintInfo() {
 	dashDivider := nord10 + strings.Repeat("-", width) + colorReset
 
 	fmt.Println(equalDivider)
-	fmt.Printf("%s%s %s %s\n", nord15, strings.Repeat(" ", (width-24)/2), (headers[rand.IntN(len(headers))]), colorReset)
+	fmt.Printf("%s%s %s %s\n", nord15, strings.Repeat(" ", (width-24)/2), headers[rand.IntN(len(headers))], colorReset)
 	fmt.Println(equalDivider)
 
 	// Print app info with aligned values
