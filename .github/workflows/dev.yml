@@ -19,8 +19,9 @@ jobs:
     name: Build docker dev build
     uses: ./.github/workflows/action-docker.yml
     with:
-      source_branch: ${{ github.ref_name }}
       title: 'Dockman'
+      version_tag: develop
+      source_branch: ${{ github.ref_name }}
     secrets: inherit
 
 #  build_and_release_linux:
