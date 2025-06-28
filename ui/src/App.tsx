@@ -1,11 +1,11 @@
 import {Box, createTheme, CssBaseline, ThemeProvider} from '@mui/material';
-import {SnackbarProvider} from "./hooks/snackbar-context.tsx";
+import {SnackbarProvider} from "./context/snackbar-context.tsx";
 import {Stack} from "./pages/stack.tsx";
 import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
 import {DashboardPage} from "./pages/dashboard-page.tsx";
 import {NavSidebar} from "./components/sidebar.tsx";
 import {SettingsPage} from "./pages/settings-page.tsx";
-import {AuthProvider} from "./hooks/auth-context.tsx";
+import {AuthProvider} from "./context/auth-context.tsx";
 import {AuthPage} from './pages/auth-page.tsx';
 import NotFoundPage from "./components/not-found.tsx";
 import React from 'react';
