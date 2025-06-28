@@ -9,6 +9,7 @@ export function useDockerContainers(selectedPage: string) {
 
     const [containers, setContainers] = useState<ContainerList[]>([])
     const [loading, setLoading] = useState(true)
+    const [refreshInterval, setRefreshInterval] = useState(2000)
 
     const fetchContainers = useCallback(async () => {
         if (!selectedPage) {
@@ -36,9 +37,9 @@ export function useDockerContainers(selectedPage: string) {
     // fetch without setting load
     useEffect(() => {
         fetchContainers().then()
-        const intervalId = setInterval(fetchContainers, 3000)
+        const intervalId = setInterval(fetchContainers, refreshInterval)
         return () => clearInterval(intervalId)
-    }, [fetchContainers])
+    }, [fetchContainers, refreshInterval])
 
-    return {containers, loading, fetchContainers}
+    return {containers, loading, fetchContainers, refreshInterval, setRefreshInterval}
 }

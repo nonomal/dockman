@@ -12,6 +12,7 @@ export function useDockerStats(selectedPage?: string) {
 
     const [field, setField] = useState(SORT_FIELD.MEM)
     const [orderBy, setOrderBy] = useState(ORDER.DSC)
+    const [refreshInterval, setRefreshInterval] = useState(2000)
 
     const fetchStats = useCallback(async () => {
         const {val, err} = await callRPC(() => dockerService.stats({
@@ -46,9 +47,9 @@ export function useDockerStats(selectedPage?: string) {
 
     useEffect(() => {
         fetchStats().then()
-        const intervalId = setInterval(fetchStats, 3000)
+        const intervalId = setInterval(fetchStats, refreshInterval)
         return () => clearInterval(intervalId)
-    }, [fetchWithLoading, fetchStats])
+    }, [fetchWithLoading, fetchStats, refreshInterval])
 
     return {
         containers,
@@ -56,6 +57,8 @@ export function useDockerStats(selectedPage?: string) {
         fetchStats,
         field,
         orderBy,
+        refreshInterval,
         modifySort,
+        setRefreshInterval,
     }
 }
