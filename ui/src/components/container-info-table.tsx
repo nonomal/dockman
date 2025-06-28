@@ -1,11 +1,9 @@
-import React from 'react'
+import React, {useEffect, useState} from 'react'
 import {
     Box,
     Chip,
-    Fade,
     Link,
     Paper,
-    Skeleton,
     Stack,
     Table,
     TableBody,
@@ -27,106 +25,110 @@ interface ContainerTableProps {
 }
 
 export function ContainerTable({containers, onShowLogs, loading}: ContainerTableProps) {
-    if (loading) {
-        return (
-            <TableContainer component={Paper} sx={{flexGrow: 1, boxShadow: 3, borderRadius: 2}}>
-                <Table stickyHeader aria-label="loading docker containers table">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell sx={tableHeaderStyles}>Name</TableCell>
-                            <TableCell sx={tableHeaderStyles}>Status</TableCell>
-                            <TableCell sx={tableHeaderStyles}>Image</TableCell>
-                            <TableCell sx={tableHeaderStyles}>Ports</TableCell>
-                            <TableCell sx={tableHeaderStyles}>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {[...Array(5)].map((_, index) => (
-                            <TableRow key={index}>
-                                <TableCell><Skeleton animation="wave"/></TableCell>
-                                <TableCell><Skeleton animation="wave" variant="rounded" width={80}
-                                                     height={24}/></TableCell>
-                                <TableCell><Skeleton animation="wave"/></TableCell>
-                                <TableCell><Skeleton animation="wave"/></TableCell>
-                                <TableCell align="right"><Skeleton animation="wave" variant="circular" width={24}
-                                                                   height={24}/></TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        )
-    }
-    if (containers.length === 0) {
-        return (
-            <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
-                <Typography variant="h5" color="text.secondary">
-                    No containers found for this deployment
-                </Typography>
-            </Box>
-        )
+    // State to track if the initial load has completed, for the one-time fade-in.
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // This effect sets `isLoaded` to true only once after the first data fetch.
+    useEffect(() => {
+        // A small timeout ensures the transition always triggers smoothly.
+        if (!loading && !isLoaded) {
+            setTimeout(() => setIsLoaded(true), 50);
+        }
+    }, [loading, isLoaded]);
+
+    const isEmpty = !loading && containers.length === 0;
+
+    function displayRows() {
+        return containers.map((container) => (
+            <TableRow hover key={container.id} sx={{'&:last-child td, &:last-child th': {border: 0}}}>
+                <TableCell component="th" scope="row">
+                    <Typography variant="body1" fontWeight="500">{container.name}</Typography>
+                </TableCell>
+                <TableCell>
+                    <Chip label={container.status} color={getStatusChipColor(container.status)}
+                          size="small" sx={{textTransform: 'capitalize'}}/>
+                </TableCell>
+                <TableCell>
+                    <Tooltip title="Open image website" arrow>
+                        <Link href={getImageHomePageUrl(container.imageName)} target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{textDecoration: 'none', color: 'primary.main'}}>
+                            <Typography variant="body2" component="span" sx={{
+                                wordBreak: 'break-all',
+                                '&:hover': {textDecoration: 'underline'}
+                            }}>
+                                {container.imageName}
+                            </Typography>
+                        </Link>
+                    </Tooltip>
+                </TableCell>
+                <TableCell width={360}>
+                    {formatPorts(container.ports)}
+                </TableCell>
+                <TableCell align="right">
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Tooltip title="Show container logs">
+                            <DocumentScannerOutlined aria-label="Show container logs" color="primary"
+                                                     onClick={() => onShowLogs(container.id, container.name)}
+                                                     sx={{cursor: 'pointer'}}/>
+                        </Tooltip>
+                    </Stack>
+                </TableCell>
+            </TableRow>
+        ));
     }
 
     return (
-        <Fade in={!loading} timeout={500}>
-            <TableContainer component={Paper} sx={{flexGrow: 1, boxShadow: 3, borderRadius: 2}}>
-                <Table stickyHeader aria-label="docker containers table">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell sx={tableHeaderStyles}>Name</TableCell>
-                            <TableCell sx={tableHeaderStyles}>Status</TableCell>
-                            <TableCell sx={tableHeaderStyles}>Image</TableCell>
-                            <TableCell sx={tableHeaderStyles}>Ports</TableCell>
-                            <TableCell sx={tableHeaderStyles}>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {containers.map((container) => (
-                            <TableRow hover key={container.id} sx={{'&:last-child td, &:last-child th': {border: 0}}}>
-                                {/* ... Same table row content as before ... */}
-                                <TableCell component="th" scope="row">
-                                    <Typography variant="body1" fontWeight="500">{container.name}</Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Chip label={container.status} color={getStatusChipColor(container.status)}
-                                          size="small" sx={{textTransform: 'capitalize'}}/>
-                                </TableCell>
-                                <TableCell>
-                                    <Tooltip title="Open image website" arrow>
-                                        <Link href={getImageHomePageUrl(container.imageName)} target="_blank"
-                                              rel="noopener noreferrer"
-                                              sx={{textDecoration: 'none', color: 'primary.main'}}>
-                                            <Typography variant="body2" component="span" sx={{
-                                                wordBreak: 'break-all',
-                                                '&:hover': {textDecoration: 'underline'}
-                                            }}>
-                                                {container.imageName}
-                                            </Typography>
-                                        </Link>
-                                    </Tooltip>
-                                </TableCell>
-                                <TableCell width={360}>
-                                    {formatPorts(container.ports)}
-                                </TableCell>
-                                <TableCell align="right">
-                                    <Stack direction="row" spacing={1}>
-                                        <Tooltip title="Show container logs">
-                                            <DocumentScannerOutlined aria-label="Show container logs" color="primary"
-                                                                     onClick={() => onShowLogs(container.id, container.name)}
-                                                                     sx={{cursor: 'pointer'}}/>
-                                        </Tooltip>
-                                    </Stack>
+        <TableContainer component={Paper} sx={{flexGrow: 1, boxShadow: 3, borderRadius: 2}}>
+            <Table stickyHeader aria-label="docker containers table">
+                <TableHead>
+                    <TableRow>
+                        <TableCell sx={tableHeaderStyles}>Name</TableCell>
+                        <TableCell sx={tableHeaderStyles}>Status</TableCell>
+                        <TableCell sx={tableHeaderStyles}>Image</TableCell>
+                        <TableCell sx={tableHeaderStyles}>Ports</TableCell>
+                        <TableCell sx={tableHeaderStyles}>Actions</TableCell>
+                    </TableRow>
+                </TableHead>
+
+                {(
+                    <TableBody
+                        sx={{
+                            opacity: isLoaded ? 1 : 0,
+                            transition: 'opacity 200ms ease-in-out',
+                        }}
+                    >
+                        {isEmpty ? (
+                            <TableRow>
+                                <TableCell colSpan={5} sx={{border: 0, height: 200}}>
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '100%',
+                                        }}
+                                    >
+                                        <Typography variant="h5" color="text.secondary">
+                                            No containers found for this deployment
+                                        </Typography>
+                                    </Box>
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : displayRows()
+                        }
                     </TableBody>
-                </Table>
-            </TableContainer>
-        </Fade>
+                )}
+            </Table>
+
+        </TableContainer>
     )
 }
 
-const tableHeaderStyles = {fontWeight: 'bold', backgroundColor: 'background.paper'}
+const tableHeaderStyles = {
+    fontWeight: 'bold', backgroundColor:
+        'background.paper'
+}
 
 const formatPorts = (ports: Port[]) => {
     if (!ports || ports.length === 0) return <>—</>
@@ -153,8 +155,12 @@ const getStatusChipColor = (status: string): "success" | "warning" | "default" |
 /**
  * Generates a clickable URL for a container image, pointing to its repository.
  * Handles Docker Hub and other public/private registries.
- * @param {string} imageName The full name of the docker image (e.g., "nginx:latest", "gcr.io/my-project/my-image:v1").
- * @returns {string} The full URL to the image's web home page.
+ * @param {
+ string
+ } imageName The full name of the docker image (e.g., "nginx:latest", "gcr.io/my-project/my-image:v1").
+ * @returns {
+ string
+ } The full URL to the image's web home page.
  */
 const getImageHomePageUrl = (imageName: string): string => {
     if (!imageName) {
