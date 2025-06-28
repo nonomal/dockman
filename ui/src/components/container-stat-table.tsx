@@ -78,7 +78,7 @@ export const ContainerStatTable = ({
 
     if (loading) {
         return (
-            <TableContainer component={Paper} sx={{flexGrow: 1, boxShadow: 3, borderRadius: 2}}>
+            <TableContainer component={Paper} variant="outlined">
                 <Table sx={{minWidth: 650}} aria-label="container stats table">
                     <TableHead>
                         <TableRow sx={{'& th': {fontWeight: 'bold'}}}>
@@ -140,7 +140,7 @@ export const ContainerStatTable = ({
     }
 
     return (
-        <Fade in={true} timeout={1000}>
+        <Fade in={true} timeout={400}>
             <TableContainer component={Paper} variant="outlined">
                 <Table sx={{minWidth: 650}} aria-label="container stats table">
                     <TableHead>
