@@ -17,12 +17,75 @@ import (
 )
 
 const (
-	owner        = "youruser" // Change this to your GitHub username/org
-	repo         = "yourrepo" // Change this to your repository name
-	binaryName   = "myapp"    // Change this to your binary name
+	owner        = "ra341"
+	repo         = "dockman"
+	binaryName   = "dockman"
 	tempSuffix   = ".tmp"
 	backupSuffix = ".backup"
 )
+
+// Example usage in your main application
+func main() {
+	githubToken := os.Getenv("GITHUB_TOKEN")
+
+	if len(os.Args) > 1 && os.Args[1] == "update" {
+		updater, err := NewUpdater("v1.0.0", githubToken) // Your current version
+		if err != nil {
+			fmt.Printf("Failed to create updater: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := updater.Update(); err != nil {
+			fmt.Printf("Update failed: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	// Check if this is a version info command
+	if len(os.Args) > 1 && os.Args[1] == "version" {
+		updater, err := NewUpdater("v1.0.0", githubToken)
+		if err != nil {
+			fmt.Printf("Failed to create updater: %v\n", err)
+			os.Exit(1)
+		}
+
+		release, err := updater.GetReleaseInfo()
+		if err != nil {
+			fmt.Printf("Failed to get release info: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Current version: v1.0.0\n")
+		if release.TagName != nil {
+			fmt.Printf("Latest version: %s\n", *release.TagName)
+		}
+		if release.PublishedAt != nil {
+			fmt.Printf("Published: %s\n", release.PublishedAt.Format(time.RFC3339))
+		}
+		if release.Body != nil && *release.Body != "" {
+			fmt.Printf("Release notes:\n%s\n", *release.Body)
+		}
+		return
+	}
+
+	// Example of checking for updates on startup (optional)
+	go func() {
+		time.Sleep(5 * time.Second) // Wait a bit before checking
+		updater, err := NewUpdater("v1.0.0", githubToken)
+		if err != nil {
+			return
+		}
+
+		if release, err := updater.CheckForUpdate(); err == nil && release != nil {
+			fmt.Printf("\nUpdate available: %s. Run '%s update' to update.\n",
+				*release.TagName, os.Args[0])
+		}
+	}()
+
+	// Keep the application running
+	select {}
+}
 
 type Updater struct {
 	client         *github.Client
@@ -43,10 +106,8 @@ func NewUpdater(version string, githubToken string) (*Updater, error) {
 	var client *github.Client
 
 	if githubToken != "" {
-		// Authenticated client for higher rate limits and private repos
 		client = github.NewClient(nil).WithAuthToken(githubToken)
 	} else {
-		// Unauthenticated client for public repos
 		client = github.NewClient(nil)
 	}
 
@@ -324,14 +385,13 @@ func (u *Updater) restartProcess() error {
 }
 
 func (u *Updater) Update() error {
-	// Check for updates
 	release, err := u.CheckForUpdate()
 	if err != nil {
 		return err
 	}
-
 	if release == nil {
-		return nil // No update available
+		// No update available
+		return nil
 	}
 
 	// Download new binary and checksum
@@ -372,75 +432,4 @@ func (u *Updater) ListReleases(page, perPage int) ([]*github.RepositoryRelease, 
 	}
 	releases, _, err := u.client.Repositories.ListReleases(u.ctx, u.owner, u.repo, opt)
 	return releases, err
-}
-
-// Example usage in your main application
-func main() {
-	// Get GitHub token from environment (optional, for higher rate limits)
-	githubToken := os.Getenv("GITHUB_TOKEN")
-
-	// Check if this is an update command
-	if len(os.Args) > 1 && os.Args[1] == "update" {
-		updater, err := NewUpdater("v1.0.0", githubToken) // Your current version
-		if err != nil {
-			fmt.Printf("Failed to create updater: %v\n", err)
-			os.Exit(1)
-		}
-
-		if err := updater.Update(); err != nil {
-			fmt.Printf("Update failed: %v\n", err)
-			os.Exit(1)
-		}
-		return
-	}
-
-	// Check if this is a version info command
-	if len(os.Args) > 1 && os.Args[1] == "version" {
-		updater, err := NewUpdater("v1.0.0", githubToken)
-		if err != nil {
-			fmt.Printf("Failed to create updater: %v\n", err)
-			os.Exit(1)
-		}
-
-		release, err := updater.GetReleaseInfo()
-		if err != nil {
-			fmt.Printf("Failed to get release info: %v\n", err)
-			os.Exit(1)
-		}
-
-		fmt.Printf("Current version: v1.0.0\n")
-		if release.TagName != nil {
-			fmt.Printf("Latest version: %s\n", *release.TagName)
-		}
-		if release.PublishedAt != nil {
-			fmt.Printf("Published: %s\n", release.PublishedAt.Format(time.RFC3339))
-		}
-		if release.Body != nil && *release.Body != "" {
-			fmt.Printf("Release notes:\n%s\n", *release.Body)
-		}
-		return
-	}
-
-	// Your normal application logic here
-	fmt.Println("Application running...")
-	fmt.Println("Commands:")
-	fmt.Println("  update  - Check for and install updates")
-	fmt.Println("  version - Show version information")
-
-	// Example of checking for updates on startup (optional)
-	go func() {
-		time.Sleep(5 * time.Second) // Wait a bit before checking
-		updater, err := NewUpdater("v1.0.0", githubToken)
-		if err != nil {
-			return
-		}
-
-		if release, err := updater.CheckForUpdate(); err == nil && release != nil {
-			fmt.Printf("\nUpdate available: %s. Run '%s update' to update.\n",
-				*release.TagName, os.Args[0])
-		}
-	}()
-
-	// Keep the application running
-	select {}
 }
