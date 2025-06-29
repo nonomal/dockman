@@ -5,6 +5,7 @@ on:
     branches:
       - main # publish a dev build on main
     paths:
+      - Dockerfile
       - .github/workflows/action-docker.yml
       - backend/**
       - ui/**
