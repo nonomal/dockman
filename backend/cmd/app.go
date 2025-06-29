@@ -14,6 +14,7 @@ import (
 	"github.com/RA341/dockman/internal/git"
 	"github.com/RA341/dockman/internal/info"
 	logger "github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/lsp"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"path/filepath"
@@ -101,6 +102,11 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 					}
 				}),
 			)
+		},
+		// lsp
+		func() (string, http.Handler) {
+			wsFunc := lsp.WebSocketHandler(lsp.DefaultUpgrader)
+			return a.registerHttpHandler("/lsp", wsFunc)
 		},
 	}
 
