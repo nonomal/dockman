@@ -1,11 +1,15 @@
 package auth
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type User struct {
 	Username string
 	Password string
 	Token    string
+	Expires  time.Time
 }
 
 type DB interface {
@@ -52,8 +56,7 @@ func (m *MemAuthDB) UpdateUser(user *User) error {
 	return nil
 }
 
-func (m *MemAuthDB) VerifyAuthToken(token string) (*User, error) {
-	hashedToken := hashString(token)
+func (m *MemAuthDB) VerifyAuthToken(hashedToken string) (*User, error) {
 	for _, user := range m.mem {
 		if hashedToken == user.Token {
 			return user, nil

@@ -23,13 +23,13 @@ func (a *Handler) Login(_ context.Context, c *connect.Request[v1.User]) (*connec
 		return nil, fmt.Errorf("empty username or password")
 	}
 
-	_, authToken, err := a.auth.Login(username, password)
+	user, authToken, err := a.auth.Login(username, password)
 	if err != nil {
 		return nil, err
 	}
 
 	response := connect.NewResponse(&v1.Empty{})
-	setCookie(authToken, response)
+	setCookie(response, authToken, user.Expires)
 
 	return response, nil
 }

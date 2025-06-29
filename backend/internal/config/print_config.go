@@ -62,6 +62,7 @@ func flattenStruct(v reflect.Value, prefix string) []KeyValue {
 		}
 		configTags := parseTag(configTag)
 		usage := configTags["usage"]
+		hide := configTags["hide"]
 		envName := colorize(fmt.Sprintf("%s_%s", envPrefix, configTags["env"]), ColorCyan)
 		message := fmt.Sprintf("%s", colorize(usage, ColorBlue))
 
@@ -71,7 +72,8 @@ func flattenStruct(v reflect.Value, prefix string) []KeyValue {
 			fullKey = prefix + "." + keyName
 		}
 
-		// --- Recurse or format the value ---
+		var val KeyValue
+
 		switch fieldV.Kind() {
 		case reflect.Struct:
 			// Recurse into nested structs
@@ -83,21 +85,26 @@ func flattenStruct(v reflect.Value, prefix string) []KeyValue {
 			for j := 0; j < fieldV.Len(); j++ {
 				sliceItems = append(sliceItems, formatSimpleValue(fieldV.Index(j)))
 			}
-			pairs = append(pairs, KeyValue{
+			val = KeyValue{
 				Key:         fullKey,
 				Value:       strings.Join(sliceItems, ", "),
 				HelpMessage: message,
 				EnvName:     envName,
-			})
+			}
 		default:
 			// Handle simple types
-			pairs = append(pairs, KeyValue{
+			val = KeyValue{
 				Key:         fullKey,
 				Value:       formatSimpleValue(fieldV),
 				HelpMessage: message,
 				EnvName:     envName,
-			})
+			}
 		}
+
+		if hide != "" {
+			val.Value = colorize("*REDACTED* ^_^", ColorRed)
+		}
+		pairs = append(pairs, val)
 	}
 	return pairs
 }

@@ -12,11 +12,11 @@ import (
 	"time"
 )
 
-func setCookie[T any](token string, response *connect.Response[T]) {
+func setCookie[T any](response *connect.Response[T], token string, expiresAt time.Time) {
 	cookie := http.Cookie{
 		Name:     HeaderAuth,
 		Value:    token,
-		MaxAge:   int((6 * time.Hour).Seconds()),
+		Expires:  expiresAt,
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode, // SameSite attribute

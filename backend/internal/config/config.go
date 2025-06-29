@@ -14,13 +14,14 @@ var C *AppConfig
 
 // AppConfig tags are parsed by processStruct
 type AppConfig struct {
-	Port           int    `config:"flag=port,env=PORT,default=8866,usage=Port to run the server on."`
-	AllowedOrigins string `config:"flag=origins,env=ORIGINS,default=*,usage=Allowed origins for the API (CSV)."`
-	ComposeRoot    string `config:"flag=cr,env=COMPOSE_ROOT,default=compose,usage=Root directory for compose files."`
-	UIPath         string `config:"flag=ui,env=UI_PATH,default=dist,usage=Path to frontend files."`
-	Auth           bool   `config:"flag=auth,env=AUTH_ENABLE,default=false,usage=Enable authentication."`
-	LocalAddr      string `config:"flag=ma,env=MACHINE_ADDR,default=0.0.0.0,usage=Local machine IP address."`
-
+	Port           int    `config:"flag=port,env=PORT,default=8866,usage=Port to run the server on"`
+	AllowedOrigins string `config:"flag=origins,env=ORIGINS,default=*,usage=Allowed origins for the API (CSV)"`
+	ComposeRoot    string `config:"flag=cr,env=COMPOSE_ROOT,default=compose,usage=Root directory for compose files"`
+	UIPath         string `config:"flag=ui,env=UI_PATH,default=dist,usage=Path to frontend files"`
+	Auth           bool   `config:"flag=auth,env=AUTH_ENABLE,default=false,usage=Enable authentication"`
+	AuthUsername   string `config:"flag=au,env=AUTH_USERNAME,default=admin,usage=authentication username"`
+	AuthPassword   string `config:"flag=ap,env=AUTH_PASSWORD,default=admin99988,usage=authentication password,hide=true"`
+	LocalAddr      string `config:"flag=ma,env=MACHINE_ADDR,default=0.0.0.0,usage=Local machine IP address"`
 	// UIFS has no 'config' tag, so it will be ignored by the loader.
 	UIFS fs.FS `json:"-"`
 }
@@ -31,6 +32,10 @@ func (c *AppConfig) GetAllowedOrigins() []string {
 		elems[i] = strings.TrimSpace(elems[i])
 	}
 	return elems
+}
+
+func (c *AppConfig) GetDockmanWithMachineUrl() string {
+	return fmt.Sprintf("http://%s:%d", c.LocalAddr, c.Port)
 }
 
 func (c *AppConfig) PrettyPrint() {

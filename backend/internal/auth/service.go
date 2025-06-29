@@ -2,7 +2,9 @@ package auth
 
 import (
 	"fmt"
+	"github.com/RA341/dockman/internal/config"
 	"github.com/rs/zerolog/log"
+	"time"
 )
 
 type Service struct {
@@ -11,7 +13,8 @@ type Service struct {
 
 func NewService() *Service {
 	adb := &MemAuthDB{make(map[string]*User)}
-	_, err := adb.NewUser("admin", "admin")
+
+	_, err := adb.NewUser(config.C.AuthUsername, config.C.AuthPassword)
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to create default user")
 	}
@@ -27,6 +30,7 @@ func (auth *Service) Login(username, inputPassword string) (*User, string, error
 
 	unHashedToken := CreateAuthToken(32)
 	user.Token = hashString(unHashedToken)
+	user.Expires = time.Now().Add(time.Hour * 4)
 
 	if err = auth.authDb.UpdateUser(user); err != nil {
 		return nil, "", fmt.Errorf("error updating user, %w", err)
@@ -46,9 +50,17 @@ func (auth *Service) Logout(user *User) error {
 }
 
 func (auth *Service) VerifyToken(token string) (*User, error) {
-	user, err := auth.authDb.VerifyAuthToken(token)
+	hashedToken := hashString(token)
+	user, err := auth.authDb.VerifyAuthToken(hashedToken)
 	if err != nil {
 		return nil, err
 	}
+
+	now := time.Now()
+	val := now.Compare(user.Expires)
+	if val == 1 {
+		return nil, fmt.Errorf("token expired at %s, current time: %s", user.Expires, now)
+	}
+
 	return user, nil
 }
