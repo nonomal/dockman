@@ -1,14 +1,12 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
-
+list:
+    just --list
 
 # builds go
 [working-directory('backend')]
 gob:
     just ui
     go run cmd/server/main.go --ui ../ui/dist --port=8899
-
-list:
-    just --list
 
 # build a gouda dev image
 dkbd:

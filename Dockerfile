@@ -42,7 +42,7 @@ RUN go build -ldflags "-s -w \
              -X github.com/RA341/dockman/internal/info.Branch=${BRANCH}" \
     -o dockman "./cmd/server/main.go"
 
-FROM alpine:latest
+FROM scratch
 
 WORKDIR /app
 
