@@ -38,7 +38,10 @@ func StartServer(opt ...config.ServerOpt) {
 	})
 	finalMux := middleware.Handler(router)
 
-	log.Info().Int("port", config.C.Port).Msg("Starting server...")
+	log.Info().
+		Int("port", config.C.Port).
+		Str("url", config.C.GetDockmanWithMachineUrl()).
+		Msg("Starting server...")
 	err = http.ListenAndServe(
 		fmt.Sprintf(":%d", config.C.Port),
 		h2c.NewHandler(finalMux, &http2.Server{}),
