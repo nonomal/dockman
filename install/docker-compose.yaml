@@ -11,7 +11,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - DOCKMAN_COMPOSE_ROOT=/stacks
-      - DOCKMAN_AUTH_ENABLE=false
+      - DOCKMAN_AUTH_ENABLE=true
+      - DOCKMAN_AUTH_USERNAME=test
+      - DOCKMAN_AUTH_PASSWORD=test
       - DOCKMAN_MACHINE_ADDR=192.168.50.111
     ports:
       - "8432:8866"

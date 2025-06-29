@@ -22,8 +22,7 @@ type AppConfig struct {
 	AuthUsername   string `config:"flag=au,env=AUTH_USERNAME,default=admin,usage=authentication username"`
 	AuthPassword   string `config:"flag=ap,env=AUTH_PASSWORD,default=admin99988,usage=authentication password,hide=true"`
 	LocalAddr      string `config:"flag=ma,env=MACHINE_ADDR,default=0.0.0.0,usage=Local machine IP address"`
-	// UIFS has no 'config' tag, so it will be ignored by the loader.
-	UIFS fs.FS `json:"-"`
+	UIFS           fs.FS  // UIFS has no 'config' tag, so it will be ignored
 }
 
 func (c *AppConfig) GetAllowedOrigins() []string {
