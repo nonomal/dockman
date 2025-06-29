@@ -7,6 +7,7 @@ on:
     paths:
       - Dockerfile
       - .github/workflows/action-docker.yml
+      - .github/workflows/dev.yml
       - backend/**
       - ui/**
 
