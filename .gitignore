@@ -11,3 +11,4 @@ dock/*
 install/stacks/
 /backend/**/gitTest
 /backend/compose/
+/config/
