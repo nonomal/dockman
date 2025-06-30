@@ -48,7 +48,7 @@ export function GitCommitList({selectedFile, selectedCommit, chooseCommit}: Comm
             setCommits(val?.commits ?? []);
         }
         setLoading(false);
-    }, [gitClient, selectedFile, showError]);
+    }, [gitClient, selectedFile]);
 
     // Fetch commits when the component mounts or the selected file changes
     useEffect(() => {
