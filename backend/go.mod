@@ -10,6 +10,7 @@ require (
 	github.com/docker/compose/v2 v2.37.3
 	github.com/docker/docker v28.3.0+incompatible
 	github.com/go-git/go-git/v5 v5.16.2
+	github.com/goccy/go-yaml v1.18.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.34.0
