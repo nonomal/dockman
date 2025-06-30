@@ -3,8 +3,11 @@ package config
 import (
 	"embed"
 	"fmt"
+	"github.com/RA341/dockman/internal/info"
+	"github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"io/fs"
+	"net"
 	"os"
 	"reflect"
 	"strings"
@@ -141,6 +144,24 @@ func loadDefaultIfNotSet(config *AppConfig) {
 	if config.Port == 0 {
 		config.Port = 8866
 	}
+
+	if !info.IsDocker() && config.LocalAddr == "0.0.0.0" {
+		ip, err := getLocalIP()
+		if err == nil {
+			config.LocalAddr = ip
+		}
+	}
+}
+
+func getLocalIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	defer pkg.CloseFile(conn)
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String(), nil
 }
 
 type ServerOpt func(o *AppConfig)

@@ -14,6 +14,7 @@ import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
 import {useAuth} from "../hooks/auth.ts";
 import {FileList} from './file-bar.tsx';
+import HostSelectDropdown from "./host-selector.tsx";
 
 export function NavSidebar() {
     const navigate = useNavigate();
@@ -43,8 +44,10 @@ export function NavSidebar() {
                         <ListItemText slotProps={{primary: {variant: 'h6'}}} primary="Dashboard"/>
                     </ListItemButton>
                 </List>
+                <HostSelectDropdown/>
                 <Divider/>
             </Box>
+
 
             <FileList/>
 

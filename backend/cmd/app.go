@@ -7,11 +7,13 @@ import (
 	dockerpc "github.com/RA341/dockman/generated/docker/v1/v1connect"
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
 	gitrpc "github.com/RA341/dockman/generated/git/v1/v1connect"
+	hostrpc "github.com/RA341/dockman/generated/host_manager/v1/v1connect"
 	"github.com/RA341/dockman/internal/auth"
 	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
+	hm "github.com/RA341/dockman/internal/host_manager"
 	"github.com/RA341/dockman/internal/info"
 	logger "github.com/RA341/dockman/pkg"
 	"github.com/RA341/dockman/pkg/lsp"
@@ -27,11 +29,12 @@ func init() {
 }
 
 type App struct {
-	Config *config.AppConfig
-	Auth   *auth.Service
-	File   *files.Service
-	Git    *git.Service
-	Docker *docker.Service
+	Config      *config.AppConfig
+	Auth        *auth.Service
+	File        *files.Service
+	Git         *git.Service
+	Docker      *docker.Service
+	HostManager *hm.Service
 }
 
 func NewApp(conf *config.AppConfig) (*App, error) {
@@ -43,15 +46,17 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	authSrv := auth.NewService()
 	fileSrv := files.NewService(absComposeRoot)
 	gitSrv := git.NewService(absComposeRoot)
-	dockerSrv := docker.NewService(absComposeRoot)
+	hostSrv := hm.NewService()
+	dockerSrv := docker.NewService(absComposeRoot, hostSrv.Manager.GetClientFn())
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{
-		Config: conf,
-		Auth:   authSrv,
-		File:   fileSrv,
-		Git:    gitSrv,
-		Docker: dockerSrv,
+		Config:      conf,
+		Auth:        authSrv,
+		File:        fileSrv,
+		Git:         gitSrv,
+		Docker:      dockerSrv,
+		HostManager: hostSrv,
 	}, nil
 }
 
@@ -102,6 +107,10 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 					}
 				}),
 			)
+		},
+		// host_manager
+		func() (string, http.Handler) {
+			return hostrpc.NewHostManagerServiceHandler(hm.NewConnectHandler(a.HostManager), connectAuth)
 		},
 		// lsp
 		func() (string, http.Handler) {

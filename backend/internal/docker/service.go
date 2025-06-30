@@ -1,10 +1,8 @@
 package docker
 
 import (
-	"context"
-	"fmt"
 	"github.com/RA341/dockman/internal/config"
-	"github.com/docker/docker/client"
+	cm "github.com/RA341/dockman/internal/host_manager"
 	"github.com/rs/zerolog/log"
 	"path/filepath"
 )
@@ -18,17 +16,12 @@ type Service struct {
 	localAddress string
 }
 
-func NewService(composeRoot string) *Service {
+func NewService(composeRoot string, cliFn cm.ActiveClient) *Service {
 	if !filepath.IsAbs(composeRoot) {
 		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
 	}
 
-	dockerClient, err := newDockerDaemonClient()
-	if err != nil {
-		log.Fatal().Err(err).Msg("error initializing docker client")
-	}
-
-	containerClient := &ContainerService{daemon: dockerClient}
+	containerClient := &ContainerService{daemon: cliFn}
 	composeClient := newComposeService(composeRoot, containerClient)
 
 	return &Service{
@@ -38,20 +31,8 @@ func NewService(composeRoot string) *Service {
 	}
 }
 
-func newDockerDaemonClient() (*client.Client, error) {
-	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to docker deamon: %w", err)
-	}
-
-	_, err = dockerClient.Ping(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("unable to ping deamon: %w", err)
-	}
-
-	return dockerClient, err
-}
-
 func (s *Service) Close() error {
-	return s.ContainerService.daemon.Close()
+	//return s.ContainerService.daemon().Close()
+	// todo look into close
+	return nil
 }

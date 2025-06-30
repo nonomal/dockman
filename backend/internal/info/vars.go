@@ -12,3 +12,7 @@ var (
 	Branch     = "unknown"
 	GoVersion  = runtime.Version()
 )
+
+func IsDocker() bool {
+	return Flavour == "Docker"
+}

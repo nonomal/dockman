@@ -136,7 +136,7 @@ func (s *ComposeService) listStack(ctx context.Context, composeCli api.Service, 
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
-	result, err := s.client.daemon.ContainerList(ctx, container.ListOptions{
+	result, err := s.client.daemon().ContainerList(ctx, container.ListOptions{
 		All:     showAll,
 		Filters: containerFilters,
 	})
@@ -201,7 +201,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 			continue
 		}
 
-		imageInspect, err := s.client.daemon.ImageInspect(ctx, service.Image)
+		imageInspect, err := s.client.daemon().ImageInspect(ctx, service.Image)
 		if err != nil {
 			// Image might not exist locally yet
 			digests[serviceName] = ""
@@ -220,11 +220,8 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 }
 
 func (s *ComposeService) withComposeCli(opts *ComposeConfig, execFn func(composeCli api.Service) error) error {
-	if opts.dockerHost == "" {
-		opts.dockerHost = s.client.daemon.DaemonHost()
-	}
-
 	dockerCli, err := command.NewDockerCli(
+		command.WithAPIClient(s.client.daemon()),
 		command.WithCombinedStreams(opts.outputStream),
 		command.WithInputStream(opts.inputStream),
 	)
@@ -232,7 +229,7 @@ func (s *ComposeService) withComposeCli(opts *ComposeConfig, execFn func(compose
 		return fmt.Errorf("failed to create cli client to docker for compose: %w", err)
 	}
 
-	clientOpts := &flags.ClientOptions{Hosts: []string{opts.dockerHost}}
+	clientOpts := &flags.ClientOptions{}
 	if err = dockerCli.Initialize(clientOpts); err != nil {
 		return err
 	}
