@@ -67,7 +67,8 @@ func (x *SwitchRequest) GetMachineID() string {
 
 type ListResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Machines      []*Machine             `protobuf:"bytes,1,rep,name=machines,proto3" json:"machines,omitempty"`
+	ActiveClient  string                 `protobuf:"bytes,1,opt,name=activeClient,proto3" json:"activeClient,omitempty"`
+	Machines      []*Machine             `protobuf:"bytes,2,rep,name=machines,proto3" json:"machines,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -100,6 +101,13 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
 	return file_host_manager_v1_host_manager_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ListResponse) GetActiveClient() string {
+	if x != nil {
+		return x.ActiveClient
+	}
+	return ""
 }
 
 func (x *ListResponse) GetMachines() []*Machine {
@@ -251,9 +259,10 @@ const file_host_manager_v1_host_manager_proto_rawDesc = "" +
 	"\n" +
 	"\"host_manager/v1/host_manager.proto\x12\x0fhost_manager.v1\"-\n" +
 	"\rSwitchRequest\x12\x1c\n" +
-	"\tmachineID\x18\x01 \x01(\tR\tmachineID\"D\n" +
-	"\fListResponse\x124\n" +
-	"\bmachines\x18\x01 \x03(\v2\x18.host_manager.v1.MachineR\bmachines\"\xe8\x01\n" +
+	"\tmachineID\x18\x01 \x01(\tR\tmachineID\"h\n" +
+	"\fListResponse\x12\"\n" +
+	"\factiveClient\x18\x01 \x01(\tR\factiveClient\x124\n" +
+	"\bmachines\x18\x02 \x03(\v2\x18.host_manager.v1.MachineR\bmachines\"\xe8\x01\n" +
 	"\aMachine\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06enable\x18\x02 \x01(\bR\x06enable\x12\x12\n" +

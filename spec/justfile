@@ -14,8 +14,8 @@ gen:
 go:
     clear
     echo 'moving go files'
-    rm -r ../backend/generated/*
-    cp -r generated/go/* ../backend/generated/
+    rm -r ../core/generated/*
+    cp -r generated/go/* ../core/generated/
     rm -r generated/go
 
 web:

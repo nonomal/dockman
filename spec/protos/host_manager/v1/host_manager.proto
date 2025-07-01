@@ -14,7 +14,8 @@ message SwitchRequest {
 }
 
 message ListResponse {
-  repeated Machine machines = 1;
+  string activeClient = 1;
+  repeated Machine machines = 2;
 }
 
 message Machine {

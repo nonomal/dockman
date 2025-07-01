@@ -16,6 +16,7 @@ func NewConnectHandler(srv *Service) *Handler {
 
 func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
 	clients := h.srv.Manager.ListClients()
+	active := h.srv.Manager.GetActiveClient()
 
 	var protoClients []*v1.Machine
 	for _, name := range clients {
@@ -25,7 +26,8 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connec
 	}
 
 	return connect.NewResponse(&v1.ListResponse{
-		Machines: protoClients,
+		Machines:     protoClients,
+		ActiveClient: active,
 	}), nil
 }
 
