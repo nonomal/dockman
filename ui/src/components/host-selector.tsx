@@ -1,20 +1,18 @@
-import {Box, FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent} from "@mui/material";
+import {Box, FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent, Typography} from "@mui/material";
 import {useCallback, useEffect, useState} from "react";
 import {callRPC, useClient} from "../lib/api";
 import {useSnackbar} from "../hooks/snackbar";
 import {HostManagerService} from "../gen/host_manager/v1/host_manager_pb.ts";
-
+import {KeyChar} from "./keychar.tsx";
 
 function HostSelectDropdown() {
     const [availableHosts, setAvailableHosts] = useState<string[]>([]);
     const [selectedHost, setSelectedHost] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
+    const [open, setOpen] = useState(false);
 
     const hostManagerClient = useClient(HostManagerService);
     const {showError} = useSnackbar();
-
-    const label = "Host Machine";
-    const labelId = "host-select-label";
 
     const switchMachine = useCallback(async (machine: string) => {
         if (!machine) return;
@@ -23,7 +21,7 @@ function HostSelectDropdown() {
         if (err) {
             showError(err);
         }
-    }, [hostManagerClient]);
+    }, [hostManagerClient, showError]);
 
     useEffect(() => {
         const fetchHosts = async () => {
@@ -31,50 +29,85 @@ function HostSelectDropdown() {
             const {val, err} = await callRPC(() => hostManagerClient.list({}));
             if (err) {
                 showError(err);
+                setLoading(false);
                 return;
             }
 
             setAvailableHosts(val?.machines.map(value => value.name) || []);
+            setSelectedHost(val?.activeClient || "")
+            setLoading(false);
         };
 
-        fetchHosts().then(() => {
-            setLoading(false);
-        });
-    }, [hostManagerClient]);
+        fetchHosts();
+    }, [hostManagerClient, showError]);
 
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.altKey && event.key.toLowerCase() === 'w') {
+                event.preventDefault();
+                setOpen(true);
+            }
+        };
 
-    const handleChange = (event: SelectChangeEvent<string>) => {
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
+    const handleChange = (event: SelectChangeEvent) => {
         const newHost = event.target.value;
+        setOpen(false);
         setSelectedHost(newHost);
-        switchMachine(newHost);
+        switchMachine(newHost).then();
     };
 
-    return (
-        <Box sx={{minWidth: 200, maxWidth: 350}}>
-            {/* The FormControl provides context and structure */}
-            <FormControl fullWidth disabled={loading}>
-                <InputLabel id={labelId}>{label}</InputLabel>
-                <Select
-                    labelId={labelId}
-                    id="host-machine-select"
-                    value={selectedHost}
-                    label={label}
-                    onChange={handleChange}
-                >
-                    {/* Show a helpful message based on the loading state */}
-                    <MenuItem value="" disabled>
-                        <em>{loading ? 'Loading hosts...' : 'Select a host...'}</em>
-                    </MenuItem>
 
-                    {/* Map over the fetched hosts to create the options */}
-                    {availableHosts.map((hostName) => (
-                        <MenuItem key={hostName} value={hostName}>
-                            {hostName}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-        </Box>
+    const label = "Docker Host";
+    const labelId = "host-select-label";
+    return (
+        <FormControl sx={{minWidth: 260}} disabled={loading}>
+            <InputLabel id={labelId}>{label}</InputLabel>
+            <Select
+                id="host-machine-select"
+                label={label}
+                labelId={labelId}
+                value={selectedHost}
+                onChange={handleChange}
+                open={open}
+                onClose={() => setOpen(false)}
+                onOpen={() => setOpen(true)}
+                renderValue={(selected) => (
+                    <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
+                        {/* The selected host name */}
+                        <span>{selected}</span>
+                        {/* The keyboard hint with icons */}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                color: 'text.secondary',
+                                pointerEvents: 'none',
+                            }}
+                        >
+                            <KeyChar>ALT</KeyChar>
+                            <Typography variant="body2">+</Typography>
+                            <KeyChar>W</KeyChar>
+                        </Box>
+                    </Box>
+                )}
+            >
+                <MenuItem value="" disabled>
+                    <em>{loading ? 'Loading hosts...' : 'Select a host...'}</em>
+                </MenuItem>
+                {availableHosts.map((hostName) => (
+                    <MenuItem key={hostName} value={hostName}>
+                        {hostName}
+                    </MenuItem>
+                ))}
+            </Select>
+        </FormControl>
     );
 }
 

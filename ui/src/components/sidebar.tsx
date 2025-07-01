@@ -3,6 +3,7 @@ import {
     Divider,
     Drawer,
     List,
+    ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
@@ -44,10 +45,12 @@ export function NavSidebar() {
                         <ListItemText slotProps={{primary: {variant: 'h6'}}} primary="Dashboard"/>
                     </ListItemButton>
                 </List>
-                <HostSelectDropdown/>
+                <Divider/>
+                <ListItem>
+                    <HostSelectDropdown/>
+                </ListItem>
                 <Divider/>
             </Box>
-
 
             <FileList/>
 

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {
     Box,
     Button,
@@ -10,79 +10,99 @@ import {
     TextField,
     Toolbar,
     Typography
-} from '@mui/material';
-import {Add as AddIcon, Search as SearchIcon} from '@mui/icons-material';
-import {useLocation, useParams} from 'react-router-dom';
-import type {FileGroup} from '../hooks/files.ts';
-import {useFiles} from "../hooks/files.ts";
-import {FileItem} from './file-item.tsx';
-import {AddFileDialog} from "./file-dialog.tsx";
+} from '@mui/material'
+import {Add as AddIcon, Search as SearchIcon} from '@mui/icons-material'
+import {useLocation, useParams} from 'react-router-dom'
+import type {FileGroup} from '../hooks/files.ts'
+import {useFiles} from "../hooks/files.ts"
+import {FileItem} from './file-item.tsx'
+import {AddFileDialog} from "./file-dialog.tsx"
 
 export function FileList() {
-    const location = useLocation();
-    const {file: currentDir} = useParams<{ file: string }>();
-    const {files, isLoading, addFile, deleteFile} = useFiles();
+    const location = useLocation()
+    const {file: currentDir} = useParams<{ file: string }>()
+    const {files, isLoading, addFile, deleteFile} = useFiles()
 
     // holds the names of all open directories.
-    const [openDirs, setOpenDirs] = useState(new Set<string>());
+    const [openDirs, setOpenDirs] = useState(new Set<string>())
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [dialogState, setDialogState] = useState<{ open: boolean; parent: string }>({open: false, parent: ''});
+    const [searchQuery, setSearchQuery] = useState('')
+    const [dialogState, setDialogState] = useState<{ open: boolean; parent: string }>({open: false, parent: ''})
+
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Check for Ctrl+k on Windows/Linux or Cmd+F on macOS
+            if ((event.ctrlKey) && event.key === 'k') {
+                event.preventDefault() // Prevent the browser's default find action
+                if (searchInputRef.current) {
+                    searchInputRef.current.focus() // Focus the search input field
+                }
+            }
+        }
+        // Add the event listener to the window
+        window.addEventListener('keydown', handleKeyDown)
+        // Cleanup: remove the event listener when the component unmounts
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [])
 
     // if you navigate to a file, its parent directory opens automatically.
     useEffect(() => {
         if (currentDir) {
             // Add the current directory from the URL to the set of open directories
-            setOpenDirs(prevOpenDirs => new Set(prevOpenDirs).add(currentDir));
+            setOpenDirs(prevOpenDirs => new Set(prevOpenDirs).add(currentDir))
         }
-    }, [currentDir]);
+    }, [currentDir])
 
     const handleToggle = useCallback((dirName: string) => {
         setOpenDirs(prevOpenDirs => {
-            const newOpenDirs = new Set(prevOpenDirs);
+            const newOpenDirs = new Set(prevOpenDirs)
             if (newOpenDirs.has(dirName)) {
-                newOpenDirs.delete(dirName); // If it's open, close it
+                newOpenDirs.delete(dirName) // If it's open, close it
             } else {
-                newOpenDirs.add(dirName); // If it's closed, open it
+                newOpenDirs.add(dirName) // If it's closed, open it
             }
-            return newOpenDirs;
-        });
-    }, []);
+            return newOpenDirs
+        })
+    }, [])
 
     const openAddDialog = (parentName: string) => {
-        setDialogState({open: true, parent: parentName});
-    };
+        setDialogState({open: true, parent: parentName})
+    }
 
     const closeAddDialog = () => {
         // use a function to prevent modifying state before closing the dialog
         setDialogState(() => ({open: false, parent: ''}))
-    };
+    }
 
     const handleAddConfirm = (filename: string) => {
         addFile(filename, dialogState.parent).then(() => {
             closeAddDialog()
         })
-    };
+    }
 
     const handleDelete = (filename: string) => {
         deleteFile(filename, location.pathname).then()
-    };
+    }
 
     const filteredFiles = useMemo(() => {
-        if (!searchQuery) return files;
-        const lowerCaseQuery = searchQuery.toLowerCase();
+        if (!searchQuery) return files
+        const lowerCaseQuery = searchQuery.toLowerCase()
 
         return files.map(group => {
-            const isParentMatch = group.name.toLowerCase().includes(lowerCaseQuery);
-            const matchingChildren = group.children.filter(child => child.toLowerCase().includes(lowerCaseQuery));
+            const isParentMatch = group.name.toLowerCase().includes(lowerCaseQuery)
+            const matchingChildren = group.children.filter(child => child.toLowerCase().includes(lowerCaseQuery))
 
             if (isParentMatch || matchingChildren.length > 0) {
                 // If parent matches, show all children. Otherwise, show only matching children.
-                return {...group, children: isParentMatch ? group.children : matchingChildren};
+                return {...group, children: isParentMatch ? group.children : matchingChildren}
             }
-            return null;
-        }).filter((group): group is FileGroup => group !== null);
-    }, [files, searchQuery]);
+            return null
+        }).filter((group): group is FileGroup => group !== null)
+    }, [files, searchQuery])
 
     return (
         <Box
@@ -103,7 +123,8 @@ export function FileList() {
                     fullWidth
                     variant="outlined"
                     size="small"
-                    placeholder="Search files..."
+                    placeholder="Search files...     CTRL + K"
+                    inputRef={searchInputRef}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     slotProps={{
@@ -145,7 +166,7 @@ export function FileList() {
                 parentName={dialogState.parent}
             />
         </Box> // Close the main container Box
-    );
+    )
 }
 
 const StyledScrollbarBox = styled(Box)(({theme}) => ({
@@ -168,4 +189,4 @@ const StyledScrollbarBox = styled(Box)(({theme}) => ({
     '&::-webkit-scrollbar-thumb:hover': {
         backgroundColor: theme.palette.grey[500],
     },
-}));
+}))
