@@ -12,3 +12,4 @@ install/stacks/
 /backend/**/gitTest
 /backend/compose/
 /config/
+/install/config/
