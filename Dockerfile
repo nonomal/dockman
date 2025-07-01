@@ -13,14 +13,14 @@ RUN npm run build
 
 FROM golang:1.24-alpine AS back
 
-WORKDIR /backend
+WORKDIR /core
 
-COPY backend/go.mod .
-COPY backend/go.sum .
+COPY core/go.mod .
+COPY core/go.sum .
 
 RUN go mod download
 
-COPY backend/ .
+COPY core/ .
 
 # do not put args higher than this for caching
 # Build arguments
@@ -46,7 +46,7 @@ FROM scratch
 
 WORKDIR /app
 
-COPY --from=back /backend/dockman dockman
+COPY --from=back /core/dockman dockman
 
 COPY --from=front /frontend/dist/ ./dist
 

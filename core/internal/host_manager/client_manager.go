@@ -14,7 +14,7 @@ import (
 )
 
 // LocalClient is the name given to the local docker daemon instance
-const LocalClient = "localClient"
+const LocalClient = "local"
 
 type ActiveClient func() *client.Client
 
@@ -104,17 +104,25 @@ func (m *ClientManager) LoadClients() error {
 	go m.loadLocalClient(clientConfig, &wg)
 	wg.Wait()
 
-	//defaultClient := "hermes"
-	if err := m.SwitchClient(LocalClient); err != nil {
-		return fmt.Errorf("unable to swtich to client: %s", LocalClient)
-	}
-
-	if len(m.ListClients()) < 1 {
+	conClients := m.ListClients()
+	if len(conClients) < 1 {
 		// at least a single machine should always be available
 		return fmt.Errorf("no docker clients could be connected, check your config")
 	}
 
-	return nil
+	// Try local client first
+	if err := m.SwitchClient(LocalClient); err == nil {
+		return nil
+	}
+
+	// Fall back to first available client
+	for _, cli := range conClients {
+		if err := m.SwitchClient(cli); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("no available clients to switch to")
 }
 
 func (m *ClientManager) loadLocalClient(clientConfig ClientConfig, wg *sync.WaitGroup) {

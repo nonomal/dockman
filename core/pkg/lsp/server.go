@@ -2,9 +2,9 @@ package lsp
 
 import (
 	"context"
+	"github.com/goccy/go-yaml"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
-	"gopkg.in/yaml.v3"
 	"log/slog"
 )
 
