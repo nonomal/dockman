@@ -3,7 +3,6 @@ package config
 import (
 	"embed"
 	"fmt"
-	"github.com/RA341/dockman/internal/info"
 	"github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"io/fs"
@@ -145,7 +144,7 @@ func loadDefaultIfNotSet(config *AppConfig) {
 		config.Port = 8866
 	}
 
-	if !info.IsDocker() && config.LocalAddr == "0.0.0.0" {
+	if config.LocalAddr == "0.0.0.0" {
 		ip, err := getLocalIP()
 		if err == nil {
 			config.LocalAddr = ip
@@ -154,6 +153,7 @@ func loadDefaultIfNotSet(config *AppConfig) {
 }
 
 func getLocalIP() (string, error) {
+	log.Info().Msg("Getting local IP by pinging cloudflare")
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		return "", err
