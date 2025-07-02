@@ -19,7 +19,7 @@ jobs:
         with:
           account: ${{ github.repository_owner }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          image-names: "*"
+          image-names: ${{ github.event.repository.name }} # Uses the current repository name
           tag-selection: untagged # Only delete untagged images
           cut-off: 1d # Delete untagged images older than 1 day
           dry-run: false
