@@ -1,0 +1,31 @@
+name: Clean GHCR images
+
+on:
+  schedule:
+    # Run every Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Delete untagged images only
+        uses: snok/container-retention-policy@v3.0.0
+        with:
+          account: ${{ github.repository_owner }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: "*"
+          tag-selection: untagged # Only delete untagged images
+          cut-off: 1d # Delete untagged images older than 1 day
+          dry-run: false
+          rust-log: container_retention_policy=info
+
+      - name: Log cleanup completion
+        run: |
+          echo "GHCR cleanup completed at $(date)"
+          echo "Deleted untagged images for repository: ${{ github.repository }}"
