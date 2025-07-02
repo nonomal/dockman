@@ -30,7 +30,7 @@ jobs:
       - name: Delete untagged images only
         uses: snok/container-retention-policy@v3.0.0
         with:
-          account: ${{ github.repository_owner }}
+          account: user
           token: ${{ secrets.GITHUB_TOKEN }}
           image-names: ${{ github.repository }}
           tag-selection: untagged
