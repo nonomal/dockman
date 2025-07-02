@@ -260,7 +260,7 @@ func (s *ComposeService) withProject(
 		}
 
 		if opts.allowFileSync {
-			log.Info().Msg("syncing bind mount to remote host")
+			log.Debug().Msg("syncing bind mount to remote host")
 			// nil client implies local client or I done fucked up
 			if sfCli := s.client.sftp(); sfCli != nil {
 				err = s.sftpProjectFiles(project, sfCli)

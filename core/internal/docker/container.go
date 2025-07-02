@@ -89,22 +89,18 @@ func (s *ContainerService) StatContainers(ctx context.Context, filter container.
 	return statsList, nil
 }
 
-func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
-	var statsList []ContainerStats
+func parallelLoop[T any, R any](input []R, mapper func(R) (T, bool)) []T {
+	contChan := make(chan T, len(input))
 
-	contChan := make(chan ContainerStats, len(containers))
 	var wg sync.WaitGroup
-
-	for _, cont := range containers {
+	for _, cont := range input {
 		wg.Add(1)
-		go func(cont container.Summary) {
+		go func(i R) {
 			defer wg.Done()
-			stats, err := s.getStats(ctx, cont)
-			if err != nil {
-				log.Warn().Err(err).Str("container", cont.ID[:12]).Msg("could not convert stats, skipping...")
-				return
+			res, ok := mapper(i)
+			if ok {
+				contChan <- res
 			}
-			contChan <- stats
 		}(cont)
 	}
 
@@ -113,11 +109,23 @@ func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, contai
 		close(contChan)
 	}()
 
+	var result []T
 	for c := range contChan {
-		statsList = append(statsList, c)
+		result = append(result, c)
 	}
 
-	return statsList
+	return result
+}
+
+func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
+	return parallelLoop(containers, func(r container.Summary) (ContainerStats, bool) {
+		stats, err := s.getStats(ctx, r)
+		if err != nil {
+			log.Warn().Err(err).Str("container", r.ID[:12]).Msg("could not convert stats, skipping...")
+			return ContainerStats{}, false
+		}
+		return stats, true
+	})
 }
 
 func (s *ContainerService) getStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
