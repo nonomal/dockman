@@ -34,6 +34,7 @@ func newComposeService(composeRoot string, client *ContainerService) *ComposeSer
 }
 
 func (s *ComposeService) Up(ctx context.Context, filename string, opts ...Opts) error {
+	opts = append(opts, WithFileSync())
 	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
 		return s.startStack(ctx, cli, project)
 	})
@@ -58,12 +59,14 @@ func (s *ComposeService) Pull(ctx context.Context, filename string, opts ...Opts
 }
 
 func (s *ComposeService) Restart(ctx context.Context, filename string, opts ...Opts) error {
+	opts = append(opts, WithFileSync())
 	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
 		return s.restartStack(ctx, cli, project)
 	})
 }
 
 func (s *ComposeService) Update(ctx context.Context, filename string, opts ...Opts) error {
+	opts = append(opts, WithFileSync())
 	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
 		beforeImages, err := s.getProjectImageDigests(ctx, project)
 		if err != nil {
@@ -270,10 +273,14 @@ func (s *ComposeService) withProject(
 			return fmt.Errorf("failed to load project: %w", err)
 		}
 
-		// nil client implies local client or I done fucked up
-		if sfCli := s.client.sftp(); sfCli != nil {
-			if err = s.sftpProjectFiles(project, sfCli); err != nil {
-				return err
+		if opts.allowFileSync {
+			log.Info().Msg("syncing bind mount to remote host")
+			// nil client implies local client or I done fucked up
+			if sfCli := s.client.sftp(); sfCli != nil {
+				err = s.sftpProjectFiles(project, sfCli)
+				if err != nil {
+					return err
+				}
 			}
 		}
 

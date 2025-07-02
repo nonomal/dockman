@@ -6,12 +6,20 @@ import (
 )
 
 type ComposeConfig struct {
-	dockerHost   string
-	outputStream io.Writer
-	inputStream  io.ReadCloser
+	dockerHost    string
+	outputStream  io.Writer
+	inputStream   io.ReadCloser
+	allowFileSync bool
 }
 
 type Opts func(opt *ComposeConfig)
+
+// WithFileSync allow file sync with remote host
+func WithFileSync() Opts {
+	return func(opt *ComposeConfig) {
+		opt.allowFileSync = true
+	}
+}
 
 func WithHost(host string) Opts {
 	return func(opt *ComposeConfig) {
