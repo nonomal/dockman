@@ -153,7 +153,6 @@ func loadDefaultIfNotSet(config *AppConfig) {
 }
 
 func getLocalIP() (string, error) {
-	log.Info().Msg("Getting local IP by pinging cloudflare")
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		return "", err
