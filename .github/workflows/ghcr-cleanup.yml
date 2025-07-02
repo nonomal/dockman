@@ -5,6 +5,12 @@ on:
     # Run every Sunday at 2 AM UTC
     - cron: '0 2 * * 0'
   workflow_dispatch: # Allow manual trigger
+    inputs:
+      dry_run:
+        description: 'enable dry run'
+        type: boolean
+        required: false
+        default: true
 
 jobs:
   cleanup:
@@ -28,8 +34,8 @@ jobs:
           image-names: ${{ github.event.repository.name }}
           tag-selection: untagged
           cut-off: 1d
-          dry-run: true # Enable dry-run first to debug
-          rust-log: container_retention_policy=debug # More detailed logging
+          dry-run: ${{ inputs.dry_run }}
+          rust-log: container_retention_policy=debug
 
       - name: Log cleanup completion
         run: |
