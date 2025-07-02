@@ -10,7 +10,7 @@ import {
     Toolbar,
     Typography
 } from '@mui/material';
-import {Dashboard, Logout, Settings} from '@mui/icons-material';
+import {Dashboard, Logout} from '@mui/icons-material';
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
 import {useAuth} from "../hooks/auth.ts";
@@ -57,10 +57,10 @@ export function NavSidebar() {
             <Box>
                 <Divider/>
                 <List>
-                    <ListItemButton selected={location.pathname === `/settings`} component={RouterLink} to="/settings">
-                        <ListItemIcon><Settings/></ListItemIcon>
-                        <ListItemText primary="Settings"/>
-                    </ListItemButton>
+                    {/*<ListItemButton selected={location.pathname === `/settings`} component={RouterLink} to="/settings">*/}
+                    {/*    <ListItemIcon><Settings/></ListItemIcon>*/}
+                    {/*    <ListItemText primary="Settings"/>*/}
+                    {/*</ListItemButton>*/}
                     <ListItemButton onClick={handleLogout}>
                         <ListItemIcon><Logout/></ListItemIcon>
                         <ListItemText primary="Logout"/>
