@@ -24,6 +24,7 @@ type MachineOptions struct {
 
 // ClientConfig structure of the yaml file
 type ClientConfig struct {
+	DefaultHost       string                    `yaml:"default_host"`
 	EnableLocalDocker bool                      `yaml:"enable_local_docker"`
 	Machines          map[string]MachineOptions `yaml:"machines"`
 }
@@ -39,6 +40,7 @@ func ExampleConfig() *ClientConfig {
 	}
 
 	return &ClientConfig{
+		DefaultHost:       LocalClient,
 		EnableLocalDocker: true,
 		Machines:          map[string]MachineOptions{"example": config},
 	}

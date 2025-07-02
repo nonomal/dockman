@@ -32,7 +32,7 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connec
 }
 
 func (h *Handler) SwitchClient(_ context.Context, c *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error) {
-	if err := h.srv.Manager.SwitchClient(c.Msg.MachineID); err != nil {
+	if err := h.srv.SwitchClient(c.Msg.MachineID); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&v1.Empty{}), nil

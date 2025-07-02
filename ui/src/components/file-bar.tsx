@@ -17,11 +17,13 @@ import type {FileGroup} from '../hooks/files.ts'
 import {useFiles} from "../hooks/files.ts"
 import {FileItem} from './file-item.tsx'
 import {AddFileDialog} from "./file-dialog.tsx"
+import {useHost} from "../hooks/host.ts";
 
 export function FileList() {
     const location = useLocation()
     const {file: currentDir} = useParams<{ file: string }>()
     const {files, isLoading, addFile, deleteFile} = useFiles()
+    const {selectedHost} = useHost()
 
     // holds the names of all open directories.
     const [openDirs, setOpenDirs] = useState(new Set<string>())
@@ -47,7 +49,7 @@ export function FileList() {
         return () => {
             window.removeEventListener('keydown', handleKeyDown)
         }
-    }, [])
+    }, [selectedHost])
 
     // if you navigate to a file, its parent directory opens automatically.
     useEffect(() => {
@@ -55,7 +57,7 @@ export function FileList() {
             // Add the current directory from the URL to the set of open directories
             setOpenDirs(prevOpenDirs => new Set(prevOpenDirs).add(currentDir))
         }
-    }, [currentDir])
+    }, [currentDir, selectedHost])
 
     const handleToggle = useCallback((dirName: string) => {
         setOpenDirs(prevOpenDirs => {
@@ -68,6 +70,22 @@ export function FileList() {
             return newOpenDirs
         })
     }, [])
+
+    const filteredFiles = useMemo(() => {
+        if (!searchQuery) return files
+        const lowerCaseQuery = searchQuery.toLowerCase()
+
+        return files.map(group => {
+            const isParentMatch = group.name.toLowerCase().includes(lowerCaseQuery)
+            const matchingChildren = group.children.filter(child => child.toLowerCase().includes(lowerCaseQuery))
+
+            if (isParentMatch || matchingChildren.length > 0) {
+                // If parent matches, show all children. Otherwise, show only matching children.
+                return {...group, children: isParentMatch ? group.children : matchingChildren}
+            }
+            return null
+        }).filter((group): group is FileGroup => group !== null)
+    }, [files, searchQuery, selectedHost])
 
     const openAddDialog = (parentName: string) => {
         setDialogState({open: true, parent: parentName})
@@ -87,22 +105,6 @@ export function FileList() {
     const handleDelete = (filename: string) => {
         deleteFile(filename, location.pathname).then()
     }
-
-    const filteredFiles = useMemo(() => {
-        if (!searchQuery) return files
-        const lowerCaseQuery = searchQuery.toLowerCase()
-
-        return files.map(group => {
-            const isParentMatch = group.name.toLowerCase().includes(lowerCaseQuery)
-            const matchingChildren = group.children.filter(child => child.toLowerCase().includes(lowerCaseQuery))
-
-            if (isParentMatch || matchingChildren.length > 0) {
-                // If parent matches, show all children. Otherwise, show only matching children.
-                return {...group, children: isParentMatch ? group.children : matchingChildren}
-            }
-            return null
-        }).filter((group): group is FileGroup => group !== null)
-    }, [files, searchQuery])
 
     return (
         <Box

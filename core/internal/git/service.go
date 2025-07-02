@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -16,7 +17,6 @@ type Service struct {
 	authToken string
 	repoPath  string
 	repo      *git.Repository
-	//fileMan   files.FileDB
 }
 
 func NewService(root string) *Service {
@@ -48,6 +48,85 @@ func initializeGit(root string) (*git.Repository, error) {
 
 	log.Info().Str("path", root).Msg("Repository initialized successfully")
 	return newRepo, nil
+}
+
+// CommitAll stages all changes (new, modified, deleted) and commits them.
+// It uses a generic commit message.
+func (s *Service) CommitAll() error {
+	w, err := s.repo.Worktree()
+	if err != nil {
+		return fmt.Errorf("could not get worktree: %w", err)
+	}
+
+	status, err := w.Status()
+	if err != nil {
+		return fmt.Errorf("could not get worktree status: %w", err)
+	}
+
+	if status.IsClean() {
+		log.Info().Msg("Working directory is clean, no changes to commit")
+		return nil
+	}
+
+	if _, err = w.Add("."); err != nil {
+		return fmt.Errorf("could not stage changes: %w", err)
+	}
+
+	log.Info().Msg("Staged all changes")
+
+	commitMsg := "chore: automatic commit of all changes"
+	commitOpts := &git.CommitOptions{
+		Author: &object.Signature{
+			Name: s.username,
+			When: time.Now(),
+		},
+	}
+
+	commitHash, err := w.Commit(commitMsg, commitOpts)
+	if err != nil {
+		return fmt.Errorf("could not create commit: %w", err)
+	}
+
+	log.Info().Str("hash", commitHash.String()).Msg("Successfully created commit with hash")
+	return nil
+}
+
+// SwitchBranch switches to a different branch.
+// first commits any outstanding changes.
+func (s *Service) SwitchBranch(name string) error {
+	log.Info().Str("branch", name).Msg("Committing all changes before switching to branch")
+	if err := s.CommitAll(); err != nil {
+		return fmt.Errorf("failed to commit changes before switching branch: %w", err)
+	}
+
+	w, err := s.repo.Worktree()
+	if err != nil {
+		return fmt.Errorf("could not get worktree: %w", err)
+	}
+
+	branchRefName := plumbing.NewBranchReferenceName(name)
+
+	log.Debug().Str("branch", name).Msg("Checking if branch exists...")
+	_, err = s.repo.Reference(branchRefName, true)
+	checkoutOpts := &git.CheckoutOptions{
+		Branch: branchRefName,
+	}
+
+	// If the reference is not found, the branch doesn't exist
+	// set the `Create` flag to true
+	if errors.Is(err, plumbing.ErrReferenceNotFound) {
+		log.Debug().Str("branch", name).Msg("Branch does not exist. Creating it.")
+		checkoutOpts.Create = true
+	} else if err != nil {
+		return fmt.Errorf("could not lookup reference for branch '%s': %w", name, err)
+	}
+
+	if err = w.Checkout(checkoutOpts); err != nil {
+		return fmt.Errorf("could not switch to branch '%s': %w", name, err)
+	}
+
+	log.Info().Str("branch", name).Msg("Switched to branch...")
+	return nil
 }
 
 func (s *Service) Commit(commitMessage string, fileList ...string) error {

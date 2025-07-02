@@ -3,6 +3,7 @@ import {callRPC, useClient} from '../lib/api';
 import {FileService} from '../gen/files/v1/files_pb';
 import {useSnackbar} from './snackbar.ts';
 import {useNavigate} from 'react-router-dom';
+import {useHost} from "./host.ts";
 
 export interface FileGroup {
     name: string;
@@ -13,6 +14,8 @@ export function useFiles() {
     const navigate = useNavigate();
     const client = useClient(FileService);
     const {showError, showSuccess} = useSnackbar();
+    const {selectedHost} = useHost()
+
 
     const [files, setFiles] = useState<FileGroup[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +34,7 @@ export function useFiles() {
             setFiles(res);
         }
         setIsLoading(false);
-    }, [client]);
+    }, [client, selectedHost]);
 
     useEffect(() => {
         fetchFiles().then();

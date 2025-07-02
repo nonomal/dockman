@@ -46,7 +46,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	authSrv := auth.NewService()
 	fileSrv := files.NewService(absComposeRoot)
 	gitSrv := git.NewService(absComposeRoot)
-	hostSrv := hm.NewService()
+	hostSrv := hm.NewService(gitSrv)
 	dockerSrv := docker.NewService(
 		absComposeRoot,
 		hostSrv.Manager.GetClientFn(),

@@ -29,7 +29,7 @@ type ClientManager struct {
 	customSSHFolder  string
 }
 
-func NewClientManager(basedir string, man *ConfigManager) *ClientManager {
+func NewClientManager(basedir string, man *ConfigManager) (*ClientManager, string) {
 	sshDir, err := initSSHDir(basedir)
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to initialize ssh dir")
@@ -42,11 +42,12 @@ func NewClientManager(basedir string, man *ConfigManager) *ClientManager {
 		clientLock:       &sync.Mutex{},
 	}
 
-	if err = cm.LoadClients(); err != nil {
+	defaultHost, err := cm.LoadClients()
+	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load clients")
 	}
 
-	return cm
+	return cm, defaultHost
 }
 
 func (m *ClientManager) GetClientFn() GetDocker {
@@ -105,7 +106,7 @@ func (m *ClientManager) ListClients() []string {
 	return cliList
 }
 
-func (m *ClientManager) LoadClients() error {
+func (m *ClientManager) LoadClients() (string, error) {
 	clientConfig := m.config.List()
 
 	var wg sync.WaitGroup
@@ -122,22 +123,14 @@ func (m *ClientManager) LoadClients() error {
 	conClients := m.ListClients()
 	if len(conClients) < 1 {
 		// at least a single machine should always be available
-		return fmt.Errorf("no docker clients could be connected, check your config")
+		return "", fmt.Errorf("no docker clients could be connected, check your config")
 	}
 
-	// Try local client first
-	if err := m.SwitchClient(LocalClient); err == nil {
-		return nil
+	if clientConfig.DefaultHost != "" {
+		return clientConfig.DefaultHost, nil
 	}
-
-	// Fall back to first available client
-	for _, cli := range conClients {
-		if err := m.SwitchClient(cli); err == nil {
-			return nil
-		}
-	}
-
-	return fmt.Errorf("no available clients to switch to")
+	// get first available host
+	return conClients[0], nil
 }
 
 func (m *ClientManager) loadLocalClient(clientConfig ClientConfig, wg *sync.WaitGroup) {

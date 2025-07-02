@@ -10,6 +10,7 @@ import {AuthPage} from './pages/auth-page.tsx';
 import NotFoundPage from "./components/not-found.tsx";
 import React from 'react';
 import {useAuth} from "./hooks/auth.ts";
+import {HostProvider} from "./context/host.tsx";
 
 export default function App() {
     return (
@@ -18,19 +19,21 @@ export default function App() {
             <SnackbarProvider>
                 <AuthProvider>
                     <BrowserRouter>
-                        <Routes>
-                            <Route path="auth" element={<AuthPage/>}/>
-                            <Route element={<PrivateRoute/>}>
-                                <Route path="/" element={<HomePage/>}>
-                                    <Route index element={<DashboardPage/>}/>
-                                    <Route path="files/:file/:child" element={<Stack/>}/>
-                                    <Route path="files/:file" element={<Stack/>}/>
-                                    <Route path="settings" element={<SettingsPage/>}/>
+                        <HostProvider>
+                            <Routes>
+                                <Route path="auth" element={<AuthPage/>}/>
+                                <Route element={<PrivateRoute/>}>
+                                    <Route path="/" element={<HomePage/>}>
+                                        <Route index element={<DashboardPage/>}/>
+                                        <Route path="files/:file/:child" element={<Stack/>}/>
+                                        <Route path="files/:file" element={<Stack/>}/>
+                                        <Route path="settings" element={<SettingsPage/>}/>
+                                    </Route>
                                 </Route>
-                            </Route>
-                            <Route path="/not-found" element={<NotFoundPage/>}/>
-                            <Route path="*" element={<NotFoundPage/>}/>
-                        </Routes>
+                                <Route path="/not-found" element={<NotFoundPage/>}/>
+                                <Route path="*" element={<NotFoundPage/>}/>
+                            </Routes>
+                        </HostProvider>
                     </BrowserRouter>
                 </AuthProvider>
             </SnackbarProvider>
