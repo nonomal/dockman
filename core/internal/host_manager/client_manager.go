@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/RA341/dockman/pkg"
 	"github.com/docker/docker/client"
+	"github.com/pkg/sftp"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
 	"net"
@@ -16,7 +17,9 @@ import (
 // LocalClient is the name given to the local docker daemon instance
 const LocalClient = "local"
 
-type ActiveClient func() *client.Client
+type GetDocker func() *client.Client
+
+type GetSftp func() *SftpClient
 
 type ClientManager struct {
 	config           *ConfigManager
@@ -46,13 +49,25 @@ func NewClientManager(basedir string, man *ConfigManager) *ClientManager {
 	return cm
 }
 
-func (m *ClientManager) GetClientFn() ActiveClient {
+func (m *ClientManager) GetClientFn() GetDocker {
 	return func() *client.Client {
 		val, ok := m.connectedClients.Load(m.GetActiveClient())
 		if !ok {
+			// this should never happen since only way of changing client should be ClientManager.SwitchClient
 			log.Warn().Str("name", m.activeClient).Msg("Client is not connected")
 		}
 		return val.client
+	}
+}
+
+func (m *ClientManager) GetSFTPFn() GetSftp {
+	return func() *SftpClient {
+		val, ok := m.connectedClients.Load(m.GetActiveClient())
+		if !ok {
+			// this should never happen since only way of changing client should be ClientManager.SwitchClient
+			log.Warn().Str("name", m.activeClient).Msg("Client is not connected")
+		}
+		return val.sftpClient
 	}
 }
 
@@ -139,7 +154,9 @@ func (m *ClientManager) loadLocalClient(clientConfig ClientConfig, wg *sync.Wait
 		return
 	}
 
-	m.testAndStore(LocalClient, localClient)
+	m.testAndStore(LocalClient, &ManagedMachine{
+		client: localClient,
+	})
 }
 
 func (m *ClientManager) loadSSHClient(machine MachineOptions, name string, s *sync.WaitGroup) {
@@ -151,27 +168,37 @@ func (m *ClientManager) loadSSHClient(machine MachineOptions, name string, s *sy
 
 	auth, err := m.getAuthMethod(name, &machine)
 	if err != nil {
-		log.Warn().Err(err).Str("name", name).Msg("Failed to load auth method for host, check your config")
+		log.Warn().Err(err).Str("client", name).Msg("Failed to load auth method for host, check your config")
 		return
 	}
 
-	newClient, err := createSSHDockerConnection(name, &machine, auth, m.saveHostKey(name, machine))
+	newClient, sshClient, err := newSSHClient(name, &machine, auth, m.saveHostKey(name, machine))
 	if err != nil {
 		log.Error().Err(err).Str("client", name).Msg("Failed to setup remote docker client")
 		return
 	}
 
-	m.testAndStore(name, newClient)
+	sftpClient, err := sftp.NewClient(sshClient)
+	if err != nil {
+		log.Error().Err(err).Str("client", name).Msg("Failed to setup sftp client")
+		return
+	}
+
+	m.testAndStore(name, &ManagedMachine{
+		client:     newClient,
+		sshClient:  sshClient,
+		sftpClient: NewSFTPCli(sftpClient),
+	})
 }
 
-func (m *ClientManager) testAndStore(name string, newClient *client.Client) {
-	_, err := testClientConn(newClient)
+func (m *ClientManager) testAndStore(name string, newClient *ManagedMachine) {
+	_, err := testClientConn(newClient.client)
 	if err != nil {
 		log.Warn().Err(err).Msgf("docker client health check failed: %s", name)
 		return
 	}
 
-	m.connectedClients.Store(name, &ManagedMachine{client: newClient})
+	m.connectedClients.Store(name, newClient)
 }
 
 func (m *ClientManager) saveHostKey(name string, machine MachineOptions) func(hostname string, remote net.Addr, key ssh.PublicKey) error {

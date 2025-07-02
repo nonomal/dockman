@@ -37,7 +37,8 @@ type ContainerStats struct {
 }
 
 type ContainerService struct {
-	daemon cm.ActiveClient
+	daemon cm.GetDocker
+	sftp   cm.GetSftp
 }
 
 func filterByLabels(projectname string) {

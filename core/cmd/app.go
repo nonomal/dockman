@@ -47,7 +47,11 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	fileSrv := files.NewService(absComposeRoot)
 	gitSrv := git.NewService(absComposeRoot)
 	hostSrv := hm.NewService()
-	dockerSrv := docker.NewService(absComposeRoot, hostSrv.Manager.GetClientFn())
+	dockerSrv := docker.NewService(
+		absComposeRoot,
+		hostSrv.Manager.GetClientFn(),
+		hostSrv.Manager.GetSFTPFn(),
+	)
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{

@@ -16,12 +16,15 @@ type Service struct {
 	localAddress string
 }
 
-func NewService(composeRoot string, cliFn cm.ActiveClient) *Service {
+func NewService(composeRoot string, cliFn cm.GetDocker, sftpFn cm.GetSftp) *Service {
 	if !filepath.IsAbs(composeRoot) {
 		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
 	}
 
-	containerClient := &ContainerService{daemon: cliFn}
+	containerClient := &ContainerService{
+		daemon: cliFn,
+		sftp:   sftpFn,
+	}
 	composeClient := newComposeService(composeRoot, containerClient)
 
 	return &Service{

@@ -31,7 +31,7 @@ func NewConfigManager(basedir string) (*ConfigManager, error) {
 		},
 	}
 
-	if !fileExists(confPath) {
+	if !FileExists(confPath) {
 		log.Info().Str("path", confPath).Msg("No hosts.yaml file found, creating...")
 
 		file, err := os.OpenFile(confPath, os.O_RDWR|os.O_CREATE, 0600)
@@ -112,7 +112,7 @@ func (manager *ConfigManager) Get(machName string) MachineOptions {
 	return manager.config.Machines[machName]
 }
 
-func fileExists(filename string) bool {
+func FileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return !os.IsNotExist(err)
 }

@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	hm "github.com/RA341/dockman/internal/host_manager"
 	"github.com/compose-spec/compose-go/v2/cli"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
@@ -269,6 +270,13 @@ func (s *ComposeService) withProject(
 			return fmt.Errorf("failed to load project: %w", err)
 		}
 
+		// nil client implies local client or I done fucked up
+		if sfCli := s.client.sftp(); sfCli != nil {
+			if err = s.sftpProjectFiles(project, sfCli); err != nil {
+				return err
+			}
+		}
+
 		addServiceLabels(project)
 		// Ensure service environment variables
 		if p, err := project.WithServicesEnvironmentResolved(true); err == nil {
@@ -281,6 +289,53 @@ func (s *ComposeService) withProject(
 
 		return execFn(composeCli, project)
 	})
+}
+
+func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *hm.SftpClient) error {
+	for _, service := range project.Services {
+		// iterate over each volume mount for that service.
+		for _, vol := range service.Volumes {
+			// We only care about "bind" mounts, which map a host path to a container path.
+			// We ignore named volumes, tmpfs, etc.
+			if vol.Bind == nil {
+				continue
+			}
+
+			// `vol.Source` is the local path on the host machine.
+			// Because we used `WithResolvedPaths(true)`, this is an absolute path.
+			localSourcePath := vol.Source
+
+			// Copy files only whose volume starts with the project's root directory path.
+			if !strings.HasPrefix(localSourcePath, s.composeRoot) {
+				log.Debug().
+					Str("local", localSourcePath).
+					Msg("Skipping bind mount outside of project root")
+				continue
+			}
+
+			// Before copying, check if the source file/directory actually exists.
+			// It might be a path that gets created by another process or container,
+			// so just log/skip if it doesn't exist.
+			if !hm.FileExists(localSourcePath) {
+				log.Debug().Str("path", localSourcePath).Msg("bind mount source path not found, skipping...")
+				continue
+			}
+
+			// The remote destination path will mirror the local absolute path.
+			// This ensures the file structure is identical on the remote host.
+			remoteDestPath := localSourcePath
+			log.Info().
+				Str("name", service.Name).
+				Str("src (local)", localSourcePath).
+				Str("dest (remote)", remoteDestPath).
+				Msg("Syncing bind mount for service")
+
+			if err := sfCli.CopyLocalToRemoteSFTP(localSourcePath, remoteDestPath); err != nil {
+				return fmt.Errorf("failed to sync bind mount %s for service %s: %w", localSourcePath, service.Name, err)
+			}
+		}
+	}
+	return nil
 }
 
 func addServiceLabels(project *types.Project) {

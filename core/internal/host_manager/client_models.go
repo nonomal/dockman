@@ -1,9 +1,14 @@
 package host_manager
 
-import "github.com/docker/docker/client"
+import (
+	"github.com/docker/docker/client"
+	"golang.org/x/crypto/ssh"
+)
 
 type ManagedMachine struct {
-	client *client.Client
+	client     *client.Client
+	sshClient  *ssh.Client
+	sftpClient *SftpClient
 }
 
 // MachineOptions defines the configuration for a single machine.
