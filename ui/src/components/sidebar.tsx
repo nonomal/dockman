@@ -34,8 +34,19 @@ export function NavSidebar() {
             anchor="left"
         >
             <Box>
-                <Toolbar>
-                    <Box component="img" sx={{height: 40, width: 40, mr: 2}} alt="Logo" src="/dockmanTBD.png"/>
+                <Toolbar sx={{minHeight: 'auto', py: 1}}>
+                    <Box
+                        component="img"
+                        sx={{
+                            height: '100%',
+                            maxHeight: 40,
+                            width: 'auto',
+                            objectFit: 'contain',
+                            mr: 2
+                        }}
+                        alt="Logo"
+                        src="/dockman.svg"
+                    />
                     <Typography variant="h5" noWrap>Dockman</Typography>
                 </Toolbar>
                 <Divider/>
