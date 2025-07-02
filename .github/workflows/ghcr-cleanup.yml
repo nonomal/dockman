@@ -32,20 +32,11 @@ jobs:
         with:
           account: ${{ github.repository_owner }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          image-names: ${{ github.event.repository.name }}
+          image-names: ${{ github.repository }}
           tag-selection: untagged
           cut-off: 1d
           dry-run: true # Enable dry-run first to debug
           rust-log: container_retention_policy=debug # More detailed logging
-
-      # If you have multiple packages, list them explicitly:
-      # image-names: "package1 package2 package3"
-      #
-      # Or if you need to clean ALL packages, you'll need a PAT token:
-      # 1. Create a Personal Access Token with 'packages:write' scope
-      # 2. Add it as a repository secret (e.g., 'PACKAGES_PAT')
-      # 3. Use: token: ${{ secrets.PACKAGES_PAT }}
-      # 4. Then you can use: image-names: "*"
 
       - name: Log cleanup completion
         run: |
