@@ -34,7 +34,7 @@ jobs:
           image-names: ${{ github.event.repository.name }}
           tag-selection: untagged
           cut-off: 1d
-          dry-run: ${{ inputs.dry_run }}
+          dry-run: ${{ inputs.dry_run || false }}
           rust-log: container_retention_policy=debug
 
       - name: Log cleanup completion
