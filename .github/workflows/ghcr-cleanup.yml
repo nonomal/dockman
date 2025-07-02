@@ -1,4 +1,4 @@
-name: Clean GHCR images
+name: Clean up untagged GHCR images
 
 on:
   schedule:
@@ -12,18 +12,40 @@ jobs:
     permissions:
       contents: read
       packages: write
-
     steps:
+      - name: Debug package information
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Repository name: ${{ github.event.repository.name }}"
+          echo "Repository owner: ${{ github.repository_owner }}"
+          echo "Expected package name: ${{ github.event.repository.name }}"
+
+      - name: Check if packages exist
+        run: |
+          # Try to list packages to see what's available
+          curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               "https://api.github.com/user/packages?package_type=container" || true
+
       - name: Delete untagged images only
         uses: snok/container-retention-policy@v3.0.0
         with:
           account: ${{ github.repository_owner }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          image-names: ${{ github.event.repository.name }} # Uses the current repository name
-          tag-selection: untagged # Only delete untagged images
-          cut-off: 1d # Delete untagged images older than 1 day
-          dry-run: false
-          rust-log: container_retention_policy=info
+          image-names: ${{ github.event.repository.name }}
+          tag-selection: untagged
+          cut-off: 1d
+          dry-run: true # Enable dry-run first to debug
+          rust-log: container_retention_policy=debug # More detailed logging
+
+      # If you have multiple packages, list them explicitly:
+      # image-names: "package1 package2 package3"
+      #
+      # Or if you need to clean ALL packages, you'll need a PAT token:
+      # 1. Create a Personal Access Token with 'packages:write' scope
+      # 2. Add it as a repository secret (e.g., 'PACKAGES_PAT')
+      # 3. Use: token: ${{ secrets.PACKAGES_PAT }}
+      # 4. Then you can use: image-names: "*"
 
       - name: Log cleanup completion
         run: |
