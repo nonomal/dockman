@@ -9,7 +9,7 @@ services:
     volumes:
       - ./stacks:/stacks
       - /var/run/docker.sock:/var/run/docker.sock
-      - ../config:/app/config
+      - ./config:/app/config
     environment:
       - DOCKMAN_COMPOSE_ROOT=/stacks
       - DOCKMAN_AUTH_ENABLE=false
