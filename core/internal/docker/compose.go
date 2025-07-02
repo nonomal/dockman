@@ -36,32 +36,60 @@ func newComposeService(composeRoot string, client *ContainerService) *ComposeSer
 func (s *ComposeService) Up(ctx context.Context, filename string, opts ...Opts) error {
 	opts = append(opts, WithFileSync())
 	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		return s.startStack(ctx, cli, project)
+		var opts api.UpOptions
+		opts.Create.Recreate = api.RecreateForce
+		opts.Create.RemoveOrphans = true
+		opts.Start.OnExit = api.CascadeStop
+
+		if err := cli.Build(ctx, project, api.BuildOptions{}); err != nil {
+			return fmt.Errorf("compose build operation failed: %w", err)
+		}
+
+		if err := cli.Up(ctx, project, opts); err != nil {
+			return fmt.Errorf("compose up operation failed: %w", err)
+		}
+
+		return nil
 	})
 }
 
 func (s *ComposeService) Down(ctx context.Context, filename string, opts ...Opts) error {
 	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		return s.downStack(ctx, cli, project)
+		if err := cli.Down(ctx, project.Name, api.DownOptions{}); err != nil {
+			return fmt.Errorf("compose down operation failed: %w", err)
+		}
+		return nil
+
 	})
 }
 
 func (s *ComposeService) Stop(ctx context.Context, filename string, opts ...Opts) error {
 	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		return s.stopStack(ctx, cli, project)
+		if err := cli.Stop(ctx, project.Name, api.StopOptions{}); err != nil {
+			return fmt.Errorf("compose stop operation failed: %w", err)
+		}
+
+		return nil
+
 	})
 }
 
 func (s *ComposeService) Pull(ctx context.Context, filename string, opts ...Opts) error {
 	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		return s.pullStack(ctx, cli, project)
+		if err := cli.Pull(ctx, project, api.PullOptions{}); err != nil {
+			return fmt.Errorf("compose pull operation failed: %w", err)
+		}
+		return nil
 	})
 }
 
 func (s *ComposeService) Restart(ctx context.Context, filename string, opts ...Opts) error {
 	opts = append(opts, WithFileSync())
 	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		return s.restartStack(ctx, cli, project)
+		if err := cli.Restart(ctx, project.Name, api.RestartOptions{}); err != nil {
+			return fmt.Errorf("compose restart operation failed: %w", err)
+		}
+		return nil
 	})
 }
 
@@ -73,7 +101,8 @@ func (s *ComposeService) Update(ctx context.Context, filename string, opts ...Op
 			return fmt.Errorf("failed to get image info before pull: %w", err)
 		}
 
-		if err = s.pullStack(ctx, cli, project); err != nil {
+		opts = append(opts, WithProjectAndCli(project, cli))
+		if err = s.Pull(ctx, filename, opts...); err != nil {
 			return err
 		}
 
@@ -90,7 +119,7 @@ func (s *ComposeService) Update(ctx context.Context, filename string, opts ...Op
 
 		log.Info().Str("stack", project.Name).Msgf("New images were downloaded, updating stack")
 
-		if err = s.startStack(ctx, cli, project); err != nil {
+		if err = s.Up(ctx, filename, opts...); err != nil {
 			return err
 		}
 
@@ -101,13 +130,12 @@ func (s *ComposeService) Update(ctx context.Context, filename string, opts ...Op
 func (s *ComposeService) StatStack(ctx context.Context, filename string, opts ...Opts) ([]ContainerStats, error) {
 	var result []ContainerStats
 	err := s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		stackList, err := s.listStack(ctx, cli, project, false)
+		stackList, err := s.listStack(ctx, project, false)
 		if err != nil {
 			return err
 		}
 
 		result = s.client.GetStatsFromContainerList(ctx, stackList)
-
 		return nil
 	})
 	if err != nil {
@@ -121,7 +149,7 @@ func (s *ComposeService) ListStack(ctx context.Context, filename string, opts ..
 	var result []container.Summary
 	err := s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
 		var err error
-		result, err = s.listStack(ctx, cli, project, true)
+		result, err = s.listStack(ctx, project, true)
 		if err != nil {
 			return err
 		}
@@ -135,7 +163,7 @@ func (s *ComposeService) ListStack(ctx context.Context, filename string, opts ..
 }
 
 // showAll: all containers (running and stopped).
-func (s *ComposeService) listStack(ctx context.Context, composeCli api.Service, project *types.Project, showAll bool) ([]container.Summary, error) {
+func (s *ComposeService) listStack(ctx context.Context, project *types.Project, showAll bool) ([]container.Summary, error) {
 	containerFilters := filters.NewArgs()
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
@@ -149,52 +177,6 @@ func (s *ComposeService) listStack(ctx context.Context, composeCli api.Service, 
 	}
 
 	return result, nil
-}
-
-func (s *ComposeService) startStack(ctx context.Context, composeCli api.Service, project *types.Project) error {
-	var opts api.UpOptions
-	opts.Create.Recreate = api.RecreateForce
-	opts.Create.RemoveOrphans = true
-	opts.Start.OnExit = api.CascadeStop
-
-	if err := composeCli.Build(ctx, project, api.BuildOptions{}); err != nil {
-		return fmt.Errorf("compose build operation failed: %w", err)
-	}
-
-	if err := composeCli.Up(ctx, project, opts); err != nil {
-		return fmt.Errorf("compose up operation failed: %w", err)
-	}
-
-	return nil
-}
-
-func (s *ComposeService) downStack(ctx context.Context, cli api.Service, project *types.Project) error {
-	if err := cli.Down(ctx, project.Name, api.DownOptions{}); err != nil {
-		return fmt.Errorf("compose down operation failed: %w", err)
-	}
-	return nil
-}
-
-func (s *ComposeService) restartStack(ctx context.Context, cli api.Service, project *types.Project) error {
-	if err := cli.Restart(ctx, project.Name, api.RestartOptions{}); err != nil {
-		return fmt.Errorf("compose restart operation failed: %w", err)
-	}
-	return nil
-}
-
-func (s *ComposeService) stopStack(ctx context.Context, composeCli api.Service, project *types.Project) error {
-	if err := composeCli.Stop(ctx, project.Name, api.StopOptions{}); err != nil {
-		return fmt.Errorf("compose stop operation failed: %w", err)
-	}
-
-	return nil
-}
-
-func (s *ComposeService) pullStack(ctx context.Context, composeCli api.Service, project *types.Project) error {
-	if err := composeCli.Pull(ctx, project, api.PullOptions{}); err != nil {
-		return fmt.Errorf("compose pull operation failed: %w", err)
-	}
-	return nil
 }
 
 func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *types.Project) (map[string]string, error) {
@@ -248,6 +230,10 @@ func (s *ComposeService) withProject(
 	opts *ComposeConfig,
 	execFn func(cli api.Service, project *types.Project) error,
 ) error {
+	if opts.cli != nil && opts.project != nil {
+		return execFn(opts.cli, opts.project)
+	}
+
 	return s.withComposeCli(opts, func(composeCli api.Service) error {
 		filename = filepath.Join(s.composeRoot, filename)
 		// will be the parent dir of the compose file else equal to compose root
