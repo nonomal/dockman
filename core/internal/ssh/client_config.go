@@ -1,4 +1,4 @@
-package host_manager
+package ssh
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func NewConfigManager(basedir string) (*ConfigManager, error) {
 		},
 	}
 
-	if !FileExists(confPath) {
+	if !pkg.FileExists(confPath) {
 		log.Info().Str("path", confPath).Msg("No hosts.yaml file found, creating...")
 
 		file, err := os.OpenFile(confPath, os.O_RDWR|os.O_CREATE, 0600)
@@ -110,9 +110,4 @@ func (manager *ConfigManager) Get(machName string) MachineOptions {
 	defer manager.mu.Unlock()
 
 	return manager.config.Machines[machName]
-}
-
-func FileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	return !os.IsNotExist(err)
 }

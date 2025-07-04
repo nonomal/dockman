@@ -1,9 +1,9 @@
-package host_manager
+package docker_manager
 
 import (
 	"connectrpc.com/connect"
 	"context"
-	v1 "github.com/RA341/dockman/generated/host_manager/v1"
+	v1 "github.com/RA341/dockman/generated/docker_manager/v1"
 )
 
 type Handler struct {

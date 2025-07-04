@@ -1,20 +1,15 @@
-package host_manager
+package ssh
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"github.com/RA341/dockman/internal/info"
-	"github.com/docker/cli/cli/connhelper"
-	"github.com/docker/docker/api/types/system"
-	"github.com/docker/docker/client"
+	"github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
-	"net"
-	"net/http"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -30,11 +25,12 @@ var commonKeyNames = []string{
 	"id_dsa",
 }
 
-// newSSHClient establishes an SSH connection to a Docker host based on the provided authentication method.
+// NewSSHClient establishes a ssh connection
+// based on the provided authentication method.
 //
 // If MachineOptions contains an empty public key, the key is saved on connect;
 // otherwise, the provided key is verified.
-func newSSHClient(name string, machine *MachineOptions, auth ssh.AuthMethod, saveHostCallback ssh.HostKeyCallback) (*client.Client, *ssh.Client, error) {
+func NewSSHClient(name string, machine *MachineOptions, auth ssh.AuthMethod, saveHostCallback ssh.HostKeyCallback) (*ssh.Client, error) {
 	sshHost := fmt.Sprintf("%s:%d", machine.Host, machine.Port)
 	conf := &ssh.ClientConfig{
 		User:            machine.User,
@@ -47,7 +43,7 @@ func newSSHClient(name string, machine *MachineOptions, auth ssh.AuthMethod, sav
 		log.Debug().Str("name", name).Msg("Verifying public key")
 		pubkey, err := stringToPublicKey(machine.RemotePublicKey)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		conf.HostKeyCallback = ssh.FixedHostKey(pubkey)
@@ -55,39 +51,9 @@ func newSSHClient(name string, machine *MachineOptions, auth ssh.AuthMethod, sav
 
 	sshClient, err := ssh.Dial("tcp", sshHost, conf)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create ssh client: %w", err)
+		return nil, fmt.Errorf("failed to create ssh client: %w", err)
 	}
-
-	// Create a Docker client using the custom dialer.
-	newClient, err := client.NewClientWithOpts(
-		client.WithDialContext(sshDialer(sshClient)),
-		client.WithAPIVersionNegotiation(),
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to connect to docker client: %w", err)
-	}
-
-	return newClient, sshClient, nil
-}
-
-func newDockerClient(opts ...client.Opt) (*client.Client, error) {
-	opts = append(opts, client.WithAPIVersionNegotiation())
-	return client.NewClientWithOpts(opts...)
-}
-
-// newLocalClient connects to the local docker host.
-//
-// It is assumed the docker daemon is running and is accessible by leviathan
-func newLocalClient() (*client.Client, error) {
-	cli, err := client.NewClientWithOpts(
-		client.FromEnv,
-		client.WithAPIVersionNegotiation(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create docker client: %w", err)
-	}
-
-	return cli, nil
+	return sshClient, nil
 }
 
 // withKeyPairAuth connects to a remote docker host using public/private key authentication.
@@ -103,7 +69,7 @@ func withKeyPairAuth(keyFolder string) (ssh.AuthMethod, error) {
 
 	for _, keyName := range commonKeyNames {
 		keyPath := filepath.Join(keyFolder, keyName)
-		if !FileExists(keyPath) {
+		if !pkg.FileExists(keyPath) {
 			continue
 		}
 
@@ -171,34 +137,6 @@ func loadPrivateKeyFromFile(keyPath string) (ssh.Signer, error) {
 	return signer, nil
 }
 
-func testClientConn(client *client.Client) (system.Info, error) {
-	cliInfo, err := client.Info(context.Background())
-	if err != nil {
-		return system.Info{}, err
-	}
-
-	log.Info().Str("ID", cliInfo.ID).Str("Kernel", cliInfo.KernelVersion).Msgf("Connected to %v", cliInfo.Name)
-	return cliInfo, nil
-}
-
-// sshDialer custom dialer that uses the SSH connection.
-func sshDialer(sshClient *ssh.Client) func(ctx context.Context, network string, addr string) (net.Conn, error) {
-	return func(ctx context.Context, network string, addr string) (net.Conn, error) {
-		dockerUnix := "/var/run/docker.sock"
-		dial, err := sshClient.Dial("unix", dockerUnix)
-		if err == nil {
-			return dial, nil
-		}
-
-		dockerTcp := "127.0.0.1:2375"
-		log.Warn().
-			Err(err).
-			Msgf("failed to dial remote docker client at %s, using fallingback at %s", dockerUnix, dockerTcp)
-
-		return sshClient.Dial("tcp", dockerTcp)
-	}
-}
-
 // generateKeyPair creates a new SSH key pair
 func generateKeyPair() (privateKey []byte, publicKey []byte, err error) {
 	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -252,7 +190,7 @@ func verifySSHKeyPair(baseDir string) (string, error) {
 		Str("public_key_file", publicKeyPath).
 		Str("path", baseDir)
 
-	if FileExists(privateKeyPath) && FileExists(publicKeyPath) {
+	if pkg.FileExists(privateKeyPath) && pkg.FileExists(publicKeyPath) {
 		logF.Msg("found existing keys... skipping generation")
 		return baseDir, nil
 	}
@@ -287,44 +225,4 @@ func stringToPublicKey(publicKeyString string) (ssh.PublicKey, error) {
 		return nil, fmt.Errorf("unable to parse public key %v", err)
 	}
 	return publicKey, nil
-}
-
-// newHostSSHClient connects to a remote docker host using public/private key authentication.
-// It uses the local machine's SSH configuration (typically ~/.ssh) for connection.
-//
-// Prerequisites:
-//   - The remote host must have an SSH server (sshd) running and accessible.
-//   - The local machine must have the necessary SSH keys and configuration to connect.
-//
-// This function assumes the user has already configured SSH access to the remote host.
-// It does not handle key generation or SSH configuration.
-func _(machine MachineOptions) (*client.Client, error) {
-	connectionStr := fmt.Sprintf("%s@%s:%d", machine.User, machine.Host, machine.Port)
-	helper, err := connhelper.GetConnectionHelper(fmt.Sprintf("ssh://%s", connectionStr))
-	if err != nil {
-		log.Error().Err(err).
-			Str("addr", connectionStr).
-			Msg("connection string")
-		return nil, err
-	}
-
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			DialContext: helper.Dialer,
-		},
-	}
-
-	newClient, err := client.NewClientWithOpts(
-		client.WithHTTPClient(httpClient),
-		client.WithHost(helper.Host),
-		client.WithDialContext(helper.Dialer),
-		client.WithAPIVersionNegotiation(),
-	)
-
-	if err != nil {
-		log.Error().Err(err).Str("addr", connectionStr).Msg("failed create ssh docker client")
-		return nil, fmt.Errorf("unable to connect to docker client")
-	}
-
-	return newClient, nil
 }

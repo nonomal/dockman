@@ -1,15 +1,4 @@
-package host_manager
-
-import (
-	"github.com/docker/docker/client"
-	"golang.org/x/crypto/ssh"
-)
-
-type ManagedMachine struct {
-	client     *client.Client
-	sshClient  *ssh.Client
-	sftpClient *SftpClient
-}
+package ssh
 
 // MachineOptions defines the configuration for a single machine.
 type MachineOptions struct {
@@ -40,7 +29,7 @@ func ExampleConfig() *ClientConfig {
 	}
 
 	return &ClientConfig{
-		DefaultHost:       LocalClient,
+		DefaultHost:       "local",
 		EnableLocalDocker: true,
 		Machines:          map[string]MachineOptions{"example": config},
 	}

@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package host_manager.v1;
+package docker_manager.v1;
 
-option go_package = "github.com/RA341/dockman/generated/host_manager/v1";
+option go_package = "github.com/RA341/dockman/generated/docker_manager/v1";
 
-service HostManagerService {
+service DockerManagerService {
   rpc List(Empty) returns (ListResponse) {}
   rpc switchClient(SwitchRequest) returns (Empty) {}
 }

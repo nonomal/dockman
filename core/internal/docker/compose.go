@@ -3,7 +3,8 @@ package docker
 import (
 	"context"
 	"fmt"
-	hm "github.com/RA341/dockman/internal/host_manager"
+	"github.com/RA341/dockman/internal/ssh"
+	"github.com/RA341/dockman/pkg"
 	"github.com/compose-spec/compose-go/v2/cli"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
@@ -284,7 +285,7 @@ func (s *ComposeService) withProject(
 	})
 }
 
-func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *hm.SftpClient) error {
+func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *ssh.SftpClient) error {
 	for _, service := range project.Services {
 		// iterate over each volume mount for that service.
 		for _, vol := range service.Volumes {
@@ -309,7 +310,7 @@ func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *hm.Sftp
 			// Before copying, check if the source file/directory actually exists.
 			// It might be a path that gets created by another process or container,
 			// so just log/skip if it doesn't exist.
-			if !hm.FileExists(localSourcePath) {
+			if !pkg.FileExists(localSourcePath) {
 				log.Debug().Str("path", localSourcePath).Msg("bind mount source path not found, skipping...")
 				continue
 			}

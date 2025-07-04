@@ -2,7 +2,7 @@ package docker
 
 import (
 	"github.com/RA341/dockman/internal/config"
-	cm "github.com/RA341/dockman/internal/host_manager"
+	dm "github.com/RA341/dockman/internal/docker_manager"
 	"github.com/rs/zerolog/log"
 	"path/filepath"
 )
@@ -16,7 +16,7 @@ type Service struct {
 	localAddress string
 }
 
-func NewService(composeRoot string, cliFn cm.GetDocker, sftpFn cm.GetSftp) *Service {
+func NewService(composeRoot string, cliFn dm.GetDocker, sftpFn dm.GetSftp) *Service {
 	if !filepath.IsAbs(composeRoot) {
 		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
 	}

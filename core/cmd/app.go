@@ -5,20 +5,22 @@ import (
 	"fmt"
 	authrpc "github.com/RA341/dockman/generated/auth/v1/v1connect"
 	dockerpc "github.com/RA341/dockman/generated/docker/v1/v1connect"
+	dockermanagerrpc "github.com/RA341/dockman/generated/docker_manager/v1/v1connect"
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
 	gitrpc "github.com/RA341/dockman/generated/git/v1/v1connect"
-	hostrpc "github.com/RA341/dockman/generated/host_manager/v1/v1connect"
 	"github.com/RA341/dockman/internal/auth"
 	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/docker"
+	dm "github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
-	hm "github.com/RA341/dockman/internal/host_manager"
 	"github.com/RA341/dockman/internal/info"
+	"github.com/RA341/dockman/internal/ssh"
 	logger "github.com/RA341/dockman/pkg"
 	"github.com/RA341/dockman/pkg/lsp"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -34,7 +36,7 @@ type App struct {
 	File        *files.Service
 	Git         *git.Service
 	Docker      *docker.Service
-	HostManager *hm.Service
+	HostManager *dm.Service
 }
 
 func NewApp(conf *config.AppConfig) (*App, error) {
@@ -43,14 +45,20 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		return nil, fmt.Errorf("failed to get absolute path for compose root: %w", err)
 	}
 
+	configDir := "config"
+	if err := os.MkdirAll(configDir, os.ModePerm); err != nil {
+		log.Fatal().Err(err).Msg("unable to create config directory")
+	}
+
 	authSrv := auth.NewService()
+	sshSrv := ssh.NewService(configDir)
 	fileSrv := files.NewService(absComposeRoot)
 	gitSrv := git.NewService(absComposeRoot)
-	hostSrv := hm.NewService(gitSrv)
+	dockerManagerSrv := dm.NewService(gitSrv, sshSrv)
 	dockerSrv := docker.NewService(
 		absComposeRoot,
-		hostSrv.Manager.GetClientFn(),
-		hostSrv.Manager.GetSFTPFn(),
+		dockerManagerSrv.Manager.GetClientFn(),
+		dockerManagerSrv.Manager.GetSFTPFn(),
 	)
 
 	log.Info().Msg("Dockman initialized successfully")
@@ -60,7 +68,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		File:        fileSrv,
 		Git:         gitSrv,
 		Docker:      dockerSrv,
-		HostManager: hostSrv,
+		HostManager: dockerManagerSrv,
 	}, nil
 }
 
@@ -114,7 +122,7 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		},
 		// host_manager
 		func() (string, http.Handler) {
-			return hostrpc.NewHostManagerServiceHandler(hm.NewConnectHandler(a.HostManager), connectAuth)
+			return dockermanagerrpc.NewDockerManagerServiceHandler(dm.NewConnectHandler(a.HostManager), connectAuth)
 		},
 		// lsp
 		func() (string, http.Handler) {

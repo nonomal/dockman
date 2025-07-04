@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        (unknown)
-// source: host_manager/v1/host_manager.proto
+// source: docker_manager/v1/docker_manager.proto
 
 package v1
 
@@ -30,7 +30,7 @@ type SwitchRequest struct {
 
 func (x *SwitchRequest) Reset() {
 	*x = SwitchRequest{}
-	mi := &file_host_manager_v1_host_manager_proto_msgTypes[0]
+	mi := &file_docker_manager_v1_docker_manager_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +42,7 @@ func (x *SwitchRequest) String() string {
 func (*SwitchRequest) ProtoMessage() {}
 
 func (x *SwitchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_host_manager_v1_host_manager_proto_msgTypes[0]
+	mi := &file_docker_manager_v1_docker_manager_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +55,7 @@ func (x *SwitchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SwitchRequest.ProtoReflect.Descriptor instead.
 func (*SwitchRequest) Descriptor() ([]byte, []int) {
-	return file_host_manager_v1_host_manager_proto_rawDescGZIP(), []int{0}
+	return file_docker_manager_v1_docker_manager_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SwitchRequest) GetMachineID() string {
@@ -75,7 +75,7 @@ type ListResponse struct {
 
 func (x *ListResponse) Reset() {
 	*x = ListResponse{}
-	mi := &file_host_manager_v1_host_manager_proto_msgTypes[1]
+	mi := &file_docker_manager_v1_docker_manager_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -87,7 +87,7 @@ func (x *ListResponse) String() string {
 func (*ListResponse) ProtoMessage() {}
 
 func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_host_manager_v1_host_manager_proto_msgTypes[1]
+	mi := &file_docker_manager_v1_docker_manager_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,7 +100,7 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_host_manager_v1_host_manager_proto_rawDescGZIP(), []int{1}
+	return file_docker_manager_v1_docker_manager_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ListResponse) GetActiveClient() string {
@@ -133,7 +133,7 @@ type Machine struct {
 
 func (x *Machine) Reset() {
 	*x = Machine{}
-	mi := &file_host_manager_v1_host_manager_proto_msgTypes[2]
+	mi := &file_docker_manager_v1_docker_manager_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -145,7 +145,7 @@ func (x *Machine) String() string {
 func (*Machine) ProtoMessage() {}
 
 func (x *Machine) ProtoReflect() protoreflect.Message {
-	mi := &file_host_manager_v1_host_manager_proto_msgTypes[2]
+	mi := &file_docker_manager_v1_docker_manager_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -158,7 +158,7 @@ func (x *Machine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Machine.ProtoReflect.Descriptor instead.
 func (*Machine) Descriptor() ([]byte, []int) {
-	return file_host_manager_v1_host_manager_proto_rawDescGZIP(), []int{2}
+	return file_docker_manager_v1_docker_manager_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Machine) GetName() string {
@@ -225,7 +225,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_host_manager_v1_host_manager_proto_msgTypes[3]
+	mi := &file_docker_manager_v1_docker_manager_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -237,7 +237,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_host_manager_v1_host_manager_proto_msgTypes[3]
+	mi := &file_docker_manager_v1_docker_manager_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -250,19 +250,19 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_host_manager_v1_host_manager_proto_rawDescGZIP(), []int{3}
+	return file_docker_manager_v1_docker_manager_proto_rawDescGZIP(), []int{3}
 }
 
-var File_host_manager_v1_host_manager_proto protoreflect.FileDescriptor
+var File_docker_manager_v1_docker_manager_proto protoreflect.FileDescriptor
 
-const file_host_manager_v1_host_manager_proto_rawDesc = "" +
+const file_docker_manager_v1_docker_manager_proto_rawDesc = "" +
 	"\n" +
-	"\"host_manager/v1/host_manager.proto\x12\x0fhost_manager.v1\"-\n" +
+	"&docker_manager/v1/docker_manager.proto\x12\x11docker_manager.v1\"-\n" +
 	"\rSwitchRequest\x12\x1c\n" +
-	"\tmachineID\x18\x01 \x01(\tR\tmachineID\"h\n" +
+	"\tmachineID\x18\x01 \x01(\tR\tmachineID\"j\n" +
 	"\fListResponse\x12\"\n" +
-	"\factiveClient\x18\x01 \x01(\tR\factiveClient\x124\n" +
-	"\bmachines\x18\x02 \x03(\v2\x18.host_manager.v1.MachineR\bmachines\"\xe8\x01\n" +
+	"\factiveClient\x18\x01 \x01(\tR\factiveClient\x126\n" +
+	"\bmachines\x18\x02 \x03(\v2\x1a.docker_manager.v1.MachineR\bmachines\"\xe8\x01\n" +
 	"\aMachine\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06enable\x18\x02 \x01(\bR\x06enable\x12\x12\n" +
@@ -272,37 +272,37 @@ const file_host_manager_v1_host_manager_proto_rawDesc = "" +
 	"\bpassword\x18\x06 \x01(\tR\bpassword\x12*\n" +
 	"\x11remote_public_key\x18\a \x01(\tR\x0fremotePublicKey\x12-\n" +
 	"\x13use_public_key_auth\x18\b \x01(\bR\x10usePublicKeyAuth\"\a\n" +
-	"\x05Empty2\x9f\x01\n" +
-	"\x12HostManagerService\x12?\n" +
-	"\x04List\x12\x16.host_manager.v1.Empty\x1a\x1d.host_manager.v1.ListResponse\"\x00\x12H\n" +
-	"\fswitchClient\x12\x1e.host_manager.v1.SwitchRequest\x1a\x16.host_manager.v1.Empty\"\x00B\xb4\x01\n" +
-	"\x13com.host_manager.v1B\x10HostManagerProtoP\x01Z2github.com/RA341/dockman/generated/host_manager/v1\xa2\x02\x03HXX\xaa\x02\x0eHostManager.V1\xca\x02\x0eHostManager\\V1\xe2\x02\x1aHostManager\\V1\\GPBMetadata\xea\x02\x0fHostManager::V1b\x06proto3"
+	"\x05Empty2\xa9\x01\n" +
+	"\x14DockerManagerService\x12C\n" +
+	"\x04List\x12\x18.docker_manager.v1.Empty\x1a\x1f.docker_manager.v1.ListResponse\"\x00\x12L\n" +
+	"\fswitchClient\x12 .docker_manager.v1.SwitchRequest\x1a\x18.docker_manager.v1.Empty\"\x00B\xc2\x01\n" +
+	"\x15com.docker_manager.v1B\x12DockerManagerProtoP\x01Z4github.com/RA341/dockman/generated/docker_manager/v1\xa2\x02\x03DXX\xaa\x02\x10DockerManager.V1\xca\x02\x10DockerManager\\V1\xe2\x02\x1cDockerManager\\V1\\GPBMetadata\xea\x02\x11DockerManager::V1b\x06proto3"
 
 var (
-	file_host_manager_v1_host_manager_proto_rawDescOnce sync.Once
-	file_host_manager_v1_host_manager_proto_rawDescData []byte
+	file_docker_manager_v1_docker_manager_proto_rawDescOnce sync.Once
+	file_docker_manager_v1_docker_manager_proto_rawDescData []byte
 )
 
-func file_host_manager_v1_host_manager_proto_rawDescGZIP() []byte {
-	file_host_manager_v1_host_manager_proto_rawDescOnce.Do(func() {
-		file_host_manager_v1_host_manager_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_host_manager_v1_host_manager_proto_rawDesc), len(file_host_manager_v1_host_manager_proto_rawDesc)))
+func file_docker_manager_v1_docker_manager_proto_rawDescGZIP() []byte {
+	file_docker_manager_v1_docker_manager_proto_rawDescOnce.Do(func() {
+		file_docker_manager_v1_docker_manager_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_docker_manager_v1_docker_manager_proto_rawDesc), len(file_docker_manager_v1_docker_manager_proto_rawDesc)))
 	})
-	return file_host_manager_v1_host_manager_proto_rawDescData
+	return file_docker_manager_v1_docker_manager_proto_rawDescData
 }
 
-var file_host_manager_v1_host_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_host_manager_v1_host_manager_proto_goTypes = []any{
-	(*SwitchRequest)(nil), // 0: host_manager.v1.SwitchRequest
-	(*ListResponse)(nil),  // 1: host_manager.v1.ListResponse
-	(*Machine)(nil),       // 2: host_manager.v1.Machine
-	(*Empty)(nil),         // 3: host_manager.v1.Empty
+var file_docker_manager_v1_docker_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_docker_manager_v1_docker_manager_proto_goTypes = []any{
+	(*SwitchRequest)(nil), // 0: docker_manager.v1.SwitchRequest
+	(*ListResponse)(nil),  // 1: docker_manager.v1.ListResponse
+	(*Machine)(nil),       // 2: docker_manager.v1.Machine
+	(*Empty)(nil),         // 3: docker_manager.v1.Empty
 }
-var file_host_manager_v1_host_manager_proto_depIdxs = []int32{
-	2, // 0: host_manager.v1.ListResponse.machines:type_name -> host_manager.v1.Machine
-	3, // 1: host_manager.v1.HostManagerService.List:input_type -> host_manager.v1.Empty
-	0, // 2: host_manager.v1.HostManagerService.switchClient:input_type -> host_manager.v1.SwitchRequest
-	1, // 3: host_manager.v1.HostManagerService.List:output_type -> host_manager.v1.ListResponse
-	3, // 4: host_manager.v1.HostManagerService.switchClient:output_type -> host_manager.v1.Empty
+var file_docker_manager_v1_docker_manager_proto_depIdxs = []int32{
+	2, // 0: docker_manager.v1.ListResponse.machines:type_name -> docker_manager.v1.Machine
+	3, // 1: docker_manager.v1.DockerManagerService.List:input_type -> docker_manager.v1.Empty
+	0, // 2: docker_manager.v1.DockerManagerService.switchClient:input_type -> docker_manager.v1.SwitchRequest
+	1, // 3: docker_manager.v1.DockerManagerService.List:output_type -> docker_manager.v1.ListResponse
+	3, // 4: docker_manager.v1.DockerManagerService.switchClient:output_type -> docker_manager.v1.Empty
 	3, // [3:5] is the sub-list for method output_type
 	1, // [1:3] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -310,26 +310,26 @@ var file_host_manager_v1_host_manager_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_host_manager_v1_host_manager_proto_init() }
-func file_host_manager_v1_host_manager_proto_init() {
-	if File_host_manager_v1_host_manager_proto != nil {
+func init() { file_docker_manager_v1_docker_manager_proto_init() }
+func file_docker_manager_v1_docker_manager_proto_init() {
+	if File_docker_manager_v1_docker_manager_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_host_manager_v1_host_manager_proto_rawDesc), len(file_host_manager_v1_host_manager_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_docker_manager_v1_docker_manager_proto_rawDesc), len(file_docker_manager_v1_docker_manager_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_host_manager_v1_host_manager_proto_goTypes,
-		DependencyIndexes: file_host_manager_v1_host_manager_proto_depIdxs,
-		MessageInfos:      file_host_manager_v1_host_manager_proto_msgTypes,
+		GoTypes:           file_docker_manager_v1_docker_manager_proto_goTypes,
+		DependencyIndexes: file_docker_manager_v1_docker_manager_proto_depIdxs,
+		MessageInfos:      file_docker_manager_v1_docker_manager_proto_msgTypes,
 	}.Build()
-	File_host_manager_v1_host_manager_proto = out.File
-	file_host_manager_v1_host_manager_proto_goTypes = nil
-	file_host_manager_v1_host_manager_proto_depIdxs = nil
+	File_docker_manager_v1_docker_manager_proto = out.File
+	file_docker_manager_v1_docker_manager_proto_goTypes = nil
+	file_docker_manager_v1_docker_manager_proto_depIdxs = nil
 }

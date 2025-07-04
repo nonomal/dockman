@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	cm "github.com/RA341/dockman/internal/host_manager"
+	dm "github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/pkg"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
@@ -37,8 +37,8 @@ type ContainerStats struct {
 }
 
 type ContainerService struct {
-	daemon cm.GetDocker
-	sftp   cm.GetSftp
+	daemon dm.GetDocker
+	sftp   dm.GetSftp
 }
 
 func filterByLabels(projectname string) {

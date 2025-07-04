@@ -1,15 +1,15 @@
 import {type ReactNode, useCallback, useEffect, useState} from 'react'
 import {callRPC, useClient} from '../lib/api'
 import {useSnackbar} from '../hooks/snackbar'
-import {HostManagerService} from '../gen/host_manager/v1/host_manager_pb'
 import {HostContext} from '../hooks/host'
+import {DockerManagerService} from "../gen/docker_manager/v1/docker_manager_pb.ts";
 
 interface HostProviderProps {
     children: ReactNode
 }
 
 export function HostProvider({children}: HostProviderProps) {
-    const hostManagerClient = useClient(HostManagerService)
+    const hostManagerClient = useClient(DockerManagerService)
     const {showError} = useSnackbar()
 
     const [availableHosts, setAvailableHosts] = useState<string[]>([])

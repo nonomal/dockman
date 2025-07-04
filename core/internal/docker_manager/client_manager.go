@@ -1,17 +1,13 @@
-package host_manager
+package docker_manager
 
 import (
 	"fmt"
+	"github.com/RA341/dockman/internal/ssh"
 	"github.com/RA341/dockman/pkg"
 	"github.com/docker/docker/client"
 	"github.com/pkg/sftp"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/ssh"
-	"net"
-	"os"
-	"path/filepath"
 	"sync"
-	"time"
 )
 
 // LocalClient is the name given to the local docker daemon instance
@@ -19,25 +15,18 @@ const LocalClient = "local"
 
 type GetDocker func() *client.Client
 
-type GetSftp func() *SftpClient
+type GetSftp func() *ssh.SftpClient
 
 type ClientManager struct {
-	config           *ConfigManager
 	connectedClients pkg.Map[string, *ManagedMachine]
 	activeClient     string
 	clientLock       *sync.Mutex
-	customSSHFolder  string
+	sshSrv           *ssh.Service
 }
 
-func NewClientManager(basedir string, man *ConfigManager) (*ClientManager, string) {
-	sshDir, err := initSSHDir(basedir)
-	if err != nil {
-		log.Fatal().Err(err).Msg("unable to initialize ssh dir")
-	}
-
+func NewClientManager(sshSrv *ssh.Service) (*ClientManager, string) {
 	cm := &ClientManager{
-		config:           man,
-		customSSHFolder:  sshDir,
+		sshSrv:           sshSrv,
 		connectedClients: pkg.Map[string, *ManagedMachine]{},
 		clientLock:       &sync.Mutex{},
 	}
@@ -62,7 +51,7 @@ func (m *ClientManager) GetClientFn() GetDocker {
 }
 
 func (m *ClientManager) GetSFTPFn() GetSftp {
-	return func() *SftpClient {
+	return func() *ssh.SftpClient {
 		val, ok := m.connectedClients.Load(m.GetActiveClient())
 		if !ok {
 			// this should never happen since only way of changing client should be ClientManager.SwitchClient
@@ -107,7 +96,7 @@ func (m *ClientManager) ListClients() []string {
 }
 
 func (m *ClientManager) LoadClients() (string, error) {
-	clientConfig := m.config.List()
+	clientConfig := m.sshSrv.Config.List()
 
 	var wg sync.WaitGroup
 	for name, machine := range clientConfig.Machines {
@@ -133,7 +122,7 @@ func (m *ClientManager) LoadClients() (string, error) {
 	return conClients[0], nil
 }
 
-func (m *ClientManager) loadLocalClient(clientConfig ClientConfig, wg *sync.WaitGroup) {
+func (m *ClientManager) loadLocalClient(clientConfig ssh.ClientConfig, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	if !clientConfig.EnableLocalDocker {
@@ -141,7 +130,7 @@ func (m *ClientManager) loadLocalClient(clientConfig ClientConfig, wg *sync.Wait
 		return
 	}
 
-	localClient, err := newLocalClient()
+	localClient, err := newClientFromLocal()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup local docker client")
 		return
@@ -152,20 +141,26 @@ func (m *ClientManager) loadLocalClient(clientConfig ClientConfig, wg *sync.Wait
 	})
 }
 
-func (m *ClientManager) loadSSHClient(machine MachineOptions, name string, s *sync.WaitGroup) {
+func (m *ClientManager) loadSSHClient(machine ssh.MachineOptions, name string, s *sync.WaitGroup) {
 	defer s.Done()
 
 	if !machine.Enable {
 		return
 	}
 
-	auth, err := m.getAuthMethod(name, &machine)
+	auth, err := m.sshSrv.GetAuthMethod(name, &machine)
 	if err != nil {
 		log.Warn().Err(err).Str("client", name).Msg("Failed to load auth method for host, check your config")
 		return
 	}
 
-	newClient, sshClient, err := newSSHClient(name, &machine, auth, m.saveHostKey(name, machine))
+	sshClient, err := ssh.NewSSHClient(name, &machine, auth, m.sshSrv.SaveHostKey(name, machine))
+	if err != nil {
+		log.Error().Err(err).Str("client", name).Msg("Failed to setup ssh client")
+		return
+	}
+
+	dockerCli, err := newClientFromSSH(sshClient)
 	if err != nil {
 		log.Error().Err(err).Str("client", name).Msg("Failed to setup remote docker client")
 		return
@@ -178,9 +173,9 @@ func (m *ClientManager) loadSSHClient(machine MachineOptions, name string, s *sy
 	}
 
 	m.testAndStore(name, &ManagedMachine{
-		client:     newClient,
+		client:     dockerCli,
 		sshClient:  sshClient,
-		sftpClient: NewSFTPCli(sftpClient),
+		sftpClient: ssh.NewSFTPCli(sftpClient),
 	})
 }
 
@@ -192,53 +187,4 @@ func (m *ClientManager) testAndStore(name string, newClient *ManagedMachine) {
 	}
 
 	m.connectedClients.Store(name, newClient)
-}
-
-func (m *ClientManager) saveHostKey(name string, machine MachineOptions) func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-		log.Debug().Str("name", name).Msg("Empty public key for, public key will be saved on connect")
-
-		comment := fmt.Sprintf("added by dockman for machine %s on %s", name, time.Now().String())
-		stringKey, err := publicKeyToString(key, comment)
-		if err != nil {
-			return fmt.Errorf("unable to convert public key for machine %s: %w", name, err)
-		}
-
-		machine.RemotePublicKey = stringKey
-		if err = m.config.WriteAndSave(name, machine); err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
-func (m *ClientManager) getAuthMethod(name string, machine *MachineOptions) (ssh.AuthMethod, error) {
-	if machine.UsePublicKeyAuth {
-		return withKeyPairAuth(m.customSSHFolder)
-	} else if machine.Password != "" {
-		return withPasswordAuth(machine), nil
-	} else {
-		// final fallback use .ssh in user dir
-		// should fail on docker containers
-		log.Debug().Str("client", name).Msg("falling back to SSH keys from home directory")
-		return withKeyPairFromHome()
-	}
-}
-
-func initSSHDir(basedir string) (string, error) {
-	baseDir, err := filepath.Abs(basedir)
-	if err != nil {
-		return "", err
-	}
-	if err = os.MkdirAll(baseDir, 0755); err != nil {
-		return "", err
-	}
-
-	sshDir, err := verifySSHKeyPair(baseDir)
-	if err != nil {
-		return "", err
-	}
-
-	return sshDir, nil
 }

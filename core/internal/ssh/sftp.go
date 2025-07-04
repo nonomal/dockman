@@ -1,4 +1,4 @@
-package host_manager
+package ssh
 
 import (
 	"fmt"
