@@ -11,7 +11,7 @@ import {
     Toolbar,
     Typography
 } from '@mui/material'
-import {Add as AddIcon, Search as SearchIcon, Upload} from '@mui/icons-material'
+import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
 import {useLocation, useParams} from 'react-router-dom'
 import type {FileGroup} from '../hooks/files.ts'
 import {useFiles} from "../hooks/files.ts"
@@ -139,7 +139,7 @@ export function FileList() {
                 </Button>
 
                 <Button
-                    startIcon={<Upload/>}
+                    startIcon={<Sync/>}
                     onClick={() => setImportDialogOpen(true)}
                     sx={{ml: 1}} // Adds a little space between the buttons
                 >
