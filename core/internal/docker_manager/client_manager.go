@@ -118,10 +118,22 @@ func (m *ClientManager) LoadClients() (string, error) {
 	if clientConfig.DefaultHost != "" {
 		return clientConfig.DefaultHost, nil
 	}
+
+	if m.ClientExists(LocalClient) {
+		return LocalClient, nil
+	}
+
 	// get first available host
 	return conClients[0], nil
 }
 
+func (m *ClientManager) ClientExists(name string) bool {
+	m.clientLock.Lock()
+	defer m.clientLock.Unlock()
+
+	_, ok := m.connectedClients.Load(name)
+	return ok
+}
 func (m *ClientManager) loadLocalClient(clientConfig ssh.ClientConfig, wg *sync.WaitGroup) {
 	defer wg.Done()
 
