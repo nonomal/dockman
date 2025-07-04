@@ -7,8 +7,8 @@ interface StackStatsProps {
 }
 
 export function StatStacksPage({selectedPage}: StackStatsProps) {
-    const {containers, loading, modifySort, orderBy, field} = useDockerStats(selectedPage)
-
+    const {containers, loading, handleSortChange, sortOrder, sortField} = useDockerStats(selectedPage)
+    
     return (
         <Box sx={{p: 3, flexGrow: 1}}>
             {containers.length !== 0 ?
@@ -19,9 +19,9 @@ export function StatStacksPage({selectedPage}: StackStatsProps) {
             <ContainerStatTable
                 loading={loading}
                 containers={containers}
-                activeSortField={field}
-                order={orderBy}
-                onFieldClick={modifySort}/>
+                activeSortField={sortField}
+                order={sortOrder}
+                onFieldClick={handleSortChange}/>
         </Box>
     );
 }

@@ -3,7 +3,7 @@ import {ContainerStatTable} from '../components/container-stat-table.tsx';
 import {useDockerStats} from "../hooks/container-stats.ts";
 
 export const DashboardPage = () => {
-    const {containers, loading, modifySort, orderBy, field} = useDockerStats()
+    const {containers, loading, handleSortChange, sortOrder, sortField} = useDockerStats()
 
     return (
         <Fade in={true}>
@@ -15,9 +15,9 @@ export const DashboardPage = () => {
                 }
                 <ContainerStatTable
                     loading={loading}
-                    order={orderBy}
-                    activeSortField={field}
-                    onFieldClick={modifySort}
+                    order={sortOrder}
+                    activeSortField={sortField}
+                    onFieldClick={handleSortChange}
                     containers={containers}
                 />
             </Box>

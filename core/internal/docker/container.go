@@ -10,17 +10,13 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rs/zerolog/log"
-	"github.com/shirou/gopsutil/v4/cpu"
-	"github.com/shirou/gopsutil/v4/mem"
 	"io"
 	"sync"
-	"time"
 )
 
 // SystemInfo holds all the collected system metrics.
 type SystemInfo struct {
-	CPU    float64 // Total CPU usage percentage
-	Memory *mem.VirtualMemoryStat
+	CPU float64 // Total CPU usage percentage
 }
 
 // ContainerStats holds metrics for a single Docker container.
@@ -39,12 +35,6 @@ type ContainerStats struct {
 type ContainerService struct {
 	daemon dm.GetDocker
 	sftp   dm.GetSftp
-}
-
-func filterByLabels(projectname string) {
-	containerFilters := filters.NewArgs()
-	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, projectname)
-	containerFilters.Add("label", projectLabel)
 }
 
 func (s *ContainerService) ListContainers(ctx context.Context, filter container.ListOptions) ([]container.Summary, error) {
@@ -130,7 +120,7 @@ func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, contai
 
 func (s *ContainerService) getStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
 	contId := info.ID[:12]
-	stats, err := s.daemon().ContainerStatsOneShot(ctx, info.ID)
+	stats, err := s.daemon().ContainerStats(ctx, info.ID, false)
 	if err != nil {
 		return ContainerStats{}, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
 	}
@@ -162,27 +152,6 @@ func (s *ContainerService) getStats(ctx context.Context, info container.Summary)
 	}, nil
 }
 
-// getSystemInfo collects and returns the current system-wide metrics.
-func getSystemInfo() (*SystemInfo, error) {
-	// --- Memory ---
-	vmStat, err := mem.VirtualMemory()
-	if err != nil {
-		return nil, fmt.Errorf("error getting memory info: %w", err)
-	}
-
-	// --- CPU ---
-	// Get CPU usage percentage over a 1-second interval.
-	cpuPercentages, err := cpu.Percent(time.Second, false)
-	if err != nil {
-		return nil, fmt.Errorf("error getting CPU usage: %w", err)
-	}
-
-	return &SystemInfo{
-		CPU:    cpuPercentages[0],
-		Memory: vmStat,
-	}, nil
-}
-
 func formatDiskIO(statsJSON container.StatsResponse) (uint64, uint64) {
 	var blkRead, blkWrite uint64
 	for _, bioEntry := range statsJSON.BlkioStats.IoServiceBytesRecursive {
@@ -206,8 +175,62 @@ func formatNetwork(statsJSON container.StatsResponse) (uint64, uint64) {
 	return rx, tx
 }
 
-// Calculate Container CPU Usage
-// This formula is the standard way to calculate CPU percentage from Docker's stats.
+// PreviousCPUStats This struct will hold the essential previous values for a single container.
+type PreviousCPUStats struct {
+	TotalUsage  uint64
+	SystemUsage uint64
+}
+
+// A thread-safe cache to store the last stats for each container ID.
+// The key will be the container ID (string).
+var (
+	statsCache = pkg.Map[string, PreviousCPUStats]{}
+	cacheLock  = &sync.Mutex{}
+)
+
+// MODIFIED - A stateful CPU calculation function
+func calculateCPUPercent(currentStats container.StatsResponse) float64 {
+	// Lock the cache for safe concurrent access
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+
+	// Get the previous stats from our cache for this container
+	previous, hasPrevious := statsCache.Load(currentStats.ID)
+
+	// On the first run for a container, we don't have previous stats, so we can't calculate.
+	// We store the current stats and return 0.
+	if !hasPrevious {
+		statsCache.Store(currentStats.ID, PreviousCPUStats{
+			TotalUsage:  currentStats.CPUStats.CPUUsage.TotalUsage,
+			SystemUsage: currentStats.CPUStats.SystemUsage,
+		})
+		return 0.0
+	}
+
+	// We have previous stats, so we can calculate the deltas
+	cpuDelta := float64(currentStats.CPUStats.CPUUsage.TotalUsage - previous.TotalUsage)
+	systemCpuDelta := float64(currentStats.CPUStats.SystemUsage - previous.SystemUsage)
+
+	// Get the number of CPUs
+	numberCPUs := float64(currentStats.CPUStats.OnlineCPUs)
+	if numberCPUs == 0.0 {
+		numberCPUs = float64(len(currentStats.CPUStats.CPUUsage.PercpuUsage))
+	}
+
+	var cpuPercent float64 = 0.0
+	// The main calculation, guarded against division by zero
+	if systemCpuDelta > 0.0 && cpuDelta > 0.0 {
+		cpuPercent = (cpuDelta / systemCpuDelta) * numberCPUs * 100.0
+	}
+
+	// Update the cache with the current stats for the next calculation
+	statsCache.Store(currentStats.ID, PreviousCPUStats{
+		TotalUsage:  currentStats.CPUStats.CPUUsage.TotalUsage,
+		SystemUsage: currentStats.CPUStats.SystemUsage,
+	})
+	return cpuPercent
+}
+
 func formatCPU(statsJSON container.StatsResponse) float64 {
 	cpuDelta := float64(statsJSON.CPUStats.CPUUsage.TotalUsage - statsJSON.PreCPUStats.CPUUsage.TotalUsage)
 	systemCpuDelta := float64(statsJSON.CPUStats.SystemUsage - statsJSON.PreCPUStats.SystemUsage)
@@ -215,6 +238,18 @@ func formatCPU(statsJSON container.StatsResponse) float64 {
 	if numberCPUs == 0.0 {
 		numberCPUs = float64(len(statsJSON.CPUStats.CPUUsage.PercpuUsage))
 	}
-	cpuPercent := (cpuDelta / systemCpuDelta) * numberCPUs * 100.0
+
+	var cpuPercent float64 = 0.0
+	// Avoid division by zero
+	if systemCpuDelta > 0.0 && cpuDelta > 0.0 {
+		cpuPercent = (cpuDelta / systemCpuDelta) * numberCPUs * 100.0
+	}
+
 	return cpuPercent
+}
+
+func filterByLabels(projectname string) {
+	containerFilters := filters.NewArgs()
+	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, projectname)
+	containerFilters.Add("label", projectLabel)
 }
