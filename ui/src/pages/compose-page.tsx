@@ -25,7 +25,7 @@ function parseTabType(input: string | null): TabType {
     return isValidTab ? tabValueInt : TabType.EDITOR
 }
 
-export function Stack() {
+export function ComposePage() {
     const {file, child} = useParams<{ file: string; child?: string }>();
     const navigate = useNavigate();
     const fileService = useClient(FileService);
@@ -44,6 +44,7 @@ export function Stack() {
         if (!filename) {
             setFileError("No filename provided in the URL.");
             setIsLoading(false);
+            navigate("/files")
             return;
         }
 

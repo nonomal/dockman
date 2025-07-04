@@ -3,6 +3,7 @@ import {callRPC, useClient} from '../lib/api'
 import {useSnackbar} from '../hooks/snackbar'
 import {HostContext} from '../hooks/host'
 import {DockerManagerService} from "../gen/docker_manager/v1/docker_manager_pb.ts";
+import { useNavigate } from 'react-router-dom';
 
 interface HostProviderProps {
     children: ReactNode
@@ -15,6 +16,7 @@ export function HostProvider({children}: HostProviderProps) {
     const [availableHosts, setAvailableHosts] = useState<string[]>([])
     const [selectedHost, setSelectedHost] = useState<string | null>(null)
     const [isLoading, setLoading] = useState(true)
+    const navigate = useNavigate()
 
     useEffect(() => {
         const fetchHosts = async () => {
@@ -46,6 +48,7 @@ export function HostProvider({children}: HostProviderProps) {
         } else {
             setSelectedHost(machine)
         }
+        navigate("/files")
     }, [hostManagerClient, selectedHost])
 
     const value = {availableHosts, selectedHost, isLoading, switchMachine}
