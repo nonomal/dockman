@@ -9,6 +9,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/rs/zerolog/log"
 	"io"
+	"os"
 	"time"
 )
 
@@ -53,42 +54,39 @@ func initializeGit(root string) (*git.Repository, error) {
 // CommitAll stages all changes (new, modified, deleted) and commits them.
 // It uses a generic commit message.
 func (s *Service) CommitAll() error {
-	w, err := s.repo.Worktree()
-	if err != nil {
-		return fmt.Errorf("could not get worktree: %w", err)
-	}
+	return s.WithWorkTree(func(workTree *git.Worktree) error {
+		status, err := workTree.Status()
+		if err != nil {
+			return fmt.Errorf("could not get worktree status: %w", err)
+		}
 
-	status, err := w.Status()
-	if err != nil {
-		return fmt.Errorf("could not get worktree status: %w", err)
-	}
+		if status.IsClean() {
+			log.Info().Msg("Working directory is clean, no changes to commit")
+			return nil
+		}
 
-	if status.IsClean() {
-		log.Info().Msg("Working directory is clean, no changes to commit")
+		if _, err = workTree.Add("."); err != nil {
+			return fmt.Errorf("could not stage changes: %w", err)
+		}
+
+		log.Debug().Msg("Staged all changes")
+
+		commitMsg := "auto commit"
+		commitOpts := &git.CommitOptions{
+			Author: &object.Signature{
+				Name: s.username,
+				When: time.Now(),
+			},
+		}
+
+		commitHash, err := workTree.Commit(commitMsg, commitOpts)
+		if err != nil {
+			return fmt.Errorf("could not create commit: %w", err)
+		}
+
+		log.Info().Str("hash", commitHash.String()).Msg("Successfully created commit with hash")
 		return nil
-	}
-
-	if _, err = w.Add("."); err != nil {
-		return fmt.Errorf("could not stage changes: %w", err)
-	}
-
-	log.Info().Msg("Staged all changes")
-
-	commitMsg := "chore: automatic commit of all changes"
-	commitOpts := &git.CommitOptions{
-		Author: &object.Signature{
-			Name: s.username,
-			When: time.Now(),
-		},
-	}
-
-	commitHash, err := w.Commit(commitMsg, commitOpts)
-	if err != nil {
-		return fmt.Errorf("could not create commit: %w", err)
-	}
-
-	log.Info().Str("hash", commitHash.String()).Msg("Successfully created commit with hash")
-	return nil
+	})
 }
 
 // SwitchBranch switches to a different branch.
@@ -99,34 +97,123 @@ func (s *Service) SwitchBranch(name string) error {
 		return fmt.Errorf("failed to commit changes before switching branch: %w", err)
 	}
 
-	w, err := s.repo.Worktree()
+	return s.WithWorkTree(func(worktree *git.Worktree) error {
+		branchRefName := plumbing.NewBranchReferenceName(name)
+
+		log.Debug().Str("branch", name).Msg("Checking if branch exists...")
+		_, err := s.repo.Reference(branchRefName, true)
+		checkoutOpts := &git.CheckoutOptions{
+			Branch: branchRefName,
+		}
+
+		// If the reference is not found, the branch doesn't exist
+		// set the `Create` flag to true
+		if errors.Is(err, plumbing.ErrReferenceNotFound) {
+			log.Debug().Str("branch", name).Msg("Branch does not exist. Creating it.")
+			checkoutOpts.Create = true
+		} else if err != nil {
+			return fmt.Errorf("could not lookup reference for branch '%s': %w", name, err)
+		}
+
+		if err = worktree.Checkout(checkoutOpts); err != nil {
+			return fmt.Errorf("could not switch to branch '%s': %w", name, err)
+		}
+
+		log.Info().Str("branch", name).Msg("Switched to branch...")
+		return nil
+	})
+}
+
+// SyncFile syncs a file's content to the current worktree from the importingBranch,
+// overwriting it if it exists. It then stages the change.
+func (s *Service) SyncFile(filepaths []string, importingBranch string) error {
+	return s.WithWorkTree(func(workTree *git.Worktree) error {
+		// Resolve the importingBranch name to a commit hash.
+		importingBranchRefName := plumbing.NewBranchReferenceName(importingBranch)
+		importingRef, err := s.repo.Reference(importingBranchRefName, true)
+		if err != nil {
+			return fmt.Errorf("could not resolve branch '%s': %w", importingBranch, err)
+		}
+
+		commit, err := s.repo.CommitObject(importingRef.Hash())
+		if err != nil {
+			return fmt.Errorf("could not get commit object for branch '%s': %w", importingBranch, err)
+		}
+
+		for _, f := range filepaths {
+			file, err := commit.File(f)
+			if err != nil {
+				return fmt.Errorf("could not find file '%s' in branch '%s': %w", filepaths, importingBranch, err)
+			}
+
+			content, err := file.Contents()
+			if err != nil {
+				return fmt.Errorf("could not read file contents: %w", err)
+			}
+
+			// Write the content to the file in the worktree's filesystem.
+			// This creates or overwrites the file on disk.
+			fullPath := workTree.Filesystem.Join(workTree.Filesystem.Root(), f)
+			if err = os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+				return fmt.Errorf("failed to write file to worktree: %w", err)
+			}
+
+			log.Debug().Str("file", f).Str("branch", importingBranch).
+				Msg("File synced to worktree from branch")
+
+			// Stage the newly created/updated file.
+			if _, err = workTree.Add(f); err != nil {
+				return fmt.Errorf("failed to stage file '%s': %w", f, err)
+			}
+		}
+
+		return nil
+	})
+}
+func (s *Service) ListBranches() ([]string, error) {
+	branches, err := s.repo.Branches()
 	if err != nil {
-		return fmt.Errorf("could not get worktree: %w", err)
+		return nil, fmt.Errorf("could not get list of branches: %w", err)
 	}
 
-	branchRefName := plumbing.NewBranchReferenceName(name)
+	var branchesStrs []string
+	_ = branches.ForEach(func(ref *plumbing.Reference) error {
+		branchesStrs = append(branchesStrs, ref.Name().Short())
+		return nil
+	})
 
-	log.Debug().Str("branch", name).Msg("Checking if branch exists...")
-	_, err = s.repo.Reference(branchRefName, true)
-	checkoutOpts := &git.CheckoutOptions{
-		Branch: branchRefName,
+	return branchesStrs, nil
+}
+
+// ListFilesInBranch lists all files tracked in the given branch.
+func (s *Service) ListFilesInBranch(branch string) ([]string, error) {
+	branchRefName := plumbing.NewBranchReferenceName(branch)
+	ref, err := s.repo.Reference(branchRefName, true)
+	if err != nil {
+		return nil, fmt.Errorf("could not resolve branch '%s': %w", branch, err)
 	}
 
-	// If the reference is not found, the branch doesn't exist
-	// set the `Create` flag to true
-	if errors.Is(err, plumbing.ErrReferenceNotFound) {
-		log.Debug().Str("branch", name).Msg("Branch does not exist. Creating it.")
-		checkoutOpts.Create = true
-	} else if err != nil {
-		return fmt.Errorf("could not lookup reference for branch '%s': %w", name, err)
+	commit, err := s.repo.CommitObject(ref.Hash())
+	if err != nil {
+		return nil, fmt.Errorf("could not get commit object for branch '%s': %w", branch, err)
 	}
 
-	if err = w.Checkout(checkoutOpts); err != nil {
-		return fmt.Errorf("could not switch to branch '%s': %w", name, err)
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, fmt.Errorf("could not get tree for commit '%s': %w", commit.Hash, err)
 	}
 
-	log.Info().Str("branch", name).Msg("Switched to branch...")
-	return nil
+	var files []string
+	fileIter := tree.Files()
+	err = fileIter.ForEach(func(f *object.File) error {
+		files = append(files, f.Name)
+		return nil // continue iteration
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed while iterating files in branch '%s': %w", branch, err)
+	}
+
+	return files, nil
 }
 
 func (s *Service) Commit(commitMessage string, fileList ...string) error {
@@ -219,7 +306,7 @@ func (s *Service) LoadFileAtCommit(filePath, commitId string) (string, error) {
 func (s *Service) WithWorkTree(execFn func(worktree *git.Worktree) error) error {
 	worktree, err := s.repo.Worktree()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get worktree: %w", err)
 	}
 
 	return execFn(worktree)
@@ -232,7 +319,6 @@ func (s *Service) ListFiles() error {
 		}
 
 		for filename, stat := range status {
-
 			//stat.Staging
 			//stat.Worktree
 			log.Debug().Msgf("File %s stats: %v", filename, stat)
@@ -294,10 +380,6 @@ func (s *Service) EditUserConfig(name, email string) error {
 	return s.repo.Storer.SetConfig(conf)
 }
 
-func (s *Service) ListCommits(files ...string) error {
-	return nil
-}
-
 func (s *Service) EditRemote(remoteNickname string, repoUrl string) error {
 	_, err := s.repo.CreateRemote(
 		&config.RemoteConfig{
@@ -309,8 +391,4 @@ func (s *Service) EditRemote(remoteNickname string, repoUrl string) error {
 	}
 
 	return nil
-}
-
-func (s *Service) ListRemote(files string) {
-
 }

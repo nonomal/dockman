@@ -11,13 +11,14 @@ import {
     Toolbar,
     Typography
 } from '@mui/material'
-import {Add as AddIcon, Search as SearchIcon} from '@mui/icons-material'
+import {Add as AddIcon, Search as SearchIcon, Upload} from '@mui/icons-material'
 import {useLocation, useParams} from 'react-router-dom'
 import type {FileGroup} from '../hooks/files.ts'
 import {useFiles} from "../hooks/files.ts"
 import {FileItem} from './file-item.tsx'
 import {AddFileDialog} from "./file-dialog.tsx"
 import {useHost} from "../hooks/host.ts";
+import {ImportFilesDialog} from "./file-import.tsx";
 
 export function FileList() {
     const location = useLocation()
@@ -106,6 +107,16 @@ export function FileList() {
         deleteFile(filename, location.pathname).then()
     }
 
+
+    // State for the new "Import" dialog
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
+
+    // A function to be called after import is done, e.g., to refresh a file list
+    const handleImportFinished = () => {
+        console.log("Import process has finished. Refreshing data...");
+        // Add your logic here to re-fetch the main file list for your page
+    };
+
     return (
         <Box
             sx={{
@@ -116,10 +127,28 @@ export function FileList() {
             }}
         >
             <Toolbar>
-                <Typography variant="h6" noWrap sx={{flexGrow: 1}}>Files</Typography>
-                <Button startIcon={<AddIcon/>} onClick={() => openAddDialog('')}>Add</Button>
+                <Typography variant="h6" noWrap sx={{flexGrow: 1}}>
+                    Files
+                </Typography>
+
+                <Button
+                    startIcon={<AddIcon/>}
+                    onClick={() => openAddDialog('')}
+                >
+                    Add
+                </Button>
+
+                <Button
+                    startIcon={<Upload/>}
+                    onClick={() => setImportDialogOpen(true)}
+                    sx={{ml: 1}} // Adds a little space between the buttons
+                >
+                    Import
+                </Button>
             </Toolbar>
+
             <Divider/>
+
             <Box sx={{px: 2, py: 1}}>
                 <TextField
                     fullWidth
@@ -160,6 +189,13 @@ export function FileList() {
                     </List>
                 )}
             </StyledScrollbarBox>
+
+            <ImportFilesDialog
+                open={importDialogOpen}
+                onClose={() => setImportDialogOpen(false)}
+                onImportComplete={handleImportFinished}
+                currentBranch={selectedHost ?? ""}
+            />
 
             <AddFileDialog
                 open={dialogState.open}

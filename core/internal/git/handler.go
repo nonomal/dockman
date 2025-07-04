@@ -53,3 +53,33 @@ func (h *Handler) Commit(_ context.Context, c *connect.Request[v1.CommitQuery]) 
 
 	return connect.NewResponse(&v1.Empty{}), nil
 }
+
+func (h *Handler) ListBranches(context.Context, *connect.Request[v1.ListBranchesRequest]) (*connect.Response[v1.ListBranchesResponse], error) {
+	branches, err := h.srv.ListBranches()
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&v1.ListBranchesResponse{Branches: branches}), nil
+}
+
+func (h *Handler) SyncFile(_ context.Context, req *connect.Request[v1.FileRequest]) (*connect.Response[v1.Empty], error) {
+	branch := req.Msg.GetBranch()
+	filepath := req.Msg.GetFilepath()
+
+	if err := h.srv.SyncFile(filepath, branch); err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.Empty{}), nil
+}
+
+func (h *Handler) ListFileFromBranch(_ context.Context, req *connect.Request[v1.BranchListFileRequest]) (*connect.Response[v1.BranchListFileResponse], error) {
+	branch := req.Msg.GetBranch()
+
+	inBranch, err := h.srv.ListFilesInBranch(branch)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.BranchListFileResponse{Files: inBranch}), nil
+}

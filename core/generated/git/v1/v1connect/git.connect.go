@@ -37,12 +37,22 @@ const (
 	GitServiceListCommitsProcedure = "/git.v1.GitService/ListCommits"
 	// GitServiceCommitProcedure is the fully-qualified name of the GitService's Commit RPC.
 	GitServiceCommitProcedure = "/git.v1.GitService/Commit"
+	// GitServiceSyncFileProcedure is the fully-qualified name of the GitService's SyncFile RPC.
+	GitServiceSyncFileProcedure = "/git.v1.GitService/SyncFile"
+	// GitServiceListFileFromBranchProcedure is the fully-qualified name of the GitService's
+	// ListFileFromBranch RPC.
+	GitServiceListFileFromBranchProcedure = "/git.v1.GitService/ListFileFromBranch"
+	// GitServiceListBranchesProcedure is the fully-qualified name of the GitService's ListBranches RPC.
+	GitServiceListBranchesProcedure = "/git.v1.GitService/ListBranches"
 )
 
 // GitServiceClient is a client for the git.v1.GitService service.
 type GitServiceClient interface {
 	ListCommits(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.CommitList], error)
 	Commit(context.Context, *connect.Request[v1.CommitQuery]) (*connect.Response[v1.Empty], error)
+	SyncFile(context.Context, *connect.Request[v1.FileRequest]) (*connect.Response[v1.Empty], error)
+	ListFileFromBranch(context.Context, *connect.Request[v1.BranchListFileRequest]) (*connect.Response[v1.BranchListFileResponse], error)
+	ListBranches(context.Context, *connect.Request[v1.ListBranchesRequest]) (*connect.Response[v1.ListBranchesResponse], error)
 }
 
 // NewGitServiceClient constructs a client for the git.v1.GitService service. By default, it uses
@@ -68,13 +78,34 @@ func NewGitServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(gitServiceMethods.ByName("Commit")),
 			connect.WithClientOptions(opts...),
 		),
+		syncFile: connect.NewClient[v1.FileRequest, v1.Empty](
+			httpClient,
+			baseURL+GitServiceSyncFileProcedure,
+			connect.WithSchema(gitServiceMethods.ByName("SyncFile")),
+			connect.WithClientOptions(opts...),
+		),
+		listFileFromBranch: connect.NewClient[v1.BranchListFileRequest, v1.BranchListFileResponse](
+			httpClient,
+			baseURL+GitServiceListFileFromBranchProcedure,
+			connect.WithSchema(gitServiceMethods.ByName("ListFileFromBranch")),
+			connect.WithClientOptions(opts...),
+		),
+		listBranches: connect.NewClient[v1.ListBranchesRequest, v1.ListBranchesResponse](
+			httpClient,
+			baseURL+GitServiceListBranchesProcedure,
+			connect.WithSchema(gitServiceMethods.ByName("ListBranches")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // gitServiceClient implements GitServiceClient.
 type gitServiceClient struct {
-	listCommits *connect.Client[v1.File, v1.CommitList]
-	commit      *connect.Client[v1.CommitQuery, v1.Empty]
+	listCommits        *connect.Client[v1.File, v1.CommitList]
+	commit             *connect.Client[v1.CommitQuery, v1.Empty]
+	syncFile           *connect.Client[v1.FileRequest, v1.Empty]
+	listFileFromBranch *connect.Client[v1.BranchListFileRequest, v1.BranchListFileResponse]
+	listBranches       *connect.Client[v1.ListBranchesRequest, v1.ListBranchesResponse]
 }
 
 // ListCommits calls git.v1.GitService.ListCommits.
@@ -87,10 +118,28 @@ func (c *gitServiceClient) Commit(ctx context.Context, req *connect.Request[v1.C
 	return c.commit.CallUnary(ctx, req)
 }
 
+// SyncFile calls git.v1.GitService.SyncFile.
+func (c *gitServiceClient) SyncFile(ctx context.Context, req *connect.Request[v1.FileRequest]) (*connect.Response[v1.Empty], error) {
+	return c.syncFile.CallUnary(ctx, req)
+}
+
+// ListFileFromBranch calls git.v1.GitService.ListFileFromBranch.
+func (c *gitServiceClient) ListFileFromBranch(ctx context.Context, req *connect.Request[v1.BranchListFileRequest]) (*connect.Response[v1.BranchListFileResponse], error) {
+	return c.listFileFromBranch.CallUnary(ctx, req)
+}
+
+// ListBranches calls git.v1.GitService.ListBranches.
+func (c *gitServiceClient) ListBranches(ctx context.Context, req *connect.Request[v1.ListBranchesRequest]) (*connect.Response[v1.ListBranchesResponse], error) {
+	return c.listBranches.CallUnary(ctx, req)
+}
+
 // GitServiceHandler is an implementation of the git.v1.GitService service.
 type GitServiceHandler interface {
 	ListCommits(context.Context, *connect.Request[v1.File]) (*connect.Response[v1.CommitList], error)
 	Commit(context.Context, *connect.Request[v1.CommitQuery]) (*connect.Response[v1.Empty], error)
+	SyncFile(context.Context, *connect.Request[v1.FileRequest]) (*connect.Response[v1.Empty], error)
+	ListFileFromBranch(context.Context, *connect.Request[v1.BranchListFileRequest]) (*connect.Response[v1.BranchListFileResponse], error)
+	ListBranches(context.Context, *connect.Request[v1.ListBranchesRequest]) (*connect.Response[v1.ListBranchesResponse], error)
 }
 
 // NewGitServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -112,12 +161,36 @@ func NewGitServiceHandler(svc GitServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(gitServiceMethods.ByName("Commit")),
 		connect.WithHandlerOptions(opts...),
 	)
+	gitServiceSyncFileHandler := connect.NewUnaryHandler(
+		GitServiceSyncFileProcedure,
+		svc.SyncFile,
+		connect.WithSchema(gitServiceMethods.ByName("SyncFile")),
+		connect.WithHandlerOptions(opts...),
+	)
+	gitServiceListFileFromBranchHandler := connect.NewUnaryHandler(
+		GitServiceListFileFromBranchProcedure,
+		svc.ListFileFromBranch,
+		connect.WithSchema(gitServiceMethods.ByName("ListFileFromBranch")),
+		connect.WithHandlerOptions(opts...),
+	)
+	gitServiceListBranchesHandler := connect.NewUnaryHandler(
+		GitServiceListBranchesProcedure,
+		svc.ListBranches,
+		connect.WithSchema(gitServiceMethods.ByName("ListBranches")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/git.v1.GitService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case GitServiceListCommitsProcedure:
 			gitServiceListCommitsHandler.ServeHTTP(w, r)
 		case GitServiceCommitProcedure:
 			gitServiceCommitHandler.ServeHTTP(w, r)
+		case GitServiceSyncFileProcedure:
+			gitServiceSyncFileHandler.ServeHTTP(w, r)
+		case GitServiceListFileFromBranchProcedure:
+			gitServiceListFileFromBranchHandler.ServeHTTP(w, r)
+		case GitServiceListBranchesProcedure:
+			gitServiceListBranchesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -133,4 +206,16 @@ func (UnimplementedGitServiceHandler) ListCommits(context.Context, *connect.Requ
 
 func (UnimplementedGitServiceHandler) Commit(context.Context, *connect.Request[v1.CommitQuery]) (*connect.Response[v1.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("git.v1.GitService.Commit is not implemented"))
+}
+
+func (UnimplementedGitServiceHandler) SyncFile(context.Context, *connect.Request[v1.FileRequest]) (*connect.Response[v1.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("git.v1.GitService.SyncFile is not implemented"))
+}
+
+func (UnimplementedGitServiceHandler) ListFileFromBranch(context.Context, *connect.Request[v1.BranchListFileRequest]) (*connect.Response[v1.BranchListFileResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("git.v1.GitService.ListFileFromBranch is not implemented"))
+}
+
+func (UnimplementedGitServiceHandler) ListBranches(context.Context, *connect.Request[v1.ListBranchesRequest]) (*connect.Response[v1.ListBranchesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("git.v1.GitService.ListBranches is not implemented"))
 }

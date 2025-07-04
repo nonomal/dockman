@@ -1,55 +1,55 @@
-import React, {useEffect, useState} from "react";
-import {Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography,} from "@mui/material";
-import {Add, AddCircleOutline, Cancel, InfoOutlined, WarningAmberOutlined} from "@mui/icons-material";
+import React, {useEffect, useState} from "react"
+import {Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography,} from "@mui/material"
+import {Add, AddCircleOutline, Cancel, InfoOutlined, WarningAmberOutlined} from "@mui/icons-material"
 
 interface AddFileDialogProps {
-    open: boolean;
-    onClose: () => void;
-    onConfirm: (name: string) => void;
-    parentName: string;
+    open: boolean
+    onClose: () => void
+    onConfirm: (name: string) => void
+    parentName: string
 }
 
 export function AddFileDialog({open, onClose, onConfirm, parentName}: AddFileDialogProps) {
-    const [name, setName] = useState('');
-    const [error, setError] = useState('');
+    const [name, setName] = useState('')
+    const [error, setError] = useState('')
 
     // Reset state when the dialog opens or closes
     useEffect(() => {
         if (open) {
-            setName('');
-            setError('');
+            setName('')
+            setError('')
         }
-    }, [open]);
+    }, [open])
 
     const handleConfirm = () => {
         // Proceed only if the name is not empty and there are no errors
         if (name.trim() && !error) {
-            onConfirm(name.trim());
-            onClose();
+            onConfirm(name.trim())
+            onClose()
         }
-    };
+    }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            handleConfirm();
+            handleConfirm()
         }
-    };
+    }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setName(value);
+        const value = e.target.value
+        setName(value)
 
         // Validation: Prevent subdirectories if a parentName is set
         if (parentName && value.includes('/')) {
-            setError("Subdirectories cannot be created here. Please enter a valid file name.");
+            setError("Subdirectories cannot be created here. Please enter a valid file name.")
         } else {
-            setError('');
+            setError('')
         }
-    };
+    }
 
     const dialogTitle = parentName
         ? `Add file to "${parentName}"`
-        : "Add new file";
+        : "Add new file"
 
     const helperTextContent = parentName ? (
         <Box>
@@ -81,7 +81,7 @@ export function AddFileDialog({open, onClose, onConfirm, parentName}: AddFileDia
                 </Typography>
             </Box>
         </Box>
-    );
+    )
 
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -125,6 +125,5 @@ export function AddFileDialog({open, onClose, onConfirm, parentName}: AddFileDia
                 </Button>
             </DialogActions>
         </Dialog>
-    );
-    ;
+    )
 }

@@ -22,6 +22,14 @@ import (
 	"time"
 )
 
+// Common SSH private key filenames in order of preference
+var commonKeyNames = []string{
+	"id_ed25519",
+	"id_ecdsa",
+	"id_rsa",
+	"id_dsa",
+}
+
 // newSSHClient establishes an SSH connection to a Docker host based on the provided authentication method.
 //
 // If MachineOptions contains an empty public key, the key is saved on connect;
@@ -52,9 +60,6 @@ func newSSHClient(name string, machine *MachineOptions, auth ssh.AuthMethod, sav
 
 	// Create a Docker client using the custom dialer.
 	newClient, err := client.NewClientWithOpts(
-		// Use a dummy TCP host to prevent "protocol not available" on Windows.
-		client.WithHost("tcp://docker.invalid:2375"),
-		//client.WithHost("unix:///var/run/docker.sock"), // use the remote host.
 		client.WithDialContext(sshDialer(sshClient)),
 		client.WithAPIVersionNegotiation(),
 	)
@@ -63,6 +68,11 @@ func newSSHClient(name string, machine *MachineOptions, auth ssh.AuthMethod, sav
 	}
 
 	return newClient, sshClient, nil
+}
+
+func newDockerClient(opts ...client.Opt) (*client.Client, error) {
+	opts = append(opts, client.WithAPIVersionNegotiation())
+	return client.NewClientWithOpts(opts...)
 }
 
 // newLocalClient connects to the local docker host.
@@ -78,14 +88,6 @@ func newLocalClient() (*client.Client, error) {
 	}
 
 	return cli, nil
-}
-
-// Common SSH private key filenames in order of preference
-var commonKeyNames = []string{
-	"id_ed25519",
-	"id_ecdsa",
-	"id_rsa",
-	"id_dsa",
 }
 
 // withKeyPairAuth connects to a remote docker host using public/private key authentication.
