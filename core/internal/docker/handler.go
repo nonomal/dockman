@@ -165,7 +165,7 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 	// returns in desc order
 	slices.SortFunc(containers, func(a, b ContainerStats) int {
 		res := sortFn(a, b)
-		if orderby == v1.ORDER_DSC {
+		if orderby == v1.ORDER_ASC {
 			return -res // Reverse the comparison for descending order
 		}
 		return res
