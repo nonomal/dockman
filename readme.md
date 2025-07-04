@@ -11,8 +11,9 @@
 ## Contents
 
 - [Install](#Install)
-- [WIP Features](#wip-features)
+    - [Config](#config)
 - [Why](#why-dockman)
+    - [Planned Features](#planned-features)
     - [How It Compares](#how-it-compares)
 - [Feedback](#feedback)
 - [Contributing](#contributing)
@@ -85,6 +86,113 @@ services:
     restart: always
 ```
 
+### Config
+
+#### Environment Variables
+
+Dockman can be configured using environment variables to customize its behavior according to your needs.
+
+#### Available Variables
+
+When you start a Dockman instance, a comprehensive table of all available environment variables for your version will be
+automatically printed in the startup logs.
+This table includes:
+
+- Config name
+- The current set values
+- Descriptions
+- env variable names (where applicable)
+
+For a complete list of available configuration options for your version,
+refer to the environment variables table displayed in your startup logs
+
+Example Image,
+
+![Environment Variables Table](.github/img/env.png)
+
+> [!NOTE]
+>
+> The available environment variables may vary between different versions of Dockman.
+>
+> Always check the startup logs for the most accurate and
+> up-to-date configuration options for your specific version.
+
+#### Setting Environment Variables
+
+You can set environment variables directly in your compose file or import them via a .env file:
+
+**Docker Compose:**
+
+```yaml
+dockman:
+  image: ghcr.io/ra341/dockman:latest
+  environment:
+    - DOCKMAN_COMPOSE_ROOT=/home/docker/stacks
+    - DOCKMAN_AUTH=true
+```
+
+**Environment File:**
+
+```bash
+# dockman.env
+DOCKMAN_COMPOSE_ROOT=/home/docker/stacks
+DOCKMAN_AUTH=true
+DOCKMAN_AUTH_USERNAME=test
+DOCKMAN_AUTH_PASSWORD=wow
+```
+
+```yaml
+dockman:
+  image: ghcr.io/ra341/dockman:latest
+  env_file:
+    - ./dockman.env
+```
+
+## Getting Help
+
+Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/discussions).
+
+## Why Dockman
+
+I built Dockman to solve a specific problem in my homelab setup. While there are excellent Docker management tools
+available, none quite matched how I prefer to work.
+
+Dockman is designed for people who:
+
+- Prefer editing configuration files directly over GUI abstractions
+- Want a clean, focused interface without unnecessary complexity
+- Value simplicity and purpose over comprehensive feature sets
+
+If this resonates with your workflow, I'd appreciate a star.
+Even if it doesn't fit your needs, I'd welcome your [feedback](#feedback) to help improve it.
+
+### Planned Features
+
+* **Enhanced Development Experience:** Integrated Language Server Protocol (LSP) support provides intelligent
+  autocompletion, syntax validation, and specialized Docker Compose features including port conflict detection and
+  automatic network creation assistance.
+
+* **Effortless Backup & Restore:** Streamlined backup and restore operations for your entire Docker Compose
+  infrastructure using Git-based snapshots, ensuring your configurations are always recoverable.
+
+* **Version Control Integration:** Built-in Git support automatically tracks changes to your compose files, maintaining
+  a complete version history with easy rollback capabilities for configuration management.
+
+* **Multi-Host Deployment:** Seamless orchestration across multiple hosts, enabling distributed container deployments
+  while maintaining centralized configuration management and monitoring.
+
+### How It Compares
+
+**vs. [Portainer](https://github.com/portainer/portainer)**: Dockman delivers a focused, minimalist experience designed
+for homelabs. If you find Portainer's extensive feature set overwhelming and prefer a streamlined interface dedicated
+specifically to compose file management, Dockman might be your solution.
+
+**vs. [Dockge](https://github.com/louislam/dockge)**: The fundamental difference lies in editing philosophy. Dockman
+embraces direct compose file editing—like working with your favorite text editor. Instead of UI-generated code, you get
+hands-on control over your configurations.
+
+The project takes inspiration from both these excellent tools.
+
 ## Multihost Support
 
 > [!IMPORTANT]
@@ -156,68 +264,6 @@ chmod 600 ~/.ssh/id_rsa
 ssh user@host-address 'docker version'
 ```
 
-## Config
-
-### Environment Variables
-
-Dockman can be configured using environment variables to customize its behavior according to your needs.
-
-### Available Variables
-
-When you start a Dockman instance, a comprehensive table of all available environment variables for your version will be
-automatically printed in the startup logs.
-This table includes:
-
-- Config name
-- The current set values
-- Descriptions
-- env variable names (where applicable)
-
-For a complete list of available configuration options for your version,
-refer to the environment variables table displayed in your startup logs
-
-Example Image,
-
-![Environment Variables Table](.github/img/env.png)
-
-> [!NOTE]
->
-> The available environment variables may vary between different versions of Dockman.
->
-> Always check the startup logs for the most accurate and
-> up-to-date configuration options for your specific version.
-
-### Setting Environment Variables
-
-You can set environment variables directly in your compose file or import them via a .env file:
-
-**Docker Compose:**
-
-```yaml
-dockman:
-  image: ghcr.io/ra341/dockman:latest
-  environment:
-    - DOCKMAN_COMPOSE_ROOT=/home/docker/stacks
-    - DOCKMAN_AUTH=true
-```
-
-**Environment File:**
-
-```bash
-# dockman.env
-DOCKMAN_COMPOSE_ROOT=/home/docker/stacks
-DOCKMAN_AUTH=true
-DOCKMAN_AUTH_USERNAME=test
-DOCKMAN_AUTH_PASSWORD=wow
-```
-
-```yaml
-dockman:
-  image: ghcr.io/ra341/dockman:latest
-  env_file:
-    - ./dockman.env
-```
-
 ## Security Considerations
 
 ### Docker Daemon Access
@@ -245,45 +291,6 @@ system.
   twice, push once)
 - **Use private, secured repositories only** - If you must use a remote, ensure it's a private, properly secured
   repository that you control
-
-## Getting Help
-
-Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/discussions).
-
-## WIP Features
-
-* **Easy Editing with LSP Support:** Integrated Language Server Protocol (LSP) for enhanced editing features like
-  autocompletion and syntax validation.
-* **Git Tracking:** Built-in Git support to track changes in your compose files, providing version history and easy
-  rollbacks.
-* **Painless Backup/Restore:** Simple, reliable commands for backing up and restoring your entire Docker Compose setup
-  using git.
-
-## Why Dockman
-
-I built Dockman to solve a specific problem in my homelab setup. While there are excellent Docker management tools
-available, none quite matched how I prefer to work.
-
-Dockman is designed for people who:
-
-- Prefer editing configuration files directly over GUI abstractions
-- Want a clean, focused interface without unnecessary complexity
-- Value simplicity and purpose over comprehensive feature sets
-
-If this resonates with your workflow, I'd appreciate a star.
-Even if it doesn't fit your needs, I'd welcome your [feedback](#feedback) to help improve it.
-
-## How It Compares
-
-**vs. [Portainer](https://github.com/portainer/portainer)**: Dockman delivers a focused, minimalist experience designed
-for homelabs. If you find Portainer's extensive feature set overwhelming and prefer a streamlined interface dedicated
-specifically to compose file management, Dockman might be your solution.
-
-**vs. [Dockge](https://github.com/louislam/dockge)**: The fundamental difference lies in editing philosophy. Dockman
-embraces direct compose file editing—like working with your favorite text editor. Instead of UI-generated code, you get
-hands-on control over your configurations.
-
-The project takes inspiration from both these excellent tools.
 
 ## Feedback
 
