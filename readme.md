@@ -39,14 +39,14 @@ Access the frontend at http://localhost:8866
 
 For a persistent installation, use Docker Compose with the configuration below.
 
-> [!IMPORTANT]  
-> 
+> [!IMPORTANT]
+>
 > The stacks directory path must be identical in all three locations:
-> 
+>
 > * 1️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
 > * 2️⃣ The host side of the volume `/path/to/stacks`
 > * 3️⃣ The container side of the volume `/path/to/stacks)`
->   
+>
 > This path consistency is essential for Dockman to locate and manage your compose files properly.
 
 ```yaml
@@ -84,6 +84,167 @@ services:
       - "8866:8866"
     restart: always
 ```
+
+## Multihost Support
+
+> [!IMPORTANT]
+>
+> This feature is currently unreleased, only available on develop tag
+>
+> ```
+> ghcr.io/ra341/dockman:dev
+> ```
+
+Dockman supports managing multiple Docker hosts from a single instance,
+allowing you to manage containers across different servers seamlessly.
+
+This multihost feature enables you to manage Docker on remote servers,
+switch between different hosts without losing configurations, maintain isolated configurations for each host,
+and deploy and monitor across your entire infrastructure.
+
+### How It Works
+
+#### Agentless Architecture
+
+Dockman uses an **agentless approach** with SSH connections to communicate with remote Docker hosts.
+
+No additional software needs to be installed on remote servers—only SSH access is required to manage Docker daemons
+securely.
+
+#### Git-Based Configuration Management
+
+Dockman leverages **Git branches** for configuration management,
+with each host having its own dedicated branch.
+
+This enables independent modifications where changes to one host don't affect others,
+while still allowing configuration sync between branches when needed.
+
+Each host maintains its own Docker Compose files, environment variables, service configurations,
+and deployment settings.
+
+When switching hosts, Dockman automatically saves changes to the current branch,
+switches to the target host's branch, and connects to that host's Docker daemon.
+
+### Prerequisites
+
+Before setting up multihost:
+
+1. **SSH Access**: SSH access to all target Docker hosts (recommended: public-private key auth)
+2. **Docker Access**: SSH user must have Docker daemon access without requiring root
+3. **Network**: Docker daemon running on remote hosts with network connectivity to Dockman
+
+### Getting Started
+
+TODO
+
+### Troubleshooting
+
+**SSH Connection Failed:**
+
+```bash
+# Test SSH connection manually
+ssh user@host-address
+
+# Check SSH key permissions
+chmod 600 ~/.ssh/id_rsa
+```
+
+**Docker Daemon Not Accessible:**
+
+```bash
+# Verify Docker is running on remote host and accessible without root access
+ssh user@host-address 'docker version'
+```
+
+## Config
+
+### Environment Variables
+
+Dockman can be configured using environment variables to customize its behavior according to your needs.
+
+### Available Variables
+
+When you start a Dockman instance, a comprehensive table of all available environment variables for your version will be
+automatically printed in the startup logs.
+This table includes:
+
+- Config name
+- The current set values
+- Descriptions
+- env variable names (where applicable)
+
+For a complete list of available configuration options for your version,
+refer to the environment variables table displayed in your startup logs
+
+Example Image,
+
+![Environment Variables Table](.github/img/env.png)
+
+> [!NOTE]
+>
+> The available environment variables may vary between different versions of Dockman.
+>
+> Always check the startup logs for the most accurate and
+> up-to-date configuration options for your specific version.
+
+### Setting Environment Variables
+
+You can set environment variables directly in your compose file or import them via a .env file:
+
+**Docker Compose:**
+
+```yaml
+dockman:
+  image: ghcr.io/ra341/dockman:latest
+  environment:
+    - DOCKMAN_COMPOSE_ROOT=/home/docker/stacks
+    - DOCKMAN_AUTH=true
+```
+
+**Environment File:**
+
+```bash
+# dockman.env
+DOCKMAN_COMPOSE_ROOT=/home/docker/stacks
+DOCKMAN_AUTH=true
+DOCKMAN_AUTH_USERNAME=test
+DOCKMAN_AUTH_PASSWORD=wow
+```
+
+```yaml
+dockman:
+  image: ghcr.io/ra341/dockman:latest
+  env_file:
+    - ./dockman.env
+```
+
+## Security Considerations
+
+### Docker Daemon Access
+
+**Critical Warning**: Granting access to the Docker daemon via `docker.sock` provides root-level access to the host
+system.
+
+**Don't Be a Dumb Dumb - Required Security Measures**:
+
+- **Never expose dockman to the internet** - Seriously, don't be that person. Keep it isolated within your local network
+- **Use VPN access only** - Use secure VPN services like Tailscale for remote access
+
+### SSH Security Best Practices
+
+- **Use SSH key authentication** instead of passwords
+- **Restrict SSH access** to specific IP ranges
+- **Rotate SSH keys regularly** and remove unused keys
+
+### Git Repository Security (The "Oops I Leaked My Secrets" Prevention Guide)
+
+- **Local config repos are fine** - It's okay to check secrets into your local configuration repository
+- **Never push to untrusted remotes** - Don't push your secrets to GitHub, GitLab, or any public/untrusted remote
+  server (your API keys don't need to be famous)
+- **Always verify your push destination** - Double-check where you're pushing your repo before hitting enter (measure
+  twice, push once)
+- **Use private, secured repositories only** - If you must use a remote, ensure it's a private, properly secured
+  repository that you control
 
 ## Getting Help
 
