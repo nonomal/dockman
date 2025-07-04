@@ -14,13 +14,13 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rs/zerolog/log"
+	"io"
 	"path/filepath"
 	"reflect"
 	"strings"
 )
 
-// stolen from
-// https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
+// reference: https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
 
 type ComposeService struct {
 	composeRoot string
@@ -34,149 +34,132 @@ func newComposeService(composeRoot string, client *ContainerService) *ComposeSer
 	}
 }
 
-func (s *ComposeService) Up(ctx context.Context, filename string, opts ...Opts) error {
-	opts = append(opts, WithFileSync())
-	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		var opts api.UpOptions
-		opts.Create.Recreate = api.RecreateForce
-		opts.Create.RemoveOrphans = true
-		opts.Start.OnExit = api.CascadeStop
-
-		if err := cli.Build(ctx, project, api.BuildOptions{}); err != nil {
-			return fmt.Errorf("compose build operation failed: %w", err)
-		}
-
-		if err := cli.Up(ctx, project, opts); err != nil {
-			return fmt.Errorf("compose up operation failed: %w", err)
-		}
-
-		return nil
-	})
-}
-
-func (s *ComposeService) Down(ctx context.Context, filename string, opts ...Opts) error {
-	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		if err := cli.Down(ctx, project.Name, api.DownOptions{}); err != nil {
-			return fmt.Errorf("compose down operation failed: %w", err)
-		}
-		return nil
-
-	})
-}
-
-func (s *ComposeService) Stop(ctx context.Context, filename string, opts ...Opts) error {
-	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		if err := cli.Stop(ctx, project.Name, api.StopOptions{}); err != nil {
-			return fmt.Errorf("compose stop operation failed: %w", err)
-		}
-
-		return nil
-
-	})
-}
-
-func (s *ComposeService) Pull(ctx context.Context, filename string, opts ...Opts) error {
-	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		if err := cli.Pull(ctx, project, api.PullOptions{}); err != nil {
-			return fmt.Errorf("compose pull operation failed: %w", err)
-		}
-		return nil
-	})
-}
-
-func (s *ComposeService) Restart(ctx context.Context, filename string, opts ...Opts) error {
-	opts = append(opts, WithFileSync())
-	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		if err := cli.Restart(ctx, project.Name, api.RestartOptions{}); err != nil {
-			return fmt.Errorf("compose restart operation failed: %w", err)
-		}
-		return nil
-	})
-}
-
-func (s *ComposeService) Update(ctx context.Context, filename string, opts ...Opts) error {
-	opts = append(opts, WithFileSync())
-	return s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		beforeImages, err := s.getProjectImageDigests(ctx, project)
-		if err != nil {
-			return fmt.Errorf("failed to get image info before pull: %w", err)
-		}
-
-		opts = append(opts, WithProjectAndCli(project, cli))
-		if err = s.Pull(ctx, filename, opts...); err != nil {
-			return err
-		}
-
-		afterImages, err := s.getProjectImageDigests(ctx, project)
-		if err != nil {
-			return fmt.Errorf("failed to get image info after pull: %w", err)
-		}
-
-		// Compare digests
-		if reflect.DeepEqual(beforeImages, afterImages) {
-			log.Info().Msg("No new images were downloaded")
-			return nil
-		}
-
-		log.Info().Str("stack", project.Name).Msgf("New images were downloaded, updating stack")
-
-		if err = s.Up(ctx, filename, opts...); err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-func (s *ComposeService) StatStack(ctx context.Context, filename string, opts ...Opts) ([]ContainerStats, error) {
-	var result []ContainerStats
-	err := s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		stackList, err := s.listStack(ctx, project, false)
-		if err != nil {
-			return err
-		}
-
-		result = s.client.GetStatsFromContainerList(ctx, stackList)
-		return nil
-	})
-	if err != nil {
-		return nil, err
+func (s *ComposeService) Up(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+	if err := s.syncProjectFilesToHost(project); err != nil {
+		return err
 	}
 
-	return result, err
-}
-
-func (s *ComposeService) ListStack(ctx context.Context, filename string, opts ...Opts) ([]container.Summary, error) {
-	var result []container.Summary
-	err := s.withProject(ctx, filename, parseOpts(opts...), func(cli api.Service, project *types.Project) error {
-		var err error
-		result, err = s.listStack(ctx, project, true)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
+	if err := composeClient.Build(ctx, project, api.BuildOptions{Services: services}); err != nil {
+		return fmt.Errorf("compose build operation failed: %w", err)
 	}
 
-	return result, nil
+	upOpts := api.UpOptions{
+		Create: api.CreateOptions{
+			Recreate:      api.RecreateDiverged,
+			RemoveOrphans: true,
+			QuietPull:     true,
+		},
+		Start: api.StartOptions{
+			//OnExit:   api.CascadeStop,
+			Services: services,
+		},
+	}
+
+	if err := composeClient.Up(ctx, project, upOpts); err != nil {
+		return fmt.Errorf("compose up operation failed: %w", err)
+	}
+
+	return nil
 }
 
-// showAll: all containers (running and stopped).
-func (s *ComposeService) listStack(ctx context.Context, project *types.Project, showAll bool) ([]container.Summary, error) {
+func (s *ComposeService) Down(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+	downOpts := api.DownOptions{
+		Services: services,
+	}
+	if err := composeClient.Down(ctx, project.Name, downOpts); err != nil {
+		return fmt.Errorf("compose down operation failed: %w", err)
+	}
+	return nil
+}
+
+func (s *ComposeService) Stop(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+	stopOpts := api.StopOptions{
+		Services: services,
+	}
+	if err := composeClient.Stop(ctx, project.Name, stopOpts); err != nil {
+		return fmt.Errorf("compose stop operation failed: %w", err)
+	}
+	return nil
+}
+
+func (s *ComposeService) Restart(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+	// A restart might involve changes to the compose file, so we sync first.
+	if err := s.syncProjectFilesToHost(project); err != nil {
+		return err
+	}
+
+	restartOpts := api.RestartOptions{
+		Services: services,
+	}
+	if err := composeClient.Restart(ctx, project.Name, restartOpts); err != nil {
+		return fmt.Errorf("compose restart operation failed: %w", err)
+	}
+	return nil
+}
+
+func (s *ComposeService) Pull(ctx context.Context, project *types.Project, composeClient api.Service) error {
+	pullOpts := api.PullOptions{}
+	if err := composeClient.Pull(ctx, project, pullOpts); err != nil {
+		return fmt.Errorf("compose pull operation failed: %w", err)
+	}
+	return nil
+}
+
+func (s *ComposeService) Update(ctx context.Context, project *types.Project, composeClient api.Service) error {
+	beforeImages, err := s.getProjectImageDigests(ctx, project)
+	if err != nil {
+		return fmt.Errorf("failed to get image info before pull: %w", err)
+	}
+
+	if err = s.Pull(ctx, project, composeClient); err != nil {
+		return err
+	}
+
+	afterImages, err := s.getProjectImageDigests(ctx, project)
+	if err != nil {
+		return fmt.Errorf("failed to get image info after pull: %w", err)
+	}
+
+	// Compare digests to see if anything changed.
+	if reflect.DeepEqual(beforeImages, afterImages) {
+		log.Info().Str("stack", project.Name).Msg("No new images were downloaded, stack is up to date")
+		return nil
+	}
+
+	log.Info().Str("stack", project.Name).Msg("New images were downloaded, updating stack...")
+	// If images changed, run Up to recreate the containers with the new images.
+	if err = s.Up(ctx, project, composeClient); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ListStack The `all` parameter controls whether to show stopped containers.
+func (s *ComposeService) ListStack(ctx context.Context, project *types.Project, all bool) ([]container.Summary, error) {
 	containerFilters := filters.NewArgs()
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
 	result, err := s.client.daemon().ContainerList(ctx, container.ListOptions{
-		All:     showAll,
+		All:     all,
 		Filters: containerFilters,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list containers for project '%s': %w", project.Name, err)
 	}
 
+	return result, nil
+}
+
+func (s *ComposeService) StatStack(ctx context.Context, project *types.Project) ([]ContainerStats, error) {
+	// Get the list of running containers for the stack.
+	stackList, err := s.ListStack(ctx, project, false) // `false` for only running
+	if err != nil {
+		return nil, err
+	}
+
+	result := s.client.GetStatsFromContainerList(ctx, stackList)
 	return result, nil
 }
 
@@ -206,83 +189,57 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 	return digests, nil
 }
 
-func (s *ComposeService) withComposeCli(opts *ComposeConfig, execFn func(composeCli api.Service) error) error {
+func (s *ComposeService) loadComposeClient(outputStream io.Writer, inputStream io.ReadCloser) (api.Service, error) {
 	dockerCli, err := command.NewDockerCli(
 		command.WithAPIClient(s.client.daemon()),
-		command.WithCombinedStreams(opts.outputStream),
-		command.WithInputStream(opts.inputStream),
+		command.WithCombinedStreams(outputStream),
+		command.WithInputStream(inputStream),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create cli client to docker for compose: %w", err)
+		return nil, fmt.Errorf("failed to create cli client to docker for compose: %w", err)
 	}
 
 	clientOpts := &flags.ClientOptions{}
 	if err = dockerCli.Initialize(clientOpts); err != nil {
-		return err
+		return nil, err
 	}
 
-	comp := compose.NewComposeService(dockerCli)
-	return execFn(comp)
+	return compose.NewComposeService(dockerCli), nil
 }
 
-func (s *ComposeService) withProject(
-	ctx context.Context,
-	filename string,
-	opts *ComposeConfig,
-	execFn func(cli api.Service, project *types.Project) error,
-) error {
-	if opts.cli != nil && opts.project != nil {
-		return execFn(opts.cli, opts.project)
+func (s *ComposeService) loadProject(ctx context.Context, filename string) (*types.Project, error) {
+	filename = filepath.Join(s.composeRoot, filename)
+	// will be the parent dir of the compose file else equal to compose root
+	workingDir := filepath.Dir(filename)
+
+	options, err := cli.NewProjectOptions(
+		[]string{filename},
+		// important maintain this order to load .env: workingdir -> env -> os -> load dot env
+		cli.WithWorkingDirectory(s.composeRoot),
+		cli.WithEnvFiles(),
+		cli.WithOsEnv,
+		cli.WithDotEnv,
+		cli.WithDefaultProfiles(),
+		cli.WithWorkingDirectory(workingDir),
+		cli.WithResolvedPaths(true),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new project: %w", err)
 	}
 
-	return s.withComposeCli(opts, func(composeCli api.Service) error {
-		filename = filepath.Join(s.composeRoot, filename)
-		// will be the parent dir of the compose file else equal to compose root
-		workingDir := filepath.Dir(filename)
+	project, err := options.LoadProject(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load project: %w", err)
+	}
 
-		options, err := cli.NewProjectOptions(
-			[]string{filename},
-			// important maintain this order to load .env: workingdir -> env -> os -> load dot env
-			cli.WithWorkingDirectory(s.composeRoot),
-			cli.WithEnvFiles(),
-			cli.WithOsEnv,
-			cli.WithDotEnv,
-			cli.WithDefaultProfiles(),
-			cli.WithWorkingDirectory(workingDir),
-			cli.WithResolvedPaths(true),
-		)
-		if err != nil {
-			return fmt.Errorf("failed to create new project: %w", err)
-		}
+	addServiceLabels(project)
+	// Ensure service environment variables
+	project, err = project.WithServicesEnvironmentResolved(true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve services environment: %w", err)
+	}
 
-		project, err := options.LoadProject(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to load project: %w", err)
-		}
-
-		if opts.allowFileSync {
-			log.Debug().Msg("syncing bind mount to remote host")
-			// nil client implies local client or I done fucked up
-			if sfCli := s.client.sftp(); sfCli != nil {
-				err = s.sftpProjectFiles(project, sfCli)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		addServiceLabels(project)
-		// Ensure service environment variables
-		if p, err := project.WithServicesEnvironmentResolved(true); err == nil {
-			project = p
-		} else {
-			return fmt.Errorf("failed to resolve services environment: %w", err)
-		}
-
-		project = project.WithoutUnnecessaryResources()
-
-		return execFn(composeCli, project)
-	})
+	return project.WithoutUnnecessaryResources(), nil
 }
 
 func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *ssh.SftpClient) error {
@@ -345,4 +302,15 @@ func addServiceLabels(project *types.Project) {
 
 		project.Services[i] = s
 	}
+}
+
+func (s *ComposeService) syncProjectFilesToHost(project *types.Project) error {
+	log.Debug().Msg("syncing bind mount to remote host")
+	// nil client implies local client or I done fucked up
+	if sfCli := s.client.sftp(); sfCli != nil {
+		if err := s.sftpProjectFiles(project, sfCli); err != nil {
+			return err
+		}
+	}
+	return nil
 }

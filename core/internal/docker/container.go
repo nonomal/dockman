@@ -175,62 +175,6 @@ func formatNetwork(statsJSON container.StatsResponse) (uint64, uint64) {
 	return rx, tx
 }
 
-// PreviousCPUStats This struct will hold the essential previous values for a single container.
-type PreviousCPUStats struct {
-	TotalUsage  uint64
-	SystemUsage uint64
-}
-
-// A thread-safe cache to store the last stats for each container ID.
-// The key will be the container ID (string).
-var (
-	statsCache = pkg.Map[string, PreviousCPUStats]{}
-	cacheLock  = &sync.Mutex{}
-)
-
-// MODIFIED - A stateful CPU calculation function
-func calculateCPUPercent(currentStats container.StatsResponse) float64 {
-	// Lock the cache for safe concurrent access
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-
-	// Get the previous stats from our cache for this container
-	previous, hasPrevious := statsCache.Load(currentStats.ID)
-
-	// On the first run for a container, we don't have previous stats, so we can't calculate.
-	// We store the current stats and return 0.
-	if !hasPrevious {
-		statsCache.Store(currentStats.ID, PreviousCPUStats{
-			TotalUsage:  currentStats.CPUStats.CPUUsage.TotalUsage,
-			SystemUsage: currentStats.CPUStats.SystemUsage,
-		})
-		return 0.0
-	}
-
-	// We have previous stats, so we can calculate the deltas
-	cpuDelta := float64(currentStats.CPUStats.CPUUsage.TotalUsage - previous.TotalUsage)
-	systemCpuDelta := float64(currentStats.CPUStats.SystemUsage - previous.SystemUsage)
-
-	// Get the number of CPUs
-	numberCPUs := float64(currentStats.CPUStats.OnlineCPUs)
-	if numberCPUs == 0.0 {
-		numberCPUs = float64(len(currentStats.CPUStats.CPUUsage.PercpuUsage))
-	}
-
-	var cpuPercent float64 = 0.0
-	// The main calculation, guarded against division by zero
-	if systemCpuDelta > 0.0 && cpuDelta > 0.0 {
-		cpuPercent = (cpuDelta / systemCpuDelta) * numberCPUs * 100.0
-	}
-
-	// Update the cache with the current stats for the next calculation
-	statsCache.Store(currentStats.ID, PreviousCPUStats{
-		TotalUsage:  currentStats.CPUStats.CPUUsage.TotalUsage,
-		SystemUsage: currentStats.CPUStats.SystemUsage,
-	})
-	return cpuPercent
-}
-
 func formatCPU(statsJSON container.StatsResponse) float64 {
 	cpuDelta := float64(statsJSON.CPUStats.CPUUsage.TotalUsage - statsJSON.PreCPUStats.CPUUsage.TotalUsage)
 	systemCpuDelta := float64(statsJSON.CPUStats.SystemUsage - statsJSON.PreCPUStats.SystemUsage)
@@ -239,7 +183,7 @@ func formatCPU(statsJSON container.StatsResponse) float64 {
 		numberCPUs = float64(len(statsJSON.CPUStats.CPUUsage.PercpuUsage))
 	}
 
-	var cpuPercent float64 = 0.0
+	var cpuPercent = 0.0
 	// Avoid division by zero
 	if systemCpuDelta > 0.0 && cpuDelta > 0.0 {
 		cpuPercent = (cpuDelta / systemCpuDelta) * numberCPUs * 100.0

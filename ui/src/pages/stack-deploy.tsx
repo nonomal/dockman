@@ -45,6 +45,7 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
     const [activeAction, setActiveAction] = useState<string | null>(null);
     const [logStream, setLogStream] = useState<AsyncIterable<string> | null>(null);
     const [isLogPanelMinimized, setIsLogPanelMinimized] = useState(true);
+    const [selectedServices, setSelectedServices] = useState<string[]>([])
 
     const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -70,7 +71,10 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
         setActiveAction(name)
 
         manageStream({
-            getStream: signal => dockerService[name]({filename: selectedPage}, {signal: signal}),
+            getStream: signal => dockerService[name]({
+                filename: selectedPage,
+                selectedServices: selectedServices,
+            }, {signal: signal}),
             transform: item => item.message,
             panelTitle: `${name} - ${selectedPage}`,
             onSuccess: () => {
@@ -168,7 +172,13 @@ export function StackDeploy({selectedPage}: DeployPageProps) {
                     borderColor: 'rgba(255, 255, 255, 0.23)', borderRadius: 3, display: 'flex',
                     flexDirection: 'column', backgroundColor: 'rgb(41,41,41)'
                 }}>
-                    <ContainerTable containers={containers} loading={loading} onShowLogs={handleContainerLogs}/>
+                    <ContainerTable
+                        containers={containers}
+                        loading={loading}
+                        onShowLogs={handleContainerLogs}
+                        setSelectedServices={setSelectedServices}
+                        selectedServices={selectedServices}
+                    />
                 </Box>
             </Box>
 

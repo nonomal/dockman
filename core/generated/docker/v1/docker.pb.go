@@ -425,14 +425,16 @@ func (x *ListResponse) GetList() []*ContainerList {
 }
 
 type ContainerList struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ImageID       string                 `protobuf:"bytes,2,opt,name=imageID,proto3" json:"imageID,omitempty"`
-	ImageName     string                 `protobuf:"bytes,3,opt,name=imageName,proto3" json:"imageName,omitempty"`
-	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-	Name          string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
-	Created       string                 `protobuf:"bytes,6,opt,name=created,proto3" json:"created,omitempty"`
-	Ports         []*Port                `protobuf:"bytes,7,rep,name=ports,proto3" json:"ports,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Id        string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ImageID   string                 `protobuf:"bytes,2,opt,name=imageID,proto3" json:"imageID,omitempty"`
+	ImageName string                 `protobuf:"bytes,3,opt,name=imageName,proto3" json:"imageName,omitempty"`
+	Status    string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	Name      string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
+	Created   string                 `protobuf:"bytes,6,opt,name=created,proto3" json:"created,omitempty"`
+	Ports     []*Port                `protobuf:"bytes,7,rep,name=ports,proto3" json:"ports,omitempty"`
+	// name to use in selecting service in docker compose
+	ServiceName   string `protobuf:"bytes,8,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -514,6 +516,13 @@ func (x *ContainerList) GetPorts() []*Port {
 		return x.Ports
 	}
 	return nil
+}
+
+func (x *ContainerList) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
+	}
+	return ""
 }
 
 // ContainerInfo holds metrics for a single Docker container.
@@ -739,10 +748,11 @@ func (*Empty) Descriptor() ([]byte, []int) {
 }
 
 type ComposeFile struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Filename         string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	SelectedServices []string               `protobuf:"bytes,2,rep,name=selectedServices,proto3" json:"selectedServices,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ComposeFile) Reset() {
@@ -782,6 +792,13 @@ func (x *ComposeFile) GetFilename() string {
 	return ""
 }
 
+func (x *ComposeFile) GetSelectedServices() []string {
+	if x != nil {
+		return x.SelectedServices
+	}
+	return nil
+}
+
 var File_docker_v1_docker_proto protoreflect.FileDescriptor
 
 const file_docker_v1_docker_proto_rawDesc = "" +
@@ -807,7 +824,7 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"memInBytes\x18\x02 \x01(\x04R\n" +
 	"memInBytes\"<\n" +
 	"\fListResponse\x12,\n" +
-	"\x04list\x18\x01 \x03(\v2\x18.docker.v1.ContainerListR\x04list\"\xc4\x01\n" +
+	"\x04list\x18\x01 \x03(\v2\x18.docker.v1.ContainerListR\x04list\"\xe6\x01\n" +
 	"\rContainerList\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aimageID\x18\x02 \x01(\tR\aimageID\x12\x1c\n" +
@@ -815,7 +832,8 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\x06status\x18\x04 \x01(\tR\x06status\x12\x12\n" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12\x18\n" +
 	"\acreated\x18\x06 \x01(\tR\acreated\x12%\n" +
-	"\x05ports\x18\a \x03(\v2\x0f.docker.v1.PortR\x05ports\"\x95\x02\n" +
+	"\x05ports\x18\a \x03(\v2\x0f.docker.v1.PortR\x05ports\x12 \n" +
+	"\vserviceName\x18\b \x01(\tR\vserviceName\"\x95\x02\n" +
 	"\x0eContainerStats\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
@@ -835,9 +853,10 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\aprivate\x18\x02 \x01(\x05R\aprivate\x12\x12\n" +
 	"\x04host\x18\x03 \x01(\tR\x04host\x12\x12\n" +
 	"\x04type\x18\x04 \x01(\tR\x04type\"\a\n" +
-	"\x05Empty\")\n" +
+	"\x05Empty\"U\n" +
 	"\vComposeFile\x12\x1a\n" +
-	"\bfilename\x18\x01 \x01(\tR\bfilename*`\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12*\n" +
+	"\x10selectedServices\x18\x02 \x03(\tR\x10selectedServices*`\n" +
 	"\n" +
 	"SORT_FIELD\x12\b\n" +
 	"\x04NAME\x10\x00\x12\a\n" +

@@ -8,7 +8,7 @@ interface StackStatsProps {
 
 export function StatStacksPage({selectedPage}: StackStatsProps) {
     const {containers, loading, handleSortChange, sortOrder, sortField} = useDockerStats(selectedPage)
-    
+
     return (
         <Box sx={{p: 3, flexGrow: 1}}>
             {containers.length !== 0 ?

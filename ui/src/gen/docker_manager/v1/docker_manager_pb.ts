@@ -16,10 +16,10 @@ export const file_docker_manager_v1_docker_manager: GenFile = /*@__PURE__*/
  * @generated from message docker_manager.v1.SwitchRequest
  */
 export type SwitchRequest = Message<"docker_manager.v1.SwitchRequest"> & {
-    /**
-     * @generated from field: string machineID = 1;
-     */
-    machineID: string;
+  /**
+   * @generated from field: string machineID = 1;
+   */
+  machineID: string;
 };
 
 /**
@@ -33,15 +33,15 @@ export const SwitchRequestSchema: GenMessage<SwitchRequest> = /*@__PURE__*/
  * @generated from message docker_manager.v1.ListResponse
  */
 export type ListResponse = Message<"docker_manager.v1.ListResponse"> & {
-    /**
-     * @generated from field: string activeClient = 1;
-     */
-    activeClient: string;
+  /**
+   * @generated from field: string activeClient = 1;
+   */
+  activeClient: string;
 
-    /**
-     * @generated from field: repeated docker_manager.v1.Machine machines = 2;
-     */
-    machines: Machine[];
+  /**
+   * @generated from field: repeated docker_manager.v1.Machine machines = 2;
+   */
+  machines: Machine[];
 };
 
 /**
@@ -55,45 +55,45 @@ export const ListResponseSchema: GenMessage<ListResponse> = /*@__PURE__*/
  * @generated from message docker_manager.v1.Machine
  */
 export type Machine = Message<"docker_manager.v1.Machine"> & {
-    /**
-     * @generated from field: string name = 1;
-     */
-    name: string;
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
 
-    /**
-     * @generated from field: bool enable = 2;
-     */
-    enable: boolean;
+  /**
+   * @generated from field: bool enable = 2;
+   */
+  enable: boolean;
 
-    /**
-     * @generated from field: string host = 3;
-     */
-    host: string;
+  /**
+   * @generated from field: string host = 3;
+   */
+  host: string;
 
-    /**
-     * @generated from field: int32 port = 4;
-     */
-    port: number;
+  /**
+   * @generated from field: int32 port = 4;
+   */
+  port: number;
 
-    /**
-     * @generated from field: string user = 5;
-     */
-    user: string;
+  /**
+   * @generated from field: string user = 5;
+   */
+  user: string;
 
-    /**
-     * @generated from field: string password = 6;
-     */
-    password: string;
+  /**
+   * @generated from field: string password = 6;
+   */
+  password: string;
 
-    /**
-     * @generated from field: string remote_public_key = 7;
-     */
-    remotePublicKey: string;
+  /**
+   * @generated from field: string remote_public_key = 7;
+   */
+  remotePublicKey: string;
 
-    /**
-     * @generated from field: bool use_public_key_auth = 8;
-     */
-    usePublicKeyAuth: boolean;
+  /**
+   * @generated from field: bool use_public_key_auth = 8;
+   */
+  usePublicKeyAuth: boolean;
 };
 
 /**
@@ -119,22 +119,22 @@ export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
  * @generated from service docker_manager.v1.DockerManagerService
  */
 export const DockerManagerService: GenService<{
-    /**
-     * @generated from rpc docker_manager.v1.DockerManagerService.List
-     */
-    list: {
-        methodKind: "unary";
-        input: typeof EmptySchema;
-        output: typeof ListResponseSchema;
-    },
-    /**
-     * @generated from rpc docker_manager.v1.DockerManagerService.switchClient
-     */
-    switchClient: {
-        methodKind: "unary";
-        input: typeof SwitchRequestSchema;
-        output: typeof EmptySchema;
-    },
+  /**
+   * @generated from rpc docker_manager.v1.DockerManagerService.List
+   */
+  list: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof ListResponseSchema;
+  },
+  /**
+   * @generated from rpc docker_manager.v1.DockerManagerService.switchClient
+   */
+  switchClient: {
+    methodKind: "unary";
+    input: typeof SwitchRequestSchema;
+    output: typeof EmptySchema;
+  },
 }> = /*@__PURE__*/
     serviceDesc(file_docker_manager_v1_docker_manager, 0);
 

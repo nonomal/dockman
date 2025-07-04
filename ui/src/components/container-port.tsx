@@ -18,7 +18,7 @@ export const ContainerPort = ({port}: PortMappingProps) => {
                             rel="noopener noreferrer"
                             sx={{color: 'info.main', textDecoration: 'none', '&:hover': {textDecoration: 'underline'}}}
                         >
-                            {host || 'localhost'}:{publicPort}
+                            {publicPort}
                         </Link>
                     </Tooltip>
                     {' → '}

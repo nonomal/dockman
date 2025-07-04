@@ -83,9 +83,9 @@ func (a *App) Close() error {
 }
 
 func (a *App) registerRoutes(mux *http.ServeMux) {
-	connectAuth := connect.WithInterceptors()
+	globalInterceptor := connect.WithInterceptors()
 	if a.Config.Auth {
-		connectAuth = connect.WithInterceptors(auth.NewInterceptor(a.Auth))
+		globalInterceptor = connect.WithInterceptors(auth.NewInterceptor(a.Auth))
 	}
 
 	handlers := []func() (string, http.Handler){
@@ -95,18 +95,18 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		},
 		// files
 		func() (string, http.Handler) {
-			return filesrpc.NewFileServiceHandler(files.NewConnectHandler(a.File), connectAuth)
+			return filesrpc.NewFileServiceHandler(files.NewConnectHandler(a.File), globalInterceptor)
 		},
 		func() (string, http.Handler) {
 			return a.registerHttpHandler("/api/file", files.NewFileHandler(a.File))
 		},
 		// docker
 		func() (string, http.Handler) {
-			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(a.Docker), connectAuth)
+			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(a.Docker), globalInterceptor)
 		},
 		// git
 		func() (string, http.Handler) {
-			return gitrpc.NewGitServiceHandler(git.NewConnectHandler(a.Git), connectAuth)
+			return gitrpc.NewGitServiceHandler(git.NewConnectHandler(a.Git), globalInterceptor)
 		},
 		func() (string, http.Handler) {
 			return a.registerHttpHandler("/api/git", git.NewFileHandler(a.Git))
@@ -122,7 +122,7 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		},
 		// host_manager
 		func() (string, http.Handler) {
-			return dockermanagerrpc.NewDockerManagerServiceHandler(dm.NewConnectHandler(a.HostManager), connectAuth)
+			return dockermanagerrpc.NewDockerManagerServiceHandler(dm.NewConnectHandler(a.HostManager), globalInterceptor)
 		},
 		// lsp
 		func() (string, http.Handler) {

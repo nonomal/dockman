@@ -8,6 +8,8 @@ import (
 	"fmt"
 	v1 "github.com/RA341/dockman/generated/docker/v1"
 	"github.com/RA341/dockman/pkg"
+	"github.com/compose-spec/compose-go/v2/types"
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/rs/zerolog/log"
@@ -16,6 +18,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Handler struct {
@@ -26,94 +29,56 @@ func NewConnectHandler(srv *Service) *Handler {
 	return &Handler{srv: srv}
 }
 
-func (h *Handler) Start(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.LogsMessage{Message: fmt.Sprintf(val)}); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err := h.srv.Up(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
-		pkg.CloseFile(pipeWriter)
-		return err
-	}
-	pkg.CloseFile(pipeWriter)
-
-	wg.Wait() // all data must be sent
-	return nil
+func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	return h.executeComposeStreamCommand(
+		ctx,
+		req.Msg.GetFilename(),
+		responseStream,
+		h.srv.Up,
+		req.Msg.GetSelectedServices()...,
+	)
 }
 
-func (h *Handler) Stop(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err := h.srv.Stop(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
-		pkg.CloseFile(pipeWriter)
-		return err
-	}
-	pkg.CloseFile(pipeWriter)
-
-	wg.Wait() // all data must be sent
-	return nil
+func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	return h.executeComposeStreamCommand(
+		ctx,
+		req.Msg.GetFilename(),
+		responseStream,
+		h.srv.Stop,
+		req.Msg.GetSelectedServices()...,
+	)
 }
 
-func (h *Handler) Remove(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err := h.srv.Down(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
-		pkg.CloseFile(pipeWriter)
-		return err
-	}
-	pkg.CloseFile(pipeWriter)
-
-	wg.Wait() // all data must be sent
-	return nil
+func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	return h.executeComposeStreamCommand(
+		ctx,
+		req.Msg.GetFilename(),
+		responseStream,
+		h.srv.Down,
+		req.Msg.GetSelectedServices()...,
+	)
 }
 
-func (h *Handler) Restart(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err := h.srv.Restart(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
-		pkg.CloseFile(pipeWriter)
-		return err
-	}
-	pkg.CloseFile(pipeWriter)
-
-	wg.Wait() // all data must be sent
-	return nil
+func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	return h.executeComposeStreamCommand(
+		ctx,
+		req.Msg.GetFilename(),
+		responseStream,
+		h.srv.Restart,
+		req.Msg.GetSelectedServices()...,
+	)
 }
 
-func (h *Handler) Update(_ context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	pipeWriter, wg := streamManager(func(val string) error {
-		if err := responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err := h.srv.Update(context.Background(), req.Msg.GetFilename(), WithOutput(pipeWriter)); err != nil {
-		pkg.CloseFile(pipeWriter)
-		return err
-	}
-	pkg.CloseFile(pipeWriter)
-
-	wg.Wait() // all data must be sent
-	return nil
+func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	return h.executeComposeStreamCommand(
+		ctx,
+		req.Msg.GetFilename(),
+		responseStream,
+		func(ctx context.Context, project *types.Project, service api.Service, _ ...string) error {
+			return h.srv.Update(ctx, project, service)
+		},
+		req.Msg.GetSelectedServices()...,
+	)
 }
 
 func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLogsRequest], responseStream *connect.ServerStream[v1.LogsMessage]) error {
@@ -136,7 +101,12 @@ func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLog
 }
 
 func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
-	result, err := h.srv.ListStack(ctx, req.Msg.GetFilename())
+	project, err := h.srv.loadProject(ctx, req.Msg.GetFilename())
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := h.srv.ListStack(ctx, project, true)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +142,12 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 	var containers []ContainerStats
 	var err error
 	if file != nil {
-		containers, err = h.srv.StatStack(ctx, file.Filename)
+		// file was passed load it from context
+		project, err := h.srv.loadProject(ctx, file.Filename)
+		if err != nil {
+			return nil, err
+		}
+		containers, err = h.srv.StatStack(ctx, project)
 	} else {
 		containers, err = h.srv.GetStats(ctx, container.ListOptions{})
 	}
@@ -184,32 +159,65 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 	if field == nil {
 		field = v1.SORT_FIELD_NAME.Enum()
 	}
-	// returns in desc order
-	fn := getSortFn(*field)
-	slices.SortFunc(containers, fn)
-
+	sortFn := getSortFn(*field)
 	orderby := *req.Msg.Order.Enum()
 
-	var stats []*v1.ContainerStats
-	if orderby == v1.ORDER_ASC {
-		// rev dsc list
-		for i := len(containers) - 1; i >= 0; i-- {
-			stats = append(stats, ToRPCStat(containers[i]))
+	// returns in desc order
+	slices.SortFunc(containers, func(a, b ContainerStats) int {
+		res := sortFn(a, b)
+		if orderby == v1.ORDER_DSC {
+			return -res // Reverse the comparison for descending order
 		}
-	} else {
-		// containers already in dsc order
-		for _, cont := range containers {
-			stats = append(stats, ToRPCStat(cont))
-		}
+		return res
+	})
+
+	stats := make([]*v1.ContainerStats, len(containers))
+	for i, cont := range containers {
+		stats[i] = ToRPCStat(cont)
 	}
 
 	return connect.NewResponse(&v1.StatsResponse{
-		System: &v1.SystemInfo{
-			//	CPU:        systemInfo.CPU,
-			//	MemInBytes: systemInfo.Memory.Used,
-		},
 		Containers: stats,
 	}), nil
+}
+
+// executeComposeStreamCommand handles the boilerplate for running a Docker Compose command that streams logs.
+func (h *Handler) executeComposeStreamCommand(
+	ctx context.Context,
+	composeFile string,
+	responseStream *connect.ServerStream[v1.LogsMessage],
+	action func(context.Context, *types.Project, api.Service, ...string) error,
+	services ...string,
+) error {
+	project, err := h.srv.loadProject(ctx, composeFile)
+	if err != nil {
+		return err
+
+	}
+
+	pipeWriter, wg := streamManager(func(val string) error {
+		if err = responseStream.Send(&v1.LogsMessage{Message: fmt.Sprintf(val)}); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	composeClient, err := h.srv.loadComposeClient(pipeWriter, nil)
+	if err != nil {
+		return err
+	}
+
+	// incase the stream connection is lost context.Background
+	// will allow the service to continue executing, instead of stopping mid-operation
+	if err = action(context.Background(), project, composeClient, services...); err != nil {
+		pkg.CloseFile(pipeWriter)
+		return err
+	}
+
+	pkg.CloseFile(pipeWriter)
+	wg.Wait()
+
+	return nil
 }
 
 func ToRPCStat(cont ContainerStats) *v1.ContainerStats {
@@ -303,12 +311,14 @@ func toRPCPort(p container.Port) *v1.Port {
 
 func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerList {
 	return &v1.ContainerList{
-		Name:      strings.TrimPrefix(stack.Names[0], "/"),
-		Id:        stack.ID,
-		ImageID:   stack.ImageID,
-		ImageName: stack.Image,
-		Status:    stack.Status,
-		Ports:     portSlice,
+		Name:        strings.TrimPrefix(stack.Names[0], "/"),
+		Id:          stack.ID,
+		ImageID:     stack.ImageID,
+		ImageName:   stack.Image,
+		Status:      stack.Status,
+		Ports:       portSlice,
+		ServiceName: stack.Labels[api.ServiceLabel],
+		Created:     time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
 	}
 }
 
