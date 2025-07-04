@@ -2,6 +2,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import {callRPC, useClient} from '../lib/api.ts';
 import {type ContainerStats, DockerService, ORDER, SORT_FIELD} from '../gen/docker/v1/docker_pb.ts';
 import {useSnackbar} from "./snackbar.ts";
+import {useHost} from "./host.ts";
 
 // This map remains very useful for clean, client-side sorting.
 const sortFieldToKeyMap: Record<SORT_FIELD, keyof ContainerStats> = {
@@ -17,6 +18,7 @@ const sortFieldToKeyMap: Record<SORT_FIELD, keyof ContainerStats> = {
 export function useDockerStats(selectedPage?: string) {
     const dockerService = useClient(DockerService);
     const {showError} = useSnackbar();
+    const {selectedHost} = useHost()
 
     // Holds the latest data received from the server, unsorted.
     const [rawContainers, setRawContainers] = useState<ContainerStats[]>([]);
@@ -61,8 +63,14 @@ export function useDockerStats(selectedPage?: string) {
             clearInterval(intervalId);
             isCancelled = true;
         };
-    }, [dockerService, selectedPage, sortField, sortOrder, refreshInterval]);
+    }, [selectedHost, dockerService, selectedPage, sortField, sortOrder, refreshInterval]);
 
+    useEffect(() => {
+        // clear containers on host change
+        setRawContainers([])
+        setLoading(true)
+        isInitialLoad.current = true;
+    }, [selectedHost]);
 
     // Optimistic Client-Side Sorting
     // This useMemo provides the INSTANT sort feedback to the UI.
