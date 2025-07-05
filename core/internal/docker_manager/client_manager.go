@@ -142,7 +142,7 @@ func (m *ClientManager) loadLocalClient(clientConfig ssh.ClientConfig, wg *sync.
 		return
 	}
 
-	localClient, err := newClientFromLocal()
+	localClient, err := NewClientFromLocal()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup local docker client")
 		return

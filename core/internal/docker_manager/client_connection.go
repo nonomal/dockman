@@ -23,10 +23,10 @@ func newClientFromSSH(sshClient *ssh.Client) (*client.Client, error) {
 	return newClient, nil
 }
 
-// newClientFromLocal connects to the local docker host.
+// NewClientFromLocal connects to the local docker host.
 //
 // It is assumed the docker daemon is running and is accessible by leviathan
-func newClientFromLocal() (*client.Client, error) {
+func NewClientFromLocal() (*client.Client, error) {
 	dockerClient, err := newDockerClient(client.FromEnv)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create docker client: %w", err)
