@@ -25,7 +25,31 @@ func NewService(root string) *Service {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create git service")
 	}
-	return &Service{repo: repo, repoPath: root}
+
+	if err = commitSampleFile(repo); err != nil {
+		log.Fatal().Err(err).Msg("Failed to create sample commit")
+	}
+
+	srv := &Service{repo: repo, repoPath: root}
+	if err = srv.CommitAll(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to create commit")
+	}
+
+	return srv
+}
+
+func commitSampleFile(repo *git.Repository) error {
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	_, err = worktree.Filesystem.Create("sample-compose.yaml")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func initializeGit(root string) (*git.Repository, error) {
@@ -39,7 +63,7 @@ func initializeGit(root string) (*git.Repository, error) {
 	// or it's not a git repository, initialize
 	newRepo, err := git.PlainInitWithOptions(root, &git.PlainInitOptions{
 		InitOptions: git.InitOptions{
-			DefaultBranch: "refs/heads/main",
+			DefaultBranch: "refs/heads/local",
 		},
 		Bare: false,
 	})
