@@ -17,7 +17,7 @@ func getConsoleWriter() zerolog.ConsoleWriter {
 func getBaseLogger(verboseLogsEnv string) zerolog.Logger {
 	env, ok := os.LookupEnv(verboseLogsEnv)
 	if !ok || env == "false" {
-		return log.With().Logger().Output(getConsoleWriter())
+		return log.Level(zerolog.InfoLevel).With().Logger().Output(getConsoleWriter())
 	}
 
 	return log.With().Caller().Logger().Output(getConsoleWriter())
