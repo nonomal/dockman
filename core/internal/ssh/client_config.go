@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"errors"
 	"fmt"
 	"github.com/RA341/dockman/pkg"
 	"github.com/goccy/go-yaml"
@@ -31,12 +32,9 @@ func NewConfigManager(basedir string) (*ConfigManager, error) {
 		},
 	}
 
-	file, err := os.ReadFile(confPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if !pkg.FileExists(confPath) || len(file) == 0 {
+	yamlFile, err := os.ReadFile(confPath)
+	// If the file does not exist or is empty, create a default one
+	if errors.Is(err, os.ErrNotExist) || (err == nil && len(yamlFile) == 0) {
 		log.Info().Str("path", confPath).Msg("hosts.yaml file not found or empty config file, setting default values...")
 
 		file, err := os.OpenFile(confPath, os.O_RDWR|os.O_CREATE, 0600)
@@ -49,6 +47,10 @@ func NewConfigManager(basedir string) (*ConfigManager, error) {
 		if err = config.Write(); err != nil {
 			return nil, err
 		}
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	if err = config.Read(); err != nil {
