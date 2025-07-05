@@ -2,20 +2,14 @@ name: dockman
 services:
   dockman:
     container_name: dockman
-#    image: ghcr.io/ra341/dockman:latest
-    build:
-      dockerfile: Dockerfile
-      context: ../
+    image: ghcr.io/ra341/dockman:dev
     volumes:
       - ./stacks:/stacks
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./config:/app/config
+      - ./config/ssh:/app/config/ssh
+      - ./hosts.yaml:/app/config/hosts.yaml
     environment:
       - DOCKMAN_COMPOSE_ROOT=/stacks
       - DOCKMAN_AUTH_ENABLE=false
-      - DOCKMAN_AUTH_USERNAME=test
-      - DOCKMAN_AUTH_PASSWORD=test
-      - DOCKMAN_MACHINE_ADDR=192.168.50.111
     ports:
       - "8432:8866"
-    restart: always
