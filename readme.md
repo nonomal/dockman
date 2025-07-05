@@ -198,9 +198,9 @@ The project takes inspiration from both these excellent tools.
 > ghcr.io/ra341/dockman:dev
 > ```
 
-Dockman's multihost feature lets you orchestrate your entire container fleet from one sleek interface. 
-Jump between servers seamlessly, keep your configurations perfectly organized,
-and deploy across your infrastructure like a conductor leading an orchestra.
+Dockman's multihost feature lets you manage remote docker hosts from one interface. 
+Jump between servers, keep your configurations perfectly organized,
+and deploy across your machines.
 
 ### How It Works
 
