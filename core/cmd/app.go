@@ -27,7 +27,7 @@ import (
 
 func init() {
 	info.PrintInfo()
-	logger.ConsoleLogger()
+	logger.ConsoleLogger("DOCKMAN_VERBOSE_LOGS")
 }
 
 type App struct {

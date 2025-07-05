@@ -14,31 +14,17 @@ func getConsoleWriter() zerolog.ConsoleWriter {
 	}
 }
 
-func getBaseLogger() zerolog.Logger {
-	//env, ok := os.LookupEnv("GOUDA_LOG_SHOW_CALLER_FILE")
-	//if !ok || env == "false" {
-	//	return log.With().Logger().Output(getConsoleWriter())
-	//}
+func getBaseLogger(verboseLogsEnv string) zerolog.Logger {
+	env, ok := os.LookupEnv(verboseLogsEnv)
+	if !ok || env == "false" {
+		return log.With().Logger().Output(getConsoleWriter())
+	}
 
 	return log.With().Caller().Logger().Output(getConsoleWriter())
 }
 
-func FileConsoleLogger(logDir, logLevel string) {
-	level, err := zerolog.ParseLevel(logLevel)
-	if err != nil {
-		log.Fatal().Err(err).Msg("unable to parse log level")
-	}
-
-	log.Logger = getBaseLogger().Output(
-		zerolog.MultiLevelWriter(
-			GetFileLogger(logDir),
-			getConsoleWriter(),
-		),
-	).Level(level)
-}
-
-func ConsoleLogger() {
-	log.Logger = getBaseLogger()
+func ConsoleLogger(verboseLogsEnv string) {
+	log.Logger = getBaseLogger(verboseLogsEnv)
 }
 
 func GetFileLogger(logFile string) *lumberjack.Logger {
