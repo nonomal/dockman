@@ -15,6 +15,7 @@
 - [Why](#why-dockman)
     - [Planned Features](#planned-features)
     - [How It Compares](#how-it-compares)
+- [Multihost support](#multihost-support)
 - [Feedback](#feedback)
 - [Security Considerations](#security-considerations)
 - [Contributing](#contributing)
