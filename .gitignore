@@ -15,3 +15,4 @@ install/stacks/
 /install/config/
 /core/compose
 /core/internal/docker/controller-docker-compose.yml
+/**/hosts.yaml

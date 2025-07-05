@@ -31,8 +31,13 @@ func NewConfigManager(basedir string) (*ConfigManager, error) {
 		},
 	}
 
-	if !pkg.FileExists(confPath) {
-		log.Info().Str("path", confPath).Msg("No hosts.yaml file found, creating...")
+	file, err := os.ReadFile(confPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if !pkg.FileExists(confPath) || len(file) == 0 {
+		log.Info().Str("path", confPath).Msg("hosts.yaml file not found or empty config file, setting default values...")
 
 		file, err := os.OpenFile(confPath, os.O_RDWR|os.O_CREATE, 0600)
 		if err != nil {
