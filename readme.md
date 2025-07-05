@@ -193,11 +193,7 @@ The project takes inspiration from both these excellent tools.
 ## Multihost Support
 > [!IMPORTANT]
 >
-> This feature is currently unreleased, only available on develop tag
->
-> ```
-> ghcr.io/ra341/dockman:dev
-> ```
+> This is now available in v1.1+; ensure you have the right version installed.
 
 Dockman's multihost feature lets you manage remote docker hosts from one interface. 
 Jump between servers, keep your configurations perfectly organized,
