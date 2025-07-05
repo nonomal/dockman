@@ -1,6 +1,6 @@
-import {Box, createTheme, CssBaseline, ThemeProvider} from '@mui/material';
+import {Box, createTheme, CssBaseline, Stack, ThemeProvider, Typography} from '@mui/material';
 import {SnackbarProvider} from "./context/snackbar-context.tsx";
-import {Stack} from "./pages/stack.tsx";
+import {ComposePage} from "./pages/compose-page.tsx";
 import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
 import {DashboardPage} from "./pages/dashboard-page.tsx";
 import {NavSidebar} from "./components/sidebar.tsx";
@@ -10,6 +10,8 @@ import {AuthPage} from './pages/auth-page.tsx';
 import NotFoundPage from "./components/not-found.tsx";
 import React from 'react';
 import {useAuth} from "./hooks/auth.ts";
+import {HostProvider} from "./context/host.tsx";
+import { DescriptionOutlined } from '@mui/icons-material';
 
 export default function App() {
     return (
@@ -18,19 +20,26 @@ export default function App() {
             <SnackbarProvider>
                 <AuthProvider>
                     <BrowserRouter>
-                        <Routes>
-                            <Route path="auth" element={<AuthPage/>}/>
-                            <Route element={<PrivateRoute/>}>
-                                <Route path="/" element={<HomePage/>}>
-                                    <Route index element={<DashboardPage/>}/>
-                                    <Route path="files/:file/:child" element={<Stack/>}/>
-                                    <Route path="files/:file" element={<Stack/>}/>
-                                    <Route path="settings" element={<SettingsPage/>}/>
+                        <HostProvider>
+                            <Routes>
+                                <Route path="auth" element={<AuthPage/>}/>
+                                <Route element={<PrivateRoute/>}>
+                                    <Route path="/" element={<HomePage/>}>
+                                        <Route index element={<DashboardPage/>}/>
+                                        <Route path="files">
+                                            {/* This route now renders ONLY at the exact path "/files" */}
+                                            <Route index element={<EmptyFilePage/>}/>
+                                            {/* These routes will only match if there is a parameter */}
+                                            <Route path=":file" element={<ComposePage/>}/>
+                                            <Route path=":file/:child" element={<ComposePage/>}/>
+                                        </Route>
+                                        <Route path="settings" element={<SettingsPage/>}/>
+                                    </Route>
                                 </Route>
-                            </Route>
-                            <Route path="/not-found" element={<NotFoundPage/>}/>
-                            <Route path="*" element={<NotFoundPage/>}/>
-                        </Routes>
+                                <Route path="/not-found" element={<NotFoundPage/>}/>
+                                <Route path="*" element={<NotFoundPage/>}/>
+                            </Routes>
+                        </HostProvider>
                     </BrowserRouter>
                 </AuthProvider>
             </SnackbarProvider>
@@ -94,6 +103,33 @@ function HomePage() {
     );
 }
 
+function EmptyFilePage() {
+    return (
+        <Box
+            component="main"
+            sx={{
+                display: 'flex',
+                flexGrow: 1, // Ensures it takes up available space in a flex layout
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%', // Use 100% if inside another container, or 100vh for full page
+            }}
+        >
+            {/* Stack component is ideal for arranging a few items vertically or horizontally with spacing. */}
+            <Stack spacing={2} alignItems="center" sx={{textAlign: 'center'}}>
+                <DescriptionOutlined
+                    sx={{fontSize: '5rem', color: 'grey.400'}}
+                />
+                <Typography variant="h5" component="h1" color="text.secondary">
+                    No File Selected
+                </Typography>
+                <Typography variant="body1" color="text.disabled">
+                    Please select a file from the sidebar.
+                </Typography>
+            </Stack>
+        </Box>
+    )
+}
 
 const darkTheme = createTheme({
     palette: {

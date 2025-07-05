@@ -7,6 +7,31 @@ option go_package = "github.com/RA341/dockman/generated/git/v1";
 service GitService {
   rpc ListCommits(File) returns (CommitList) {}
   rpc Commit(CommitQuery) returns (Empty) {}
+  rpc SyncFile(FileRequest) returns (Empty) {}
+  rpc ListFileFromBranch(BranchListFileRequest) returns (BranchListFileResponse) {}
+  rpc ListBranches(ListBranchesRequest) returns (ListBranchesResponse) {}
+}
+
+message ListBranchesRequest {
+
+}
+
+message ListBranchesResponse {
+  repeated string branches = 1;
+}
+
+
+message BranchListFileRequest {
+  string branch = 1;
+}
+
+message BranchListFileResponse {
+  repeated string files = 1;
+}
+
+message FileRequest {
+  string branch = 1;
+  repeated string filepath = 2;
 }
 
 message CommitQuery {

@@ -1,4 +1,4 @@
-name: Docker build
+name: Action-Docker-build
 
 on:
   workflow_call:

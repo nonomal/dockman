@@ -66,6 +66,8 @@ message ContainerList {
   string name = 5;
   string created = 6;
   repeated Port ports = 7;
+  // name to use in selecting service in docker compose
+  string serviceName = 8;
 }
 
 // ContainerInfo holds metrics for a single Docker container.
@@ -102,4 +104,5 @@ message Empty{}
 
 message ComposeFile {
   string filename = 1;
+  repeated string selectedServices = 2;
 }

@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package docker_manager.v1;
+
+option go_package = "github.com/RA341/dockman/generated/docker_manager/v1";
+
+service DockerManagerService {
+  rpc List(Empty) returns (ListResponse) {}
+  rpc switchClient(SwitchRequest) returns (Empty) {}
+}
+
+message SwitchRequest {
+  string machineID = 1;
+}
+
+message ListResponse {
+  string activeClient = 1;
+  repeated Machine machines = 2;
+}
+
+message Machine {
+  string name = 1;
+  bool enable = 2;
+  string host = 3;
+  int32 port = 4;
+  string user = 5;
+  string password = 6;
+  string remote_public_key = 7;
+  bool use_public_key_auth = 8;
+}
+
+message Empty {}

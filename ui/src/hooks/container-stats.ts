@@ -1,64 +1,120 @@
-import {useCallback, useEffect, useState} from 'react'
-import {callRPC, useClient} from '../lib/api.ts'
-import {type ContainerStats, DockerService, ORDER, SORT_FIELD} from '../gen/docker/v1/docker_pb.ts'
-import {useSnackbar} from "./snackbar.ts"
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {callRPC, useClient} from '../lib/api.ts';
+import {type ContainerStats, DockerService, ORDER, SORT_FIELD} from '../gen/docker/v1/docker_pb.ts';
+import {useSnackbar} from "./snackbar.ts";
+import {useHost} from "./host.ts";
+
+// This map remains very useful for clean, client-side sorting.
+const sortFieldToKeyMap: Record<SORT_FIELD, keyof ContainerStats> = {
+    [SORT_FIELD.NAME]: 'name',
+    [SORT_FIELD.CPU]: 'cpuUsage',
+    [SORT_FIELD.MEM]: 'memoryUsage',
+    [SORT_FIELD.NETWORK_RX]: 'networkRx',
+    [SORT_FIELD.NETWORK_TX]: 'networkTx',
+    [SORT_FIELD.DISK_R]: 'blockRead',
+    [SORT_FIELD.DISK_W]: 'blockWrite',
+};
 
 export function useDockerStats(selectedPage?: string) {
-    const dockerService = useClient(DockerService)
-    const {showError} = useSnackbar()
+    const dockerService = useClient(DockerService);
+    const {showError} = useSnackbar();
+    const {selectedHost} = useHost()
 
-    const [containers, setContainers] = useState<ContainerStats[]>([])
-    const [loading, setLoading] = useState(true)
+    // Holds the latest data received from the server, unsorted.
+    const [rawContainers, setRawContainers] = useState<ContainerStats[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const [field, setField] = useState(SORT_FIELD.MEM)
-    const [orderBy, setOrderBy] = useState(ORDER.DSC)
-    const [refreshInterval, setRefreshInterval] = useState(2000)
+    // This state is the source of truth for the desired sort order.
+    const [sortField, setSortField] = useState(SORT_FIELD.MEM);
+    const [sortOrder, setSortOrder] = useState(ORDER.DSC);
+    const [refreshInterval, setRefreshInterval] = useState(2500);
+    const isInitialLoad = useRef(true);
+    const resort = useRef(false)
 
-    const fetchStats = useCallback(async () => {
-        const {val, err} = await callRPC(() => dockerService.stats({
-            sortBy: field,
-            order: orderBy,
-            file: selectedPage ? {filename: selectedPage} : undefined
-        }))
-        if (err) {
-            showError(err)
-            return
-        }
+    useEffect(() => {
+        let isCancelled = false;
 
-        setContainers(val?.containers || [])
+        const fetchData = async () => {
+            const {val, err} = await callRPC(() => dockerService.stats({
+                sortBy: sortField,
+                order: sortOrder,
+                file: selectedPage ? {filename: selectedPage} : undefined
+            }));
 
-    }, [dockerService, field, orderBy, selectedPage])
+            if (isCancelled) return;
 
-    const modifySort = (newField: SORT_FIELD, newOrderBy: ORDER) => {
-        setField(newField)
-        setOrderBy(newOrderBy)
-    }
+            if (err) {
+                showError(err);
+            } else {
+                setRawContainers(val?.containers || []);
+            }
 
-    const fetchWithLoading = useCallback(async () => {
+            if (isInitialLoad.current) {
+                setLoading(false);
+                isInitialLoad.current = false;
+            }
+        };
+
+        fetchData();
+
+        const intervalId = setInterval(fetchData, refreshInterval);
+
+        return () => {
+            clearInterval(intervalId);
+            isCancelled = true;
+        };
+    }, [selectedHost, dockerService, selectedPage, sortField, sortOrder, refreshInterval]);
+
+    useEffect(() => {
+        // clear containers on host change
+        setRawContainers([])
         setLoading(true)
-        await fetchStats()
-        setLoading(false)
-    }, [fetchStats])
+        isInitialLoad.current = true;
+    }, [selectedHost]);
 
-    // set loading state only at the initial load
+    // Optimistic Client-Side Sorting
+    // This useMemo provides the INSTANT sort feedback to the UI.
+    // It runs immediately whenever `rawContainers` or the sort state changes.
     useEffect(() => {
-        fetchWithLoading().then()
-    }, []) // Empty dependency array runs only once.
+        if (resort.current) {
+            // sort and let the server handle subsequent sorts until order is changed
+            resort.current = false
+            const key = sortFieldToKeyMap[sortField];
+            const res = [...rawContainers].sort((a, b) => {
+                const valA = a[key];
+                const valB = b[key];
+                let comparison = 0;
 
-    useEffect(() => {
-        fetchStats().then()
-        const intervalId = setInterval(fetchStats, refreshInterval)
-        return () => clearInterval(intervalId)
-    }, [fetchWithLoading, fetchStats, refreshInterval])
+                if (typeof valA === 'bigint' && typeof valB === 'bigint') {
+                    if (valA < valB) comparison = -1;
+                    if (valA > valB) comparison = 1;
+                } else if (typeof valA === 'number' && typeof valB === 'number') {
+                    comparison = valA - valB;
+                } else {
+                    comparison = String(valA).localeCompare(String(valB));
+                }
+
+                return sortOrder === ORDER.ASC ? comparison : -comparison;
+            })
+            setRawContainers(res)
+        }
+    }, [rawContainers, sortField, sortOrder]);
+
+
+    const handleSortChange = useCallback((newField: SORT_FIELD, newOrderBy: ORDER) => {
+        setSortField(newField)
+        setSortOrder(newOrderBy)
+        // immediate resort for ui
+        resort.current = true
+    }, []);
 
     return {
-        containers,
+        containers: rawContainers,
         loading,
-        fetchStats,
-        field,
-        orderBy,
-        refreshInterval,
-        modifySort,
+        sortField,
+        sortOrder,
+        handleSortChange,
         setRefreshInterval,
-    }
+        refreshInterval,
+    };
 }

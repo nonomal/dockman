@@ -1,4 +1,4 @@
-name: Release Pipeline
+name: Release-Tag
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     paths:
       - .github/workflows/action-*
       - .github/workflows/release*
-      - backend/**
+      - core/**
       - ui/**
 
 permissions:

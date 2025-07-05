@@ -3,17 +3,19 @@ import {
     Divider,
     Drawer,
     List,
+    ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
     Toolbar,
     Typography
 } from '@mui/material';
-import {Dashboard, Logout, Settings} from '@mui/icons-material';
+import {Dashboard, Logout} from '@mui/icons-material';
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
 import {useAuth} from "../hooks/auth.ts";
 import {FileList} from './file-bar.tsx';
+import HostSelectDropdown from "./host-selector.tsx";
 
 export function NavSidebar() {
     const navigate = useNavigate();
@@ -32,8 +34,19 @@ export function NavSidebar() {
             anchor="left"
         >
             <Box>
-                <Toolbar>
-                    <Box component="img" sx={{height: 40, width: 40, mr: 2}} alt="Logo" src="/dockmanTBD.png"/>
+                <Toolbar sx={{minHeight: 'auto', py: 1}}>
+                    <Box
+                        component="img"
+                        sx={{
+                            height: '100%',
+                            maxHeight: 40,
+                            width: 'auto',
+                            objectFit: 'contain',
+                            mr: 2
+                        }}
+                        alt="Logo"
+                        src="/dockman.svg"
+                    />
                     <Typography variant="h5" noWrap>Dockman</Typography>
                 </Toolbar>
                 <Divider/>
@@ -44,6 +57,10 @@ export function NavSidebar() {
                     </ListItemButton>
                 </List>
                 <Divider/>
+                <ListItem>
+                    <HostSelectDropdown/>
+                </ListItem>
+                <Divider/>
             </Box>
 
             <FileList/>
@@ -51,10 +68,10 @@ export function NavSidebar() {
             <Box>
                 <Divider/>
                 <List>
-                    <ListItemButton selected={location.pathname === `/settings`} component={RouterLink} to="/settings">
-                        <ListItemIcon><Settings/></ListItemIcon>
-                        <ListItemText primary="Settings"/>
-                    </ListItemButton>
+                    {/*<ListItemButton selected={location.pathname === `/settings`} component={RouterLink} to="/settings">*/}
+                    {/*    <ListItemIcon><Settings/></ListItemIcon>*/}
+                    {/*    <ListItemText primary="Settings"/>*/}
+                    {/*</ListItemButton>*/}
                     <ListItemButton onClick={handleLogout}>
                         <ListItemIcon><Logout/></ListItemIcon>
                         <ListItemText primary="Logout"/>

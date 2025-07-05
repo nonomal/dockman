@@ -1,8 +1,8 @@
 import {
     Box,
+    CircularProgress,
     Fade,
     IconButton,
-    LinearProgress,
     Paper,
     Skeleton,
     Table,
@@ -13,10 +13,11 @@ import {
     TableRow,
     TableSortLabel,
     Tooltip,
-    Typography
+    Typography,
+    useTheme
 } from "@mui/material";
 import {type ContainerStats, ORDER, SORT_FIELD} from "../gen/docker/v1/docker_pb.ts";
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import GetAppIcon from '@mui/icons-material/GetApp';
 import PublishIcon from '@mui/icons-material/Publish';
 import EditIcon from '@mui/icons-material/Edit';
@@ -40,17 +41,6 @@ export const ContainerStatTable = (
         order,
         loading
     }: ContainersTableProps) => {
-
-    const [isLoaded, setIsLoaded] = useState(false);
-    // This effect ensures the fade-in only happens once
-    useEffect(() => {
-        // set a small timeout to ensure React has committed the initial
-        // DOM with opacity: 0 before we trigger the transition to opacity: 1.
-        // This prevents the fade from being skipped on very fast loads.
-        if (!loading && !isLoaded) {
-            setTimeout(() => setIsLoaded(true), 50); // Small delay for the transition to catch
-        }
-    }, [loading, isLoaded]);
 
     const isEmpty = !loading && containers.length === 0;
 
@@ -86,7 +76,7 @@ export const ContainerStatTable = (
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const handleCopy = (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
         event.stopPropagation();
-        navigator.clipboard.writeText(id);
+        navigator.clipboard.writeText(id).then();
         setCopiedId(id);
         // After 1.5 seconds, reset the state to clear the checkmark
         setTimeout(() => {
@@ -142,9 +132,9 @@ export const ContainerStatTable = (
                     <TableBody
                         sx={{
                             // Opacity is 0 initially, and 1 after the first load.
-                            opacity: isLoaded ? 1 : 0,
+                            // opacity: isLoaded ? 1 : 1,
                             // A CSS transition animates the change in opacity.
-                            transition: 'opacity 100ms ease-in-out',
+                            // transition: 'opacity 100ms ease-in-out',
                         }}
                     >
                         {loading ? (
@@ -172,62 +162,61 @@ export const ContainerStatTable = (
                             containers.map((container) => {
                                 const memUsagePercent = container.memoryLimit > 0 ? (Number(container.memoryUsage) / Number(container.memoryLimit)) * 100 : 0;
                                 return (
-                                    <TableRow key={container.id} sx={{'&:last-child td, &:last-child th': {border: 0}}}>
-                                        <TableCell component="th" scope="row">
-                                            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
-                                                <span>{container.name}</span>
-                                                <Tooltip
-                                                    title={copiedId === container.id ? "Copied!" : "Copy container ID"}
-                                                    placement="top">
-                                                    <IconButton
-                                                        onClick={(e) => handleCopy(e, container.id)}
-                                                        size="small"
-                                                        sx={{position: 'relative'}}
-                                                    >
-                                                        {/* The check icon is only visible when its ID is the copiedId */}
-                                                        <CheckIcon
-                                                            fontSize="inherit"
-                                                            sx={{
-                                                                position: 'absolute',
-                                                                opacity: copiedId === container.id ? 1 : 0,
-                                                                transition: 'opacity 0.2s',
-                                                                color: 'success.main' // Give it a green color
-                                                            }}
-                                                        />
-                                                        {/* The copy icon is visible by default and fades out when copied */}
-                                                        <ContentCopy
-                                                            fontSize="inherit"
-                                                            sx={{
-                                                                opacity: copiedId === container.id ? 0 : 1,
-                                                                transition: 'opacity 0.2s',
-                                                            }}
-                                                        />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                                <Box sx={{width: '100%', mr: 1}}>
-                                                    <LinearProgress variant="determinate" value={container.cpuUsage}/>
+                                    <Fade in={true} timeout={400}>
+                                        <TableRow key={container.id}
+                                                  sx={{'&:last-child td, &:last-child th': {border: 0}}}>
+                                            <TableCell component="th" scope="row">
+                                                <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
+                                                    <span>{container.name}</span>
+                                                    <Tooltip
+                                                        title={copiedId === container.id ? "Copied!" : "Copy container ID"}
+                                                        placement="top">
+                                                        <IconButton
+                                                            onClick={(e) => handleCopy(e, container.id)}
+                                                            size="small"
+                                                            sx={{position: 'relative'}}
+                                                        >
+                                                            {/* The check icon is only visible when its ID is the copiedId */}
+                                                            <CheckIcon
+                                                                fontSize="inherit"
+                                                                sx={{
+                                                                    position: 'absolute',
+                                                                    opacity: copiedId === container.id ? 1 : 0,
+                                                                    transition: 'opacity 0.2s',
+                                                                    color: 'success.main' // Give it a green color
+                                                                }}
+                                                            />
+                                                            {/* The copy icon is visible by default and fades out when copied */}
+                                                            <ContentCopy
+                                                                fontSize="inherit"
+                                                                sx={{
+                                                                    opacity: copiedId === container.id ? 0 : 1,
+                                                                    transition: 'opacity 0.2s',
+                                                                }}
+                                                            />
+                                                        </IconButton>
+                                                    </Tooltip>
                                                 </Box>
-                                                <Box sx={{minWidth: 35}}>
-                                                    <Typography variant="body2"
-                                                                color="text.secondary">{`${container.cpuUsage.toFixed(2)}%`}</Typography>
-                                                </Box>
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell>
-                                            {`${formatBytes(Number(container.memoryUsage))} / ${formatBytes(Number(container.memoryLimit))} 
+                                            </TableCell>
+                                            <TableCell>
+                                                <CircularStatWithTrack
+                                                    value={container.cpuUsage}
+                                                    size={48}
+                                                    thickness={1}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                {`${formatBytes(Number(container.memoryUsage))} / ${formatBytes(Number(container.memoryLimit))} 
                                             (${memUsagePercent.toFixed(1)}%)`}
-                                        </TableCell>
-                                        <TableCell>
-                                            {`${formatBytes(Number(container.networkRx))} / ${formatBytes(Number(container.networkTx))}`}
-                                        </TableCell>
-                                        <TableCell>
-                                            {`${formatBytes(Number(container.blockRead))} / ${formatBytes(Number(container.blockWrite))}`}
-                                        </TableCell>
-                                    </TableRow>
+                                            </TableCell>
+                                            <TableCell>
+                                                {`${formatBytes(Number(container.networkRx))} / ${formatBytes(Number(container.networkTx))}`}
+                                            </TableCell>
+                                            <TableCell>
+                                                {`${formatBytes(Number(container.blockRead))} / ${formatBytes(Number(container.blockWrite))}`}
+                                            </TableCell>
+                                        </TableRow>
+                                    </Fade>
                                 )
                             })
                         )}
@@ -246,3 +235,58 @@ const formatBytes = (bytes: number | bigint, decimals = 2) => {
     const i = Math.floor(Math.log(Number(bytes)) / Math.log(k));
     return parseFloat((Number(bytes) / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
+
+
+interface CircularStatProps {
+    value: number,
+    size: number,
+    thickness: number,
+}
+
+function CircularStatWithTrack(props: CircularStatProps) {
+    const {value, size = 56, thickness = 4} = props;
+    const theme = useTheme();
+
+    return (
+        <Box sx={{position: 'relative', display: 'inline-flex'}}>
+            {/* Background Track */}
+            <CircularProgress
+                variant="determinate"
+                sx={{
+                    color: theme.palette.grey[theme.palette.mode === 'light' ? 200 : 800],
+                }}
+                size={size}
+                thickness={thickness}
+                value={100} // The track is always full
+            />
+            {/* Actual Progress */}
+            <CircularProgress
+                variant="determinate"
+                value={value}
+                size={size}
+                thickness={thickness}
+                sx={{
+                    position: 'absolute',
+                    left: 0,
+                }}
+            />
+            {/* Text Label */}
+            <Box
+                sx={{
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <Typography variant="caption" component="div" color="text.secondary" sx={{fontWeight: 'bold'}}>
+                    {`${value.toFixed(2)}%`}
+                </Typography>
+            </Box>
+        </Box>
+    );
+}
