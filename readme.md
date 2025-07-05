@@ -10,12 +10,13 @@
 
 ## Contents
 
-- [Install](#Install)
+- [Install](#install)
     - [Config](#config)
 - [Why](#why-dockman)
     - [Planned Features](#planned-features)
     - [How It Compares](#how-it-compares)
 - [Feedback](#feedback)
+- [Security Considerations](#security-considerations)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -37,8 +38,6 @@ docker run --rm -p 8866:8866 -v /var/run/docker.sock:/var/run/docker.sock ghcr.i
 Access the frontend at http://localhost:8866
 
 ### Docker Compose
-
-For a persistent installation, use Docker Compose with the configuration below.
 
 > [!IMPORTANT]
 >
@@ -67,7 +66,7 @@ services:
     restart: always
 ```
 
-### Example with Actual Path
+#### Example with Actual Path
 
 Replace `/path/to/stacks` with your actual directory path:
 
@@ -88,14 +87,12 @@ services:
 
 ### Config
 
-#### Environment Variables
-
 Dockman can be configured using environment variables to customize its behavior according to your needs.
 
-#### Available Variables
-
-When you start a Dockman instance, a comprehensive table of all available environment variables for your version will be
+When you start a Dockman instance, a comprehensive table of all 
+available environment variables for your version will be
 automatically printed in the startup logs.
+
 This table includes:
 
 - Config name
@@ -106,16 +103,9 @@ This table includes:
 For a complete list of available configuration options for your version,
 refer to the environment variables table displayed in your startup logs
 
-Example Image,
-
-![Environment Variables Table](.github/img/env.png)
-
-> [!NOTE]
->
-> The available environment variables may vary between different versions of Dockman.
->
-> Always check the startup logs for the most accurate and
-> up-to-date configuration options for your specific version.
+> Example Image,
+> 
+> ![Environment Variables Table](.github/img/env.png)
 
 #### Setting Environment Variables
 
@@ -142,6 +132,7 @@ DOCKMAN_AUTH_PASSWORD=wow
 ```
 
 ```yaml
+# dockman-compose.yaml
 dockman:
   image: ghcr.io/ra341/dockman:latest
   env_file:
@@ -154,8 +145,13 @@ Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/
 
 ## Why Dockman
 
-I built Dockman to solve a specific problem in my homelab setup. While there are excellent Docker management tools
-available, none quite matched how I prefer to work.
+I built Dockman to solve a specific problem in my homelab setup. While there are excellent Docker management tools available, none quite matched how I prefer to work.
+
+Before Dockman, I had a repository of my compose files which I used to scp over to my server on every change—as exhausting as it sounds. 
+But it let me work in my IDE to edit configurations, which was the one thing keeping me sane in this otherwise tedious workflow.
+
+So I thought: what if I could keep my IDE workflow but ditch the manual file shuffling? Dockman bridges that gap, 
+giving you the best of both worlds—the comfort of your local development environment with the power of effortless remote deployment.
 
 Dockman is designed for people who:
 
@@ -194,7 +190,6 @@ hands-on control over your configurations.
 The project takes inspiration from both these excellent tools.
 
 ## Multihost Support
-
 > [!IMPORTANT]
 >
 > This feature is currently unreleased, only available on develop tag
@@ -203,49 +198,144 @@ The project takes inspiration from both these excellent tools.
 > ghcr.io/ra341/dockman:dev
 > ```
 
-Dockman supports managing multiple Docker hosts from a single instance,
-allowing you to manage containers across different servers seamlessly.
-
-This multihost feature enables you to manage Docker on remote servers,
-switch between different hosts without losing configurations, maintain isolated configurations for each host,
-and deploy and monitor across your entire infrastructure.
+Dockman's multihost feature lets you manage remote docker hosts from one interface. 
+Jump between servers, keep your configurations perfectly organized,
+and deploy across your machines.
 
 ### How It Works
 
 #### Agentless Architecture
 
-Dockman uses an **agentless approach** with SSH connections to communicate with remote Docker hosts.
-
-No additional software needs to be installed on remote servers—only SSH access is required to manage Docker daemons
-securely.
+No bloated agents cluttering your servers—Dockman keeps it clean with **SSH-only connections**. 
+Just point it at your Docker hosts and watch the magic happen. All you need is SSH access.
 
 #### Git-Based Configuration Management
 
-Dockman leverages **Git branches** for configuration management,
-with each host having its own dedicated branch.
+Each host gets its own **Git branch**. Tweak one host's setup without breaking another's. 
+When you switch hosts, Dockman automatically saves your work, hops to the right branch, 
+and connects to your target server.
 
-This enables independent modifications where changes to one host don't affect others,
-while still allowing configuration sync between branches when needed.
-
-Each host maintains its own Docker Compose files, environment variables, service configurations,
-and deployment settings.
-
-When switching hosts, Dockman automatically saves changes to the current branch,
-switches to the target host's branch, and connects to that host's Docker daemon.
+Your Docker Compose files, environment variables, and deployment settings stay perfectly isolated per host, 
+but you can still sync configurations between branches.
 
 ### Prerequisites
-
-Before setting up multihost:
 
 1. **SSH Access**: SSH access to all target Docker hosts (recommended: public-private key auth)
 2. **Docker Access**: SSH user must have Docker daemon access without requiring root
 3. **Network**: Docker daemon running on remote hosts with network connectivity to Dockman
 
-### Getting Started
+### Setup
 
-TODO
+Begin by creating `hosts.yaml` as a file before mounting the volume.
 
-### Troubleshooting
+> [!CAUTION]
+> If this file doesn't exist, Docker Compose will automatically create a directory with this name, causing the configuration to fail.
+
+```yaml
+name: dockman
+services:
+  dockman:
+    container_name: dockman
+    image: ghcr.io/ra341/dockman:dev
+    environment:
+      - DOCKMAN_COMPOSE_ROOT=/home/zaphodb/stacks
+    volumes:
+      - /home/zaphodb/stacks:/home/zaphodb/stacks
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/ssh:/app/config/ssh
+      - ./hosts.yaml:/app/config/hosts.yaml
+    ports:
+      - "8866:8866"
+    restart: always
+```
+
+#### Adding Machines
+
+To configure additional machines in your YAML configuration file. This process involves defining connection details and authentication methods for each target system.
+
+##### Structure
+
+* `default_host`: set a default machine to automatically connect on startup
+* `enable_local_docker`: use the local docker from env mounted using `/var/run/docker.sock:/var/run/docker.sock`
+
+```yaml
+default_host: local
+enable_local_docker: true
+machines:
+  apollo:
+    enable: true
+    host: 192.169.69.0
+    port: 22
+    user: root
+    use_public_key_auth: true
+```
+
+##### Required Information
+
+Before adding a machine, collect the following details for each target system:
+
+- **Host**: IP address or hostname of the target machine
+- **Port**: SSH port (typically 22, though often changed for security purposes)
+- **User**: Username for SSH connection (commonly `root`, `ubuntu`, or a dedicated service account)
+
+##### Authentication Hierarchy
+
+Dockman supports multiple authentication methods and attempts them in the following priority order:
+
+1. **Public Key Authentication**: Enable by setting `use_public_key_auth: true`. This method requires transferring the SSH public key from `config/ssh/id_rsa.pub` to the remote machine's `authorized_keys` file.
+
+2. **Password Authentication**: When `use_public_key_auth: false`, Dockman will attempt password-based authentication using the value specified in `password: somepassword`.
+
+3. **Host Authentication**: If no password is provided, Dockman falls back to the SSH configuration in your machine's user directory (typically `~/.ssh`).
+   > NOTE
+   > This method only works with native executables and was intended for local development.
+   >
+   > It will fail when running in a Docker container.
+
+### Configuration Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `enable` | boolean | Yes | Controls whether this machine configuration is active |
+| `host` | string | Yes | IP address or hostname of the target machine |
+| `port` | integer | Yes | SSH port number (standard port is 22) |
+| `user` | string | Yes | SSH username for establishing the connection |
+| `password` | string | No | SSH password for authentication (if not using key-based auth) |
+| `remote_public_key` | string | No | Automatically populated during connection - do not modify manually |
+| `use_public_key_auth` | boolean | Yes | Enables public key authentication method |
+
+#### Example: Adding Multiple Machines
+
+```yaml
+default_host: local
+enable_local_docker: true
+machines:
+  apollo:
+    enable: true
+    host: 192.169.69.0
+    port: 22
+    user: root
+    remote_public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vX9j...
+    use_public_key_auth: true
+  
+  ares: # The machines can be named whatever you want
+    enable: true
+    host: 10.0.1.100
+    port: 2222
+    user: deploy
+    password: someSecretPassword # this machine will use password auth
+    remote_public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vX9j... # will be automatically set, NEVER MODIFY MANUALLY
+  
+  artemis:
+    enable: false  # Temporarily disabled
+    host: staging.example.com
+    port: 22
+    user: ubuntu
+    remote_public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vX9j...
+    use_public_key_auth: true
+```
+
+#### Troubleshooting
 
 **SSH Connection Failed:**
 
@@ -266,12 +356,7 @@ ssh user@host-address 'docker version'
 
 ## Security Considerations
 
-### Docker Daemon Access
-
-**Critical Warning**: Granting access to the Docker daemon via `docker.sock` provides root-level access to the host
-system.
-
-**Don't Be a Dumb Dumb - Required Security Measures**:
+### **Security Measures aka Don't Be a Dumb Dumb**:
 
 - **Never expose dockman to the internet** - Seriously, don't be that person. Keep it isolated within your local network
 - **Use VPN access only** - Use secure VPN services like Tailscale for remote access
@@ -287,8 +372,7 @@ system.
 - **Local config repos are fine** - It's okay to check secrets into your local configuration repository
 - **Never push to untrusted remotes** - Don't push your secrets to GitHub, GitLab, or any public/untrusted remote
   server (your API keys don't need to be famous)
-- **Always verify your push destination** - Double-check where you're pushing your repo before hitting enter (measure
-  twice, push once)
+- **Always verify your push destination** - Double-check where you're pushing your repo before hitting enter.
 - **Use private, secured repositories only** - If you must use a remote, ensure it's a private, properly secured
   repository that you control
 
