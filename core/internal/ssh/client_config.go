@@ -47,8 +47,6 @@ func NewConfigManager(basedir string) (*ConfigManager, error) {
 		if err = config.Write(); err != nil {
 			return nil, err
 		}
-	} else {
-		return nil, err
 	}
 
 	if err = config.Read(); err != nil {
