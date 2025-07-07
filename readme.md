@@ -4,17 +4,17 @@
   <p>
     Dockman is a tool designed to simplify the management of Docker Compose files, particularly for homelab environments. It provides a straightforward way to edit, track, and back up your compose configurations.
   </p>
+  <img src="https://github.com/user-attachments/assets/b29be7fd-15fb-4584-8136-d44a1a0acf25" alt="Dockman Demo" width="800">
 </div>
-
-![dockmanv1](https://github.com/user-attachments/assets/a927aba2-fe96-44ee-b194-bdaab9436948)
 
 ## Contents
 
 - [Install](#install)
     - [Config](#config)
+- [Roadmap](#roadmap)
 - [Why](#why-dockman)
-    - [Planned Features](#planned-features)
     - [How It Compares](#how-it-compares)
+- [File Layout](#file-layout)
 - [Multihost support](#multihost-support)
 - [Feedback](#feedback)
 - [Security Considerations](#security-considerations)
@@ -42,11 +42,11 @@ Access the frontend at http://localhost:8866
 
 > [!IMPORTANT]
 >
-> The stacks directory path must be identical in all three locations:
+> The stacks directory path must be absloute and identical in all three locations:
 >
 > * 1️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
 > * 2️⃣ The host side of the volume `/path/to/stacks`
-> * 3️⃣ The container side of the volume `/path/to/stacks)`
+> * 3️⃣ The container side of the volume `/path/to/stacks`
 >
 > This path consistency is essential for Dockman to locate and manage your compose files properly.
 
@@ -146,9 +146,22 @@ dockman:
 
 Dockman follows [semver](https://semver.org/) and tags its image as such.
 
+You can pin a dockman version using specific version tags
+
 Find all available tags [here](https://github.com/RA341/dockman/pkgs/container/dockman)
 
-You can pin a dockman version using specific version tags:
+> [!TIP]
+> We recommend using (`latest`) or (`vX`)
+
+#### Tags
+
+| Tag Pattern | Description                          | Example  | Recommended For                          |
+|-------------|--------------------------------------|----------|------------------------------------------|
+| `vX.Y.Z`    | Exact version                        | `v1.2.0` | Pin (No updates)                         |
+| `vX.Y`      | Latest patch for minor version       | `v1.2`   | Bug fixes                                |
+| `vX`        | Latest minor/patch for major version | `v1`     | New features                             |
+| `latest`    | Latest stable release                | `latest` | Always get the latest updates            |
+| `dev`       | Development builds                   | `dev`    | Contributing/testing unreleased features |
 
 ```bash
 # Pin to a specific version
@@ -167,16 +180,6 @@ docker pull ghcr.io/ra341/dockman:latest
 docker pull ghcr.io/ra341/dockman:dev
 ```
 
-#### Available Tags
-
-| Tag Pattern | Description                          | Example  | Recommended For                          |
-|-------------|--------------------------------------|----------|------------------------------------------|
-| `vX.Y.Z`    | Exact version                        | `v1.2.0` | Pin (No updates)                         |
-| `vX.Y`      | Latest patch for minor version       | `v1.2`   | Bug fixes                                |
-| `vX`        | Latest minor/patch for major version | `v1`     | New features                             |
-| `latest`    | Latest stable release                | `latest` | Always get the latest updates            |
-| `dev`       | Development builds                   | `dev`    | Contributing/testing unreleased features |
-
 #### Docker Compose Example
 
 ```yaml
@@ -191,14 +194,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
-> [!TIP]
-> We recommend using (`latest`) or (`vX`)
-
 ## Getting Help
 
 Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/discussions).
 
-## Features & Roadmap
+## Roadmap
 
 ### ✅ Completed
 
@@ -261,6 +261,41 @@ embraces direct compose file editing—like working with your favorite text edit
 hands-on control over your configurations.
 
 The project takes inspiration from both these excellent tools.
+
+## File Layout
+
+Dockman keeps things simple with a flat-ish structure that makes sense for homelab setups.
+
+### The Rules
+
+- **No nested folders** - You can create folders in the root directory, but that's it. No folders inside folders.
+- **Think startup-only** - Any file in dockman should only be needed when your containers start up. Think `compose.yaml`, `.env` files, and initial config files.
+- **Keep data separate** - Application data like databases, logs, or user-generated content doesn't belong here. Mount those elsewhere.
+
+### The Philosophy
+
+Your compose setup should be a clean collection of:
+- Core `compose.yaml` files
+- Supporting `.env` files  
+- configuration files
+
+That's it. If your container needs to write to it after startup, it probably doesn't belong in dockman.
+
+### Example Structure
+```
+stacks/
+├── .env # a global .env file that can be read by all compose files 
+├── nextcloud/
+│   ├── compose.yaml
+│   ├── .env
+│   └── config.php
+├── traefik/
+│   ├── compose.yaml
+│   └── traefik.yml
+└── media-compose.yaml # this file does not require any supporting files so it is placed at root
+```
+
+Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/issues) and we can argue about it.
 
 ## Multihost Support
 
@@ -361,7 +396,7 @@ machines:
 
 ```yaml
 default_host: apollo # apollo will be the default connecting machine 
-enable_local_docker: true # load the local client mounted at/var/run/docker.sock
+enable_local_docker: true # load the local client mounted at /var/run/docker.sock
 machines:
   apollo:
     enable: true
@@ -375,7 +410,7 @@ machines:
     host: 10.0.1.100
     port: 2222
     user: deploy
-    password: someSecretPassword # this machines uses password auth
+    password: someSecretPassword # this machine will use password auth
     use_public_key_auth: false
 
   artemis:
