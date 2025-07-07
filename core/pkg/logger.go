@@ -3,7 +3,6 @@ package pkg
 import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
 )
 
@@ -25,14 +24,4 @@ func getBaseLogger(verboseLogsEnv string) zerolog.Logger {
 
 func ConsoleLogger(verboseLogsEnv string) {
 	log.Logger = getBaseLogger(verboseLogsEnv)
-}
-
-func GetFileLogger(logFile string) *lumberjack.Logger {
-	return &lumberjack.Logger{
-		Filename:   logFile,
-		MaxSize:    10, // MB
-		MaxBackups: 5,  // number of backups
-		MaxAge:     30, // days
-		Compress:   true,
-	}
 }
