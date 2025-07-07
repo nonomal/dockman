@@ -43,8 +43,8 @@ jobs:
           tags: |
             type=raw,value=latest,enable=true
           labels: |
-            org.opencontainers.image.title=${{ inputs.title }}
-            org.opencontainers.image.description=Docker image for ${{ inputs.title }}.
+            org.opencontainers.image.title=Dockman updater
+            org.opencontainers.image.description=Docker image for dockman updater.
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
