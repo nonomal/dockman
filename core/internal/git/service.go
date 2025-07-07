@@ -26,7 +26,7 @@ func NewService(root string) *Service {
 		log.Fatal().Err(err).Msg("Failed to create git service")
 	}
 
-	if err = commitSampleFile(repo); err != nil {
+	if err = commitSampleFile(root, repo); err != nil {
 		log.Fatal().Err(err).Msg("Failed to create sample commit")
 	}
 
@@ -38,15 +38,21 @@ func NewService(root string) *Service {
 	return srv
 }
 
-func commitSampleFile(repo *git.Repository) error {
+func commitSampleFile(root string, repo *git.Repository) error {
 	worktree, err := repo.Worktree()
 	if err != nil {
 		return err
 	}
 
-	_, err = worktree.Filesystem.Create("sample-compose.yaml")
+	dir, err := os.ReadDir(root)
 	if err != nil {
 		return err
+	}
+
+	if len(dir) == 0 {
+		if _, err = worktree.Filesystem.Create("sample-compose.yaml"); err != nil {
+			return err
+		}
 	}
 
 	return nil
