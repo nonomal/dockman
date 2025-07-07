@@ -15,7 +15,6 @@ import ErrorIcon from '@mui/icons-material/Error';
 import {Commit,} from '@mui/icons-material';
 import {useCallback, useEffect, useRef, useState} from "react";
 import {callRPC, downloadFile, uploadFile, useClient} from "../lib/api.ts";
-import * as monacoEditor from "monaco-editor";
 import {GitService} from "../gen/git/v1/git_pb.ts";
 import {useSnackbar} from "../hooks/snackbar.ts";
 import {MonacoEditor} from "../components/editor.tsx";
@@ -32,7 +31,7 @@ export function StackEditor({selectedPage}: EditorProps) {
     const gitClient = useClient(GitService);
     const {showSuccess, showError} = useSnackbar();
 
-    const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>(null);
+    // const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>(null);
     const [fileContent, setFileContent] = useState("")
 
     const [loading, setLoading] = useState(false)
@@ -134,15 +133,15 @@ export function StackEditor({selectedPage}: EditorProps) {
         }
     };
 
-    function handleEditorDidMount(
-        editor: monacoEditor.editor.IStandaloneCodeEditor
-    ): void {
-        editorRef.current = editor
-        // editor.onDidChangeModelContent(() => {
-        //     const currentValue = editor.getValue();
-        //     setFileContent(currentValue);
-        // });
-    }
+    // function handleEditorDidMount(
+    //     editor: monacoEditor.editor.IStandaloneCodeEditor
+    // ): void {
+    //     editorRef.current = editor
+    //     // editor.onDidChangeModelContent(() => {
+    //     //     const currentValue = editor.getValue();
+    //     //     setFileContent(currentValue);
+    //     // });
+    // }
 
     const handleCommitConfirm = () => {
         if (commitMessage.trim()) {
@@ -222,7 +221,7 @@ export function StackEditor({selectedPage}: EditorProps) {
                                         selectedPage={selectedPage}
                                         fileContent={fileContent}
                                         handleEditorChange={handleEditorChange}
-                                        handleEditorDidMount={handleEditorDidMount}
+                                        // handleEditorDidMount={handleEditorDidMount}
                                     />
                                 )}
                             </Box>

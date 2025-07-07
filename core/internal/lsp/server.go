@@ -2,21 +2,41 @@ package lsp
 
 import (
 	"context"
+	"github.com/RA341/dockman/pkg"
 	"github.com/goccy/go-yaml"
+	"github.com/rs/zerolog/log"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
-	"log/slog"
 )
 
 type Server struct {
 	conn jsonrpc2.Conn
 	// documents stores the content of open files.
-	documents Map[protocol.DocumentURI, string]
+	documents pkg.Map[protocol.DocumentURI, string]
+}
+
+// StartLSP starts an LSP session on the given stream.
+// It blocks until the client disconnects.
+func StartLSP(opts ...LspOpts) error {
+	config := ParseOpts(opts...)
+
+	jsonStream := jsonrpc2.NewStream(config.stream)
+
+	s := NewServer()
+	ctx, conn, _ := protocol.NewServer(context.Background(), s, jsonStream, config.logger)
+	s.conn = conn
+
+	log.Info().Msg("LSP Server Connected and Listening.")
+	config.logger.Info("Starting lsp server")
+	<-ctx.Done()
+	config.logger.Info("Closing lsp server")
+
+	return nil
 }
 
 func NewServer() *Server {
 	return &Server{
-		documents: Map[protocol.DocumentURI, string]{},
+		documents: pkg.Map[protocol.DocumentURI, string]{},
 	}
 }
 
@@ -48,6 +68,7 @@ func (s *Server) Exit(ctx context.Context) error {
 }
 
 func (s *Server) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) (err error) {
+	log.Debug().Msg("DidOpen")
 	s.documents.Store(params.TextDocument.URI, params.TextDocument.Text)
 
 	// After opening, we should immediately analyze the document for errors.
@@ -55,8 +76,20 @@ func (s *Server) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocume
 	return nil
 }
 
+func (s *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) (err error) {
+	log.Debug().Msg("DidChange")
+	// The ContentChanges array contains the full text of the document
+	// because we requested TextDocumentSyncKindFull.
+	content := params.ContentChanges[0].Text
+	s.documents.Store(params.TextDocument.URI, content)
+	s.analyzeAndPublishDiagnostics(ctx, params.TextDocument.URI, content)
+	return nil
+}
+
 func (s *Server) analyzeAndPublishDiagnostics(ctx context.Context, uri protocol.DocumentURI, content string) {
 	var diagnostics []protocol.Diagnostic
+
+	log.Debug().Msg("analyzing diagnostics")
 
 	// Try to parse the YAML content.
 	var a any
@@ -85,7 +118,7 @@ func (s *Server) analyzeAndPublishDiagnostics(ctx context.Context, uri protocol.
 		},
 	)
 	if err != nil {
-		slog.Error("Error publishing diagnostics: ", err)
+		log.Error().Err(err).Msg("Error publishing diagnostics: ")
 		return
 	}
 }
@@ -141,11 +174,6 @@ func (s *Server) Declaration(ctx context.Context, params *protocol.DeclarationPa
 }
 
 func (s *Server) Definition(ctx context.Context, params *protocol.DefinitionParams) (result []protocol.Location, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) (err error) {
 	//TODO implement me
 	panic("implement me")
 }

@@ -3,7 +3,7 @@ import {createConnectTransport} from "@connectrpc/connect-web";
 import type {DescService} from "@bufbuild/protobuf";
 import {useMemo} from "react";
 
-const API_URL = import.meta.env.MODE === 'development'
+export const API_URL = import.meta.env.MODE === 'development'
     ? "http://localhost:8866"
     : window.location.origin;
 

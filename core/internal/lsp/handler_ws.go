@@ -2,7 +2,9 @@ package lsp
 
 import (
 	"fmt"
+	"github.com/RA341/dockman/pkg"
 	"github.com/gorilla/websocket"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -16,15 +18,26 @@ var DefaultUpgrader = websocket.Upgrader{
 // to a WebSocket and starts an LSP session.
 func WebSocketHandler(up websocket.Upgrader) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Debug().Msg("starting lsp")
+
 		conn, err := up.Upgrade(w, r, nil)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to start lsp server: %v", err), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Failed to upgrade connection: %v", err), http.StatusInternalServerError)
 			return
 		}
+		// Ensure connection is closed when function exits
+		defer pkg.CloseFile(conn)
 
 		stream := &WebSocketStream{conn: conn}
 		if err = StartLSP(WithStream(stream), WithZapLogger()); err != nil {
-			http.Error(w, fmt.Sprintf("Failed to start lsp server: %v", err), http.StatusInternalServerError)
+			log.Error().Err(err).Msg("Failed to start LSP server")
+			// Optionally send close message with error
+			_ = conn.WriteMessage(
+				websocket.CloseMessage,
+				websocket.FormatCloseMessage(
+					websocket.CloseInternalServerErr, err.Error(),
+				),
+			)
 			return
 		}
 	}
