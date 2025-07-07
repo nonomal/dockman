@@ -293,7 +293,7 @@ stacks/
 ├── traefik/
 │   ├── compose.yaml
 │   └── traefik.yml
-└── compose.yaml # this file does not requiere and supporting files so it is placed at root
+└── media-compose.yaml # this file does not require any supporting files so it is placed at root
 ```
 
 Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/issues) and we can argue about it.
@@ -397,7 +397,7 @@ machines:
 
 ```yaml
 default_host: apollo # apollo will be the default connecting machine 
-enable_local_docker: true # load the local client mounted at/var/run/docker.sock
+enable_local_docker: true # load the local client mounted at /var/run/docker.sock
 machines:
   apollo:
     enable: true
@@ -411,7 +411,7 @@ machines:
     host: 10.0.1.100
     port: 2222
     user: deploy
-    password: someSecretPassword # this machines uses password auth
+    password: someSecretPassword # this machine will use password auth
     use_public_key_auth: false
 
   artemis:
