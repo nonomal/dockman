@@ -1,5 +1,7 @@
 name: Action-Docker-build
 
+# potential fix https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
+
 on:
   workflow_call:
     inputs:
@@ -89,7 +91,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: "linux/amd64,linux/arm64"
+          #          platforms: "linux/amd64,linux/arm64" todo takes a long time
           cache-to: type=gha,mode=max
           cache-from: type=gha
           build-args: |
