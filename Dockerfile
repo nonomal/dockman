@@ -15,8 +15,7 @@ FROM golang:1.24-alpine AS back
 
 WORKDIR /core
 
-COPY core/go.mod .
-COPY core/go.sum .
+COPY core/go.mod core/go.sum ./
 
 RUN go mod download
 

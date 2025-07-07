@@ -3,132 +3,200 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
-	"time"
-
-	"github.com/docker/docker/api/types"
+	"github.com/RA341/dockman/pkg"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"io"
+	"net/http"
+	"os"
+	"strings"
 )
 
-const imageToUpdate = "ghcr.io/ra341/dockman:develop"
+// will the real auth key please stand up
+var realAuthKey string
+var imageToUpdate string
 
-func main() {
+var localDockerClient *client.Client
 
-	ctx := context.Background()
+func init() {
+	log.Logger = log.With().Logger().Output(
+		zerolog.ConsoleWriter{
+			Out:        os.Stderr,
+			TimeFormat: "2006-01-02 15:04:05",
+		},
+	)
 
-	containerNameToUpdate := "my-nginx-container"
+	val, ok := os.LookupEnv("DOCKMAN_UPDATER_KEY")
+	if !ok || val == "" {
+		log.Fatal().Msg("DOCKMAN_UPDATER_KEY env is missing, please set it in your config")
+	}
+	realAuthKey = val
 
-	// --- 1. Initialize Docker Client ---
+	val2, ok := os.LookupEnv("DOCKMAN_UPDATER_IMAGE")
+	if !ok || val2 == "" {
+		log.Fatal().Msg("DOCKMAN_UPDATER_IMAGE env is missing, please set it in your config")
+	}
+	imageToUpdate = val2
+	log.Info().Str("image", imageToUpdate).Msg("updater will monitor this image")
+
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		panic(fmt.Errorf("failed to create docker client: %w", err))
+		log.Fatal().Err(err).Msg("Failed to connect to local docker client")
+		return
 	}
-	defer cli.Close()
-	fmt.Printf("Successfully connected to Docker daemon.\n\n")
+	localDockerClient = cli
+}
 
-	// --- 2. Pull the latest image ---
-	fmt.Printf("Pulling latest image for %s...\n", imageToUpdate)
-	out, err := cli.ImagePull(ctx, imageToUpdate, types.ImagePullOptions{})
-	if err != nil {
-		panic(fmt.Errorf("failed to pull image: %w", err))
-	}
-	defer out.Close()
-	io.Copy(os.Stdout, out)
-	fmt.Println("\nImage pull complete.")
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{authKey}/update", updateHandler)
 
-	// Find the container to update by name
-	fmt.Printf("Searching for container named '%s' to update...\n", containerNameToUpdate)
-	containerFilters := filters.NewArgs()
-	containerFilters.Add("name", containerNameToUpdate)
-
-	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{
-		All:     true, // List all containers (including stopped)
-		Filters: containerFilters,
-	})
-	if err != nil {
-		panic(fmt.Errorf("failed to list containers: %w", err))
-	}
-
-	if len(containers) == 0 {
-		fmt.Printf("No container named '%s' found. You may want to create one from scratch.\n", containerNameToUpdate)
-		// For this example, we'll stop here. You could add logic to create a new one.
+	if err := UpdateContainersForImage(context.Background(), localDockerClient, imageToUpdate); err != nil {
+		log.Error().Err(err).Msg("Failed to update dockman container")
 		return
 	}
 
-	// --- 4. Get the old container's configuration ---
-	oldContainer := containers[0]
-	fmt.Printf("Found old container %s. Inspecting it to preserve settings...\n", oldContainer.ID[:12])
+	port := "8869"
+	log.Info().Str("port", port).Msg("Dockman updater starting...")
 
-	oldContainerInfo, err := cli.ContainerInspect(ctx, oldContainer.ID)
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), mux); err != nil {
+		log.Fatal().Err(err).Msg("Failed to start Dockman updater")
+	}
+}
+
+// updateHandler is our handler function.
+func updateHandler(w http.ResponseWriter, r *http.Request) {
+	pathAuthKey := r.PathValue("authKey")
+	if pathAuthKey == "" || realAuthKey != pathAuthKey {
+		http.Error(w, "invalid authKey", http.StatusForbidden)
+		return
+	}
+
+	log.Info().Msg("Received a valid update request")
+	Update()
+	w.WriteHeader(http.StatusOK)
+}
+
+func Update() {
+	log.Info().Msg("Updating dockman container")
+	if err := UpdateContainersForImage(context.Background(), localDockerClient, imageToUpdate); err != nil {
+		log.Error().Err(err).Msg("Failed to update dockman container")
+		return
+	}
+}
+
+// UpdateContainersForImage finds all containers using the specified image,
+// pulls the latest version of the image, and recreates the containers
+// with the new image while preserving their configuration.
+func UpdateContainersForImage(ctx context.Context, cli *client.Client, imageName string) error {
+	log.Info().Str("image", imageName).Msg("Starting update for image")
+
+	log.Info().Msg("Pulling latest image to ensure we have the newest version...")
+	reader, err := cli.ImagePull(ctx, imageName, image.PullOptions{})
 	if err != nil {
-		panic(fmt.Errorf("failed to inspect container %s: %w", oldContainer.ID, err))
+		return fmt.Errorf("failed to pull image %s: %w", imageName, err)
 	}
+	defer pkg.CloseFile(reader)
 
-	// --- 5. Stop and Rename the old container (for rollback safety) ---
-	fmt.Println("Stopping old container...")
-	if err := cli.ContainerStop(ctx, oldContainer.ID, container.StopOptions{}); err != nil {
-		panic(fmt.Errorf("failed to stop container %s: %w", oldContainer.ID, err))
+	// Copy the pull output to stdout to show progress
+	if _, err := io.Copy(os.Stdout, reader); err != nil {
+		return fmt.Errorf("failed to read image pull response: %w", err)
 	}
+	log.Info().Msg("Image pull complete.")
 
-	backupName := oldContainer.ID[:12] + "-backup-" + time.Now().Format("20060102150405")
-	fmt.Printf("Renaming old container to '%s'...\n", backupName)
-	if err := cli.ContainerRename(ctx, oldContainer.ID, backupName); err != nil {
-		panic(fmt.Errorf("failed to rename container %s: %w", oldContainer.ID, err))
-	}
+	// Find all containers using this image
+	containerFilters := filters.NewArgs()
+	containerFilters.Add("ancestor", imageName)
 
-	// --- 6. Create a new container with the preserved configuration ---
-	fmt.Println("Creating new container with updated image...")
-
-	// The config is copied from the old container.
-	newContainerConfig := oldContainerInfo.Config
-	// CRITICAL: We update the image to the one we just pulled.
-	newContainerConfig.Image = imageToUpdate
-
-	// The host config is copied from the old container.
-	newHostConfig := oldContainerInfo.HostConfig
-
-	// The network config is copied from the old container.
-	newNetworkConfig := &network.NetworkingConfig{
-		EndpointsConfig: oldContainerInfo.NetworkSettings.Networks,
-	}
-
-	// Create the new container with the original name.
-	resp, err := cli.ContainerCreate(ctx, newContainerConfig, newHostConfig, newNetworkConfig, nil, containerNameToUpdate)
+	containers, err := cli.ContainerList(ctx, container.ListOptions{
+		All:     true, // Consider both running and stopped containers
+		Filters: containerFilters,
+	})
 	if err != nil {
-		// ROLLBACK
-		fmt.Println("!!! FAILED to create new container. Rolling back...")
-		// Rename the old container back
-		if errRename := cli.ContainerRename(ctx, oldContainer.ID, containerNameToUpdate); errRename != nil {
-			fmt.Printf("!!! CRITICAL: Failed to rename backup container back: %v\n", errRename)
-			fmt.Printf("!!! MANUAL INTERVENTION REQUIRED. The old container is '%s'\n", backupName)
-		} else {
-			// Restart the old container
-			if errStart := cli.ContainerStart(ctx, oldContainer.ID, types.ContainerStartOptions{}); errStart != nil {
-				fmt.Printf("!!! CRITICAL: Failed to restart old container: %v\n", errStart)
-			} else {
-				fmt.Println("Rollback successful. The old container is running again.")
-			}
+		return fmt.Errorf("failed to list containers for image %s: %w", imageName, err)
+	}
+
+	if len(containers) == 0 {
+		log.Info().Msgf("No containers found using image %s. Nothing to do.", imageName)
+		return nil
+	}
+
+	log.Info().Msgf("Found %d container(s) to update.", len(containers))
+
+	// Recreate each container
+	for _, oldContainer := range containers {
+		containerName := "N/A"
+		if len(oldContainer.Names) > 0 {
+			// Names have a leading '/' which we should trim
+			containerName = strings.TrimPrefix(oldContainer.Names[0], "/")
 		}
-		panic(fmt.Errorf("failed to create new container: %w", err))
+		log.Info().Msgf("Processing container: %s (ID: %s)", containerName, oldContainer.ID[:12])
+
+		// Inspect the old container to get its configuration
+		log.Info().Msgf("Inspecting old container %s...", containerName)
+		inspectedData, err := cli.ContainerInspect(ctx, oldContainer.ID)
+		if err != nil {
+			return fmt.Errorf("failed to inspect container %s: %w", oldContainer.ID, err)
+		}
+
+		// Stop and remove the old container
+		log.Info().Msgf("Stopping old container %s...", containerName)
+		if err := cli.ContainerStop(ctx, oldContainer.ID, container.StopOptions{}); err != nil {
+			return fmt.Errorf("failed to stop container %s: %w", oldContainer.ID, err)
+		}
+		log.Info().Msgf("Removing old container %s...", containerName)
+		if err := cli.ContainerRemove(ctx, oldContainer.ID, container.RemoveOptions{}); err != nil {
+			return fmt.Errorf("failed to remove container %s: %w", oldContainer.ID, err)
+		}
+
+		// Create a new container with the same configuration but the new image
+		log.Info().Msgf("Creating new container %s with updated image...", containerName)
+
+		// The inspected config has the old image name, so we update it.
+		inspectedData.Config.Image = imageName
+
+		// Prepare the networking configuration
+		networkingConfig := &network.NetworkingConfig{
+			EndpointsConfig: inspectedData.NetworkSettings.Networks,
+		}
+
+		newContainer, err := cli.ContainerCreate(ctx,
+			inspectedData.Config,     // Container configuration
+			inspectedData.HostConfig, // Host configuration (ports, volumes, etc.)
+			networkingConfig,         // Networking configuration
+			nil,                      // Platform (can be nil)
+			containerName,            // The original container name
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create new container for %s: %w", containerName, err)
+		}
+
+		// Start the new container
+		log.Info().Msgf("Starting new container %s (ID: %s)...", containerName, newContainer.ID[:12])
+		if err := cli.ContainerStart(ctx, newContainer.ID, container.StartOptions{}); err != nil {
+			return fmt.Errorf("failed to start new container %s: %w", newContainer.ID, err)
+		}
+
+		log.Info().Msgf("Successfully updated container %s.", containerName)
 	}
 
-	// --- 7. Start the new container ---
-	fmt.Printf("Starting new container %s...\n", resp.ID[:12])
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		// You could add rollback logic here as well, but for simplicity we'll panic.
-		panic(fmt.Errorf("failed to start new container: %w", err))
+	// Prune old, dangling images
+	log.Info().Msg("Cleaning up old, dangling images...")
+	pruneReport, err := cli.ImagesPrune(ctx, filters.Args{})
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to prune images") // Non-fatal
+	}
+	if len(pruneReport.ImagesDeleted) > 0 {
+		log.Info().Msgf("Pruned %d images, reclaimed %d bytes.", len(pruneReport.ImagesDeleted), pruneReport.SpaceReclaimed)
+	} else {
+		log.Info().Msg("No old images to prune.")
 	}
 
-	// --- 8. Cleanup: Remove the old (renamed) container ---
-	fmt.Printf("New container started successfully. Removing old backup container '%s'...\n", backupName)
-	if err := cli.ContainerRemove(ctx, oldContainer.ID, types.ContainerRemoveOptions{RemoveVolumes: false, Force: true}); err != nil {
-		fmt.Printf("Warning: failed to remove old container %s: %v\n", backupName, err)
-		fmt.Println("You may need to remove it manually.")
-	}
-
-	fmt.Printf("\nUpdate complete! New container '%s' (%s) is running.\n", containerNameToUpdate, resp.ID[:12])
+	log.Info().Str("image", imageName).Msg("Update process for image %s completed successfully.")
+	return nil
 }
