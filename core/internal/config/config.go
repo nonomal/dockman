@@ -17,13 +17,15 @@ var C *AppConfig
 // AppConfig tags are parsed by processStruct
 type AppConfig struct {
 	Port           int    `config:"flag=port,env=PORT,default=8866,usage=Port to run the server on"`
-	AllowedOrigins string `config:"flag=origins,env=ORIGINS,default=*,usage=Allowed origins for the API (CSV)"`
+	AllowedOrigins string `config:"flag=origins,env=ORIGINS,default=*,usage=Allowed origins for the API (in CSV)"`
 	ComposeRoot    string `config:"flag=cr,env=COMPOSE_ROOT,default=compose,usage=Root directory for compose files"`
 	UIPath         string `config:"flag=ui,env=UI_PATH,default=dist,usage=Path to frontend files"`
 	Auth           bool   `config:"flag=auth,env=AUTH_ENABLE,default=false,usage=Enable authentication"`
 	AuthUsername   string `config:"flag=au,env=AUTH_USERNAME,default=admin,usage=authentication username"`
 	AuthPassword   string `config:"flag=ap,env=AUTH_PASSWORD,default=admin99988,usage=authentication password,hide=true"`
 	LocalAddr      string `config:"flag=ma,env=MACHINE_ADDR,default=0.0.0.0,usage=Local machine IP address"`
+	UpdaterAddr    string `config:"flag=upAddr,env=UPDATER_HOST,default=updater:8869,usage=Host address for dockman updater, eg: http://localhost:8869"`
+	UpdaterKey     string `config:"flag=upAuth,env=UPDATER_KEY,default=,usage=Authentication key for dockman updater"`
 	UIFS           fs.FS  // UIFS has no 'config' tag, so it will be ignored
 }
 

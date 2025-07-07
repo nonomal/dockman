@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	v1 "github.com/RA341/dockman/generated/docker/v1"
+	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/pkg"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/compose/v2/pkg/api"
@@ -15,6 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"io"
 	"net"
+	"net/http"
 	"slices"
 	"strings"
 	"sync"
@@ -70,7 +72,7 @@ func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFi
 }
 
 func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	return h.executeComposeStreamCommand(
+	err := h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
@@ -79,6 +81,29 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 		},
 		req.Msg.GetSelectedServices()...,
 	)
+	if err != nil {
+		return err
+	}
+	addr := config.C.UpdaterAddr
+	key := config.C.UpdaterKey
+	go sendReqToUpdater(addr, key)
+
+	return nil
+}
+
+func sendReqToUpdater(addr, key string) {
+	log.Debug().Str("addr", addr).Msg("sending request to updating dockman")
+	if key != "" && addr != "" {
+
+		addr = strings.TrimSuffix(addr, "/")
+		addr = fmt.Sprintf("%s/%s/update", addr, key)
+
+		httpclient := &http.Client{}
+		if _, err := httpclient.Get(addr); err != nil {
+			log.Warn().Err(err).Str("addr", addr).Msg("unable to send request to updater")
+			return
+		}
+	}
 }
 
 func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLogsRequest], responseStream *connect.ServerStream[v1.LogsMessage]) error {
@@ -101,7 +126,7 @@ func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLog
 }
 
 func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
-	project, err := h.srv.loadProject(ctx, req.Msg.GetFilename())
+	project, err := h.srv.loadProject(ctx, req.Msg.GetFilename(), false)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +168,7 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 	var err error
 	if file != nil {
 		// file was passed load it from context
-		project, err := h.srv.loadProject(ctx, file.Filename)
+		project, err := h.srv.loadProject(ctx, file.Filename, false)
 		if err != nil {
 			return nil, err
 		}
@@ -189,10 +214,9 @@ func (h *Handler) executeComposeStreamCommand(
 	action func(context.Context, *types.Project, api.Service, ...string) error,
 	services ...string,
 ) error {
-	project, err := h.srv.loadProject(ctx, composeFile)
+	project, err := h.srv.loadProject(ctx, composeFile, true)
 	if err != nil {
 		return err
-
 	}
 
 	pipeWriter, wg := streamManager(func(val string) error {

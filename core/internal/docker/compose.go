@@ -47,7 +47,7 @@ func (s *ComposeService) Up(ctx context.Context, project *types.Project, compose
 		Create: api.CreateOptions{
 			Recreate:      api.RecreateDiverged,
 			RemoveOrphans: true,
-			QuietPull:     true,
+			//QuietPull:     true,
 		},
 		Start: api.StartOptions{
 			//OnExit:   api.CascadeStop,
@@ -207,7 +207,7 @@ func (s *ComposeService) loadComposeClient(outputStream io.Writer, inputStream i
 	return compose.NewComposeService(dockerCli), nil
 }
 
-func (s *ComposeService) loadProject(ctx context.Context, filename string) (*types.Project, error) {
+func (s *ComposeService) loadProject(ctx context.Context, filename string, removeDockman bool) (*types.Project, error) {
 	filename = filepath.Join(s.composeRoot, filename)
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(filename)
@@ -239,12 +239,43 @@ func (s *ComposeService) loadProject(ctx context.Context, filename string) (*typ
 		return nil, fmt.Errorf("failed to resolve services environment: %w", err)
 	}
 
+	isRemoteDockman := s.client.sftp() != nil // true if sftp exists implying a remote machine
+	// prevent dockman from being affected by actions
+	// unless it's a remote instance
+	if !isRemoteDockman && removeDockman {
+		trimDockman(project)
+	}
+
 	return project.WithoutUnnecessaryResources(), nil
+}
+
+const dockmanImage = "ghcr.io/ra341/dockman"
+
+func trimDockman(project *types.Project) {
+	for serviceName, serviceConfig := range project.Services {
+		if serviceConfig.Image != "" {
+			// trim tags
+			imageName := serviceConfig.Image
+			if lastColon := strings.LastIndex(serviceConfig.Image, ":"); lastColon != -1 {
+				imageName = serviceConfig.Image[:lastColon]
+			}
+
+			// skip service if not image or is a remote dockman instance
+			if imageName != dockmanImage {
+				continue
+			}
+
+			log.Info().Msg("Filtering out dockman from action")
+			log.Debug().Str("image", serviceConfig.Image).Str("service-name", serviceName).
+				Msg("Removing service from project because its image matches the filter")
+
+			delete(project.Services, serviceName)
+		}
+	}
 }
 
 func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *ssh.SftpClient) error {
 	for _, service := range project.Services {
-		// iterate over each volume mount for that service.
 		for _, vol := range service.Volumes {
 			// We only care about "bind" mounts, which map a host path to a container path.
 			// We ignore named volumes, tmpfs, etc.
