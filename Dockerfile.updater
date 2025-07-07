@@ -1,19 +1,24 @@
-
 FROM golang:1.24-alpine AS builder
 
-
-WORKDIR /app
-
+WORKDIR /core
 
 COPY core/go.mod core/go.sum ./
 
 RUN go mod download
 
-COPY core/ ./
+COPY core/ .
 
-RUN go build \
-    -ldflags="-s -w" \
-    -o /dockman-updater \
+# These ARGs are automatically populated by Docker Buildx for each platform.
+# e.g., for 'linux/arm64', TARGETOS becomes 'linux' and TARGETARCH becomes 'arm64'.
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+
+# We run the build on the native amd64 runner, but use GOOS and GOARCH
+# to tell the Go compiler to create a binary for the *target* platform.
+# This avoids slow emulation for the compilation step.
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-s -w" \
+    -o /dockman-updater  \
     ./cmd/updater/main.go
 
 FROM scratch
