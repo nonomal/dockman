@@ -29,8 +29,8 @@
     "reconnecting-websocket": "^4.4.0",
     "styled-components": "^6.1.18",
     "vscode-ws-jsonrpc": "^3.4.0",
-    "xterm": "^5.3.0",
-    "xterm-addon-fit": "^0.8.0"
+    "@xterm/xterm": "^5.5.0",
+    "@xterm/addon-fit": "^0.10.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
