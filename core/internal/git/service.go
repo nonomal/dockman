@@ -50,6 +50,7 @@ func commitSampleFile(root string, repo *git.Repository) error {
 	}
 
 	if len(dir) == 0 {
+		log.Debug().Msg("empty repo, adding sample compose")
 		if _, err = worktree.Filesystem.Create("sample-compose.yaml"); err != nil {
 			return err
 		}
