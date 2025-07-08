@@ -30,6 +30,7 @@ interface ContainersTableProps {
     order: ORDER
     onFieldClick: (field: SORT_FIELD, orderBy: ORDER) => void;
     containers: ContainerStats[];
+    placeHolders: number;
     loading: boolean;
 }
 
@@ -39,7 +40,8 @@ export const ContainerStatTable = (
         onFieldClick,
         activeSortField,
         order,
-        loading
+        loading,
+        placeHolders = 5,
     }: ContainersTableProps) => {
 
     const isEmpty = !loading && containers.length === 0;
@@ -140,14 +142,17 @@ export const ContainerStatTable = (
                         {loading ? (
                             // Skeletons are rendered while loading, but will be invisible
                             // until the fade-in is triggered.
-                            [...Array(5)].map((_, index) => (
+                            [...Array(placeHolders)].map((_, index) => (
                                 <TableRow key={`skeleton-${index}`}>
-                                    <TableCell><Skeleton animation="wave"/></TableCell>
-                                    <TableCell><Skeleton animation="wave" variant="rounded" width={80}
-                                                         height={24}/></TableCell>
-                                    <TableCell><Skeleton animation="wave"/></TableCell>
-                                    <TableCell><Skeleton animation="wave"/></TableCell>
-                                    <TableCell><Skeleton animation="wave"/></TableCell>
+                                    <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
+                                    <TableCell>
+                                        <Skeleton animation="wave" variant="rounded"
+                                                  width={80}
+                                                  height={24}/>
+                                    </TableCell>
+                                    <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
+                                    <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
+                                    <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
                                 </TableRow>
                             ))
                         ) : isEmpty ? (
