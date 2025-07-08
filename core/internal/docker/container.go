@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	dm "github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/pkg"
@@ -110,7 +111,7 @@ func parallelLoop[T any, R any](input []R, mapper func(R) (T, bool)) []T {
 func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
 	return parallelLoop(containers, func(r container.Summary) (ContainerStats, bool) {
 		stats, err := s.getStats(ctx, r)
-		if err != nil {
+		if err != nil && !errors.Is(err, context.Canceled) {
 			log.Warn().Err(err).Str("container", r.ID[:12]).Msg("could not convert stats, skipping...")
 			return ContainerStats{}, false
 		}
