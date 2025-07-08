@@ -30,11 +30,11 @@ interface ContainersTableProps {
     order: ORDER
     onFieldClick: (field: SORT_FIELD, orderBy: ORDER) => void;
     containers: ContainerStats[];
-    placeHolders: number;
+    placeHolders?: number;
     loading: boolean;
 }
 
-export const ContainerStatTable = (
+export function ContainerStatTable(
     {
         containers,
         onFieldClick,
@@ -42,7 +42,7 @@ export const ContainerStatTable = (
         order,
         loading,
         placeHolders = 5,
-    }: ContainersTableProps) => {
+    }: ContainersTableProps) {
 
     const isEmpty = !loading && containers.length === 0;
 
