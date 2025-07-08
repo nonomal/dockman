@@ -13,6 +13,9 @@ gob:
 dkbd:
     docker build . -t dockman:dev
 
+dkup:
+    docker build -f Dockerfile.updater . -t dockman/updater:dev
+
 # prune docker containers
 prune:
     docker image prune -f
