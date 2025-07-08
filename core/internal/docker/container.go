@@ -15,11 +15,6 @@ import (
 	"sync"
 )
 
-// SystemInfo holds all the collected system metrics.
-type SystemInfo struct {
-	CPU float64 // Total CPU usage percentage
-}
-
 // ContainerStats holds metrics for a single Docker container.
 type ContainerStats struct {
 	ID          string

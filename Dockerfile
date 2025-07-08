@@ -43,8 +43,6 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-s -w \
 
 FROM scratch
 
-LABEL "dev.dockman"="true"
-
 # if dockman needs to make making HTTPS requests we need to add CA certificates
 # scratch image does not have certs base image will need to be changed as well
 #RUN apk add --no-cache ca-certificates

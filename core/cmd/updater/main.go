@@ -56,10 +56,10 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{authKey}/update", updateHandler)
 
-	if err := UpdateContainersForImage(context.Background(), localDockerClient, imageToUpdate); err != nil {
-		log.Error().Err(err).Msg("Failed to update dockman container")
-		return
-	}
+	//if err := UpdateContainersForImage(context.Background(), localDockerClient, imageToUpdate); err != nil {
+	//	log.Error().Err(err).Msg("Failed to update dockman container")
+	//	return
+	//}
 
 	port := "8869"
 	log.Info().Str("port", port).Msg("Dockman updater starting...")
@@ -76,10 +76,11 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid authKey", http.StatusForbidden)
 		return
 	}
-
 	log.Info().Msg("Received a valid update request")
-	Update()
 	w.WriteHeader(http.StatusOK)
+
+	// update in background
+	go Update()
 }
 
 func Update() {

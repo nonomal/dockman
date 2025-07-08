@@ -265,11 +265,11 @@ func trimDockman(project *types.Project) {
 				continue
 			}
 
+			delete(project.Services, serviceName)
+
 			log.Info().Msg("Filtering out dockman from action")
 			log.Debug().Str("image", serviceConfig.Image).Str("service-name", serviceName).
 				Msg("Removing service from project because its image matches the filter")
-
-			delete(project.Services, serviceName)
 		}
 	}
 }
@@ -336,9 +336,9 @@ func addServiceLabels(project *types.Project) {
 }
 
 func (s *ComposeService) syncProjectFilesToHost(project *types.Project) error {
-	log.Debug().Msg("syncing bind mount to remote host")
 	// nil client implies local client or I done fucked up
 	if sfCli := s.client.sftp(); sfCli != nil {
+		log.Debug().Msg("syncing bind mount to remote host")
 		if err := s.sftpProjectFiles(project, sfCli); err != nil {
 			return err
 		}

@@ -84,6 +84,7 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 	if err != nil {
 		return err
 	}
+
 	addr := config.C.UpdaterAddr
 	key := config.C.UpdaterKey
 	go sendReqToUpdater(addr, key)
@@ -94,7 +95,6 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 func sendReqToUpdater(addr, key string) {
 	log.Debug().Str("addr", addr).Msg("sending request to updating dockman")
 	if key != "" && addr != "" {
-
 		addr = strings.TrimSuffix(addr, "/")
 		addr = fmt.Sprintf("%s/%s/update", addr, key)
 
@@ -220,7 +220,7 @@ func (h *Handler) executeComposeStreamCommand(
 	}
 
 	pipeWriter, wg := streamManager(func(val string) error {
-		if err = responseStream.Send(&v1.LogsMessage{Message: fmt.Sprintf(val)}); err != nil {
+		if err = responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
 			return err
 		}
 		return nil
