@@ -239,7 +239,7 @@ and that was the one redeeming quality of this workflow.
 
 I wanted a tool that let me stay in my IDE but got rid of the tedious remote update process. Dockman aims to bridge that
 gap,
-giving you the best of both worlds—the comfort of your local development environment with the easy deployment.
+giving you the best of both worlds, the comfort of your local development environment with the easy deployment.
 
 Dockman is designed for people who:
 
@@ -257,7 +257,7 @@ for homelabs. If you find Portainer's extensive feature set overwhelming and pre
 specifically to compose file management, Dockman might be your solution.
 
 **vs. [Dockge](https://github.com/louislam/dockge)**: The fundamental difference lies in editing philosophy. Dockman
-embraces direct compose file editing—like working with your favorite text editor. Instead of UI-generated code, you get
+embraces direct compose file editing, like working with your favorite text editor. Instead of UI-generated code, you get
 hands-on control over your configurations.
 
 The project takes inspiration from both these excellent tools.
@@ -314,7 +314,7 @@ and deploy across your machines.
 
 #### Agentless Architecture
 
-No bloated agents cluttering your servers—Dockman keeps it clean with **SSH-only connections**.
+No bloated agents cluttering your servers, Dockman keeps it clean with **SSH-only connections**.
 Just point it at your Docker hosts and watch the magic happen. All you need is SSH access.
 
 #### Git-Based Configuration Management
