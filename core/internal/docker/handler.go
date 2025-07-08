@@ -219,6 +219,8 @@ func (h *Handler) executeComposeStreamCommand(
 		return err
 	}
 
+	log.Debug().Any("ss", project.Services).Msg("docker services")
+
 	pipeWriter, wg := streamManager(func(val string) error {
 		if err = responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {
 			return err
