@@ -21,7 +21,6 @@
     "@mui/material": "^7.1.1",
     "@mui/styled-engine-sc": "^7.1.1",
     "@nivo/line": "^0.99.0",
-    "lucide-react": "^0.514.0",
     "monaco-languageclient": "^9.8.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
