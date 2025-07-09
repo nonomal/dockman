@@ -1,6 +1,6 @@
 module github.com/RA341/dockman
 
-go 1.24.4
+go 1.24
 
 require (
 	connectrpc.com/connect v1.18.1

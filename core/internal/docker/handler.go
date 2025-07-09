@@ -219,7 +219,8 @@ func (h *Handler) executeComposeStreamCommand(
 		return err
 	}
 
-	log.Debug().Any("ss", project.Services).Msg("docker services")
+	services = h.srv.withoutDockman(project, services...)
+	log.Debug().Strs("ssdd", services).Msg("compose stream")
 
 	pipeWriter, wg := streamManager(func(val string) error {
 		if err = responseStream.Send(&v1.LogsMessage{Message: val}); err != nil {

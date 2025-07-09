@@ -15,8 +15,10 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rs/zerolog/log"
 	"io"
+	"maps"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 )
 
@@ -39,15 +41,14 @@ func (s *ComposeService) Up(ctx context.Context, project *types.Project, compose
 		return err
 	}
 
-	if err := composeClient.Build(ctx, project, api.BuildOptions{Services: services}); err != nil {
-		return fmt.Errorf("compose build operation failed: %w", err)
-	}
-
 	upOpts := api.UpOptions{
 		Create: api.CreateOptions{
-			Recreate:      api.RecreateDiverged,
+			Build:         &api.BuildOptions{Services: services},
+			Services:      services,
 			RemoveOrphans: true,
-			//QuietPull:     true,
+			//Recreate:             api.RecreateDiverged,
+			Inherit:   true,
+			AssumeYes: true,
 		},
 		Start: api.StartOptions{
 			//OnExit:   api.CascadeStop,
@@ -239,39 +240,61 @@ func (s *ComposeService) loadProject(ctx context.Context, filename string, remov
 		return nil, fmt.Errorf("failed to resolve services environment: %w", err)
 	}
 
-	isRemoteDockman := s.client.sftp() != nil // true if sftp exists implying a remote machine
-	// prevent dockman from being affected by actions
-	// unless it's a remote instance
-	if !isRemoteDockman && removeDockman {
-		trimDockman(project)
-	}
-
 	return project.WithoutUnnecessaryResources(), nil
 }
 
 const dockmanImage = "ghcr.io/ra341/dockman"
 
-func trimDockman(project *types.Project) {
-	for serviceName, serviceConfig := range project.Services {
-		if serviceConfig.Image != "" {
-			// trim tags
-			imageName := serviceConfig.Image
-			if lastColon := strings.LastIndex(serviceConfig.Image, ":"); lastColon != -1 {
-				imageName = serviceConfig.Image[:lastColon]
-			}
+func (s *ComposeService) withoutDockman(project *types.Project, services ...string) []string {
+	// If sftp client exists, it's a remote machine. Do not filter.
+	isRemoteDockman := s.client.sftp() != nil
+	if isRemoteDockman {
+		return services
+	}
 
-			// skip service if not image or is a remote dockman instance
-			if imageName != dockmanImage {
-				continue
-			}
-
-			delete(project.Services, serviceName)
-
-			log.Info().Msg("Filtering out dockman from action")
-			log.Debug().Str("image", serviceConfig.Image).Str("service-name", serviceName).
-				Msg("Removing service from project because its image matches the filter")
+	// Find the name of the service running the "dockman" image.
+	var dockmanServiceName string
+	for name, config := range project.Services {
+		imageName := trimTag(config.Image)
+		if imageName == dockmanImage {
+			dockmanServiceName = name
+			log.Info().Msg("Found dockman service to filter from action")
+			log.Debug().Str("image", config.Image).Str("service-name", name).
+				Msg("This service will be excluded from the final list.")
+			break // Found it, no need to keep searching
 		}
 	}
+
+	// If no service is using the dockman image, there's nothing to filter.
+	if dockmanServiceName == "" {
+		if len(services) == 0 {
+			// empty list implies all services, since no other services were explicitly passed
+			return []string{}
+		}
+		return services
+	}
+
+	// Determine which list of services to filter.
+	targetServices := services
+	// If the user did not provide a specific list of services,
+	// use all services from the project as the target.
+	if len(services) == 0 {
+		targetServices = slices.Collect(maps.Keys(project.Services))
+	}
+
+	// Remove the dockman service from the target list and return the result.
+	return slices.DeleteFunc(targetServices, func(serviceName string) bool {
+		return serviceName == dockmanServiceName
+	})
+}
+
+// Trim the tag (e.g., ":latest") from the image name for a reliable match
+func trimTag(image string) string {
+	imageName := image
+	if lastColon := strings.LastIndex(image, ":"); lastColon != -1 {
+		imageName = image[:lastColon]
+	}
+	return imageName
 }
 
 func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *ssh.SftpClient) error {
