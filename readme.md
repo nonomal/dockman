@@ -269,19 +269,23 @@ Dockman keeps things simple with a flat-ish structure that makes sense for homel
 ### The Rules
 
 - **No nested folders** - You can create folders in the root directory, but that's it. No folders inside folders.
-- **Think startup-only** - Any file in dockman should only be needed when your containers start up. Think `compose.yaml`, `.env` files, and initial config files.
-- **Keep data separate** - Application data like databases, logs, or user-generated content doesn't belong here. Mount those elsewhere.
+- **Think startup-only** - Any file in dockman should only be needed when your containers start up. Think
+  `compose.yaml`, `.env` files, and initial config files.
+- **Keep data separate** - Application data like databases, logs, or user-generated content doesn't belong here. Mount
+  those elsewhere.
 
 ### The Philosophy
 
 Your compose setup should be a clean collection of:
+
 - Core `compose.yaml` files
-- Supporting `.env` files  
+- Supporting `.env` files
 - configuration files
 
 That's it. If your container needs to write to it after startup, it probably doesn't belong in dockman.
 
 ### Example Structure
+
 ```
 stacks/
 ├── .env # a global .env file that can be read by all compose files 
@@ -333,10 +337,10 @@ but you can still sync configurations between branches.
 3. **Network**: Docker daemon running on remote hosts with network connectivity to Dockman
 
 ### Getting Started
-  
+
 First, create an empty `hosts.yaml` file before running docker-compose
 > [!CAUTION]
-> Docker-compose will create a directory instead if it doesn't exist, 
+> Docker-compose will create a directory instead if it doesn't exist,
 > this will cause dockman to fail since it's expecting a file
 
 ```yaml
@@ -385,9 +389,10 @@ machines:
 
 2. **Password** - If `use_public_key_auth: false` then dockman uses `password: yourpassword`
 
-3. **Host SSH Config** - If both `use_public_key_auth: false` and `password` is empty, then dockman falls back to your personal `~/.ssh` config. 
+3. **Host SSH Config** - If both `use_public_key_auth: false` and `password` is empty, then dockman falls back to your
+   personal `~/.ssh` config.
 
-> [!CAUTION] 
+> [!CAUTION]
 > **Host SSH Config** method is intended for local development when running Dockman directly (not in Docker).
 > Inside a Docker container, this behavior is undefined and will likely fail
 > since the container doesn't have access to your user's SSH directory.
@@ -435,8 +440,8 @@ machines:
 
 > [!IMPORTANT]
 > The `remote_public_key` field gets filled automatically when you connect.
-> 
-> NEVER MODIFY THIS FIELD MANUALLY AS IT MAY BREAK AUTH 
+>
+> NEVER MODIFY THIS FIELD MANUALLY AS IT MAY BREAK AUTH
 
 #### Troubleshooting
 
@@ -490,31 +495,13 @@ I'd especially love to hear what you think about a couple of things:
 
 * The UI
     * I'm not a UI expert, in fact I hate HTML/CSS in general. The current interface is mostly built using Material-UI
-      and
-      Gemini.
+      and Gemini.
     * If you have ideas on how to make it look better or easier to use, I'm all ears. Feel free to open an issue with
       your suggestions.
 
 ## Contributing
 
-Dockman is built with Go for the backend and React for the frontend.
-
-### Project Structure
-
-- **[backend](backend)**: The Go backend service
-    - **[spec](spec)**: Proto files for the Connect-RPC API [more info](spec/readme.md).
-- **[frontend](ui)**: The React frontend application
-- **[install](install)**: Installation scripts and documentation (WIP)
-
-### Getting Started
-
-Before contributing, make sure you have:
-
-- Go 1.24+ installed
-- Node.js 22+ and npm/yarn
-- Docker for testing/updating generated code
-
-### How to Contribute
+Thanks for wanting to help make this project better! Here's everything you need to know to get up and running.
 
 Whether you're fixing a bug, adding a feature, or improving documentation:
 
@@ -522,10 +509,112 @@ Whether you're fixing a bug, adding a feature, or improving documentation:
 2. **Fork and branch** - Create a feature branch from `main`
 3. **Submit a PR** - Include a clear description of what you've changed
 
-### Questions?
+Dockman is built with Go for the backend and React for the frontend.
 
-Not sure where to start? Open an issue tagged with `question` or `help wanted`. I'm happy to help guide new contributors
-through the codebase.
+### Project Structure
+
+- **[backend](core)**: The Go backend service
+    - **[spec](spec)**: Proto files for the Connect-RPC API [more info](spec/readme.md).
+- **[frontend](ui)**: The React frontend application
+- **[install](install)**: Installation scripts and documentation (WIP)
+
+### What You'll Need
+
+Before diving in, make sure you have these installed:
+
+- **Go 1.24+**
+- **Node.js 22+** and npm/yarn
+- **Docker** (I mean... DUH!) for testing and updating generated code
+
+### The Setup
+
+#### Step 1: Build the Frontend First
+
+The Go server expects a frontend bundle to be ready before it'll start.
+
+You won't actually use this build for development - it's just to keep the server happy.
+
+```bash
+cd ui
+npm install
+npm run build
+```
+
+#### Step 2: Fire Up the Backend
+
+Now let's get that Go server running:
+
+```bash
+cd core/
+```
+
+You'll need to point it to your frontend build from step 1.
+and tell it where to place the compose files:
+
+This command creates a dir named stacks at project root
+
+```bash
+go run cmd/server/main.go --ui=../ui/dist --cr="../stacks"
+```
+
+> [!TIP]
+> If it looks like it's hanging, don't panic!
+>
+> Go compilation can take a few seconds. Grab a coffee
+
+The Backend will be accessible at http://localhost:8866
+
+#### Step 3: Start the Dev Frontend
+
+Open a new terminal (the backend needs to stay running):
+
+```bash
+cd ui
+npm run dev
+```
+
+The frontend will be accessible at http://localhost:5173
+
+> [!IMPORTANT]
+> The frontend needs the backend running to work properly,
+> so make sure step 2 is done first!
+>
+> If the server is down, you will get a bunch of error messages on the frontend
+
+#### Quick Reference
+
+Once everything is running:
+
+- **Backend**: Usually runs on port 8866 (check the terminal output)
+- **Frontend Dev Server**: Usually runs on port 5173 (check the terminal output)
+- **Docker Compose Root**: The `../stacks` directory (you can change this with the `--cr` flag)
+
+#### Common Issues & Solutions
+
+- **"Frontend won't load"**: Make sure the backend is running first
+- **"Go server won't start"**: Check if you built the frontend (`npm run build` in the ui directory)
+- **"Something broke"**: Try turning it off and on again (seriously, restart both servers)
+
+### Development Workflow
+
+1. Make your changes in the `ui/` directory
+2. The dev server will auto-reload for most changes
+3. For backend changes, you'll need to restart the Go server
+4. Test with real Docker containers to make sure everything works
+
+### Need Help?
+
+Not sure where to start? Open an issue tagged with `question` or `help wanted`.
+
+I'm happy to help guide new contributors through the codebase.
+
+If you get stuck, don't hesitate to:
+
+- Open an issue with your problem
+- Ask questions in the discussions
+- Tag me (@RA341) if you need clarification on anything
+
+Happy coding!
 
 ## License
 
