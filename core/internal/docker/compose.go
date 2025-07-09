@@ -37,18 +37,21 @@ func newComposeService(composeRoot string, client *ContainerService) *ComposeSer
 }
 
 func (s *ComposeService) Up(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+	log.Debug().Strs("services", services).Msg("Upping")
+
 	if err := s.syncProjectFilesToHost(project); err != nil {
 		return err
 	}
 
 	upOpts := api.UpOptions{
 		Create: api.CreateOptions{
-			Build:         &api.BuildOptions{Services: services},
-			Services:      services,
-			RemoveOrphans: true,
-			//Recreate:             api.RecreateDiverged,
-			Inherit:   true,
-			AssumeYes: true,
+			Build:                &api.BuildOptions{Services: services},
+			Services:             services,
+			RemoveOrphans:        false,
+			Recreate:             api.RecreateForce, // Force recreation of the specified services
+			RecreateDependencies: api.RecreateNever, // Do not recreate dependencies
+			Inherit:              true,
+			AssumeYes:            true,
 		},
 		Start: api.StartOptions{
 			//OnExit:   api.CascadeStop,
@@ -106,7 +109,7 @@ func (s *ComposeService) Pull(ctx context.Context, project *types.Project, compo
 	return nil
 }
 
-func (s *ComposeService) Update(ctx context.Context, project *types.Project, composeClient api.Service) error {
+func (s *ComposeService) Update(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
 	beforeImages, err := s.getProjectImageDigests(ctx, project)
 	if err != nil {
 		return fmt.Errorf("failed to get image info before pull: %w", err)
@@ -129,7 +132,7 @@ func (s *ComposeService) Update(ctx context.Context, project *types.Project, com
 
 	log.Info().Str("stack", project.Name).Msg("New images were downloaded, updating stack...")
 	// If images changed, run Up to recreate the containers with the new images.
-	if err = s.Up(ctx, project, composeClient); err != nil {
+	if err = s.Up(ctx, project, composeClient, services...); err != nil {
 		return err
 	}
 

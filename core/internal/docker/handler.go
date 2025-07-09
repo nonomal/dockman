@@ -76,9 +76,7 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		func(ctx context.Context, project *types.Project, service api.Service, _ ...string) error {
-			return h.srv.Update(ctx, project, service)
-		},
+		h.srv.Update,
 		req.Msg.GetSelectedServices()...,
 	)
 	if err != nil {

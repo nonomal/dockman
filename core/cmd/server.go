@@ -27,7 +27,7 @@ func StartServer(opt ...config.ServerOpt) {
 
 	router := http.NewServeMux()
 	app.registerRoutes(router)
-	router.Handle("/", newSpaHandler(config.C.UIFS))
+	registerFrontend(router)
 
 	middleware := cors.New(cors.Options{
 		AllowedOrigins:      config.C.GetAllowedOrigins(),
@@ -49,6 +49,12 @@ func StartServer(opt ...config.ServerOpt) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server")
 	}
+}
+
+func registerFrontend(router *http.ServeMux) {
+	// todo make this optional when developing
+	router.Handle("/", newSpaHandler(config.C.UIFS))
+
 }
 
 // SpaHandler implements the http.Handler interface and serves a single-page
