@@ -172,6 +172,7 @@ export function ContainerStatTable(
                                                   sx={{'&:last-child td, &:last-child th': {border: 0}}}>
                                             <TableCell component="th" scope="row">
                                                 <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
+                                                    <span>{container.name}</span>
                                                     <Tooltip
                                                         title={copiedId === container.id ? "Copied!" : "Copy container ID"}
                                                         placement="top">
@@ -200,7 +201,6 @@ export function ContainerStatTable(
                                                             />
                                                         </IconButton>
                                                     </Tooltip>
-                                                    <span>{container.name}</span>
                                                 </Box>
                                             </TableCell>
                                             <TableCell>
