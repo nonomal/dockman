@@ -1,4 +1,4 @@
-package config
+package args
 
 import (
 	"flag"
@@ -9,27 +9,9 @@ import (
 	"strings"
 )
 
-const envPrefix = "DOCKMAN"
-
-// Load creates a new AppConfig, populates it from defaults, environment
-// variables, and command-line flags, and then parses the flags.
-// The order of precedence is:
-// 1. Command-line flags (e.g., -port 9000)
-// 2. Environment variables (e.g., DOCKMAN_PORT=9000)
-// 3. Default values specified in struct tags.
-func Load() (*AppConfig, error) {
-	conf := &AppConfig{}
-	if err := processStruct(conf); err != nil {
-		return nil, err
-	}
-	flag.Parse()
-	return conf, nil
-}
-
-// processStruct uses reflection to iterate over the fields of a struct,
+// ProcessStruct uses reflection to iterate over the fields of a struct,
 // read the 'config' tags, and set up the corresponding flags.
-func processStruct(s interface{}) error {
-
+func ProcessStruct(s interface{}, envPrefix string) error {
 	// Ensure we have a pointer to a struct
 	val := reflect.ValueOf(s)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {

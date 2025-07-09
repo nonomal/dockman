@@ -2,15 +2,18 @@ package config
 
 import (
 	"embed"
+	"flag"
 	"fmt"
 	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/args"
 	"github.com/rs/zerolog/log"
 	"io/fs"
 	"net"
 	"os"
-	"reflect"
 	"strings"
 )
+
+const envPrefix = "DOCKMAN"
 
 var C *AppConfig
 
@@ -41,80 +44,24 @@ func (c *AppConfig) GetDockmanWithMachineUrl() string {
 	return fmt.Sprintf("http://%s:%d", c.LocalAddr, c.Port)
 }
 
-func (c *AppConfig) PrettyPrint() {
-	// Flatten the struct into a list of KeyValue pairs.
-	// We start with an empty prefix for the top-level keys.
-	pairs := flattenStruct(reflect.ValueOf(c), "")
-
-	// Find the length of the longest key for alignment.
-	maxKeyLength := 0
-	maxValueLength := 0
-	maxHelpLength := 0
-	for _, p := range pairs {
-		if len(p.Key) > maxKeyLength {
-			maxKeyLength = len(p.Key)
-		}
-
-		// strip ANSI color codes to get the true visible length of the value.
-		cleanValue := ansiRegex.ReplaceAllString(p.Value, "")
-		if len(cleanValue) > maxValueLength {
-			maxValueLength = len(cleanValue)
-		}
-
-		cleanHelpValue := ansiRegex.ReplaceAllString(p.HelpMessage, "")
-		if len(cleanHelpValue) > maxHelpLength {
-			maxHelpLength = len(cleanHelpValue)
-		}
-	}
-
-	// Format each pair into a colored, aligned string.
-	redEnvLabel := colorize("Env:", ColorRed+ColorUnderline)
-	var contentBuilder strings.Builder
-	for i, p := range pairs {
-		// Calculate padding for the key column
-		keyPadding := strings.Repeat(" ", maxKeyLength-len(p.Key))
-
-		// Calculate padding for the value column
-		cleanValue := ansiRegex.ReplaceAllString(p.Value, "")
-		valuePadding := strings.Repeat(" ", maxValueLength-len(cleanValue))
-
-		// Colorize parts for readability
-		coloredKey := colorize(p.Key, ColorBlue+ColorBold)
-
-		cleanHelp := ansiRegex.ReplaceAllString(p.HelpMessage, "")
-		helpPadding := strings.Repeat(" ", maxHelpLength-len(cleanHelp))
-
-		// Assemble the line with calculated padding
-		// Format: [Key]:[Padding]  [Value][Padding]   [Help]
-		contentBuilder.WriteString(coloredKey)
-		contentBuilder.WriteString(":")
-		contentBuilder.WriteString(keyPadding)
-		contentBuilder.WriteString("  ") // Separator between key and value
-
-		contentBuilder.WriteString(p.Value)
-		contentBuilder.WriteString(valuePadding)
-		contentBuilder.WriteString("  ") // Separator between value and help
-
-		contentBuilder.WriteString(p.HelpMessage)
-		contentBuilder.WriteString(helpPadding)
-		contentBuilder.WriteString("  ") // Separator between help and env
-
-		contentBuilder.WriteString(fmt.Sprintf("%s %s", redEnvLabel, p.EnvName))
-
-		if i < len(pairs)-1 {
-			contentBuilder.WriteString("\n")
-		}
-	}
-
-	ms := colorize("To modify config, set the respective", ColorMagenta+ColorBold)
-	contentBuilder.WriteString(fmt.Sprintf("\n\n%s %s", ms, redEnvLabel))
-
-	printInBox("Config", contentBuilder.String())
-}
-
 // LoadConfig sets global app config
 func LoadConfig(opts ...ServerOpt) {
 	C = parseConfig(opts...)
+}
+
+// Load creates a new AppConfig, populates it from defaults, environment
+// variables, and command-line flags, and then parses the flags.
+// The order of precedence is:
+// 1. Command-line flags (e.g., -port 9000)
+// 2. Environment variables (e.g., DOCKMAN_PORT=9000)
+// 3. Default values specified in struct tags.
+func Load() (*AppConfig, error) {
+	conf := &AppConfig{}
+	if err := args.ProcessStruct(conf, envPrefix); err != nil {
+		return nil, err
+	}
+	flag.Parse()
+	return conf, nil
 }
 
 func parseConfig(opts ...ServerOpt) *AppConfig {
@@ -127,7 +74,7 @@ func parseConfig(opts ...ServerOpt) *AppConfig {
 		o(config)
 	}
 	loadDefaultIfNotSet(config)
-	config.PrettyPrint()
+	args.PrettyPrint(config, envPrefix)
 
 	return config
 }

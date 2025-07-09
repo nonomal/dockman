@@ -1,4 +1,4 @@
-package config
+package args
 
 import (
 	"fmt"
@@ -31,8 +31,79 @@ type KeyValue struct {
 	EnvName     string
 }
 
-// flattenStruct recursively traverses a struct and returns a flat list of KeyValue pairs.
-func flattenStruct(v reflect.Value, prefix string) []KeyValue {
+func PrettyPrint(c interface{}, baseEnv string) {
+	// Flatten the struct into a list of KeyValue pairs.
+	// We start with an empty prefix for the top-level keys.
+	pairs := flattenStructForPrinting(reflect.ValueOf(c), "", baseEnv)
+
+	// Find the length of the longest key for alignment.
+	maxKeyLength := 0
+	maxValueLength := 0
+	maxHelpLength := 0
+	for _, p := range pairs {
+		if len(p.Key) > maxKeyLength {
+			maxKeyLength = len(p.Key)
+		}
+
+		// strip ANSI color codes to get the true visible length of the value.
+		cleanValue := ansiRegex.ReplaceAllString(p.Value, "")
+		if len(cleanValue) > maxValueLength {
+			maxValueLength = len(cleanValue)
+		}
+
+		cleanHelpValue := ansiRegex.ReplaceAllString(p.HelpMessage, "")
+		if len(cleanHelpValue) > maxHelpLength {
+			maxHelpLength = len(cleanHelpValue)
+		}
+	}
+
+	// Format each pair into a colored, aligned string.
+	redEnvLabel := colorize("Env:", ColorRed+ColorUnderline)
+	var contentBuilder strings.Builder
+	for i, p := range pairs {
+		// Calculate padding for the key column
+		keyPadding := strings.Repeat(" ", maxKeyLength-len(p.Key))
+
+		// Calculate padding for the value column
+		cleanValue := ansiRegex.ReplaceAllString(p.Value, "")
+		valuePadding := strings.Repeat(" ", maxValueLength-len(cleanValue))
+
+		// Colorize parts for readability
+		coloredKey := colorize(p.Key, ColorBlue+ColorBold)
+
+		cleanHelp := ansiRegex.ReplaceAllString(p.HelpMessage, "")
+		helpPadding := strings.Repeat(" ", maxHelpLength-len(cleanHelp))
+
+		// Assemble the line with calculated padding
+		// Format: [Key]:[Padding]  [Value][Padding]   [Help]
+		contentBuilder.WriteString(coloredKey)
+		contentBuilder.WriteString(":")
+		contentBuilder.WriteString(keyPadding)
+		contentBuilder.WriteString("  ") // Separator between key and value
+
+		contentBuilder.WriteString(p.Value)
+		contentBuilder.WriteString(valuePadding)
+		contentBuilder.WriteString("  ") // Separator between value and help
+
+		contentBuilder.WriteString(p.HelpMessage)
+		contentBuilder.WriteString(helpPadding)
+		contentBuilder.WriteString("  ") // Separator between help and env
+
+		contentBuilder.WriteString(fmt.Sprintf("%s %s", redEnvLabel, p.EnvName))
+
+		if i < len(pairs)-1 {
+			contentBuilder.WriteString("\n")
+		}
+	}
+
+	ms := colorize("To modify config, set the respective", ColorMagenta+ColorBold)
+	contentBuilder.WriteString(fmt.Sprintf("\n\n%s %s", ms, redEnvLabel))
+
+	printInBox("Config", contentBuilder.String())
+}
+
+// flattenStructForPrinting recursively traverses a struct and returns a flat list of KeyValue pairs.
+func flattenStructForPrinting(v reflect.Value, prefix, baseEnv string) []KeyValue {
 	// If it's a pointer, dereference it.
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -45,17 +116,7 @@ func flattenStruct(v reflect.Value, prefix string) []KeyValue {
 		fieldT := t.Field(i)
 		fieldV := v.Field(i)
 
-		// Get the json tag and skip if marked with "-"
-		jsonTag := fieldT.Tag.Get("json")
-		if jsonTag == "-" {
-			continue
-		}
-
-		keyName := strings.Split(jsonTag, ",")[0]
-		if keyName == "" {
-			keyName = fieldT.Name // Fallback to field name
-		}
-
+		keyName := fieldT.Name
 		configTag := fieldT.Tag.Get("config")
 		if configTag == "" {
 			continue // Skip fields without the config tag
@@ -63,7 +124,7 @@ func flattenStruct(v reflect.Value, prefix string) []KeyValue {
 		configTags := parseTag(configTag)
 		usage := configTags["usage"]
 		hide := configTags["hide"]
-		envName := colorize(fmt.Sprintf("%s_%s", envPrefix, configTags["env"]), ColorCyan)
+		envName := colorize(fmt.Sprintf("%s_%s", baseEnv, configTags["env"]), ColorCyan)
 		message := fmt.Sprintf("%s", colorize(usage, ColorBlue))
 
 		// Create the full key path (e.g., "database.host")
@@ -77,7 +138,7 @@ func flattenStruct(v reflect.Value, prefix string) []KeyValue {
 		switch fieldV.Kind() {
 		case reflect.Struct:
 			// Recurse into nested structs
-			nestedPairs := flattenStruct(fieldV, fullKey)
+			nestedPairs := flattenStructForPrinting(fieldV, fullKey, baseEnv)
 			pairs = append(pairs, nestedPairs...)
 		case reflect.Slice:
 			// Format slices as comma-separated strings

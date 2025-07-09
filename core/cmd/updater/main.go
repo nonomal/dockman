@@ -17,10 +17,6 @@ import (
 	"strings"
 )
 
-// will the real auth key please stand up
-var realAuthKey string
-var imageToUpdate string
-
 var localDockerClient *client.Client
 
 func init() {
@@ -30,19 +26,6 @@ func init() {
 			TimeFormat: "2006-01-02 15:04:05",
 		},
 	)
-
-	val, ok := os.LookupEnv("DOCKMAN_UPDATER_KEY")
-	if !ok || val == "" {
-		log.Fatal().Msg("DOCKMAN_UPDATER_KEY env is missing, please set it in your config")
-	}
-	realAuthKey = val
-
-	val2, ok := os.LookupEnv("DOCKMAN_UPDATER_IMAGE")
-	if !ok || val2 == "" {
-		log.Fatal().Msg("DOCKMAN_UPDATER_IMAGE env is missing, please set it in your config")
-	}
-	imageToUpdate = val2
-	log.Info().Str("image", imageToUpdate).Msg("updater will monitor this image")
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -72,7 +55,7 @@ func main() {
 // updateHandler is our handler function.
 func updateHandler(w http.ResponseWriter, r *http.Request) {
 	pathAuthKey := r.PathValue("authKey")
-	if pathAuthKey == "" || realAuthKey != pathAuthKey {
+	if pathAuthKey == "" || conf.UpdaterKey != pathAuthKey {
 		http.Error(w, "invalid authKey", http.StatusForbidden)
 		return
 	}
@@ -85,7 +68,7 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 
 func Update() {
 	log.Info().Msg("Updating dockman container")
-	if err := UpdateContainersForImage(context.Background(), localDockerClient, imageToUpdate); err != nil {
+	if err := UpdateContainersForImage(context.Background(), localDockerClient, conf.UpdaterImage); err != nil {
 		log.Error().Err(err).Msg("Failed to update dockman container")
 		return
 	}
