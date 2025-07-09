@@ -25,20 +25,18 @@ import (
 // reference: https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
 
 type ComposeService struct {
-	composeRoot string
-	client      *ContainerService
+	ComposeRoot string
+	Client      *ContainerService
 }
 
 func newComposeService(composeRoot string, client *ContainerService) *ComposeService {
 	return &ComposeService{
-		composeRoot: composeRoot,
-		client:      client,
+		ComposeRoot: composeRoot,
+		Client:      client,
 	}
 }
 
 func (s *ComposeService) Up(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
-	log.Debug().Strs("services", services).Msg("Upping")
-
 	if err := s.syncProjectFilesToHost(project); err != nil {
 		return err
 	}
@@ -145,7 +143,7 @@ func (s *ComposeService) ListStack(ctx context.Context, project *types.Project, 
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
-	result, err := s.client.daemon().ContainerList(ctx, container.ListOptions{
+	result, err := s.Client.Daemon().ContainerList(ctx, container.ListOptions{
 		All:     all,
 		Filters: containerFilters,
 	})
@@ -163,7 +161,7 @@ func (s *ComposeService) StatStack(ctx context.Context, project *types.Project) 
 		return nil, err
 	}
 
-	result := s.client.GetStatsFromContainerList(ctx, stackList)
+	result := s.Client.GetStatsFromContainerList(ctx, stackList)
 	return result, nil
 }
 
@@ -175,7 +173,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 			continue
 		}
 
-		imageInspect, err := s.client.daemon().ImageInspect(ctx, service.Image)
+		imageInspect, err := s.Client.Daemon().ImageInspect(ctx, service.Image)
 		if err != nil {
 			// Image might not exist locally yet
 			digests[serviceName] = ""
@@ -195,7 +193,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 
 func (s *ComposeService) loadComposeClient(outputStream io.Writer, inputStream io.ReadCloser) (api.Service, error) {
 	dockerCli, err := command.NewDockerCli(
-		command.WithAPIClient(s.client.daemon()),
+		command.WithAPIClient(s.Client.Daemon()),
 		command.WithCombinedStreams(outputStream),
 		command.WithInputStream(inputStream),
 	)
@@ -212,14 +210,14 @@ func (s *ComposeService) loadComposeClient(outputStream io.Writer, inputStream i
 }
 
 func (s *ComposeService) loadProject(ctx context.Context, filename string, removeDockman bool) (*types.Project, error) {
-	filename = filepath.Join(s.composeRoot, filename)
+	filename = filepath.Join(s.ComposeRoot, filename)
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(filename)
 
 	options, err := cli.NewProjectOptions(
 		[]string{filename},
 		// important maintain this order to load .env: workingdir -> env -> os -> load dot env
-		cli.WithWorkingDirectory(s.composeRoot),
+		cli.WithWorkingDirectory(s.ComposeRoot),
 		cli.WithEnvFiles(),
 		cli.WithOsEnv,
 		cli.WithDotEnv,
@@ -250,7 +248,7 @@ const dockmanImage = "ghcr.io/ra341/dockman"
 
 func (s *ComposeService) withoutDockman(project *types.Project, services ...string) []string {
 	// If sftp client exists, it's a remote machine. Do not filter.
-	isRemoteDockman := s.client.sftp() != nil
+	isRemoteDockman := s.Client.Sftp() != nil
 	if isRemoteDockman {
 		return services
 	}
@@ -258,8 +256,7 @@ func (s *ComposeService) withoutDockman(project *types.Project, services ...stri
 	// Find the name of the service running the "dockman" image.
 	var dockmanServiceName string
 	for name, config := range project.Services {
-		imageName := trimTag(config.Image)
-		if imageName == dockmanImage {
+		if strings.HasPrefix(config.Image, dockmanImage) {
 			dockmanServiceName = name
 			log.Info().Msg("Found dockman service to filter from action")
 			log.Debug().Str("image", config.Image).Str("service-name", name).
@@ -314,7 +311,7 @@ func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *ssh.Sft
 			localSourcePath := vol.Source
 
 			// Copy files only whose volume starts with the project's root directory path.
-			if !strings.HasPrefix(localSourcePath, s.composeRoot) {
+			if !strings.HasPrefix(localSourcePath, s.ComposeRoot) {
 				log.Debug().
 					Str("local", localSourcePath).
 					Msg("Skipping bind mount outside of project root")
@@ -363,7 +360,7 @@ func addServiceLabels(project *types.Project) {
 
 func (s *ComposeService) syncProjectFilesToHost(project *types.Project) error {
 	// nil client implies local client or I done fucked up
-	if sfCli := s.client.sftp(); sfCli != nil {
+	if sfCli := s.Client.Sftp(); sfCli != nil {
 		log.Debug().Msg("syncing bind mount to remote host")
 		if err := s.sftpProjectFiles(project, sfCli); err != nil {
 			return err

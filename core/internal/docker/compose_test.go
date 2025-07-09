@@ -9,8 +9,8 @@ import (
 
 func TestTrimDockman(t *testing.T) {
 	comp := ComposeService{
-		client: &ContainerService{
-			sftp: func() *ssh.SftpClient {
+		Client: &ContainerService{
+			Sftp: func() *ssh.SftpClient {
 				return nil
 			},
 		},

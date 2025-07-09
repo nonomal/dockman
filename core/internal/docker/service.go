@@ -22,8 +22,8 @@ func NewService(composeRoot string, cliFn dm.GetDocker, sftpFn dm.GetSftp) *Serv
 	}
 
 	containerClient := &ContainerService{
-		daemon: cliFn,
-		sftp:   sftpFn,
+		Daemon: cliFn,
+		Sftp:   sftpFn,
 	}
 	composeClient := newComposeService(composeRoot, containerClient)
 

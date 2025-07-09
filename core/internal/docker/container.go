@@ -29,12 +29,12 @@ type ContainerStats struct {
 }
 
 type ContainerService struct {
-	daemon dm.GetDocker
-	sftp   dm.GetSftp
+	Daemon dm.GetDocker
+	Sftp   dm.GetSftp
 }
 
 func (s *ContainerService) ListContainers(ctx context.Context, filter container.ListOptions) ([]container.Summary, error) {
-	containers, err := s.daemon().ContainerList(ctx, filter)
+	containers, err := s.Daemon().ContainerList(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("could not list containers: %w", err)
 	}
@@ -52,7 +52,7 @@ func (s *ContainerService) GetStats(ctx context.Context, filter container.ListOp
 }
 
 func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
-	return s.daemon().ContainerLogs(ctx, containerID, container.LogsOptions{
+	return s.Daemon().ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
@@ -116,7 +116,7 @@ func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, contai
 
 func (s *ContainerService) getStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
 	contId := info.ID[:12]
-	stats, err := s.daemon().ContainerStats(ctx, info.ID, false)
+	stats, err := s.Daemon().ContainerStats(ctx, info.ID, false)
 	if err != nil {
 		return ContainerStats{}, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
 	}
