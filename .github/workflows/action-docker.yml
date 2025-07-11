@@ -36,7 +36,7 @@ jobs:
       matrix:
         target:
           # "default"
-          - name: minimal
+          - name: minimal # target name
             suffix: "" # EXPLICITLY empty suffix for the tag
           - name: alpine
             suffix: -alpine
@@ -93,7 +93,7 @@ jobs:
 
           labels: |
             org.opencontainers.image.title=${{ inputs.title }}
-            org.opencontainers.image.description=Docker image for ${{ inputs.title }}.
+            org.opencontainers.image.description=Docker image for ${{ inputs.title }} built for ${{ matrix.target.name }}.
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
