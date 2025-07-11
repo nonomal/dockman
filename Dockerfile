@@ -41,13 +41,57 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-s -w \
              -X github.com/RA341/dockman/internal/info.Branch=${BRANCH}" \
     -o dockman "./cmd/server/main.go"
 
-FROM scratch
+# Alpine target
+FROM alpine:latest AS alpine
 
-# if dockman needs to make making HTTPS requests we need to add CA certificates
-# scratch image does not have certs base image will need to be changed as well
+# incase app needs to make https requests
 #RUN apk add --no-cache ca-certificates
-#and copy from back
+
+WORKDIR /app
+
+COPY --from=back /core/dockman dockman
+
+COPY --from=front /frontend/dist/ ./dist
+
+# todo non root
+#RUN chown -R appuser:appgroup /app
+#
+#USER appuser
+
+EXPOSE 8866
+
+ENTRYPOINT ["./dockman"]
+
+# Alpine with ssh client target
+FROM alpine:latest AS alpine-ssh
+
+RUN apk add --no-cache ca-certificates openssh-client
+
+WORKDIR /app
+
+COPY --from=back /core/dockman dockman
+
+COPY --from=front /frontend/dist/ ./dist
+
+# todo non root
+#RUN chown -R appuser:appgroup /app
+#
+#USER appuser
+
+EXPOSE 8866
+
+ENTRYPOINT ["./dockman"]
+
+
+# Scratch target
+FROM scratch AS minimal
+
+# todo user perms and certs to make https requests
 #COPY --from=back /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+#
+#COPY --from=back /etc/passwd /etc/passwd
+#
+#COPY --from=back /etc/group /etc/group
 
 WORKDIR /app
 

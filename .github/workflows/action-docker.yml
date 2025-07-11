@@ -1,7 +1,5 @@
 name: Action-Docker-build
 
-# potential fix https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
-
 on:
   workflow_call:
     inputs:
@@ -26,12 +24,24 @@ on:
 
 jobs:
   build-and-push:
-    name: Build and Push Docker for ${{ github.repository }}
+    # Give the job a dynamic name based on the matrix
+    name: Build Image for (${{ matrix.target.name }})
     runs-on: ubuntu-latest
     permissions:
-      contents: read   # To checkout the repository
-      packages: write  # To push Docker images to GHCR
-      # id-token: write # Uncomment if using OIDC for Docker login to GHCR
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false # Don't cancel other jobs if one fails
+      matrix:
+        target:
+          # "default"
+          - name: minimal
+            suffix: "" # EXPLICITLY empty suffix for the tag
+          - name: alpine
+            suffix: -alpine
+          - name: alpine-ssh
+            suffix: -scratch
 
     steps:
       - name: Checkout repository
@@ -57,6 +67,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
+          # Add a flavor suffix to all tags based on the matrix
+          flavor: |
+            suffix=-${{ matrix.target.suffix }}
           tags: |
             # assumes `version_tag` is valid SemVer skip tag if empty (vX.Y.Z or X.Y.Z), create major and major.minor tags.
             # Example: if version_tag is "v1.2.3", this adds "v1" and "v1.2".
@@ -89,9 +102,11 @@ jobs:
         with:
           context: .
           push: true
+          # Use the target from the matrix
+          target: ${{ matrix.target.name }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          #          platforms: "linux/amd64,linux/arm64" todo takes a long time
+          # platforms: "linux/amd64,linux/arm64" todo takes a long time
           cache-to: type=gha,mode=max
           cache-from: type=gha
           build-args: |
@@ -105,5 +120,3 @@ jobs:
           echo "🚀 Docker image build and push complete for: ghcr.io/${{ github.repository }}"
           echo "🏷️ Tags created:"
           echo "${{ steps.meta.outputs.tags }}"
-          echo "📋 Labels applied:"
-          echo "${{ steps.meta.outputs.labels }}"
