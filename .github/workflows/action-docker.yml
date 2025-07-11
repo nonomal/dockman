@@ -39,9 +39,9 @@ jobs:
           - name: minimal
             suffix: "" # EXPLICITLY empty suffix for the tag
           - name: alpine
-            suffix: -alpine
+            suffix: alpine-
           - name: alpine-ssh
-            suffix: -scratch
+            suffix: ssh-
 
     steps:
       - name: Checkout repository
