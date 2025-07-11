@@ -70,7 +70,7 @@ jobs:
           # Add a flavor suffix to all tags based on the matrix
           flavor: |
             suffix=-${{ matrix.target.suffix }}
-            separator=''
+            prefix=
           tags: |
             # assumes `version_tag` is valid SemVer skip tag if empty (vX.Y.Z or X.Y.Z), create major and major.minor tags.
             # Example: if version_tag is "v1.2.3", this adds "v1" and "v1.2".
