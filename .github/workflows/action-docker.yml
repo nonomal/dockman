@@ -39,9 +39,9 @@ jobs:
           - name: minimal
             suffix: "" # EXPLICITLY empty suffix for the tag
           - name: alpine
-            suffix: alpine-
+            suffix: -alpine
           - name: alpine-ssh
-            suffix: ssh-
+            suffix: -ssh
 
     steps:
       - name: Checkout repository
@@ -69,8 +69,8 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           # Add a flavor suffix to all tags based on the matrix
           flavor: |
-            suffix=
-            prefix=${{ matrix.target.suffix }}
+            suffix=${{ matrix.target.suffix }}
+            prefix=
           tags: |
             # assumes `version_tag` is valid SemVer skip tag if empty (vX.Y.Z or X.Y.Z), create major and major.minor tags.
             # Example: if version_tag is "v1.2.3", this adds "v1" and "v1.2".
