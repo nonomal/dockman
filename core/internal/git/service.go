@@ -325,7 +325,6 @@ func (s *Service) LoadFileAtCommit(filePath, commitId string) (string, error) {
 		return "", fmt.Errorf("failed to get file %s from commit %s: %w", filePath, commitId, err)
 	}
 
-	// Get file contents
 	content, err := file.Contents()
 	if err != nil {
 		return "", fmt.Errorf("failed to read file contents: %w", err)

@@ -4,6 +4,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"path/filepath"
+	"strings"
 )
 
 const fileContentsFormKey = "contents"
@@ -35,6 +36,7 @@ func (h *FileHandler) LoadFileAtCommit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cleanPath := filepath.Clean(fileName)
+	cleanPath = strings.Replace(cleanPath, "\\", "/", -1)
 
 	content, err := h.srv.LoadFileAtCommit(cleanPath, commitID)
 	if err != nil {

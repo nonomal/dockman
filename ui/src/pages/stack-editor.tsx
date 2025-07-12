@@ -228,7 +228,7 @@ export function StackEditor({selectedPage}: EditorProps) {
                         </Fade>
                     </Box>
                     <Box sx={{
-                        width: 270,
+                        width: 100,
                         flexShrink: 0,
                         display: 'flex',
                         flexDirection: 'column'
