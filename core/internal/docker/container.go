@@ -5,36 +5,26 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	dm "github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/pkg"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
 	"io"
 	"sync"
 )
 
-// ContainerStats holds metrics for a single Docker container.
-type ContainerStats struct {
-	ID          string
-	Name        string
-	CPUUsage    float64
-	MemoryUsage uint64 // in bytes
-	MemoryLimit uint64 // in bytes
-	NetworkRx   uint64 // bytes received
-	NetworkTx   uint64 // bytes sent
-	BlockRead   uint64 // bytes read from block devices
-	BlockWrite  uint64 // bytes written to block devices
+type ContainerService struct {
+	daemon *client.Client
 }
 
-type ContainerService struct {
-	Daemon dm.GetDocker
-	Sftp   dm.GetSftp
+func NewContainerService(cli *client.Client) *ContainerService {
+	return &ContainerService{daemon: cli}
 }
 
 func (s *ContainerService) ListContainers(ctx context.Context, filter container.ListOptions) ([]container.Summary, error) {
-	containers, err := s.Daemon().ContainerList(ctx, filter)
+	containers, err := s.daemon.ContainerList(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("could not list containers: %w", err)
 	}
@@ -52,7 +42,7 @@ func (s *ContainerService) GetStats(ctx context.Context, filter container.ListOp
 }
 
 func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
-	return s.Daemon().ContainerLogs(ctx, containerID, container.LogsOptions{
+	return s.daemon.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
@@ -75,34 +65,6 @@ func (s *ContainerService) StatContainers(ctx context.Context, filter container.
 	return statsList, nil
 }
 
-func parallelLoop[T any, R any](input []R, mapper func(R) (T, bool)) []T {
-	contChan := make(chan T, len(input))
-
-	var wg sync.WaitGroup
-	for _, cont := range input {
-		wg.Add(1)
-		go func(i R) {
-			defer wg.Done()
-			res, ok := mapper(i)
-			if ok {
-				contChan <- res
-			}
-		}(cont)
-	}
-
-	go func() {
-		wg.Wait()
-		close(contChan)
-	}()
-
-	var result []T
-	for c := range contChan {
-		result = append(result, c)
-	}
-
-	return result
-}
-
 func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
 	return parallelLoop(containers, func(r container.Summary) (ContainerStats, bool) {
 		stats, err := s.getStats(ctx, r)
@@ -116,7 +78,7 @@ func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, contai
 
 func (s *ContainerService) getStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
 	contId := info.ID[:12]
-	stats, err := s.Daemon().ContainerStats(ctx, info.ID, false)
+	stats, err := s.daemon.ContainerStats(ctx, info.ID, false)
 	if err != nil {
 		return ContainerStats{}, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
 	}
@@ -192,4 +154,45 @@ func filterByLabels(projectname string) {
 	containerFilters := filters.NewArgs()
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, projectname)
 	containerFilters.Add("label", projectLabel)
+}
+
+func parallelLoop[T any, R any](input []R, mapper func(R) (T, bool)) []T {
+	contChan := make(chan T, len(input))
+
+	var wg sync.WaitGroup
+	for _, cont := range input {
+		wg.Add(1)
+		go func(i R) {
+			defer wg.Done()
+			res, ok := mapper(i)
+			if ok {
+				contChan <- res
+			}
+		}(cont)
+	}
+
+	go func() {
+		wg.Wait()
+		close(contChan)
+	}()
+
+	var result []T
+	for c := range contChan {
+		result = append(result, c)
+	}
+
+	return result
+}
+
+// ContainerStats holds metrics for a single Docker container.
+type ContainerStats struct {
+	ID          string
+	Name        string
+	CPUUsage    float64
+	MemoryUsage uint64 // in bytes
+	MemoryLimit uint64 // in bytes
+	NetworkRx   uint64 // bytes received
+	NetworkTx   uint64 // bytes sent
+	BlockRead   uint64 // bytes read from block devices
+	BlockWrite  uint64 // bytes written to block devices
 }

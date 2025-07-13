@@ -17,17 +17,20 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 	"sync"
 	"time"
 )
 
+type GetService func() *Service
+
 type Handler struct {
-	srv *Service
+	srv GetService
 }
 
-func NewConnectHandler(srv *Service) *Handler {
+func NewConnectHandler(srv GetService) *Handler {
 	return &Handler{srv: srv}
 }
 
@@ -36,7 +39,7 @@ func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv.Up,
+		h.srv().Up,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -46,7 +49,7 @@ func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile]
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv.Stop,
+		h.srv().Stop,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -56,7 +59,7 @@ func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFil
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv.Down,
+		h.srv().Down,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -66,7 +69,7 @@ func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFi
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv.Restart,
+		h.srv().Restart,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -76,7 +79,7 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv.Update,
+		h.srv().Update,
 		req.Msg.GetSelectedServices()...,
 	)
 	if err != nil {
@@ -85,23 +88,9 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 
 	addr := config.C.UpdaterAddr
 	key := config.C.UpdaterKey
-	go sendReqToUpdater(addr, key)
+	go sendReqToUpdater(addr, key, "")
 
 	return nil
-}
-
-func sendReqToUpdater(addr, key string) {
-	log.Debug().Str("addr", addr).Msg("sending request to updating dockman")
-	if key != "" && addr != "" {
-		addr = strings.TrimSuffix(addr, "/")
-		addr = fmt.Sprintf("%s/%s/update", addr, key)
-
-		httpclient := &http.Client{}
-		if _, err := httpclient.Get(addr); err != nil {
-			log.Warn().Err(err).Str("addr", addr).Msg("unable to send request to updater")
-			return
-		}
-	}
 }
 
 func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLogsRequest], responseStream *connect.ServerStream[v1.LogsMessage]) error {
@@ -109,7 +98,7 @@ func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLog
 		return fmt.Errorf("container id is required")
 	}
 
-	logsReader, err := h.srv.ContainerLogs(ctx, req.Msg.GetContainerID())
+	logsReader, err := h.srv().ContainerLogs(ctx, req.Msg.GetContainerID())
 	if err != nil {
 		return err
 	}
@@ -124,12 +113,12 @@ func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLog
 }
 
 func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
-	project, err := h.srv.loadProject(ctx, req.Msg.GetFilename(), false)
+	project, err := h.srv().LoadProject(ctx, req.Msg.GetFilename())
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := h.srv.ListStack(ctx, project, true)
+	result, err := h.srv().ListStack(ctx, project, true)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +128,7 @@ func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]
 		var portSlice []*v1.Port
 		for _, p := range stack.Ports {
 			if isIPV4(p.IP) {
-				p.IP = h.srv.localAddress // use the local addr found from docker
+				p.IP = config.C.LocalAddr
 				// ignore ipv6 ports no one uses it anyway
 				portSlice = append(portSlice, toRPCPort(p))
 			}
@@ -166,13 +155,13 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 	var err error
 	if file != nil {
 		// file was passed load it from context
-		project, err := h.srv.loadProject(ctx, file.Filename, false)
+		project, err := h.srv().LoadProject(ctx, file.Filename)
 		if err != nil {
 			return nil, err
 		}
-		containers, err = h.srv.StatStack(ctx, project)
+		containers, err = h.srv().StatStack(ctx, project)
 	} else {
-		containers, err = h.srv.GetStats(ctx, container.ListOptions{})
+		containers, err = h.srv().GetStats(ctx, container.ListOptions{})
 	}
 	if err != nil {
 		return nil, err
@@ -212,12 +201,12 @@ func (h *Handler) executeComposeStreamCommand(
 	action func(context.Context, *types.Project, api.Service, ...string) error,
 	services ...string,
 ) error {
-	project, err := h.srv.loadProject(ctx, composeFile, true)
+	project, err := h.srv().LoadProject(ctx, composeFile)
 	if err != nil {
 		return err
 	}
 
-	services = h.srv.withoutDockman(project, services...)
+	services = h.srv().withoutDockman(project, services...)
 	log.Debug().Strs("ssdd", services).Msg("compose stream")
 
 	pipeWriter, wg := streamManager(func(val string) error {
@@ -227,7 +216,7 @@ func (h *Handler) executeComposeStreamCommand(
 		return nil
 	})
 
-	composeClient, err := h.srv.loadComposeClient(pipeWriter, nil)
+	composeClient, err := h.srv().LoadComposeClient(pipeWriter, nil)
 	if err != nil {
 		return err
 	}
@@ -295,6 +284,32 @@ func getSortFn(field v1.SORT_FIELD) func(a, b ContainerStats) int {
 	default:
 		return func(a, b ContainerStats) int {
 			return cmp.Compare(b.Name, a.Name)
+		}
+	}
+}
+
+func sendReqToUpdater(addr, key, path string) {
+	log.Debug().Str("addr", addr).Msg("sending request to updating dockman")
+	if key != "" && addr != "" {
+		addr = strings.TrimSuffix(addr, "/")
+		addr = fmt.Sprintf("%s/update", addr) // Remove key from URL path
+
+		formData := url.Values{}
+		formData.Set("composeFile", path)
+
+		req, err := http.NewRequest("POST", addr, strings.NewReader(formData.Encode()))
+		if err != nil {
+			log.Warn().Err(err).Str("addr", addr).Msg("unable to create request")
+			return
+		}
+
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Authorization", key) // Add key as header
+
+		httpclient := &http.Client{}
+		if _, err = httpclient.Do(req); err != nil {
+			log.Warn().Err(err).Str("addr", addr).Msg("unable to send request to updater")
+			return
 		}
 	}
 }

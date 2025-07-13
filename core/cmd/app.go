@@ -14,10 +14,8 @@ import (
 	dm "github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
-	"github.com/RA341/dockman/internal/info"
 	"github.com/RA341/dockman/internal/lsp"
 	"github.com/RA341/dockman/internal/ssh"
-	logger "github.com/RA341/dockman/pkg"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"
@@ -25,18 +23,12 @@ import (
 	"strings"
 )
 
-func init() {
-	info.PrintInfo()
-	logger.ConsoleLogger("DOCKMAN_VERBOSE_LOGS")
-}
-
 type App struct {
-	Config      *config.AppConfig
-	Auth        *auth.Service
-	File        *files.Service
-	Git         *git.Service
-	Docker      *docker.Service
-	HostManager *dm.Service
+	Auth          *auth.Service
+	Config        *config.AppConfig
+	DockerManager *dm.Service
+	Git           *git.Service
+	File          *files.Service
 }
 
 func NewApp(conf *config.AppConfig) (*App, error) {
@@ -54,30 +46,21 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	sshSrv := ssh.NewService(configDir)
 	fileSrv := files.NewService(absComposeRoot)
 	gitSrv := git.NewService(absComposeRoot)
-	dockerManagerSrv := dm.NewService(gitSrv, sshSrv)
-	dockerSrv := docker.NewService(
-		absComposeRoot,
-		dockerManagerSrv.Manager.GetClientFn(),
-		dockerManagerSrv.Manager.GetSFTPFn(),
-	)
+	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, absComposeRoot)
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{
-		Config:      conf,
-		Auth:        authSrv,
-		File:        fileSrv,
-		Git:         gitSrv,
-		Docker:      dockerSrv,
-		HostManager: dockerManagerSrv,
+		Config:        conf,
+		Auth:          authSrv,
+		File:          fileSrv,
+		Git:           gitSrv,
+		DockerManager: dockerManagerSrv,
 	}, nil
 }
 
 func (a *App) Close() error {
 	if err := a.File.Close(); err != nil {
 		return fmt.Errorf("failed to close file service: %w", err)
-	}
-	if err := a.Docker.Close(); err != nil {
-		return fmt.Errorf("failed to close docker service: %w", err)
 	}
 	return nil
 }
@@ -102,7 +85,7 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		},
 		// docker
 		func() (string, http.Handler) {
-			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(a.Docker), globalInterceptor)
+			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(a.DockerManager.GetServiceInstance), globalInterceptor)
 		},
 		// git
 		func() (string, http.Handler) {
@@ -122,7 +105,7 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		},
 		// host_manager
 		func() (string, http.Handler) {
-			return dockermanagerrpc.NewDockerManagerServiceHandler(dm.NewConnectHandler(a.HostManager), globalInterceptor)
+			return dockermanagerrpc.NewDockerManagerServiceHandler(dm.NewConnectHandler(a.DockerManager), globalInterceptor)
 		},
 		// lsp
 		func() (string, http.Handler) {

@@ -4,7 +4,9 @@ import (
 	connectcors "connectrpc.com/cors"
 	"fmt"
 	"github.com/RA341/dockman/internal/config"
+	"github.com/RA341/dockman/internal/info"
 	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/logger"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
@@ -15,6 +17,11 @@ import (
 	"path"
 	"strings"
 )
+
+func init() {
+	info.PrintInfo()
+	logger.ConsoleLogger("DOCKMAN_VERBOSE_LOGS")
+}
 
 func StartServer(opt ...config.ServerOpt) {
 	config.LoadConfig(opt...)

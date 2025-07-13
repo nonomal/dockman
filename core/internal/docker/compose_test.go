@@ -1,20 +1,18 @@
 package docker
 
 import (
-	"github.com/RA341/dockman/internal/ssh"
+	"github.com/RA341/dockman/pkg/logger"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
+func init() {
+	logger.ConsoleLoggerForTest()
+}
+
 func TestTrimDockman(t *testing.T) {
-	comp := ComposeService{
-		Client: &ContainerService{
-			Sftp: func() *ssh.SftpClient {
-				return nil
-			},
-		},
-	}
+	comp := NewComposeService("", nil, nil)
 
 	proj := types.Project{
 		Services: map[string]types.ServiceConfig{

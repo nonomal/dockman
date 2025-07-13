@@ -7,7 +7,8 @@ import (
 )
 
 type ManagedMachine struct {
-	client     *client.Client
+	dockerClient *client.Client
+	// this field is unused for now, intended to be used in: https://github.com/RA341/dockman/issues/25
 	sshClient  *ssh2.Client
 	sftpClient *ssh.SftpClient
 }

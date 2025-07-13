@@ -13,10 +13,6 @@ import (
 // LocalClient is the name given to the local docker daemon instance
 const LocalClient = "local"
 
-type GetDocker func() *client.Client
-
-type GetSftp func() *ssh.SftpClient
-
 type ClientManager struct {
 	connectedClients pkg.Map[string, *ManagedMachine]
 	activeClient     string
@@ -39,26 +35,30 @@ func NewClientManager(sshSrv *ssh.Service) (*ClientManager, string) {
 	return cm, defaultHost
 }
 
-func (m *ClientManager) GetClientFn() GetDocker {
-	return func() *client.Client {
-		val, ok := m.connectedClients.Load(m.GetActiveClient())
-		if !ok {
-			// this should never happen since only way of changing client should be ClientManager.SwitchClient
-			log.Warn().Str("name", m.activeClient).Msg("Client is not connected")
-		}
-		return val.client
+func (m *ClientManager) GetMachine() *ManagedMachine {
+	val, ok := m.connectedClients.Load(m.GetActiveClient())
+	if !ok {
+		// this should never happen since only way of changing client should be SwitchClient,
+		// and we can choose only from valid list of clients validated by SwitchClient
+		log.Warn().Str("name", m.activeClient).Msg("Client is not not found, THIS SHOULD NEVER HAPPEN, submit a bug report https://github.com/RA341/dockman/issues")
 	}
+	return val
 }
 
-func (m *ClientManager) GetSFTPFn() GetSftp {
-	return func() *ssh.SftpClient {
-		val, ok := m.connectedClients.Load(m.GetActiveClient())
-		if !ok {
-			// this should never happen since only way of changing client should be ClientManager.SwitchClient
-			log.Warn().Str("name", m.activeClient).Msg("Client is not connected")
-		}
-		return val.sftpClient
+func (m *ClientManager) GetDocker() *client.Client {
+	val, ok := m.connectedClients.Load(m.GetActiveClient())
+	if !ok {
+		log.Warn().Str("name", m.activeClient).Msg("Client is not connected")
 	}
+	return val.dockerClient
+}
+
+func (m *ClientManager) GetSFTP() *ssh.SftpClient {
+	val, ok := m.connectedClients.Load(m.GetActiveClient())
+	if !ok {
+		log.Warn().Str("name", m.activeClient).Msg("Client is not connected")
+	}
+	return val.sftpClient
 }
 
 func (m *ClientManager) GetActiveClient() string {
@@ -69,13 +69,13 @@ func (m *ClientManager) GetActiveClient() string {
 }
 
 func (m *ClientManager) SwitchClient(name string) error {
-	m.clientLock.Lock()
-	defer m.clientLock.Unlock()
-
 	_, ok := m.connectedClients.Load(name)
 	if !ok {
 		return fmt.Errorf("invalid client %s", name)
 	}
+
+	m.clientLock.Lock()
+	defer m.clientLock.Unlock()
 
 	log.Debug().Str("client", name).Msg("setting default client")
 	m.activeClient = name
@@ -149,7 +149,7 @@ func (m *ClientManager) loadLocalClient(clientConfig ssh.ClientConfig, wg *sync.
 	}
 
 	m.testAndStore(LocalClient, &ManagedMachine{
-		client: localClient,
+		dockerClient: localClient,
 	})
 }
 
@@ -185,14 +185,14 @@ func (m *ClientManager) loadSSHClient(machine ssh.MachineOptions, name string, s
 	}
 
 	m.testAndStore(name, &ManagedMachine{
-		client:     dockerCli,
-		sshClient:  sshClient,
-		sftpClient: ssh.NewSFTPCli(sftpClient),
+		dockerClient: dockerCli,
+		sshClient:    sshClient,
+		sftpClient:   ssh.NewSFTPCli(sftpClient),
 	})
 }
 
 func (m *ClientManager) testAndStore(name string, newClient *ManagedMachine) {
-	_, err := testClientConn(newClient.client)
+	_, err := testClientConn(newClient.dockerClient)
 	if err != nil {
 		log.Warn().Err(err).Msgf("docker client health check failed: %s", name)
 		return
