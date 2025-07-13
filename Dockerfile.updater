@@ -19,7 +19,7 @@ ARG TARGETARCH
 # This avoids slow emulation for the compilation step.
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-s -w" \
     -o /dockman-updater  \
-    ./cmd/updater/main.go
+    ./cmd/updater
 
 FROM scratch
 

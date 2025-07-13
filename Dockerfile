@@ -39,7 +39,7 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-s -w \
              -X github.com/RA341/dockman/internal/info.CommitInfo=${COMMIT_INFO} \
              -X github.com/RA341/dockman/internal/info.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
              -X github.com/RA341/dockman/internal/info.Branch=${BRANCH}" \
-    -o dockman "./cmd/server/main.go"
+    -o dockman "./cmd/server"
 
 # Alpine target
 FROM alpine:latest AS alpine
