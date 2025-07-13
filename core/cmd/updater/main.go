@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/pkg"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -17,7 +18,7 @@ import (
 	"strings"
 )
 
-var localDockerClient *client.Client
+var composeClient *docker.ComposeService
 
 func init() {
 	log.Logger = log.With().Logger().Output(
@@ -32,17 +33,18 @@ func init() {
 		log.Fatal().Err(err).Msg("Failed to connect to local docker client")
 		return
 	}
-	localDockerClient = cli
+
+	syncer := &docker.NoopSyncer{}
+	composeClient = docker.NewComposeService(
+		conf.ComposeRoot,
+		docker.NewContainerService(cli),
+		syncer,
+	)
 }
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{authKey}/update", updateHandler)
-
-	//if err := UpdateContainersForImage(context.Background(), localDockerClient, imageToUpdate); err != nil {
-	//	log.Error().Err(err).Msg("Failed to update dockman container")
-	//	return
-	//}
+	mux.HandleFunc("POST /update", updateHandler)
 
 	port := "8869"
 	log.Info().Str("port", port).Msg("Dockman updater starting...")
@@ -54,24 +56,50 @@ func main() {
 
 // updateHandler is our handler function.
 func updateHandler(w http.ResponseWriter, r *http.Request) {
-	pathAuthKey := r.PathValue("authKey")
+	pathAuthKey := r.Header.Get("Authorization")
 	if pathAuthKey == "" || conf.UpdaterKey != pathAuthKey {
-		http.Error(w, "invalid authKey", http.StatusForbidden)
+		http.Error(w, "invalid Authorization", http.StatusForbidden)
 		return
 	}
-	log.Info().Msg("Received a valid update request")
+
+	filepath := r.FormValue("composeFile")
+	if filepath == "" {
+		http.Error(w, "composeFile is required", http.StatusBadRequest)
+		return
+	}
+
+	log.Info().Str("path", filepath).Msg("Received a valid update request")
 	w.WriteHeader(http.StatusOK)
 
 	// update in background
-	go Update()
+	go Update(filepath)
 }
 
-func Update() {
+func Update(path string) {
 	log.Info().Msg("Updating dockman container")
-	if err := UpdateContainersForImage(context.Background(), localDockerClient, conf.UpdaterImage); err != nil {
-		log.Error().Err(err).Msg("Failed to update dockman container")
+	ctx := context.Background()
+
+	project, err := composeClient.LoadProject(ctx, path)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to load project")
 		return
 	}
+
+	cli, err := composeClient.LoadComposeClient(os.Stdout, nil)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to load compose client")
+		return
+	}
+
+	if err = composeClient.Update(ctx, project, cli); err != nil {
+		log.Error().Err(err).Msg("Failed to update project")
+		return
+	}
+
+	//if err := UpdateContainersForImage(context.Background(), localDockerClient, conf.UpdaterImage); err != nil {
+	//	log.Error().Err(err).Msg("Failed to update dockman container")
+	//	return
+	//}
 }
 
 // UpdateContainersForImage finds all containers using the specified image,

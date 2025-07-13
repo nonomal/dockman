@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/RA341/dockman/pkg/lsp"
+	"github.com/RA341/dockman/internal/lsp"
 	"go.uber.org/zap"
 	"io"
 	"log"
