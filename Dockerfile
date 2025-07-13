@@ -29,17 +29,18 @@ ARG TARGETARCH
 ARG VERSION=dev
 ARG COMMIT_INFO=unknown
 ARG BRANCH=unknown
+ARG INFO_PACKAGE=github.com/RA341/dockman/internal/info
 
 # We run the build on the native amd64 runner, but use GOOS and GOARCH
 # to tell the Go compiler to create a binary for the *target* platform.
 # This avoids slow emulation for the compilation step.
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-s -w \
-             -X github.com/RA341/dockman/internal/info.Flavour=Docker \
-             -X github.com/RA341/dockman/internal/info.Version=${VERSION} \
-             -X github.com/RA341/dockman/internal/info.CommitInfo=${COMMIT_INFO} \
-             -X github.com/RA341/dockman/internal/info.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
-             -X github.com/RA341/dockman/internal/info.Branch=${BRANCH}" \
-    -o dockman "./cmd/server/main.go"
+             -X ${INFO_PACKAGE}.Flavour=Docker \
+             -X ${INFO_PACKAGE}.Version=${VERSION} \
+             -X ${INFO_PACKAGE}.CommitInfo=${COMMIT_INFO} \
+             -X ${INFO_PACKAGE}.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+             -X ${INFO_PACKAGE}.Branch=${BRANCH}" \
+    -o dockman "./cmd/server"
 
 # Alpine target
 FROM alpine:latest AS alpine
