@@ -10,8 +10,19 @@ import (
 	"net"
 )
 
-// newClientFromSSH establishes an SSH connection to a Docker host
-func newClientFromSSH(sshClient *ssh.Client) (*client.Client, error) {
+// NewLocalClient connects to the local docker host.
+//
+// It is assumed the docker daemon is running and is accessible
+func NewLocalClient() (*client.Client, error) {
+	dockerClient, err := newDockerClient(client.FromEnv)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create docker client: %w", err)
+	}
+	return dockerClient, nil
+}
+
+// newSSHClient establishes an SSH connection to a Docker host
+func newSSHClient(sshClient *ssh.Client) (*client.Client, error) {
 	// Create a Docker client using the custom dialer.
 	newClient, err := newDockerClient(
 		client.WithDialContext(dockerSSHDialer(sshClient)),
@@ -23,17 +34,6 @@ func newClientFromSSH(sshClient *ssh.Client) (*client.Client, error) {
 	return newClient, nil
 }
 
-// NewClientFromLocal connects to the local docker host.
-//
-// It is assumed the docker daemon is running and is accessible by leviathan
-func NewClientFromLocal() (*client.Client, error) {
-	dockerClient, err := newDockerClient(client.FromEnv)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create docker client: %w", err)
-	}
-	return dockerClient, nil
-}
-
 // thin wrapper around client.NewClientWithOpts, to load common options
 // between the connection methods
 func newDockerClient(opts ...client.Opt) (*client.Client, error) {
@@ -41,13 +41,16 @@ func newDockerClient(opts ...client.Opt) (*client.Client, error) {
 	return client.NewClientWithOpts(opts...)
 }
 
-func testClientConn(client *client.Client) (system.Info, error) {
+func testDockerConnection(client *client.Client) (system.Info, error) {
 	cliInfo, err := client.Info(context.Background())
 	if err != nil {
 		return system.Info{}, err
 	}
 
-	log.Info().Str("ID", cliInfo.ID).Str("Kernel", cliInfo.KernelVersion).Msgf("Connected to %v", cliInfo.Name)
+	log.Info().
+		Str("ID", cliInfo.ID).Str("Kernel", cliInfo.KernelVersion).
+		Str("name", cliInfo.Name).Msg("Connected to client")
+
 	return cliInfo, nil
 }
 
@@ -63,7 +66,9 @@ func dockerSSHDialer(sshClient *ssh.Client) func(ctx context.Context, network st
 		dockerTcp := "127.0.0.1:2375"
 		log.Warn().
 			Err(err).
-			Msgf("failed to dial remote docker client at %s, using fallingback at %s", dockerUnix, dockerTcp)
+			Str("socket", dockerUnix).
+			Str("tcp", dockerTcp).
+			Msg("failed to dial remote docker client at socket, using fallback at tcp")
 
 		return sshClient.Dial("tcp", dockerTcp)
 	}

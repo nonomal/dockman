@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/RA341/dockman/internal/docker"
+	"github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/pkg"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -28,7 +29,7 @@ func init() {
 		},
 	)
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := docker_manager.NewLocalClient()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to local docker client")
 		return

@@ -134,6 +134,7 @@ func (m *ClientManager) ClientExists(name string) bool {
 	_, ok := m.connectedClients.Load(name)
 	return ok
 }
+
 func (m *ClientManager) loadLocalClient(clientConfig ssh.ClientConfig, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -142,7 +143,7 @@ func (m *ClientManager) loadLocalClient(clientConfig ssh.ClientConfig, wg *sync.
 		return
 	}
 
-	localClient, err := NewClientFromLocal()
+	localClient, err := NewLocalClient()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup local docker client")
 		return
@@ -172,7 +173,7 @@ func (m *ClientManager) loadSSHClient(machine ssh.MachineOptions, name string, s
 		return
 	}
 
-	dockerCli, err := newClientFromSSH(sshClient)
+	dockerCli, err := newSSHClient(sshClient)
 	if err != nil {
 		log.Error().Err(err).Str("client", name).Msg("Failed to setup remote docker client")
 		return
@@ -192,8 +193,7 @@ func (m *ClientManager) loadSSHClient(machine ssh.MachineOptions, name string, s
 }
 
 func (m *ClientManager) testAndStore(name string, newClient *ManagedMachine) {
-	_, err := testClientConn(newClient.dockerClient)
-	if err != nil {
+	if _, err := testDockerConnection(newClient.dockerClient); err != nil {
 		log.Warn().Err(err).Msgf("docker client health check failed: %s", name)
 		return
 	}
