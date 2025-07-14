@@ -36,13 +36,13 @@ Try Dockman with this single command:
 docker run --rm -p 8866:8866 -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/ra341/dockman:latest
 ```
 
-Access the frontend at http://localhost:8866
+Access at http://localhost:8866
 
 ### Docker Compose
 
 > [!IMPORTANT]
 >
-> The stacks directory path must be absloute and identical in all three locations:
+> The stacks directory path must be absolute and identical in all three locations:
 >
 > * 1️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
 > * 2️⃣ The host side of the volume `/path/to/stacks`
@@ -88,26 +88,20 @@ services:
 
 ### Config
 
-Dockman can be configured using environment variables to customize
-its behavior according to your needs.
+Dockman can be customized through environment variables to better suit your workflow.
 
-When you start a Dockman instance, a comprehensive table of all
-available environment variables for your version will be
-automatically printed in the startup logs.
+When you launch a Dockman instance, a detailed configuration table will automatically appear in the startup logs. This
+table provides:
 
-This table includes:
+* Configuration names
+* Current values
+* Descriptions
+* Corresponding environment variable names (if applicable)
 
-- Config name
-- The current set values
-- Descriptions
-- env variable names (where applicable)
-
-For a complete list of available configuration options for your version,
-refer to the environment variables table displayed in your startup logs
+To see all available configuration options for your specific version, refer to this table in the startup logs.
 
 > [!NOTE]
-> Example Image
->
+> **Example Output**
 > ![Environment Variables Table](.github/img/env.png)
 
 #### Setting Environment Variables
@@ -148,42 +142,25 @@ Dockman follows [semver](https://semver.org/) and tags its image as such.
 
 You can pin a dockman version using specific version tags
 
-Find all available tags [here](https://github.com/RA341/dockman/pkgs/container/dockman)
+Find all available tags
+[here](https://github.com/RA341/dockman/pkgs/container/dockman/versions?filters%5Bversion_type%5D=tagged)
 
 > [!TIP]
-> We recommend using (`latest`) or (`vX`)
+> We recommend using (`vX`) or (`latest`)
 
 #### Tags
 
-| Tag Pattern | Description                          | Example  | Recommended For                          |
-|-------------|--------------------------------------|----------|------------------------------------------|
-| `vX.Y.Z`    | Exact version                        | `v1.2.0` | Pin (No updates)                         |
-| `vX.Y`      | Latest patch for minor version       | `v1.2`   | Bug fixes                                |
-| `vX`        | Latest minor/patch for major version | `v1`     | New features                             |
-| `latest`    | Latest stable release                | `latest` | Always get the latest updates            |
-| `dev`       | Development builds                   | `dev`    | Contributing/testing unreleased features |
-
-```bash
-# Pin to a specific version
-docker pull ghcr.io/ra341/dockman:v1.2.0
-
-# Pin to a major.minor version (gets latest bug fixes)
-docker pull ghcr.io/ra341/dockman:v1.2
-
-# Pin to a major version (gets latest feature updates)
-docker pull ghcr.io/ra341/dockman:v1
-
-# Use latest stable release
-docker pull ghcr.io/ra341/dockman:latest
-
-# Use development build (unstable)
-docker pull ghcr.io/ra341/dockman:dev
-```
+| Tag Pattern | Description                          | Example  | Recommended For                                              |
+|-------------|--------------------------------------|----------|--------------------------------------------------------------|
+| `vX.Y.Z`    | Exact version                        | `v1.2.0` | Pin (No updates)                                             |
+| `vX.Y`      | Latest patch for minor version       | `v1.2`   | Bug fixes                                                    |
+| `vX`        | Latest minor/patch for major version | `v1`     | New features                                                 |
+| `latest`    | Latest stable release                | `latest` | Always get the latest updates (May contain breaking changes) |
+| `dev`       | Development builds                   | `dev`    | Contributing/testing unreleased features                     |
 
 #### Docker Compose Example
 
 ```yaml
-version: '3.8'
 services:
   dockman:
     image: ghcr.io/ra341/dockman:v1.2.0  # Pin to specific version
@@ -202,53 +179,51 @@ Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/
 
 ### ✅ Completed
 
-- **Version Control** - Built-in Git support automatically tracks changes to your compose files,
-  maintaining a complete version history with easy rollback capabilities for configuration management
+- **Version Control** - Built-in Git support that automatically tracks changes to your compose files and lets you easily
+  roll back when things go wrong
     - Released: [v1.0](https://github.com/RA341/dockman/releases/tag/v1.0.0)
 
-- **Multi-Host Support** - Multihost docker support, enabling distributed container deployments while maintaining
-  centralized
-  configuration management and monitoring
+- **Multi-Host Support** - Deploy containers across multiple hosts while keeping everything managed from one place, with
+  isolated configs per host
     - Released: [v1.1](https://github.com/RA341/dockman/releases/tag/v1.1.0)
 
 ### 🚀 Active Development
 
-- **Enhanced Development Experience** - Integrated Language Server Protocol support with intelligent autocompletion,
-  syntax validation, and specialized Docker Compose features including port conflict detection and automatic network
-  creation assistance
+- **Editor LSP** - Smart autocompletion, syntax checking, formatter and custom Docker Compose helpers like port
+  conflict detection and auto network setup
     - Status: [In Progress](https://github.com/RA341/dockman/issues/8)
+
+- **Smart Updater** - Built-in container update management that replaces watchtower and diun. Choose between
+  auto-updates or just get notified when updates are available
+    - Status: [In Progress](https://github.com/RA341/dockman/issues/30)
 
 ### 📋 Planned
 
-- **Backup & Restore** - Streamlined backup and restore operations for your entire Docker Compose infrastructure using
-  Git-based snapshots,
-  ensuring your configurations are always recoverable
+- **Backup & Restore** - Complete backup and restore for your entire Docker setup, so you never lose
+  your configs
     - Status: TBA
 
 Have ideas for new features?
 [open an issue](https://github.com/RA341/dockman/issues/new) to share your suggestions!
 
-## Why Dockman
+**Why Dockman**
 
-I built Dockman to solve a specific problem in my homelab setup.
-While there are excellent Docker management tools available, none quite matched how I prefer to work.
+I built Dockman to solve a frustrating workflow problem in my homelab. While other Docker management tools exist,
+none matched how I actually wanted to work.
 
-Before Dockman, I had a repository of my compose files that I had to manually scp to my server with every change.
-The workflow was cumbersome, but it let me work in my IDE to edit configurations,
-and that was the one redeeming quality of this workflow.
+My previous setup required manually using scp to transfer compose files to my server after every change. The workflow
+was tedious, but it had one major upside: I could edit configurations in my IDE where I'm most productive.
 
-I wanted a tool that let me stay in my IDE but got rid of the tedious remote update process. Dockman aims to bridge that
-gap,
-giving you the best of both worlds, the comfort of your local development environment with the easy deployment.
+Dockman eliminates the friction while preserving what worked. You get the comfort of your local development environment
+with easy deployment for your homelab.
 
-Dockman is designed for people who:
+**Dockman is built for people who:**
 
-- Prefer editing configuration files directly over GUI abstractions
-- Want a clean, focused interface without unnecessary complexity
-- Value simplicity and purpose over comprehensive feature sets
+* Edit configuration files directly rather than through GUI abstractions
+* Want focused tools without feature bloat
+* Value simplicity and reliability over comprehensive features
 
-If this resonates with your workflow, I'd appreciate a star.
-Even if it doesn't fit your needs, I'd welcome your [feedback](#feedback) to help improve it.
+If this matches your workflow, I'd appreciate a star. If not, let me know what's missing.
 
 ### How It Compares
 
