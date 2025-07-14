@@ -206,7 +206,7 @@ Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/
 Have ideas for new features?
 [open an issue](https://github.com/RA341/dockman/issues/new) to share your suggestions!
 
-**Why Dockman**
+## **Why Dockman**
 
 I built Dockman to solve a frustrating workflow problem in my homelab. While other Docker management tools exist,
 none matched how I actually wanted to work.
