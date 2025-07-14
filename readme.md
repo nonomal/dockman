@@ -464,34 +464,57 @@ ssh user@host-address 'docker version'
 
 ## Security Considerations
 
-### **Security Measures aka Don't Be a Dumb Dumb**:
+### **AKA Don't Be a Dumb Dumb**
 
-- **Never expose dockman to the internet** - Seriously, don't be that person. Keep it isolated within your local network
-- **Use VPN access only** - Use secure VPN services like Tailscale for remote access
+### Exposing Dockman
 
-### SSH Security Best Practices
+#### Why Exposing Dockman to the Internet Is a Terrible Idea
 
-- **Use SSH key authentication** instead of passwords
-- **Restrict SSH access** to specific IP ranges
-- **Rotate SSH keys regularly** and remove unused keys
+Dockman has access to your Docker socket, which is essentially root access to your entire system. One compromised
+dockman instance means a bad day for you.
 
-### Git Repository Security (The "Oops I Leaked My Secrets" Prevention Guide)
+It gets worse if you're using dockman to manage remote Docker hosts. Since it connects via SSH, a breach doesn't just
+compromise one server, it potentially compromises every connected machine in your setup.
 
-- **Local config repos are fine** - It's okay to check secrets into your local configuration repository
-- **Never push to untrusted remotes** - Don't push your secrets to GitHub, GitLab, or any public/untrusted remote
-  server (your API keys don't need to be famous)
-- **Always verify your push destination** - Double-check where you're pushing your repo before hitting enter.
-- **Use private, secured repositories only** - If you must use a remote, ensure it's a private, properly secured
-  repository that you control
+#### How to Actually Secure Dockman
+
+Keep dockman local only. It's designed for your private network, not the wild west of the internet. When you need remote
+access, use a VPN like [Netbird](https://netbird.io/) or [Tailscale](https://tailscale.com/) to securely tunnel into
+your network.
+
+Turn on dockman's built-in authentication too. On a private network, this gives you sufficient protection for most home
+setups without making things overly complicated.
+
+### **Git Repository Security**
+
+#### Why Secrets in Git Are Usually Bad (But OK Here)
+
+Your dockman repo breaks the usual rules about secrets in git repositories, and that's intentional. Unlike most
+projects, this repository lives permanently on your homelab server, which changes everything about secret management.
+
+Git actually makes secrets tracking easier here. When you update your Plex API key or database password and something
+breaks, you can roll back to the previous working configuration. Since this isn't a collaboration repo, the typical
+concerns about team access don't apply.
+
+#### How People Usually Mess This Up
+
+The stories about secrets in git involve one mistake: pushing to public repositories. Don't accidentally commit
+API keys to public GitHub repos. If you need remote backup, use private self-hosted solutions
+like [Gitea](https://about.gitea.com/) on a VPS.
+
+#### What Actually Works
+
+Keep secrets directly in your local repository, it makes change tracking easier. Your homelab repo should never touch
+public services like GitHub or GitLab.
+
+If you prefer .env files with `.gitignore`, that works too, dockman doesn't enforce any particular convention.
 
 ## Feedback
 
-This project is in early stages, so any and all feedback is a huge help.
-If you spot a bug, have an idea for a feature, or just want to share your thoughts, please open an issue.
+If you spot a bug, have an idea for a feature, or just want to share your thoughts, please open an issue any and all
+feedback is welcome.
 
 I'd especially love to hear what you think about a couple of things:
-
-* The File and Folder Structure
 
 * The UI
     * I'm not a UI expert, in fact I hate HTML/CSS in general. The current interface is mostly built using Material-UI
