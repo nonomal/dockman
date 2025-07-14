@@ -15,24 +15,40 @@ import {
     Tooltip,
     Typography,
     useTheme
-} from "@mui/material";
-import {type ContainerStats, ORDER, SORT_FIELD} from "../gen/docker/v1/docker_pb.ts";
-import React, {useState} from "react";
-import GetAppIcon from '@mui/icons-material/GetApp';
-import PublishIcon from '@mui/icons-material/Publish';
-import EditIcon from '@mui/icons-material/Edit';
-import {Article, ContentCopy} from "@mui/icons-material";
-import CheckIcon from "@mui/icons-material/Check";
+} from "@mui/material"
+import {type ContainerStats, ORDER, SORT_FIELD} from "../gen/docker/v1/docker_pb.ts"
+import React, {useState} from "react"
+import GetAppIcon from '@mui/icons-material/GetApp'
+import PublishIcon from '@mui/icons-material/Publish'
+import EditIcon from '@mui/icons-material/Edit'
+import {Article, ContentCopy} from "@mui/icons-material"
+import CheckIcon from "@mui/icons-material/Check"
 
 
 interface ContainersTableProps {
-    activeSortField: SORT_FIELD;
+    activeSortField: SORT_FIELD
     order: ORDER
-    onFieldClick: (field: SORT_FIELD, orderBy: ORDER) => void;
-    containers: ContainerStats[];
-    placeHolders?: number;
-    loading: boolean;
+    onFieldClick: (field: SORT_FIELD, orderBy: ORDER) => void
+    containers: ContainerStats[]
+    placeHolders?: number
+    loading: boolean
 }
+
+// --- NEW HELPER FUNCTION ---
+// Determines the color based on resource usage percentage.
+// - Green for normal usage (< 70%)
+// - Yellow for high usage (70-90%)
+// - Red for critical usage (> 90%)
+const getUsageColor = (value: number): 'success.main' | 'warning.main' | 'error.main' => {
+    if (value > 90) {
+        return 'error.main' // Critical
+    }
+    if (value > 70) {
+        return 'warning.main' // High
+    }
+    return 'success.main' // Normal
+}
+
 
 export function ContainerStatTable(
     {
@@ -44,19 +60,17 @@ export function ContainerStatTable(
         placeHolders = 5,
     }: ContainersTableProps) {
 
-    const isEmpty = !loading && containers.length === 0;
+    const isEmpty = !loading && containers.length === 0
 
     const handleSortRequest = (field: SORT_FIELD) => {
         if (loading || isEmpty) {
-            return;
+            return
         }
-        // If the same field is clicked again, toggle the order. Otherwise, default to DSC.
-        const isAsc = activeSortField === field && order === ORDER.ASC;
-        const newOrder = isAsc ? ORDER.DSC : ORDER.ASC;
-        // If a new field is clicked, always start with DSC
-        const finalOrder = activeSortField !== field ? ORDER.DSC : newOrder;
-        onFieldClick(field, finalOrder);
-    };
+        const isAsc = activeSortField === field && order === ORDER.ASC
+        const newOrder = isAsc ? ORDER.DSC : ORDER.ASC
+        const finalOrder = activeSortField !== field ? ORDER.DSC : newOrder
+        onFieldClick(field, finalOrder)
+    }
 
     const createSortableHeader = (field: SORT_FIELD, label: string, icon?: React.ReactNode) => (
         <TableSortLabel
@@ -73,35 +87,36 @@ export function ContainerStatTable(
                 {label}
             </Box>
         </TableSortLabel>
-    );
+    )
 
-    const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [copiedId, setCopiedId] = useState<string | null>(null)
     const handleCopy = (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
-        event.stopPropagation();
-        navigator.clipboard.writeText(id).then();
-        setCopiedId(id);
-        // After 1.5 seconds, reset the state to clear the checkmark
+        event.stopPropagation()
+        navigator.clipboard.writeText(id).then()
+        setCopiedId(id)
         setTimeout(() => {
-            setCopiedId(null);
-        }, 1500);
-    };
+            setCopiedId(null)
+        }, 1500)
+    }
 
     return (
         <Fade in={true} timeout={400}>
             <TableContainer component={Paper} variant="outlined">
-                <Table sx={{minWidth: 650}} aria-label="container stats table">
+                {/* By setting table-layout to fixed, the table's layout is determined by the widths of the columns in the header. */}
+                <Table sx={{minWidth: 650, tableLayout: 'fixed'}} aria-label="container stats table">
                     <TableHead>
                         <TableRow sx={{'& th': {fontWeight: 'bold'}}}>
-                            <TableCell>
+                            {/* For equally spaced columns, we assign a percentage width to each header cell. */}
+                            <TableCell sx={{width: '15%'}}>
                                 {createSortableHeader(SORT_FIELD.NAME, 'Container Name')}
                             </TableCell>
-                            <TableCell sx={{width: '15%'}}>
+                            <TableCell sx={{width: '10%'}}>
                                 {createSortableHeader(SORT_FIELD.CPU, 'CPU %')}
                             </TableCell>
-                            <TableCell>
-                                {createSortableHeader(SORT_FIELD.MEM, 'Memory Usage / Limit')}
+                            <TableCell sx={{width: '10%'}}>
+                                {createSortableHeader(SORT_FIELD.MEM, 'Memory Usage')}
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{width: '20%'}}>
                                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                                     <Typography variant="body2" sx={{fontWeight: 'bold', mr: 1}}>
                                         Network:
@@ -117,31 +132,22 @@ export function ContainerStatTable(
                                     </Box>
                                 </Box>
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{width: '20%'}}>
                                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                                     <Typography variant="body2" sx={{fontWeight: 'bold', mr: 1}}>
                                         Block I/O:
                                     </Typography>
                                     <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                        {createSortableHeader(SORT_FIELD.DISK_R, "Read", <Article fontSize="small"/>)}
-                                        <Typography component="span" sx={{mx: 0.5}}>/</Typography>
                                         {createSortableHeader(SORT_FIELD.DISK_W, "Write", <EditIcon fontSize="small"/>)}
+                                        <Typography component="span" sx={{mx: 0.5}}>/</Typography>
+                                        {createSortableHeader(SORT_FIELD.DISK_R, "Read", <Article fontSize="small"/>)}
                                     </Box>
                                 </Box>
                             </TableCell>
                         </TableRow>
                     </TableHead>
-                    <TableBody
-                        sx={{
-                            // Opacity is 0 initially, and 1 after the first load.
-                            // opacity: isLoaded ? 1 : 1,
-                            // A CSS transition animates the change in opacity.
-                            // transition: 'opacity 100ms ease-in-out',
-                        }}
-                    >
+                    <TableBody>
                         {loading ? (
-                            // Skeletons are rendered while loading, but will be invisible
-                            // until the fade-in is triggered.
                             [...Array(placeHolders)].map((_, index) => (
                                 <TableRow key={`skeleton-${index}`}>
                                     <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
@@ -165,7 +171,6 @@ export function ContainerStatTable(
                             </TableRow>
                         ) : (
                             containers.map((container) => {
-                                const memUsagePercent = container.memoryLimit > 0 ? (Number(container.memoryUsage) / Number(container.memoryLimit)) * 100 : 0;
                                 return (
                                     <Fade in={true} timeout={400}>
                                         <TableRow key={container.id}
@@ -181,17 +186,15 @@ export function ContainerStatTable(
                                                             size="small"
                                                             sx={{position: 'relative'}}
                                                         >
-                                                            {/* The check icon is only visible when its ID is the copiedId */}
                                                             <CheckIcon
                                                                 fontSize="inherit"
                                                                 sx={{
                                                                     position: 'absolute',
                                                                     opacity: copiedId === container.id ? 1 : 0,
                                                                     transition: 'opacity 0.2s',
-                                                                    color: 'success.main' // Give it a green color
+                                                                    color: 'success.main'
                                                                 }}
                                                             />
-                                                            {/* The copy icon is visible by default and fades out when copied */}
                                                             <ContentCopy
                                                                 fontSize="inherit"
                                                                 sx={{
@@ -204,21 +207,29 @@ export function ContainerStatTable(
                                                 </Box>
                                             </TableCell>
                                             <TableCell>
-                                                <CircularStatWithTrack
+                                                <CPUStat
                                                     value={container.cpuUsage}
                                                     size={48}
                                                     thickness={1}
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                {`${formatBytes(Number(container.memoryUsage))} / ${formatBytes(Number(container.memoryLimit))} 
-                                            (${memUsagePercent.toFixed(1)}%)`}
+                                                <UsageBar
+                                                    usage={(Number(container.memoryUsage))}
+                                                    limit={(Number(container.memoryLimit))}
+                                                />
                                             </TableCell>
                                             <TableCell>
-                                                {`${formatBytes(Number(container.networkRx))} / ${formatBytes(Number(container.networkTx))}`}
+                                                <RWData
+                                                    download={Number(container.networkRx)}
+                                                    upload={Number(container.networkTx)}
+                                                />
                                             </TableCell>
                                             <TableCell>
-                                                {`${formatBytes(Number(container.blockRead))} / ${formatBytes(Number(container.blockWrite))}`}
+                                                <RWData
+                                                    download={Number(container.blockWrite)}
+                                                    upload={Number(container.blockRead)}
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     </Fade>
@@ -229,32 +240,55 @@ export function ContainerStatTable(
                 </Table>
             </TableContainer>
         </Fade>
-    );
-};
+    )
+}
 
-const formatBytes = (bytes: number | bigint, decimals = 2) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(Number(bytes)) / Math.log(k));
-    return parseFloat((Number(bytes) / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-};
+const RWData = ({upload, download}: { upload: number; download: number }) => {
+    const rx = Number(upload);
+    const tx = Number(download);
 
+    // Calculate the ratio, handling the case where tx is 0 to avoid division errors
+    let ratioText = '0:1';
+    if (tx > 0) {
+        const ratio = (rx / tx).toFixed(1);
+        ratioText = `${ratio}:1`;
+    } else if (rx > 0) {
+        // If there's download but no upload, the ratio is infinite
+        ratioText = '∞';
+    }
 
-interface CircularStatProps {
+    return (
+        <Box sx={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'start', gap: 1}}>
+            <Typography
+                variant="body2"
+                sx={{color: 'primary.main', fontWeight: 'medium'}}
+            >
+                {ratioText}
+            </Typography>
+
+            {/* Download/Upload Column */}
+            <Box sx={{display: 'flex', alignItems: 'center'}}>
+                <Typography variant="body2" color="text.secondary">
+                    {`${formatBytes(rx)} / ${formatBytes(tx)}`}
+                </Typography>
+            </Box>
+        </Box>
+    )
+}
+
+interface CPUStatProps {
     value: number,
     size: number,
     thickness: number,
 }
 
-function CircularStatWithTrack(props: CircularStatProps) {
-    const {value, size = 56, thickness = 4} = props;
-    const theme = useTheme();
+function CPUStat(props: CPUStatProps) {
+    const {value, size = 56, thickness = 4} = props
+    const theme = useTheme()
+    const progressColor = getUsageColor(value)
 
     return (
         <Box sx={{position: 'relative', display: 'inline-flex'}}>
-            {/* Background Track */}
             <CircularProgress
                 variant="determinate"
                 sx={{
@@ -262,20 +296,20 @@ function CircularStatWithTrack(props: CircularStatProps) {
                 }}
                 size={size}
                 thickness={thickness}
-                value={100} // The track is always full
+                value={100}
             />
-            {/* Actual Progress */}
             <CircularProgress
                 variant="determinate"
                 value={value}
                 size={size}
                 thickness={thickness}
                 sx={{
+                    color: progressColor,
                     position: 'absolute',
                     left: 0,
                 }}
             />
-            {/* Text Label */}
+
             <Box
                 sx={{
                     top: 0,
@@ -288,10 +322,94 @@ function CircularStatWithTrack(props: CircularStatProps) {
                     justifyContent: 'center',
                 }}
             >
-                <Typography variant="caption" component="div" color="text.secondary" sx={{fontWeight: 'bold'}}>
+                <Typography
+                    variant="caption"
+                    component="div"
+                    sx={{fontWeight: 'bold', color: progressColor}}
+                >
                     {`${value.toFixed(2)}%`}
                 </Typography>
             </Box>
         </Box>
-    );
+    )
+}
+
+interface UsageBarProps {
+    usage: number   // Formatted usage string, e.g., "2.92 GB"
+    limit: number   // Formatted limit string, e.g., "15.5 GB"
+    barHeight?: number  // Optional: makes the bar height configurable
+}
+
+export function UsageBar(
+    {
+        usage,
+        limit,
+        barHeight = 16
+    }: UsageBarProps) {
+
+    const theme = useTheme()
+    const trackColor = theme.palette.grey[700]
+
+    const memUsagePercent = limit > 0 ?
+        (usage / limit) * 100 : 0
+
+    const color = getUsageColor(memUsagePercent)
+    const roundedValue = memUsagePercent.toFixed(0)
+
+    const formattedUsage = formatBytes(usage)
+    const formattedLimit = formatBytes(limit)
+
+    return (
+        <Tooltip title={`Memory Usage: ${memUsagePercent.toFixed(1)}%`} placement="top">
+            <Box sx={{display: 'flex', flexDirection: 'column', minWidth: 150}}>
+                <Box sx={{
+                    position: 'relative',
+                    width: '100%',
+                    height: barHeight,
+                    bgcolor: trackColor,
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                }}>
+
+                    <Box sx={{
+                        width: `${memUsagePercent}%`,
+                        height: '100%',
+                        bgcolor: color,
+                        borderRadius: 1,
+                        transition: 'width 0.3s ease-in-out',
+                    }}/>
+
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            position: 'absolute',
+                            width: '100%',
+                            textAlign: 'center',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.5)', // Keeps text readable
+                        }}
+                    >
+                        {`${roundedValue}%`}
+                    </Typography>
+                </Box>
+
+                <Box sx={{display: 'flex', justifyContent: 'flex-end', pt: 0.5}}>
+                    <Typography variant="caption" color="text.secondary">
+                        {`${formattedUsage} / ${formattedLimit}`}
+                    </Typography>
+                </Box>
+            </Box>
+        </Tooltip>
+    )
+}
+
+const formatBytes = (bytes: number | bigint, decimals = 2) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const dm = decimals < 0 ? 0 : decimals
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.floor(Math.log(Number(bytes)) / Math.log(k))
+    return parseFloat((Number(bytes) / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
