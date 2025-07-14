@@ -284,6 +284,7 @@ interface CPUStatProps {
 
 function CPUStat(props: CPUStatProps) {
     const {value, size = 56, thickness = 4} = props
+    const clampedValue = Math.min(value, 100)
     const theme = useTheme()
     const progressColor = getUsageColor(value)
 
@@ -292,7 +293,7 @@ function CPUStat(props: CPUStatProps) {
             <CircularProgress
                 variant="determinate"
                 sx={{
-                    color: theme.palette.grey[theme.palette.mode === 'light' ? 200 : 800],
+                    color: theme.palette.grey[800],
                 }}
                 size={size}
                 thickness={thickness}
@@ -300,7 +301,7 @@ function CPUStat(props: CPUStatProps) {
             />
             <CircularProgress
                 variant="determinate"
-                value={value}
+                value={clampedValue}
                 size={size}
                 thickness={thickness}
                 sx={{
@@ -327,7 +328,7 @@ function CPUStat(props: CPUStatProps) {
                     component="div"
                     sx={{fontWeight: 'bold', color: progressColor}}
                 >
-                    {`${value.toFixed(2)}%`}
+                    {`${value.toFixed(2)}`}
                 </Typography>
             </Box>
         </Box>
