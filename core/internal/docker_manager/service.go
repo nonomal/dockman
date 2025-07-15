@@ -45,7 +45,7 @@ func (srv *Service) GetServiceInstance() *docker.Service {
 }
 
 func (srv *Service) SwitchClient(name string) error {
-	oldClient := srv.manager.GetActiveClient()
+	oldClient := srv.manager.Active()
 
 	wg := errgroup.Group{}
 	wg.Go(func() error {
@@ -56,7 +56,7 @@ func (srv *Service) SwitchClient(name string) error {
 	})
 
 	wg.Go(func() error {
-		if err := srv.manager.SwitchClient(name); err != nil {
+		if err := srv.manager.Switch(name); err != nil {
 			return fmt.Errorf("unable to switch docker client :%w", err)
 		}
 		return nil
@@ -65,7 +65,7 @@ func (srv *Service) SwitchClient(name string) error {
 	if err := wg.Wait(); err != nil {
 		// back to old client
 		_ = srv.git.SwitchBranch(oldClient)
-		_ = srv.manager.SwitchClient(oldClient)
+		_ = srv.manager.Switch(oldClient)
 		return err
 	}
 
