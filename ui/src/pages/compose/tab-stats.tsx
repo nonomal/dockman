@@ -1,12 +1,12 @@
 import {Box} from '@mui/material';
-import {ContainerStatTable} from "../components/container-stat-table.tsx";
-import {useDockerStats} from "../hooks/container-stats.ts";
+import {useDockerStats} from "../../hooks/container-stats.ts";
+import {ContainerStatTable} from './components/container-stat-table.tsx';
 
 interface StackStatsProps {
     selectedPage: string;
 }
 
-export function StatStacksPage({selectedPage}: StackStatsProps) {
+export function TabStat({selectedPage}: StackStatsProps) {
     const {containers, loading, handleSortChange, sortOrder, sortField} = useDockerStats(selectedPage)
 
     return (

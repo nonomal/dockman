@@ -16,13 +16,13 @@ import {
     Stop as StopIcon,
     Update as UpdateIcon
 } from '@mui/icons-material';
-import {useClient} from '../lib/api.ts';
-import {useDockerContainers} from "../hooks/container.ts";
-import {ContainerTable} from "../components/container-info-table.tsx";
-import {LogsPanel} from "../components/logs-panel.tsx";
-import {useSnackbar} from "../hooks/snackbar.ts";
-import {Code, ConnectError} from "@connectrpc/connect";
-import {DockerService} from "../gen/docker/v1/docker_pb.ts";
+import { ContainerTable } from './components/container-info-table';
+import { LogsPanel } from './components/logs-panel';
+import {Code, ConnectError } from '@connectrpc/connect';
+import {useClient} from "../../lib/api.ts";
+import { DockerService } from '../../gen/docker/v1/docker_pb.ts';
+import { useDockerContainers } from '../../hooks/container.ts';
+import {useSnackbar} from "../../hooks/snackbar.ts";
 
 const deployActionsConfig = [
     {name: 'start', message: "started", icon: <PlayArrowIcon/>},
@@ -36,7 +36,7 @@ interface DeployPageProps {
     selectedPage: string;
 }
 
-export function StackDeploy({selectedPage}: DeployPageProps) {
+export function TabDeploy({selectedPage}: DeployPageProps) {
     const dockerService = useClient(DockerService);
     const {containers, fetchContainers, loading} = useDockerContainers(selectedPage);
     const {showSuccess} = useSnackbar()

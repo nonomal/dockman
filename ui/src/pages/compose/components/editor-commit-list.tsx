@@ -1,7 +1,4 @@
 import {useCallback, useEffect, useMemo, useState} from "react"
-import {type Commit, GitService} from "../gen/git/v1/git_pb"
-import {callRPC, useClient} from "../lib/api"
-import {useSnackbar} from "../hooks/snackbar.ts"
 import {
     Accordion,
     AccordionDetails,
@@ -13,6 +10,9 @@ import {
     Typography
 } from "@mui/material"
 import {Circle} from "@mui/icons-material"
+import {callRPC, useClient} from "../../../lib/api.ts";
+import {type Commit, GitService} from "../../../gen/git/v1/git_pb.ts";
+import {useSnackbar} from "../../../hooks/snackbar.ts";
 
 interface CommitListProps {
     selectedFile: string
@@ -24,7 +24,7 @@ interface GroupedCommits {
     [date: string]: Commit[]
 }
 
-export function GitCommitList({selectedFile, selectedCommit, chooseCommit}: CommitListProps) {
+export function EditorCommitList({selectedFile, selectedCommit, chooseCommit}: CommitListProps) {
     const gitClient = useClient(GitService)
     const {showError} = useSnackbar()
     const [commits, setCommits] = useState<Commit[]>([])

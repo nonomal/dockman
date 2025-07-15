@@ -2,15 +2,15 @@
 // @generated from file docker_manager/v1/docker_manager.proto (package docker_manager.v1, syntax proto3)
 /* eslint-disable */
 
-import type {GenFile, GenMessage, GenService} from "@bufbuild/protobuf/codegenv2";
-import {fileDesc, messageDesc, serviceDesc} from "@bufbuild/protobuf/codegenv2";
-import type {Message} from "@bufbuild/protobuf";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file docker_manager/v1/docker_manager.proto.
  */
 export const file_docker_manager_v1_docker_manager: GenFile = /*@__PURE__*/
-    fileDesc("CiZkb2NrZXJfbWFuYWdlci92MS9kb2NrZXJfbWFuYWdlci5wcm90bxIRZG9ja2VyX21hbmFnZXIudjEiIgoNU3dpdGNoUmVxdWVzdBIRCgltYWNoaW5lSUQYASABKAkiUgoMTGlzdFJlc3BvbnNlEhQKDGFjdGl2ZUNsaWVudBgBIAEoCRIsCghtYWNoaW5lcxgCIAMoCzIaLmRvY2tlcl9tYW5hZ2VyLnYxLk1hY2hpbmUimwEKB01hY2hpbmUSDAoEbmFtZRgBIAEoCRIOCgZlbmFibGUYAiABKAgSDAoEaG9zdBgDIAEoCRIMCgRwb3J0GAQgASgFEgwKBHVzZXIYBSABKAkSEAoIcGFzc3dvcmQYBiABKAkSGQoRcmVtb3RlX3B1YmxpY19rZXkYByABKAkSGwoTdXNlX3B1YmxpY19rZXlfYXV0aBgIIAEoCCIHCgVFbXB0eTKpAQoURG9ja2VyTWFuYWdlclNlcnZpY2USQwoETGlzdBIYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5Gh8uZG9ja2VyX21hbmFnZXIudjEuTGlzdFJlc3BvbnNlIgASTAoMc3dpdGNoQ2xpZW50EiAuZG9ja2VyX21hbmFnZXIudjEuU3dpdGNoUmVxdWVzdBoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgBCwgEKFWNvbS5kb2NrZXJfbWFuYWdlci52MUISRG9ja2VyTWFuYWdlclByb3RvUAFaNGdpdGh1Yi5jb20vUkEzNDEvZG9ja21hbi9nZW5lcmF0ZWQvZG9ja2VyX21hbmFnZXIvdjGiAgNEWFiqAhBEb2NrZXJNYW5hZ2VyLlYxygIQRG9ja2VyTWFuYWdlclxWMeICHERvY2tlck1hbmFnZXJcVjFcR1BCTWV0YWRhdGHqAhFEb2NrZXJNYW5hZ2VyOjpWMWIGcHJvdG8z");
+  fileDesc("CiZkb2NrZXJfbWFuYWdlci92MS9kb2NrZXJfbWFuYWdlci5wcm90bxIRZG9ja2VyX21hbmFnZXIudjEiIgoNU3dpdGNoUmVxdWVzdBIRCgltYWNoaW5lSUQYASABKAkiUgoMTGlzdFJlc3BvbnNlEhQKDGFjdGl2ZUNsaWVudBgBIAEoCRIsCghtYWNoaW5lcxgCIAMoCzIaLmRvY2tlcl9tYW5hZ2VyLnYxLk1hY2hpbmUimwEKB01hY2hpbmUSDAoEbmFtZRgBIAEoCRIOCgZlbmFibGUYAiABKAgSDAoEaG9zdBgDIAEoCRIMCgRwb3J0GAQgASgFEgwKBHVzZXIYBSABKAkSEAoIcGFzc3dvcmQYBiABKAkSGQoRcmVtb3RlX3B1YmxpY19rZXkYByABKAkSGwoTdXNlX3B1YmxpY19rZXlfYXV0aBgIIAEoCCIHCgVFbXB0eTKpAQoURG9ja2VyTWFuYWdlclNlcnZpY2USQwoETGlzdBIYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5Gh8uZG9ja2VyX21hbmFnZXIudjEuTGlzdFJlc3BvbnNlIgASTAoMc3dpdGNoQ2xpZW50EiAuZG9ja2VyX21hbmFnZXIudjEuU3dpdGNoUmVxdWVzdBoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgBCwgEKFWNvbS5kb2NrZXJfbWFuYWdlci52MUISRG9ja2VyTWFuYWdlclByb3RvUAFaNGdpdGh1Yi5jb20vUkEzNDEvZG9ja21hbi9nZW5lcmF0ZWQvZG9ja2VyX21hbmFnZXIvdjGiAgNEWFiqAhBEb2NrZXJNYW5hZ2VyLlYxygIQRG9ja2VyTWFuYWdlclxWMeICHERvY2tlck1hbmFnZXJcVjFcR1BCTWV0YWRhdGHqAhFEb2NrZXJNYW5hZ2VyOjpWMWIGcHJvdG8z");
 
 /**
  * @generated from message docker_manager.v1.SwitchRequest
@@ -27,7 +27,7 @@ export type SwitchRequest = Message<"docker_manager.v1.SwitchRequest"> & {
  * Use `create(SwitchRequestSchema)` to create a new message.
  */
 export const SwitchRequestSchema: GenMessage<SwitchRequest> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 0);
+  messageDesc(file_docker_manager_v1_docker_manager, 0);
 
 /**
  * @generated from message docker_manager.v1.ListResponse
@@ -49,7 +49,7 @@ export type ListResponse = Message<"docker_manager.v1.ListResponse"> & {
  * Use `create(ListResponseSchema)` to create a new message.
  */
 export const ListResponseSchema: GenMessage<ListResponse> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 1);
+  messageDesc(file_docker_manager_v1_docker_manager, 1);
 
 /**
  * @generated from message docker_manager.v1.Machine
@@ -101,19 +101,20 @@ export type Machine = Message<"docker_manager.v1.Machine"> & {
  * Use `create(MachineSchema)` to create a new message.
  */
 export const MachineSchema: GenMessage<Machine> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 2);
+  messageDesc(file_docker_manager_v1_docker_manager, 2);
 
 /**
  * @generated from message docker_manager.v1.Empty
  */
-export type Empty = Message<"docker_manager.v1.Empty"> & {};
+export type Empty = Message<"docker_manager.v1.Empty"> & {
+};
 
 /**
  * Describes the message docker_manager.v1.Empty.
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 3);
+  messageDesc(file_docker_manager_v1_docker_manager, 3);
 
 /**
  * @generated from service docker_manager.v1.DockerManagerService
@@ -136,5 +137,5 @@ export const DockerManagerService: GenService<{
     output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/
-    serviceDesc(file_docker_manager_v1_docker_manager, 0);
+  serviceDesc(file_docker_manager_v1_docker_manager, 0);
 

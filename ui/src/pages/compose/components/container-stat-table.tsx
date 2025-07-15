@@ -16,13 +16,13 @@ import {
     Typography,
     useTheme
 } from "@mui/material"
-import {type ContainerStats, ORDER, SORT_FIELD} from "../gen/docker/v1/docker_pb.ts"
 import React, {useState} from "react"
 import GetAppIcon from '@mui/icons-material/GetApp'
 import PublishIcon from '@mui/icons-material/Publish'
 import EditIcon from '@mui/icons-material/Edit'
 import {Article, ContentCopy} from "@mui/icons-material"
 import CheckIcon from "@mui/icons-material/Check"
+import {type ContainerStats, ORDER, SORT_FIELD} from "../../../gen/docker/v1/docker_pb"
 
 
 interface ContainersTableProps {

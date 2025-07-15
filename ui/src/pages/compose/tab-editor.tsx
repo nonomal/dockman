@@ -14,12 +14,12 @@ import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error';
 import {Commit,} from '@mui/icons-material';
 import {useCallback, useEffect, useRef, useState} from "react";
-import {callRPC, downloadFile, uploadFile, useClient} from "../lib/api.ts";
-import {GitService} from "../gen/git/v1/git_pb.ts";
-import {useSnackbar} from "../hooks/snackbar.ts";
-import {MonacoEditor} from "../components/editor.tsx";
-import {GitCommitList} from "../components/git-commit-list.tsx";
-import {DiffViewer} from "../components/diff.tsx";
+import {callRPC, downloadFile, uploadFile, useClient} from "../../lib/api";
+import {GitService} from "../../gen/git/v1/git_pb";
+import {DiffViewer} from "./components/diff.tsx";
+import {MonacoEditor} from "./components/editor.tsx";
+import {useSnackbar} from "../../hooks/snackbar.ts";
+import {EditorCommitList} from "./components/editor-commit-list.tsx";
 
 interface EditorProps {
     selectedPage: string;
@@ -27,7 +27,7 @@ interface EditorProps {
 
 type SaveState = 'idle' | 'typing' | 'saving' | 'success' | 'error'
 
-export function StackEditor({selectedPage}: EditorProps) {
+export function TabEditor({selectedPage}: EditorProps) {
     const gitClient = useClient(GitService);
     const {showSuccess, showError} = useSnackbar();
 
@@ -234,7 +234,7 @@ export function StackEditor({selectedPage}: EditorProps) {
                         flexDirection: 'column'
 
                     }}>
-                        <GitCommitList
+                        <EditorCommitList
                             key={commitListKey}
                             chooseCommit={commit => {
                                 setDiffCommitId(commit)
