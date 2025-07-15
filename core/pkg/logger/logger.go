@@ -21,6 +21,10 @@ func getBaseLogger(verboseLogs bool) zerolog.Logger {
 	return log.Level(zerolog.InfoLevel).With().Logger().Output(getConsoleWriter())
 }
 
+func DefaultLogger() {
+	log.Logger = getBaseLogger(true)
+}
+
 func ConsoleLogger(verboseLogsEnv string) {
 	env, found := os.LookupEnv(verboseLogsEnv)
 	verboseLogs := found && strings.ToLower(env) == "true"
