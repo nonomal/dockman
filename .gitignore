@@ -16,3 +16,4 @@ install/stacks/
 /core/compose
 /core/internal/docker/controller-docker-compose.yml
 /**/hosts.yaml
+/**/appdata

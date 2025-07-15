@@ -114,7 +114,7 @@ func UpdateContainersForImage(ctx context.Context, cli *client.Client, imageName
 	if err != nil {
 		return fmt.Errorf("failed to pull image %s: %w", imageName, err)
 	}
-	defer pkg.CloseFile(reader)
+	defer pkg.CloseCloser(reader)
 
 	// Copy the pull output to stdout to show progress
 	if _, err := io.Copy(os.Stdout, reader); err != nil {

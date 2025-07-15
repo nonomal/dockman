@@ -20,7 +20,7 @@ type UpdaterConfig struct {
 var conf UpdaterConfig
 
 func Load() {
-	if err := args.ProcessStruct(&conf, envPrefix); err != nil {
+	if err := args.ParseStruct(&conf, envPrefix); err != nil {
 		log.Fatal().Err(err).Msg("unable to parse config struct")
 		return
 	}

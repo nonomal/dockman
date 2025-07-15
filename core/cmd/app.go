@@ -10,6 +10,7 @@ import (
 	gitrpc "github.com/RA341/dockman/generated/git/v1/v1connect"
 	"github.com/RA341/dockman/internal/auth"
 	"github.com/RA341/dockman/internal/config"
+	"github.com/RA341/dockman/internal/database"
 	"github.com/RA341/dockman/internal/docker"
 	dm "github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/internal/files"
@@ -18,7 +19,6 @@ import (
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -29,6 +29,7 @@ type App struct {
 	DockerManager *dm.Service
 	Git           *git.Service
 	File          *files.Service
+	DB            *database.Service
 }
 
 func NewApp(conf *config.AppConfig) (*App, error) {
@@ -37,13 +38,10 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		return nil, fmt.Errorf("failed to get absolute path for compose root: %w", err)
 	}
 
-	configDir := "config"
-	if err := os.MkdirAll(configDir, os.ModePerm); err != nil {
-		log.Fatal().Err(err).Msg("unable to create config directory")
-	}
-
+	// initialize services
+	dbSrv := database.NewService()
 	authSrv := auth.NewService()
-	sshSrv := ssh.NewService(configDir)
+	sshSrv := ssh.NewService(config.C.ConfigDir)
 	fileSrv := files.NewService(absComposeRoot)
 	gitSrv := git.NewService(absComposeRoot)
 	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, absComposeRoot)
@@ -55,6 +53,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		File:          fileSrv,
 		Git:           gitSrv,
 		DockerManager: dockerManagerSrv,
+		DB:            dbSrv,
 	}, nil
 }
 
@@ -62,12 +61,17 @@ func (a *App) Close() error {
 	if err := a.File.Close(); err != nil {
 		return fmt.Errorf("failed to close file service: %w", err)
 	}
+
+	if err := a.DB.Close(); err != nil {
+		return fmt.Errorf("failed to close database service: %w", err)
+	}
+
 	return nil
 }
 
 func (a *App) registerRoutes(mux *http.ServeMux) {
 	globalInterceptor := connect.WithInterceptors()
-	if a.Config.Auth {
+	if a.Config.Auth.Enable {
 		globalInterceptor = connect.WithInterceptors(auth.NewInterceptor(a.Auth))
 	}
 
@@ -126,7 +130,7 @@ func (a *App) registerHttpHandler(basePath string, subMux http.Handler) (string,
 	}
 
 	baseHandler := http.StripPrefix(strings.TrimSuffix(basePath, "/"), subMux)
-	if a.Config.Auth {
+	if a.Config.Auth.Enable {
 		httpAuth := auth.NewHttpAuthMiddleware(a.Auth)
 		baseHandler = httpAuth(baseHandler)
 	}

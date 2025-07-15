@@ -95,7 +95,7 @@ func load() (*AppConfig, error) {
 		}
 		*p = absPath
 
-		if err = os.Mkdir(absPath, 0777); err != nil {
+		if err = os.MkdirAll(absPath, 0777); err != nil {
 			return nil, err
 		}
 	}
