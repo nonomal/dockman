@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	v1 "github.com/RA341/dockman/generated/docker/v1"
-	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/pkg"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/compose/v2/pkg/api"
@@ -27,11 +26,17 @@ import (
 type GetService func() *Service
 
 type Handler struct {
-	srv GetService
+	srv  GetService
+	addr string
+	pass string
 }
 
-func NewConnectHandler(srv GetService) *Handler {
-	return &Handler{srv: srv}
+func NewConnectHandler(srv GetService, host, pass string) *Handler {
+	return &Handler{
+		srv:  srv,
+		addr: host,
+		pass: pass,
+	}
 }
 
 func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
@@ -86,9 +91,7 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 		return err
 	}
 
-	addr := config.C.Updater.Addr
-	key := config.C.Updater.PassKey
-	go sendReqToUpdater(addr, key, "")
+	go sendReqToUpdater(h.addr, h.pass, "")
 
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	dockermanagerrpc "github.com/RA341/dockman/generated/docker_manager/v1/v1connect"
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
 	gitrpc "github.com/RA341/dockman/generated/git/v1/v1connect"
+	sshrpc "github.com/RA341/dockman/generated/ssh/v1/v1connect"
 	"github.com/RA341/dockman/internal/auth"
 	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/database"
@@ -19,7 +20,6 @@ import (
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"path/filepath"
 	"strings"
 )
 
@@ -30,21 +30,19 @@ type App struct {
 	Git           *git.Service
 	File          *files.Service
 	DB            *database.Service
+	SSH           *ssh.Service
 }
 
 func NewApp(conf *config.AppConfig) (*App, error) {
-	absComposeRoot, err := filepath.Abs(strings.TrimSpace(conf.ComposeRoot))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get absolute path for compose root: %w", err)
-	}
+	cr := conf.ComposeRoot
 
 	// initialize services
-	dbSrv := database.NewService()
-	authSrv := auth.NewService()
-	sshSrv := ssh.NewService(config.C.ConfigDir)
-	fileSrv := files.NewService(absComposeRoot)
-	gitSrv := git.NewService(absComposeRoot)
-	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, absComposeRoot)
+	dbSrv := database.NewService(config.C.ConfigDir)
+	authSrv := auth.NewService(config.C.Auth.Username, config.C.Auth.Password)
+	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
+	fileSrv := files.NewService(cr)
+	gitSrv := git.NewService(cr)
+	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, cr)
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{
@@ -54,6 +52,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		Git:           gitSrv,
 		DockerManager: dockerManagerSrv,
 		DB:            dbSrv,
+		SSH:           sshSrv,
 	}, nil
 }
 
@@ -89,7 +88,11 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		},
 		// docker
 		func() (string, http.Handler) {
-			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(a.DockerManager.GetServiceInstance), globalInterceptor)
+			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(
+				a.DockerManager.GetServiceInstance,
+				config.C.Updater.Addr,
+				config.C.Updater.PassKey,
+			), globalInterceptor)
 		},
 		// git
 		func() (string, http.Handler) {
@@ -115,6 +118,10 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		func() (string, http.Handler) {
 			wsFunc := lsp.WebSocketHandler(lsp.DefaultUpgrader)
 			return a.registerHttpHandler("/api/lsp", wsFunc)
+		},
+		// ssh
+		func() (string, http.Handler) {
+			return sshrpc.NewSSHServiceHandler(ssh.NewConnectHandler(a.SSH), globalInterceptor)
 		},
 	}
 
