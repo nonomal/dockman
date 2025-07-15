@@ -5,31 +5,33 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
 	"net"
-	"os"
-	"path/filepath"
 	"time"
 )
 
 type Service struct {
-	Config       *ConfigManager
-	sshKeyFolder string
+	Machines MachineManager
+	Keys     KeyManager
 }
 
-func NewService(basedir string) *Service {
-	sshDir, err := initSSHDir(basedir)
-	if err != nil {
-		log.Fatal().Err(err).Msg("unable to initialize ssh dir")
-	}
-
-	configManager, err := NewConfigManager(basedir)
-	if err != nil {
-		log.Fatal().Err(err).Msg("unable load host config")
+func NewService(keyMan KeyManager, machManager MachineManager) *Service {
+	if err := initSSHKeys(keyMan); err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize ssh keys")
+		return nil
 	}
 
 	return &Service{
-		Config:       configManager,
-		sshKeyFolder: sshDir,
+		Machines: machManager,
+		Keys:     keyMan,
 	}
+}
+
+func (m *Service) NewSSHClient(machine *MachineOptions) (*ssh.Client, error) {
+	auth, err := m.GetAuthMethod(machine)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load auth method for host: %w", err)
+	}
+
+	return createSSHClient(machine, auth, m.SaveHostKey(machine.Name, *machine))
 }
 
 func (m *Service) SaveHostKey(name string, machine MachineOptions) func(hostname string, remote net.Addr, key ssh.PublicKey) error {
@@ -43,7 +45,7 @@ func (m *Service) SaveHostKey(name string, machine MachineOptions) func(hostname
 		}
 
 		machine.RemotePublicKey = stringKey
-		if err = m.Config.WriteAndSave(name, machine); err != nil {
+		if err = m.Machines.Write(machine); err != nil {
 			return err
 		}
 
@@ -51,32 +53,39 @@ func (m *Service) SaveHostKey(name string, machine MachineOptions) func(hostname
 	}
 }
 
-func (m *Service) GetAuthMethod(name string, machine *MachineOptions) (ssh.AuthMethod, error) {
+func (m *Service) GetAuthMethod(machine *MachineOptions) (ssh.AuthMethod, error) {
 	if machine.UsePublicKeyAuth {
-		return withKeyPairAuth(m.sshKeyFolder)
+		return withKeyPairFromDB(m.Keys)
 	} else if machine.Password != "" {
 		return withPasswordAuth(machine), nil
 	} else {
 		// final fallback use .ssh in user dir
 		// should fail on docker containers
-		log.Debug().Str("client", name).Msg("falling back to SSH keys from home directory")
+		log.Debug().Str("client", machine.Name).Msg("falling back to SSH keys from home directory")
 		return withKeyPairFromHome()
 	}
 }
 
-func initSSHDir(basedir string) (string, error) {
-	baseDir, err := filepath.Abs(basedir)
-	if err != nil {
-		return "", err
-	}
-	if err = os.MkdirAll(baseDir, 0755); err != nil {
-		return "", err
+func initSSHKeys(keyMan KeyManager) error {
+	_, err := keyMan.GetKey(DefaultKeyName)
+	if err == nil {
+		return nil
 	}
 
-	sshDir, err := verifySSHKeyPair(baseDir)
+	// error occurred while getting default key generate new keys
+	private, public, err := generateKeyPair()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return sshDir, nil
+	err = keyMan.SaveKey(KeyConfig{
+		Name:       DefaultKeyName,
+		PublicKey:  public,
+		PrivateKey: private,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
