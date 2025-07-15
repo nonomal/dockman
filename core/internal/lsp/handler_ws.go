@@ -26,7 +26,7 @@ func WebSocketHandler(up websocket.Upgrader) http.HandlerFunc {
 			return
 		}
 		// Ensure connection is closed when function exits
-		defer pkg.CloseFile(conn)
+		defer pkg.CloseCloser(conn)
 
 		stream := &WebSocketStream{conn: conn}
 		if err = StartLSP(WithStream(stream), WithZapLogger()); err != nil {

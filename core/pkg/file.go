@@ -11,9 +11,9 @@ func FileExists(filename string) bool {
 	return !os.IsNotExist(err)
 }
 
-func CloseFile(rw io.Closer) {
+func CloseCloser(rw io.Closer) {
 	err := rw.Close()
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to close io.Closer")
+		log.Warn().Err(err).Msg("Error occurred while closing io.Closer")
 	}
 }

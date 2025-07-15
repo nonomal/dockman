@@ -41,7 +41,7 @@ func (h *FileHandler) SaveFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving file from form", http.StatusBadRequest)
 		return
 	}
-	defer pkg.CloseFile(file)
+	defer pkg.CloseCloser(file)
 
 	decodedFileName, err := b64.StdEncoding.DecodeString(meta.Filename)
 	if err != nil {

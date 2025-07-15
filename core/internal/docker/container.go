@@ -82,7 +82,7 @@ func (s *ContainerService) getStats(ctx context.Context, info container.Summary)
 	if err != nil {
 		return ContainerStats{}, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
 	}
-	defer pkg.CloseFile(stats.Body)
+	defer pkg.CloseCloser(stats.Body)
 
 	body, err := io.ReadAll(stats.Body)
 	if err != nil {

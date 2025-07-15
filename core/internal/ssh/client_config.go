@@ -41,7 +41,7 @@ func NewConfigManager(basedir string) (*ConfigManager, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer pkg.CloseFile(file)
+		defer pkg.CloseCloser(file)
 
 		config.config = ExampleConfig()
 		if err = config.Write(); err != nil {

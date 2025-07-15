@@ -144,7 +144,7 @@ func (s *Service) createFile(filename string) error {
 		return err
 	}
 
-	pkg.CloseFile(f)
+	pkg.CloseCloser(f)
 	return nil
 }
 

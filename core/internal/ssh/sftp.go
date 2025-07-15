@@ -65,14 +65,14 @@ func (cli *SftpClient) CopyFileSFTP(localFile, remoteFile string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open local file %s: %w", localFile, err)
 	}
-	defer pkg.CloseFile(srcFile)
+	defer pkg.CloseCloser(srcFile)
 
 	// Create remote file for writing
 	dstFile, err := cli.sfCli.Create(remoteFile)
 	if err != nil {
 		return fmt.Errorf("failed to create remote file %s: %w", remoteFile, err)
 	}
-	defer pkg.CloseFile(dstFile)
+	defer pkg.CloseCloser(dstFile)
 
 	// Copy the contents
 	_, err = io.Copy(dstFile, srcFile)
