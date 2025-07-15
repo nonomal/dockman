@@ -86,8 +86,8 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 		return err
 	}
 
-	addr := config.C.UpdaterAddr
-	key := config.C.UpdaterKey
+	addr := config.C.Updater.Addr
+	key := config.C.Updater.PassKey
 	go sendReqToUpdater(addr, key, "")
 
 	return nil
@@ -102,7 +102,7 @@ func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLog
 	if err != nil {
 		return err
 	}
-	defer pkg.CloseFile(logsReader)
+	defer pkg.CloseCloser(logsReader)
 
 	writer := &ContainerLogWriter{responseStream: responseStream}
 	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
@@ -224,11 +224,11 @@ func (h *Handler) executeComposeStreamCommand(
 	// incase the stream connection is lost context.Background
 	// will allow the service to continue executing, instead of stopping mid-operation
 	if err = action(context.Background(), project, composeClient, services...); err != nil {
-		pkg.CloseFile(pipeWriter)
+		pkg.CloseCloser(pipeWriter)
 		return err
 	}
 
-	pkg.CloseFile(pipeWriter)
+	pkg.CloseCloser(pipeWriter)
 	wg.Wait()
 
 	return nil
@@ -322,7 +322,7 @@ func streamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitG
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer pkg.CloseFile(pipeReader)
+		defer pkg.CloseCloser(pipeReader)
 
 		scanner := bufio.NewScanner(pipeReader)
 		for scanner.Scan() {

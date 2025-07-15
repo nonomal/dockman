@@ -14,7 +14,7 @@ type Service struct {
 func NewService() *Service {
 	adb := &MemAuthDB{make(map[string]*User)}
 
-	_, err := adb.NewUser(config.C.AuthUsername, config.C.AuthPassword)
+	_, err := adb.NewUser(config.C.Auth.Username, config.C.Auth.Password)
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to create default user")
 	}
