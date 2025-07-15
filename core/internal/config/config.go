@@ -7,6 +7,7 @@ import (
 	"github.com/RA341/dockman/pkg/args"
 	"io/fs"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -19,9 +20,9 @@ var C *AppConfig
 type AppConfig struct {
 	Port           int           `config:"flag=port,env=PORT,default=8866,usage=Port to run the server on"`
 	AllowedOrigins string        `config:"flag=origins,env=ORIGINS,default=*,usage=Allowed origins for the API (in CSV)"`
-	ComposeRoot    string        `config:"flag=cr,env=COMPOSE_ROOT,default=compose,usage=Root directory for compose files"`
 	UIPath         string        `config:"flag=ui,env=UI_PATH,default=dist,usage=Path to frontend files"`
 	LocalAddr      string        `config:"flag=ma,env=MACHINE_ADDR,default=0.0.0.0,usage=Local machine IP address"`
+	ComposeRoot    string        `config:"flag=cr,env=COMPOSE_ROOT,default=/compose,usage=Root directory for compose files"`
 	ConfigDir      string        `config:"flag=conf,env=CONFIG,default=/config,usage=Directory to store dockman config"`
 	Auth           AuthConfig    `config:""` // indicate to parse struct
 	Updater        UpdaterConfig `config:""`
@@ -41,7 +42,7 @@ type UpdaterConfig struct {
 }
 
 type Logger struct {
-	Level   string `config:"flag=logLevel,env=LOG_LEVEL,default=info,usage=set logging level"`
+	Level   string `config:"flag=logLevel,env=LOG_LEVEL,default=info,usage=disabled|debug|info|warn|error|fatal"`
 	Verbose bool   `config:"flag=logVerbose,env=LOG_VERBOSE,default=false,usage=show more info in logs"`
 }
 
@@ -93,6 +94,10 @@ func load() (*AppConfig, error) {
 			return nil, fmt.Errorf("failed to get abs path for %s: %w", *p, err)
 		}
 		*p = absPath
+
+		if err = os.Mkdir(absPath, 0777); err != nil {
+			return nil, err
+		}
 	}
 
 	return conf, nil
