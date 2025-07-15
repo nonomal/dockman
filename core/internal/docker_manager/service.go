@@ -2,6 +2,7 @@ package docker_manager
 
 import (
 	"fmt"
+	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/git"
 	"github.com/RA341/dockman/internal/ssh"
@@ -40,7 +41,7 @@ func NewService(git *git.Service, ssh *ssh.Service, composeRoot string) *Service
 func (srv *Service) GetServiceInstance() *docker.Service {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
-	return srv.activeClient // Always ready, no creation needed
+	return srv.activeClient
 }
 
 func (srv *Service) SwitchClient(name string) error {
@@ -78,7 +79,17 @@ func (srv *Service) SwitchClient(name string) error {
 
 	mach := srv.manager.GetMachine()
 	syncer := docker.NewSFTPSyncer(mach.sftpClient, srv.composeRoot)
+
+	// to add direct links to services
+	localAddr := ""
+	if name != LocalClient {
+		localAddr = mach.dockerClient.DaemonHost()
+	} else {
+		localAddr = config.C.LocalAddr
+	}
+
 	srv.activeClient = docker.NewService(
+		localAddr,
 		srv.composeRoot,
 		mach.dockerClient,
 		syncer,

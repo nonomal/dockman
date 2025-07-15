@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	logger.ConsoleLoggerForTest()
+	logger.InitForTest()
 }
 
 func TestTrimDockman(t *testing.T) {
