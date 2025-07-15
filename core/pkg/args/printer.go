@@ -34,7 +34,7 @@ type KeyValue struct {
 func PrettyPrint(c interface{}, baseEnv string) {
 	// Flatten the struct into a list of KeyValue pairs.
 	// We start with an empty prefix for the top-level keys.
-	pairs := flattenStructForPrinting(reflect.ValueOf(c), "", baseEnv)
+	pairs := flattenStruct(reflect.ValueOf(c), "", baseEnv)
 
 	// Find the length of the longest key for alignment.
 	maxKeyLength := 0
@@ -102,30 +102,25 @@ func PrettyPrint(c interface{}, baseEnv string) {
 	printInBox("Config", contentBuilder.String())
 }
 
-// flattenStructForPrinting recursively traverses a struct and returns a flat list of KeyValue pairs.
-func flattenStructForPrinting(v reflect.Value, prefix, baseEnv string) []KeyValue {
+// flattenStruct recursively traverses a struct and returns a flat list of KeyValue pairs.
+func flattenStruct(v reflect.Value, prefix, baseEnv string) []KeyValue {
 	// If it's a pointer, dereference it.
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
+	prefixer := Prefixer(baseEnv)
 
 	var pairs []KeyValue
-
 	t := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		fieldT := t.Field(i)
 		fieldV := v.Field(i)
 
 		keyName := fieldT.Name
-		configTag := fieldT.Tag.Get("config")
-		if configTag == "" {
+		configTag, ok := fieldT.Tag.Lookup("config")
+		if !ok {
 			continue // Skip fields without the config tag
 		}
-		configTags := parseTag(configTag)
-		usage := configTags["usage"]
-		hide := configTags["hide"]
-		envName := colorize(fmt.Sprintf("%s_%s", baseEnv, configTags["env"]), ColorCyan)
-		message := fmt.Sprintf("%s", colorize(usage, ColorBlue))
 
 		// Create the full key path (e.g., "database.host")
 		fullKey := keyName
@@ -133,13 +128,20 @@ func flattenStructForPrinting(v reflect.Value, prefix, baseEnv string) []KeyValu
 			fullKey = prefix + "." + keyName
 		}
 
-		var val KeyValue
-
-		switch fieldV.Kind() {
-		case reflect.Struct:
-			// Recurse into nested structs
-			nestedPairs := flattenStructForPrinting(fieldV, fullKey, baseEnv)
+		if fieldV.Kind() == reflect.Struct {
+			nestedPairs := flattenStruct(fieldV, fullKey, baseEnv)
 			pairs = append(pairs, nestedPairs...)
+			continue // Important: move to the next field after handling the struct
+		}
+
+		configTags := parseTag(configTag)
+		usage := configTags["usage"]
+		hide := configTags["hide"]
+		envName := colorize(prefixer(configTags["env"]), ColorCyan)
+		message := fmt.Sprintf("%s", colorize(usage, ColorBlue))
+
+		var val KeyValue
+		switch fieldV.Kind() {
 		case reflect.Slice:
 			// Format slices as comma-separated strings
 			var sliceItems []string
@@ -168,6 +170,12 @@ func flattenStructForPrinting(v reflect.Value, prefix, baseEnv string) []KeyValu
 		pairs = append(pairs, val)
 	}
 	return pairs
+}
+
+func Prefixer(baseEnv string) func(env string) string {
+	return func(env string) string {
+		return fmt.Sprintf("%s_%s", baseEnv, env)
+	}
 }
 
 // formatSimpleValue converts a reflect.Value of a simple type to a colored string.
