@@ -40,8 +40,8 @@ jobs:
             suffix: "" # EXPLICITLY empty suffix for the tag
           - name: alpine
             suffix: -alpine
-          - name: alpine-ssh
-            suffix: -ssh
+    #          - name: alpine-ssh
+    #            suffix: -ssh
 
     steps:
       - name: Checkout repository
