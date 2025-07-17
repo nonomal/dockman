@@ -5,28 +5,47 @@ package docker_manager.v1;
 option go_package = "github.com/RA341/dockman/generated/docker_manager/v1";
 
 service DockerManagerService {
-  rpc List(Empty) returns (ListResponse) {}
-  rpc switchClient(SwitchRequest) returns (Empty) {}
+  rpc SwitchClient(SwitchRequest) returns (Empty) {}
+  rpc ListClients(Empty) returns (ListClientsResponse) {}
+  rpc ListHosts(Empty) returns (ListMachine) {}
+  rpc Get(GetMachine) returns (Machine) {}
+  rpc NewClient(Machine) returns (Empty) {}
+  rpc EditClient(Machine) returns (Empty) {}
+  rpc DeleteClient(Machine) returns (Empty) {}
+  rpc ToggleClient(ToggleReqeust) returns (Empty) {}
 }
 
-message SwitchRequest {
-  string machineID = 1;
+message GetMachine {
+  string name = 1;
 }
 
-message ListResponse {
+message ToggleReqeust {
+  bool enable = 1;
+  string name = 2;
+}
+
+message ListClientsResponse {
   string activeClient = 1;
+  repeated string clients = 2;
+}
+
+message ListMachine {
   repeated Machine machines = 2;
 }
 
 message Machine {
-  string name = 1;
-  bool enable = 2;
-  string host = 3;
-  int32 port = 4;
-  string user = 5;
-  string password = 6;
-  string remote_public_key = 7;
-  bool use_public_key_auth = 8;
+  int64 id = 1;
+  string name = 2;
+  bool   enable = 3;
+  string host = 4;
+  int32  port = 5;
+  string user = 6;
+  string password = 7;
+  bool   use_public_key_auth = 8;
+}
+
+message SwitchRequest {
+  string machineID = 1;
 }
 
 message Empty {}
