@@ -8,7 +8,6 @@ import (
 	dockermanagerrpc "github.com/RA341/dockman/generated/docker_manager/v1/v1connect"
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
 	gitrpc "github.com/RA341/dockman/generated/git/v1/v1connect"
-	sshrpc "github.com/RA341/dockman/generated/ssh/v1/v1connect"
 	"github.com/RA341/dockman/internal/auth"
 	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/database"
@@ -89,7 +88,7 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		// docker
 		func() (string, http.Handler) {
 			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(
-				a.DockerManager.GetServiceInstance,
+				a.DockerManager.GetService,
 				config.C.Updater.Addr,
 				config.C.Updater.PassKey,
 			), authInterceptor)
@@ -118,10 +117,6 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		func() (string, http.Handler) {
 			wsFunc := lsp.WebSocketHandler(lsp.DefaultUpgrader)
 			return a.registerHttpHandler("/api/lsp", wsFunc)
-		},
-		// ssh
-		func() (string, http.Handler) {
-			return sshrpc.NewSSHServiceHandler(ssh.NewConnectHandler(a.SSH), authInterceptor)
 		},
 	}
 
