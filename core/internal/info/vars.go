@@ -4,9 +4,13 @@ import (
 	"runtime"
 )
 
+const (
+	DevMode = "dev"
+)
+
 var (
 	Flavour    = "Server"
-	Version    = "dev"
+	Version    = DevMode
 	CommitInfo = "unknown"
 	BuildDate  = "unknown"
 	Branch     = "unknown"
@@ -15,4 +19,8 @@ var (
 
 func IsDocker() bool {
 	return Flavour == "Docker"
+}
+
+func IsDev() bool {
+	return Version == DevMode
 }
