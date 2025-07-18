@@ -105,7 +105,7 @@ tasks:
     summary: |
       Builds native ui for native binary target 
 
-  dk.*:
+  dk:*:
     desc: "Builds the main dockman image for a specific target. Usage: task dk:<target>"
     vars:
       TARGET: "{{index .MATCH 0}}"
@@ -113,9 +113,20 @@ tasks:
       - docker build . -t {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}} --target {{.TARGET}}
     preconditions:
       - sh: 'test -n "{{.TARGET}}"'
-        msg: "The 'target' variable must be provided. Usage: task docker:build target=<target-name>"
+        msg: "The 'target' variable must be provided. Usage: task dk.<target-name>"
 
-  up:
+  dkr:*:
+    desc: "Builds and runs the main dockman image for a specific target. Usage: task dkr:<target>"
+    vars:
+      TARGET: "{{index .MATCH 0}}"
+    cmds:
+      - task dk:{{.TARGET}}
+      - docker run -v /var/run/docker.sock:/var/run/docker.sock -p 8221:8866 {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
+    preconditions:
+      - sh: 'test -n "{{.TARGET}}"'
+        msg: "The 'target' variable must be provided. Usage: task dkr.<target-name>"
+
+  dkup:
     desc: "Builds the updater image. Usage: task dk:<target>"
     vars:
       UPDATER: "Dockerfile.updater"
@@ -123,6 +134,15 @@ tasks:
       TARGET: "dev"
     cmds:
       - docker build -f {{.UPDATER}} . -t {{.DOCKMAN_IMAGE_BASE}}/{{.IMAGE}}:{{.TARGET}}
+
+  dkupr:
+    desc: "Builds and runs the updater image. Usage: task dk:<target>"
+    vars:
+      UPDATER: "Dockerfile.updater"
+      IMAGE: "updater"
+      TARGET: "dev"
+    cmds:
+      - docker run -p 8869:8869 {{.DOCKMAN_IMAGE_BASE}}/{{.IMAGE}}:{{.TARGET}}
 
   prune:
     desc: "Prune docker images."
