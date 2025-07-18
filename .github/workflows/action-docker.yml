@@ -24,24 +24,22 @@ on:
 
 jobs:
   build-and-push:
+    strategy:
+      fail-fast: false # Don't cancel other jobs if one fails
+      matrix:
+        target:
+          # "default"
+          - name: alpine
+            suffix: ""
+    #          - name: alpine-ssh
+    #            suffix: -ssh
+
     # Give the job a dynamic name based on the matrix
     name: Build Image for (${{ matrix.target.name }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
-    strategy:
-      fail-fast: false # Don't cancel other jobs if one fails
-      matrix:
-        target:
-          # "default"
-          - name: minimal # target name
-            suffix: "" # EXPLICITLY empty suffix for the tag
-          - name: alpine
-            suffix: -alpine
-    #          - name: alpine-ssh
-    #            suffix: -ssh
 
     steps:
       - name: Checkout repository
