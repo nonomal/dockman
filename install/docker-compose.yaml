@@ -15,15 +15,16 @@ services:
       - DOCKMAN_AUTH_ENABLE=false
       - DOCKMAN_UPDATER_HOST=http://updater:8869
       - DOCKMAN_UPDATER_KEY=someAuthkey
+      - DOCKMAN_VERBOSE_LOGS=true
     ports:
       - "8432:8866"
 
   updater:
     container_name: dockman-updater
     image: ghcr.io/ra341/dockman/updater:latest
-    build:
-      context: ..
-      dockerfile: Dockerfile.updater
+    #    build:
+    #      context: ..
+    #      dockerfile: Dockerfile.updater
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -31,5 +32,3 @@ services:
       - DOCKMAN_UPDATER_IMAGE=ghcr.io/ra341/dockman:dev
     ports:
       - "8869:8869"
-    depends_on:
-      - dockman
