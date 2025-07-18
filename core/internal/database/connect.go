@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"path/filepath"
 )
 
@@ -23,6 +24,7 @@ func connect(basepath string) (*gorm.DB, error) {
 	connectionStr := dbpath + "?_journal_mode=WAL&_busy_timeout=5000"
 	conn := sqlite.Open(connectionStr)
 	conf := &gorm.Config{
+		Logger:      logger.Default.LogMode(logger.Silent),
 		PrepareStmt: true,
 	}
 	if info.IsDev() {
