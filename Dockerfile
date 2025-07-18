@@ -14,6 +14,11 @@ FROM golang:1.24-alpine AS back
 
 WORKDIR /core
 
+# for sqlite
+ENV CGO_ENABLED=1
+
+RUN apk update && apk add --no-cache gcc musl-dev
+
 COPY core/go.mod core/go.sum ./
 
 RUN go mod download
