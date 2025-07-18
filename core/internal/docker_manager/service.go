@@ -15,6 +15,7 @@ import (
 type Service struct {
 	manager     *ClientManager
 	git         *git.Service
+	ssh         *ssh.Service
 	composeRoot string
 
 	mu           sync.RWMutex
@@ -31,6 +32,8 @@ func NewService(git *git.Service, ssh *ssh.Service, composeRoot string) *Service
 		composeRoot: composeRoot,
 		git:         git,
 		manager:     clientManager,
+		ssh:         ssh,
+		mu:          sync.RWMutex{},
 	}
 	if err := srv.SwitchClient(defaultHost); err != nil {
 		log.Fatal().Err(err).Str("name", defaultHost).Msg("unable to switch client")
@@ -38,10 +41,112 @@ func NewService(git *git.Service, ssh *ssh.Service, composeRoot string) *Service
 	return srv
 }
 
-func (srv *Service) GetServiceInstance() *docker.Service {
+func (srv *Service) GetService() *docker.Service {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	return srv.activeClient
+}
+
+func (srv *Service) EditClient(editedMach *ssh.MachineOptions) error {
+	oldMach, err := srv.ssh.GetMachByID(editedMach.ID)
+	if err != nil {
+		return fmt.Errorf("could not find machine with id %q: %w", editedMach.ID, err)
+	}
+
+	err = srv.DeleteClient(&oldMach)
+	if err != nil {
+		return fmt.Errorf("unable to delete client: %w", err)
+	}
+
+	err = srv.AddClient(editedMach)
+	if err != nil {
+		return fmt.Errorf("unable to create client: %w", err)
+	}
+
+	return nil
+}
+
+func (srv *Service) AddClient(mach *ssh.MachineOptions) error {
+	err := srv.ssh.AddClient(mach)
+	if err != nil {
+		return fmt.Errorf("failed to create ssh client: %w", err)
+	}
+
+	if !mach.Enable {
+		// saved not loaded
+		return nil
+	}
+
+	return srv.LoadMachine(mach)
+}
+
+func (srv *Service) LoadMachine(mach *ssh.MachineOptions) error {
+	val, ok := srv.ssh.Get(mach.Name)
+	if !ok {
+		return fmt.Errorf("ssh client not found, This should never happen")
+	}
+
+	if err := srv.manager.Load(mach.Name, val); err != nil {
+		return fmt.Errorf("failed to create docker client: %w", err)
+	}
+
+	return nil
+}
+
+func (srv *Service) DeleteClient(mach *ssh.MachineOptions) error {
+	err := srv.manager.Delete(mach.Name)
+	if err != nil {
+		return fmt.Errorf("unable to delete docker client: %w", err)
+	}
+
+	err = srv.ssh.DeleteMachine(mach)
+	if err != nil {
+		return fmt.Errorf("unable to ssh client: %w", err)
+	}
+
+	return nil
+}
+func (srv *Service) ToggleClient(name string, enable bool) error {
+	mach, err := srv.ssh.GetMach(name)
+	if err != nil {
+		return fmt.Errorf("unable to get machine %s: %w", name, err)
+	}
+
+	if !enable {
+		return srv.disableClient(mach)
+	}
+
+	return srv.enableClient(mach)
+}
+
+func (srv *Service) disableClient(mach ssh.MachineOptions) error {
+	if err := srv.manager.Delete(mach.Name); err != nil {
+		return fmt.Errorf("unable to remove docker client: %w", err)
+	}
+
+	if err := srv.ssh.DisableClient(&mach); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// enable, connect and add client
+func (srv *Service) enableClient(mach ssh.MachineOptions) error {
+	if err := srv.ssh.EnableClient(&mach); err != nil {
+		return fmt.Errorf("error occured while connecting to ssh: %w", err)
+	}
+
+	connectedMachine, ok := srv.ssh.Get(mach.Name)
+	if !ok {
+		return fmt.Errorf("ssh client not found, This should never happen")
+	}
+
+	if err := srv.manager.Load(mach.Name, connectedMachine); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (srv *Service) SwitchClient(name string) error {
@@ -73,19 +178,22 @@ func (srv *Service) SwitchClient(name string) error {
 	defer srv.mu.Unlock()
 
 	if srv.activeClient != nil {
-		// TODO: Maybe Add cleanup docker.Service
-		// srv.activeClient.Close()
+		// todo maybe dispose
+		//pkg.CloseCloser(srv.activeClient)
 	}
 
 	mach := srv.manager.GetMachine()
-	syncer := docker.NewSFTPSyncer(mach.sftpClient, srv.composeRoot)
 
 	// to add direct links to services
-	localAddr := ""
-	if name != LocalClient {
-		localAddr = mach.dockerClient.DaemonHost()
-	} else {
+	var localAddr string
+	var syncer docker.Syncer
+	if name == LocalClient {
+		// todo load from service
 		localAddr = config.C.LocalAddr
+		syncer = &docker.NoopSyncer{}
+	} else {
+		localAddr = mach.dockerClient.DaemonHost()
+		syncer = docker.NewSFTPSyncer(mach.ssh.SftpClient, srv.composeRoot)
 	}
 
 	srv.activeClient = docker.NewService(

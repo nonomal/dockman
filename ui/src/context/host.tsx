@@ -19,24 +19,23 @@ export function HostProvider({children}: HostProviderProps) {
     const [isLoading, setLoading] = useState(true)
     const navigate = useNavigate()
 
-    useEffect(() => {
-        const fetchHosts = async () => {
-            setLoading(true)
-            const {val, err} = await callRPC(() => hostManagerClient.list({}))
-            if (err) {
-                showError(err)
-                setLoading(false)
-                return
-            }
-
-            setAvailableHosts(val?.machines.map(value => value.name) || [])
-            setSelectedHost(val?.activeClient || null)
+    const fetchHosts = useCallback(async () => {
+        setLoading(true)
+        const {val, err} = await callRPC(() => hostManagerClient.listClients({}))
+        if (err) {
+            showError(err)
             setLoading(false)
+            return
         }
 
-        fetchHosts()
-    }, [hostManagerClient])
+        setAvailableHosts(val?.clients.map(value => value) || [])
+        setSelectedHost(val?.activeClient || null)
+        setLoading(false)
+    }, [hostManagerClient]);
 
+    useEffect(() => {
+        fetchHosts().then()
+    }, [fetchHosts])
 
     const switchMachine = useCallback(async (machine: string) => {
         if (!machine || machine === selectedHost) return
@@ -56,7 +55,7 @@ export function HostProvider({children}: HostProviderProps) {
 
     }, [hostManagerClient, loc.pathname, navigate, selectedHost])
 
-    const value = {availableHosts, selectedHost, isLoading, switchMachine}
+    const value = {availableHosts, selectedHost, isLoading, switchMachine, fetchHosts}
     return (
         <HostContext.Provider value={value}>
             {children}

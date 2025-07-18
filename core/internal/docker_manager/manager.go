@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/RA341/dockman/pkg"
-	"github.com/pkg/sftp"
 	"github.com/rs/zerolog/log"
 	"sync"
 )
@@ -13,20 +12,21 @@ import (
 const LocalClient = "local"
 
 type ClientManager struct {
-	connectedClients pkg.Map[string, *ManagedMachine]
-	activeClient     string
-	clientLock       *sync.Mutex
-	sshSrv           *ssh.Service
+	ssh              *ssh.Service
+	connectedClients pkg.Map[string, *ConnectedDockerClient]
+
+	activeClient string
+	clientLock   *sync.RWMutex
 }
 
 func NewClientManager(sshSrv *ssh.Service) (*ClientManager, string) {
 	cm := &ClientManager{
-		sshSrv:           sshSrv,
-		connectedClients: pkg.Map[string, *ManagedMachine]{},
-		clientLock:       &sync.Mutex{},
+		ssh:              sshSrv,
+		connectedClients: pkg.Map[string, *ConnectedDockerClient]{},
+		clientLock:       &sync.RWMutex{},
 	}
 
-	defaultHost, err := cm.loadClients()
+	defaultHost, err := cm.loadAllHosts()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load clients")
 	}
@@ -34,7 +34,7 @@ func NewClientManager(sshSrv *ssh.Service) (*ClientManager, string) {
 	return cm, defaultHost
 }
 
-func (m *ClientManager) GetMachine() *ManagedMachine {
+func (m *ClientManager) GetMachine() *ConnectedDockerClient {
 	val, ok := m.connectedClients.Load(m.Active())
 	if !ok {
 		// this should never happen since only way of changing client should be Switch,
@@ -45,15 +45,27 @@ func (m *ClientManager) GetMachine() *ManagedMachine {
 }
 
 func (m *ClientManager) Active() string {
-	m.clientLock.Lock()
-	defer m.clientLock.Unlock()
+	m.clientLock.RLock()
+	defer m.clientLock.RUnlock()
 
 	return m.activeClient
 }
 
+func (m *ClientManager) Delete(name string) error {
+	if err := m.switchIfActive(name); err != nil {
+		return err
+	}
+
+	if cli, ok := m.connectedClients.Load(name); ok {
+		cli.Close()
+		m.connectedClients.Delete(name)
+	}
+
+	return nil
+}
+
 func (m *ClientManager) Switch(name string) error {
-	_, ok := m.connectedClients.Load(name)
-	if !ok {
+	if _, ok := m.connectedClients.Load(name); !ok {
 		return fmt.Errorf("invalid client %s", name)
 	}
 
@@ -66,11 +78,8 @@ func (m *ClientManager) Switch(name string) error {
 }
 
 func (m *ClientManager) List() []string {
-	m.clientLock.Lock()
-	defer m.clientLock.Unlock()
-
 	var cliList []string
-	m.connectedClients.Range(func(key string, _ *ManagedMachine) bool {
+	m.connectedClients.Range(func(key string, _ *ConnectedDockerClient) bool {
 		cliList = append(cliList, key)
 		return true
 	})
@@ -78,25 +87,64 @@ func (m *ClientManager) List() []string {
 	return cliList
 }
 
-func (m *ClientManager) Exists(name string) bool {
-	m.clientLock.Lock()
-	defer m.clientLock.Unlock()
+func (m *ClientManager) Load(name string, sshCon *ssh.ConnectedMachine) error {
+	client, err := newDockerSSHClient(sshCon.SshClient)
+	if err != nil {
+		return fmt.Errorf("unable to create docker client: %w", err)
+	}
 
+	connection, err := testDockerConnection(client)
+	if err != nil {
+		return fmt.Errorf("unable to test docker connection: %w", err)
+	}
+
+	log.Info().Str("name", connection.Name).
+		Str("Kernel", connection.KernelVersion).Msg("Connected to client")
+
+	m.connectedClients.Store(name, NewConnectedDockerClient(client, sshCon))
+	return nil
+}
+
+func (m *ClientManager) Exists(name string) bool {
 	_, ok := m.connectedClients.Load(name)
 	return ok
 }
 
-func (m *ClientManager) loadClients() (string, error) {
-	machines, err := m.sshSrv.Machines.List()
-	if err != nil {
-		return "", fmt.Errorf("unable to list machines: %w", err)
+// switch out to next available client, if currently active
+func (m *ClientManager) switchIfActive(name string) error {
+	if active := m.Active(); active != name {
+		return nil
 	}
 
+	client := m.List()
+	var switched bool
+	for _, newClient := range client {
+		if newClient == name {
+			continue
+		}
+
+		if err := m.Switch(newClient); err != nil {
+			return fmt.Errorf("failed to switch to client: %w", err)
+		} else {
+			switched = true
+		}
+	}
+
+	if !switched {
+		return fmt.Errorf("nice try, but %s is the only client left", name)
+	}
+
+	return nil
+}
+
+func (m *ClientManager) loadAllHosts() (string, error) {
+	machines := m.ssh.ListConnected()
+
 	var wg sync.WaitGroup
-	for _, machine := range machines {
+	for name, machine := range machines {
 		// Load remote clients concurrently
 		wg.Add(1)
-		go m.loadSSHClient(machine, &wg)
+		go m.loadSSHClient(name, machine, &wg)
 	}
 	// Load local client concurrently
 	wg.Add(1)
@@ -124,6 +172,7 @@ func (m *ClientManager) loadClients() (string, error) {
 func (m *ClientManager) loadLocalClient(wg *sync.WaitGroup) {
 	defer wg.Done()
 
+	// todo
 	//if !clientConfig.EnableLocalDocker {
 	//	log.Info().Msgf("Local docker is disabled in config")
 	//	return
@@ -135,44 +184,28 @@ func (m *ClientManager) loadLocalClient(wg *sync.WaitGroup) {
 		return
 	}
 
-	m.testAndStore(LocalClient, &ManagedMachine{
-		dockerClient: localClient,
-	})
+	m.testAndStore(LocalClient, NewConnectedDockerClient(
+		localClient,
+		nil,
+	))
 }
 
-func (m *ClientManager) loadSSHClient(machine ssh.MachineOptions, s *sync.WaitGroup) {
+func (m *ClientManager) loadSSHClient(name string, machine *ssh.ConnectedMachine, s *sync.WaitGroup) {
 	defer s.Done()
 
-	if !machine.Enable {
-		return
-	}
-
-	sshClient, err := m.sshSrv.NewSSHClient(&machine)
+	dockerCli, err := newDockerSSHClient(machine.SshClient)
 	if err != nil {
-		log.Warn().Err(err).Str("client", machine.Name).Msg("Failed to setup ssh client")
+		log.Error().Err(err).Str("client", name).Msg("Failed to setup remote docker client")
 		return
 	}
 
-	dockerCli, err := newDockerSSHClient(sshClient)
-	if err != nil {
-		log.Error().Err(err).Str("client", machine.Name).Msg("Failed to setup remote docker client")
-		return
-	}
-
-	sftpClient, err := sftp.NewClient(sshClient)
-	if err != nil {
-		log.Error().Err(err).Str("client", machine.Name).Msg("Failed to setup sftp client")
-		return
-	}
-
-	m.testAndStore(machine.Name, &ManagedMachine{
-		dockerClient: dockerCli,
-		sshClient:    sshClient,
-		sftpClient:   ssh.NewSFTPCli(sftpClient),
-	})
+	m.testAndStore(name, NewConnectedDockerClient(
+		dockerCli,
+		machine,
+	))
 }
 
-func (m *ClientManager) testAndStore(name string, newClient *ManagedMachine) {
+func (m *ClientManager) testAndStore(name string, newClient *ConnectedDockerClient) {
 	if _, err := testDockerConnection(newClient.dockerClient); err != nil {
 		log.Warn().Err(err).Msgf("docker client health check failed: %s", name)
 		return

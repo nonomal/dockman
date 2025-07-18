@@ -15,6 +15,7 @@ const tabConfigurations: TabConfig[] = [
         label: "Docker Hosts",
         component: <TabDockerHosts/>
     },
+
     // To add a new tab, simply add a new object to this array
     // {
     //   label: "Another Tab",
@@ -60,9 +61,6 @@ export function SettingsPage() {
 
     return (
         <>
-            {/*<Typography variant="h6" component="div" sx={{mb: 2}}>*/}
-            {/*    Settings*/}
-            {/*</Typography>*/}
             <Box sx={{width: '100%'}}>
                 <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
                     <Tabs value={activeTabIndex} onChange={handleChange} aria-label="settings tabs">

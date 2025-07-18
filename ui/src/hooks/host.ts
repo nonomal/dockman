@@ -5,6 +5,7 @@ interface HostContextType {
     selectedHost: string | null;
     isLoading: boolean;
     switchMachine: (machine: string) => Promise<void>;
+    fetchHosts: () => Promise<void>;
 }
 
 export const HostContext = createContext<HostContextType | undefined>(undefined);

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/RA341/dockman/pkg"
 	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,6 +16,15 @@ type SftpClient struct {
 
 func NewSFTPCli(cli *sftp.Client) *SftpClient {
 	return &SftpClient{sfCli: cli}
+}
+
+func NewSFTPFromSSH(cli *ssh.Client) (*SftpClient, error) {
+	sftpClient, err := sftp.NewClient(cli)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SftpClient{sfCli: sftpClient}, nil
 }
 
 // CopyLocalToRemoteSFTP Helper function to recursively copy local files/directories via SFTP.

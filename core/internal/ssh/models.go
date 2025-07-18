@@ -1,8 +1,12 @@
 package ssh
 
 import (
-	"github.com/uptrace/bun"
-	"time"
+	"crypto/sha256"
+	"fmt"
+	"github.com/RA341/dockman/pkg"
+	"golang.org/x/crypto/ssh"
+	"gorm.io/gorm"
+	"strconv"
 )
 
 const DefaultKeyName = "defaultSSHKey"
@@ -20,42 +24,84 @@ type KeyManager interface {
 }
 
 type KeyConfig struct {
-	bun.BaseModel `bun:"table:ssh_configs,alias:sc"`
+	gorm.Model
+	Name       string `gorm:"not null;unique"` // Identifier for the SSH config
+	PublicKey  []byte `gorm:"type:blob"`
+	PrivateKey []byte `gorm:"type:blob"`
+}
 
-	ID         int64  `bun:"id,pk,autoincrement"`
-	Name       string `bun:"name,notnull,unique"` // Identifier for the SSH config
-	PublicKey  []byte `bun:"public_key,type:blob"`
-	PrivateKey []byte `bun:"private_key,type:blob"`
-
-	CreatedAt time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	UpdatedAt time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+// TableName specifies the table name for the KeyConfig model
+func (KeyConfig) TableName() string {
+	return "ssh_configs"
 }
 
 // MachineManager manages machine configurations
 type MachineManager interface {
-	Write(mach MachineOptions) error
-	Delete(mac MachineOptions) error
+	Save(mach *MachineOptions) error
+	Delete(mac *MachineOptions) error
 	List() ([]MachineOptions, error)
 	Get(machName string) (MachineOptions, error)
+	GetByID(id uint) (MachineOptions, error)
 }
 
 // MachineOptions defines the configuration for a single machine.
 type MachineOptions struct {
-	bun.BaseModel `bun:"table:machine_options,alias:mo"`
+	gorm.Model
 
-	ID               int64  `bun:"id,pk,autoincrement"`
-	Name             string `bun:"name,notnull,unique"`
-	Enable           bool   `bun:"enable,notnull,default:false"`
-	Host             string `bun:"host,notnull"`
-	Port             int    `bun:"port,notnull,default:22"`
-	User             string `bun:"user,notnull"`
-	Password         string `bun:"password,nullzero"`
-	RemotePublicKey  string `bun:"remote_public_key,nullzero"`
-	UsePublicKeyAuth bool   `bun:"use_public_key_auth,notnull,default:false"`
+	Name             string `gorm:"not null;uniqueIndex"`
+	Enable           bool   `gorm:"not null;default:false"`
+	Host             string `gorm:"not null"`
+	Port             int    `gorm:"not null;default:22"`
+	User             string `gorm:"not null"`
+	Password         string
+	RemotePublicKey  string
+	UsePublicKeyAuth bool `gorm:"not null;default:false"`
+}
 
-	// Standard timestamps
-	CreatedAt time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	UpdatedAt time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+// TableName specifies the custom table name for the model.
+func (m *MachineOptions) TableName() string {
+	return "machine_options"
+}
+
+func (m *MachineOptions) Hash() string {
+	hasher := sha256.New()
+
+	hasher.Write([]byte(strconv.FormatUint(uint64(m.ID), 10)))
+	hasher.Write([]byte(m.Name))
+	hasher.Write([]byte(strconv.FormatBool(m.Enable)))
+	hasher.Write([]byte(m.Host))
+	hasher.Write([]byte(strconv.Itoa(m.Port)))
+	hasher.Write([]byte(m.User))
+	hasher.Write([]byte(m.Password))
+	hasher.Write([]byte(m.RemotePublicKey))
+	hasher.Write([]byte(strconv.FormatBool(m.UsePublicKeyAuth)))
+
+	return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
+func (m *MachineOptions) HashCmp(inputHash string) bool {
+	return m.Hash() == inputHash
+}
+
+type ConnectedMachine struct {
+	infoHash   string
+	SshClient  *ssh.Client
+	SftpClient *SftpClient
+}
+
+func NewConnectedMachine(sshClient *ssh.Client, sftpClient *SftpClient, infoHash string) *ConnectedMachine {
+	return &ConnectedMachine{
+		infoHash:   infoHash,
+		SshClient:  sshClient,
+		SftpClient: sftpClient,
+	}
+}
+
+// Close return error to fulfill io.closer we don't need to use it
+func (c *ConnectedMachine) Close() error {
+	pkg.CloseCloser(c.SftpClient.sfCli)
+	pkg.CloseCloser(c.SshClient)
+	return nil
 }
 
 // ClientConfig structure of the yaml file
