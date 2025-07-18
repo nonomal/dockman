@@ -1,24 +1,32 @@
 package database
 
 import (
-	"database/sql"
+	"github.com/RA341/dockman/internal/database/impl"
+	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
 )
 
 type Service struct {
-	sqlConn *sql.DB
+	SshKeyDB  ssh.KeyManager
+	MachineDB ssh.MachineManager
 }
 
-func NewService() *Service {
-	_, sqlConn, err := connect()
+func NewService(basepath string) *Service {
+	gormDB, err := connect(basepath)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Unable to connect to database")
 		return nil
 	}
 
-	return &Service{sqlConn: sqlConn}
+	keyman := impl.NewKeyManagerDB(gormDB)
+	macMan := impl.NewMachineManagerDB(gormDB)
+
+	return &Service{
+		SshKeyDB:  keyman,
+		MachineDB: macMan,
+	}
 }
 
 func (s *Service) Close() error {
-	return s.sqlConn.Close()
+	return nil
 }

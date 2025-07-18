@@ -1,12 +1,12 @@
 import {Editor} from "@monaco-editor/react";
 import * as monacoEditor from "monaco-editor";
-import {getLanguageFromExtension} from "../lib/editor.ts";
 import {MonacoLanguageClient} from 'monaco-languageclient';
 import {toSocket, WebSocketMessageReader, WebSocketMessageWriter} from 'vscode-ws-jsonrpc';
 import ReconnectingWebSocket from 'reconnecting-websocket';
-import {API_URL} from "../lib/api.ts";
 import {initialize} from '@codingame/monaco-vscode-api';
 import getLanguagesServiceOverride from '@codingame/monaco-vscode-languages-service-override';
+import { API_URL } from "../../../lib/api";
+import { getLanguageFromExtension } from "../../../lib/editor";
 
 // This MUST match the language ID your LSP server expects.
 const MY_CUSTOM_LANGUAGE_ID = 'compose.yaml';

@@ -1,11 +1,11 @@
 import React, {type SyntheticEvent, useEffect, useMemo, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
-import {StackEditor} from "./stack-editor.tsx";
-import {StackDeploy} from "./stack-deploy.tsx";
+import {TabEditor} from "./tab-editor.tsx";
+import {TabDeploy} from "./tab-deploy.tsx";
 import {Box, CircularProgress, Fade, Tab, Tabs, Typography} from '@mui/material';
-import {StatStacksPage} from "./stack-stats.tsx";
-import {callRPC, useClient} from "../lib/api.ts";
-import {FileService} from "../gen/files/v1/files_pb.ts";
+import {TabStat} from "./tab-stats.tsx";
+import {callRPC, useClient} from "../../lib/api.ts";
+import {FileService} from "../../gen/files/v1/files_pb.ts";
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 interface TabDetails {
@@ -69,16 +69,16 @@ export function ComposePage() {
 
         map.push({
             label: 'Editor',
-            component: <StackEditor key={filename} selectedPage={filename}/>
+            component: <TabEditor key={filename} selectedPage={filename}/>
         })
         if (isComposeFile) {
             map.push({
                 label: 'Deploy',
-                component: <StackDeploy selectedPage={filename}/>
+                component: <TabDeploy selectedPage={filename}/>
             });
             map.push({
                 label: 'Stats',
-                component: <StatStacksPage selectedPage={filename}/>
+                component: <TabStat selectedPage={filename}/>
             });
         }
 

@@ -16,3 +16,5 @@ install/stacks/
 /**/hosts.yaml
 /**/build
 /**/appdata
+/ui/'../
+/**/.task

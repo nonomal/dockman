@@ -1,9 +1,9 @@
 import {useCallback, useEffect, useState} from "react";
-import {downloadFileAtCommit} from "../lib/api.ts";
-import {useSnackbar} from "../hooks/snackbar.ts";
 import {DiffEditor} from "@monaco-editor/react";
 import {Box, CircularProgress, Typography} from "@mui/material";
-import {getLanguageFromExtension} from "../lib/editor.ts";
+import {useSnackbar} from "../../../hooks/snackbar.ts";
+import {downloadFileAtCommit} from "../../../lib/api.ts";
+import {getLanguageFromExtension} from "../../../lib/editor.ts";
 
 interface DiffViewProps {
     commitId: string;

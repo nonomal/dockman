@@ -16,8 +16,8 @@ import {
     Typography
 } from '@mui/material'
 import {DocumentScannerOutlined} from '@mui/icons-material'
-import {type ContainerList, type Port} from '../gen/docker/v1/docker_pb.ts'
 import {ContainerPort} from './container-port.tsx'
+import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts";
 
 interface ContainerTableProps {
     containers: ContainerList[]

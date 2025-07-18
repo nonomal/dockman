@@ -11,9 +11,9 @@ type Config struct {
 	logger *zap.Logger
 }
 
-type LspOpts func(config *Config)
+type Opts func(config *Config)
 
-func ParseOpts(opts ...LspOpts) *Config {
+func ParseOpts(opts ...Opts) *Config {
 	config := &Config{}
 	for _, opt := range opts {
 		opt(config)
@@ -21,13 +21,13 @@ func ParseOpts(opts ...LspOpts) *Config {
 	return config
 }
 
-func WithStream(rwc io.ReadWriteCloser) LspOpts {
+func WithStream(rwc io.ReadWriteCloser) Opts {
 	return func(config *Config) {
 		config.stream = rwc
 	}
 }
 
-func WithZapLogger() LspOpts {
+func WithZapLogger() Opts {
 	return func(config *Config) {
 		logger, err := zap.NewProduction()
 		if err != nil {
@@ -37,7 +37,7 @@ func WithZapLogger() LspOpts {
 	}
 }
 
-func WithLogger(logger *zap.Logger) LspOpts {
+func WithLogger(logger *zap.Logger) Opts {
 	return func(config *Config) {
 		config.logger = logger
 	}

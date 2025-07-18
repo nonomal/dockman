@@ -17,7 +17,7 @@ type Server struct {
 
 // StartLSP starts an LSP session on the given stream.
 // It blocks until the client disconnects.
-func StartLSP(opts ...LspOpts) error {
+func StartLSP(opts ...Opts) error {
 	config := ParseOpts(opts...)
 
 	jsonStream := jsonrpc2.NewStream(config.stream)
@@ -48,23 +48,6 @@ func (s *Server) Initialize(ctx context.Context, params *protocol.InitializePara
 			TextDocumentSync: protocol.TextDocumentSyncKindFull,
 		},
 	}, nil
-}
-
-// Initialized is a notification from the client that the handshake is complete.
-func (s *Server) Initialized(ctx context.Context, params *protocol.InitializedParams) error {
-	// We can do any post-initialization setup here.
-	// For now, we'll do nothing.
-	return nil
-}
-
-// Shutdown is called by the client when it's about to exit.
-func (s *Server) Shutdown(ctx context.Context) error {
-	return nil
-}
-
-// Exit is called by the client to ask the server to exit.
-func (s *Server) Exit(ctx context.Context) error {
-	return nil
 }
 
 func (s *Server) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) (err error) {
@@ -121,6 +104,23 @@ func (s *Server) analyzeAndPublishDiagnostics(ctx context.Context, uri protocol.
 		log.Error().Err(err).Msg("Error publishing diagnostics: ")
 		return
 	}
+}
+
+// Initialized is a notification from the client that the handshake is complete.
+func (s *Server) Initialized(ctx context.Context, params *protocol.InitializedParams) error {
+	// We can do any post-initialization setup here.
+	// For now, we'll do nothing.
+	return nil
+}
+
+// Shutdown is called by the client when it's about to exit.
+func (s *Server) Shutdown(ctx context.Context) error {
+	return nil
+}
+
+// Exit is called by the client to ask the server to exit.
+func (s *Server) Exit(ctx context.Context) error {
+	return nil
 }
 
 func (s *Server) WorkDoneProgressCancel(ctx context.Context, params *protocol.WorkDoneProgressCancelParams) (err error) {

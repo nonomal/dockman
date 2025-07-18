@@ -1,13 +1,13 @@
-name: Develop-Build
+name: Canary-Build
 
 on:
   push:
     branches:
-      - dev
+      - main # publish a dev build on main
     paths:
       - Dockerfile
       - .github/workflows/action-docker.yml
-      - .github/workflows/dev.yml
+      - .github/workflows/canary.yml
       - core/**
       - ui/**
 
@@ -21,7 +21,7 @@ jobs:
     uses: ./.github/workflows/action-docker.yml
     with:
       title: 'Dockman'
-      version_tag: develop
+      version_tag: canary
       source_branch: ${{ github.ref_name }}
     secrets: inherit
 

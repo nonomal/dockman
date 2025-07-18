@@ -1,19 +1,19 @@
 import {Box, createTheme, CssBaseline, Stack, ThemeProvider, Typography} from '@mui/material';
 import {SnackbarProvider} from "./context/snackbar-context.tsx";
-import {ComposePage} from "./pages/compose-page.tsx";
 import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
-import {DashboardPage} from "./pages/dashboard-page.tsx";
 import {NavSidebar} from "./components/sidebar.tsx";
-import {SettingsPage} from "./pages/settings-page.tsx";
 import {AuthProvider} from "./context/auth-context.tsx";
-import {AuthPage} from './pages/auth-page.tsx';
 import NotFoundPage from "./components/not-found.tsx";
 import React from 'react';
 import {useAuth} from "./hooks/auth.ts";
 import {HostProvider} from "./context/host.tsx";
-import { DescriptionOutlined } from '@mui/icons-material';
+import {DescriptionOutlined} from '@mui/icons-material';
+import {AuthPage} from './pages/auth/auth-page.tsx';
+import {DashboardPage} from './pages/dashboard/dashboard-page.tsx';
+import {ComposePage} from './pages/compose/compose-page.tsx';
+import {SettingsPage} from "./pages/settings/settings-page.tsx";
 
-export default function App() {
+export function App() {
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline/>

@@ -1,5 +1,5 @@
 import {Box, Link, Tooltip} from '@mui/material';
-import {type Port} from "../gen/docker/v1/docker_pb.ts";
+import type {Port} from "../../../gen/docker/v1/docker_pb.ts";
 
 interface PortMappingProps {
     port: Port;

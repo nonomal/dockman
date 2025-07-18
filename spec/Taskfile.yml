@@ -1,0 +1,50 @@
+# https://taskfile.dev
+version: '3'
+
+vars:
+  WORKING_DIR:
+    sh: pwd
+
+tasks:
+  # generate files no moves
+  geno:
+    deps: [ build ]
+    cmds:
+      - docker run --rm -v "{{.WORKING_DIR}}:/workspace" protobuilder:latest
+
+  # generate and copy out go files and remove go generated dir
+  gen:
+    deps: [ geno ]
+    cmds:
+      - task: go
+      - task: web
+
+  go:
+    cmds:
+      - rm -r ../core/generated/*
+      - cp -r generated/go/* ../core/generated/
+      - rm -r generated/go
+
+  web:
+    cmds:
+      - rm -r ../ui/src/gen/*
+      - cp -r generated/web/* ../ui/src/gen/
+      - rm -r generated/web
+
+  # drop into a shell and interact with the image
+  # CTRL+D to exit
+  it:
+    deps: [ build ]
+    cmds:
+      - docker run --rm --name gouda_grpc_shell -v "{{.WORKING_DIR}}:/workspace" -it protobuilder:latest /bin/bash
+
+  # build image
+  build:
+    cmds:
+      - docker build . -t protobuilder:latest
+
+  # build and push
+  bpsh:
+    cmds:
+      - make build
+      - make push

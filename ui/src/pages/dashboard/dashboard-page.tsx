@@ -1,6 +1,6 @@
 import {Box, Fade,} from '@mui/material';
-import {ContainerStatTable} from '../components/container-stat-table.tsx';
-import {useDockerStats} from "../hooks/container-stats.ts";
+import {useDockerStats} from "../../hooks/container-stats.ts";
+import {ContainerStatTable} from "../compose/components/container-stat-table.tsx";
 
 export const DashboardPage = () => {
     const {containers, loading, handleSortChange, sortOrder, sortField} = useDockerStats()

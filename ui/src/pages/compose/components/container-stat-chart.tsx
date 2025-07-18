@@ -1,8 +1,8 @@
-import type {ContainerStats} from "../gen/docker/v1/docker_pb.ts";
-import {StatLineChart} from "./charts.tsx";
 import {useEffect, useMemo, useState} from "react";
 import {Box, Card, CardContent, Typography} from "@mui/material";
 import Grid from '@mui/material/Grid';
+import type {ContainerStats} from "../../../gen/docker/v1/docker_pb.ts";
+import {StatLineChart} from "./charts.tsx";
 
 const MAX_HISTORY_LENGTH = 100;
 

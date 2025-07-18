@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
@@ -13,7 +14,7 @@ func FileExists(filename string) bool {
 
 func CloseCloser(rw io.Closer) {
 	err := rw.Close()
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
 		log.Warn().Err(err).Msg("Error occurred while closing io.Closer")
 	}
 }

@@ -19,7 +19,6 @@ import (
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"path/filepath"
 	"strings"
 )
 
@@ -30,21 +29,19 @@ type App struct {
 	Git           *git.Service
 	File          *files.Service
 	DB            *database.Service
+	SSH           *ssh.Service
 }
 
 func NewApp(conf *config.AppConfig) (*App, error) {
-	absComposeRoot, err := filepath.Abs(strings.TrimSpace(conf.ComposeRoot))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get absolute path for compose root: %w", err)
-	}
+	cr := conf.ComposeRoot
 
 	// initialize services
-	dbSrv := database.NewService()
-	authSrv := auth.NewService()
-	sshSrv := ssh.NewService(config.C.ConfigDir)
-	fileSrv := files.NewService(absComposeRoot)
-	gitSrv := git.NewService(absComposeRoot)
-	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, absComposeRoot)
+	dbSrv := database.NewService(config.C.ConfigDir)
+	authSrv := auth.NewService(config.C.Auth.Username, config.C.Auth.Password)
+	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
+	fileSrv := files.NewService(cr)
+	gitSrv := git.NewService(cr)
+	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, cr)
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{
@@ -54,6 +51,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		Git:           gitSrv,
 		DockerManager: dockerManagerSrv,
 		DB:            dbSrv,
+		SSH:           sshSrv,
 	}, nil
 }
 
@@ -70,9 +68,9 @@ func (a *App) Close() error {
 }
 
 func (a *App) registerRoutes(mux *http.ServeMux) {
-	globalInterceptor := connect.WithInterceptors()
+	authInterceptor := connect.WithInterceptors()
 	if a.Config.Auth.Enable {
-		globalInterceptor = connect.WithInterceptors(auth.NewInterceptor(a.Auth))
+		authInterceptor = connect.WithInterceptors(auth.NewInterceptor(a.Auth))
 	}
 
 	handlers := []func() (string, http.Handler){
@@ -82,18 +80,22 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		},
 		// files
 		func() (string, http.Handler) {
-			return filesrpc.NewFileServiceHandler(files.NewConnectHandler(a.File), globalInterceptor)
+			return filesrpc.NewFileServiceHandler(files.NewConnectHandler(a.File), authInterceptor)
 		},
 		func() (string, http.Handler) {
 			return a.registerHttpHandler("/api/file", files.NewFileHandler(a.File))
 		},
 		// docker
 		func() (string, http.Handler) {
-			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(a.DockerManager.GetServiceInstance), globalInterceptor)
+			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(
+				a.DockerManager.GetService,
+				config.C.Updater.Addr,
+				config.C.Updater.PassKey,
+			), authInterceptor)
 		},
 		// git
 		func() (string, http.Handler) {
-			return gitrpc.NewGitServiceHandler(git.NewConnectHandler(a.Git), globalInterceptor)
+			return gitrpc.NewGitServiceHandler(git.NewConnectHandler(a.Git), authInterceptor)
 		},
 		func() (string, http.Handler) {
 			return a.registerHttpHandler("/api/git", git.NewFileHandler(a.Git))
@@ -109,7 +111,7 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		},
 		// host_manager
 		func() (string, http.Handler) {
-			return dockermanagerrpc.NewDockerManagerServiceHandler(dm.NewConnectHandler(a.DockerManager), globalInterceptor)
+			return dockermanagerrpc.NewDockerManagerServiceHandler(dm.NewConnectHandler(a.DockerManager), authInterceptor)
 		},
 		// lsp
 		func() (string, http.Handler) {

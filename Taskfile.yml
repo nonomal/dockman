@@ -1,0 +1,150 @@
+version: '3'
+
+vars:
+  DOCKMAN_IMAGE_BASE: dockman
+  # Directory for Go source commands
+  GO_CMD_DIR: cmd
+  # Directory for build output
+  BUILD_DIR: build
+
+tasks:
+  default:
+    desc: "Lists all available tasks"
+    cmds:
+      - task --list
+
+  init:
+    desc: "Setup dockman dev environment should be run once after cloning the project."
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - task: npmi
+      - task: tidy
+      - task: ui:native
+    status:
+      # This command checks if the directory exists. If it does, the task is considered "up-to-date" and won't run.
+      - test -d {{.BUILD_DIR}}
+  # todo cross platform
+  #  clean:
+  #    desc: "Removes all files in {{.BUILD_DIR}}."
+  #    cmds:
+  #      - task: clean-dir
+  #
+  #  clean-dir:
+  #    internal: true
+  #    cmds:
+  #      - |
+  #        {{if eq OS "windows"}}
+  #        Remove-Item -Path "{{.BUILD_DIR}}" -Recurse -Force
+  #        {{else}}
+  #        rm -rf "{{.BUILD_DIR}}"
+  #        mkdir -p "{{.BUILD_DIR}}"
+  #        {{end}}
+
+  tidy:
+    dir: core/
+    cmds:
+      - go mod tidy -v -x
+
+  npmi:
+    dir: ui/
+    cmds:
+      - npm i
+
+  go:*:
+    dir: core/
+    desc: "Builds a Go target. Usage: task go:<target>"
+    vars:
+      CMD_NAME: "{{index .MATCH 0}}"
+      EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
+    preconditions:
+      - task: init
+    sources:
+      - "**/*.go"  # Fixed: removed leading slash
+    generates:
+      - "{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}"
+    cmds:
+      - go build -v -o ../{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}} ./{{.GO_CMD_DIR}}/{{.CMD_NAME}}
+    summary: |
+      Builds the '{{.CMD_NAME}}' Go command.
+      Source: '{{.GO_CMD_DIR}}/{{.CMD_NAME}}'
+      Output: '{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}'
+
+  gor:*:
+    dir: "{{.BUILD_DIR}}"
+    desc: "Builds and runs a Go target. Usage: task gor:<target>"
+    vars:
+      CMD_NAME: "{{index .MATCH 0}}"
+      EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
+    preconditions:
+      - task: init
+    sources:
+      - "**/*.go"
+    generates:
+      - "{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}"
+    cmds:
+      - task go:{{.CMD_NAME}}
+      - ../{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}} -conf={{.CMD_NAME}}/config -cr={{.CMD_NAME}}/compose
+
+  ui:
+    desc: "Build the latest web ui"
+    dir: ui
+    sources:
+      - "*.tsx"
+    cmds:
+      - npm run build
+
+  ui:native:
+    dir: ui/
+    sources:
+      - "*.tsx"
+    desc: "Builds ui for embed binary. Usage: task ui:native"
+    cmds:
+      - vite build --outDir=../core/cmd/native/dist
+    generates:
+      - "../core/cmd/native/dist"
+    summary: |
+      Builds native ui for native binary target 
+
+  dk:*:
+    desc: "Builds the main dockman image for a specific target. Usage: task dk:<target>"
+    vars:
+      TARGET: "{{index .MATCH 0}}"
+    cmds:
+      - docker build . -t {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}} --target {{.TARGET}}
+    preconditions:
+      - sh: 'test -n "{{.TARGET}}"'
+        msg: "The 'target' variable must be provided. Usage: task dk.<target-name>"
+
+  dkr:*:
+    desc: "Builds and runs the main dockman image for a specific target. Usage: task dkr:<target>"
+    vars:
+      TARGET: "{{index .MATCH 0}}"
+    cmds:
+      - task dk:{{.TARGET}}
+      - docker run -v /var/run/docker.sock:/var/run/docker.sock -p 8221:8866 {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
+    preconditions:
+      - sh: 'test -n "{{.TARGET}}"'
+        msg: "The 'target' variable must be provided. Usage: task dkr.<target-name>"
+
+  dkup:
+    desc: "Builds the updater image. Usage: task dk:<target>"
+    vars:
+      UPDATER: "Dockerfile.updater"
+      IMAGE: "updater"
+      TARGET: "dev"
+    cmds:
+      - docker build -f {{.UPDATER}} . -t {{.DOCKMAN_IMAGE_BASE}}/{{.IMAGE}}:{{.TARGET}}
+
+  dkupr:
+    desc: "Builds and runs the updater image. Usage: task dk:<target>"
+    vars:
+      UPDATER: "Dockerfile.updater"
+      IMAGE: "updater"
+      TARGET: "dev"
+    cmds:
+      - docker run -p 8869:8869 {{.DOCKMAN_IMAGE_BASE}}/{{.IMAGE}}:{{.TARGET}}
+
+  prune:
+    desc: "Prune docker images."
+    cmds:
+      - docker image prune -f

@@ -21,8 +21,8 @@ func NewLocalClient() (*client.Client, error) {
 	return dockerClient, nil
 }
 
-// newSSHClient establishes an SSH connection to a Docker host
-func newSSHClient(sshClient *ssh.Client) (*client.Client, error) {
+// newDockerSSHClient establishes an SSH connection to a Docker host
+func newDockerSSHClient(sshClient *ssh.Client) (*client.Client, error) {
 	// Create a Docker client using the custom dialer.
 	newClient, err := newDockerClient(
 		client.WithDialContext(dockerSSHDialer(sshClient)),
