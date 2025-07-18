@@ -34,7 +34,7 @@ message ListMachine {
 }
 
 message Machine {
-  int64 id = 1;
+  uint64 id = 1;
   string name = 2;
   bool   enable = 3;
   string host = 4;
