@@ -146,6 +146,8 @@ func (m *Service) LoadClient(machine *MachineOptions, newClient bool) error {
 			sftpCli,
 			machine.Hash(),
 		))
+	} else {
+		pkg.CloseCloser(cli)
 	}
 
 	return nil
