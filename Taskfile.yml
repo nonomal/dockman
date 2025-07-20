@@ -24,7 +24,7 @@ tasks:
 
   init:build:
     desc: "Creates the build dir"
-    cmd: mkdir -p {{.BUILD_DIR}}
+    cmd: coreutils mkdir -p {{.BUILD_DIR}}
     status:
       # This command checks if the directory exists. If it does, the task is considered "up-to-date" and won't run.
       - test -d {{.BUILD_DIR}}
@@ -61,9 +61,9 @@ tasks:
       - coreutils mv -f dist {{.NATIVE_DIR}}/dist
 
   clean:
-    desc: "Removes all files in {{.BUILD_DIR}}."
+    desc: "Removes all files in {{.BUILD_DIR}}"
     cmds:
-      - task: clean-dir
+      - coreutils rm -rf {{.BUILD_DIR}}/*
 
   tidy:
     desc: "Calls go mod tidy in {{.CORE_DIR}}"
