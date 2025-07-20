@@ -520,93 +520,150 @@ Before diving in, make sure you have these installed:
 - **[Taskfile](https://taskfile.dev/#/installation)** – a modern task runner used for automating development workflows (
   like Make, but nicer)
 - **[Coreutils](https://uutils.github.io/coreutils/docs/installation.html)** – used to perform cross-platform file
-  operations, since Taskfile doesn’t yet support platform-agnostic shell commands
+  operations, since Taskfile doesn't yet support platform-agnostic shell commands
   > _Using [uutils/coreutils](https://github.com/uutils/coreutils) as a temporary workaround
   pending [Taskfile cross-platform shell support](https://github.com/go-task/task/issues/197#issuecomment-3014045749)_
 
-### The Setup
+### Init
 
-#### Step 1: Build the Frontend First
-
-The Go server expects a frontend bundle to be ready before it'll start.
-
-You won't actually use this build for development - it's just to keep the server happy.
+The easiest way to get started is with our init task that handles everything:
 
 ```bash
-cd ui
-npm install
-npm run build
+task init
 ```
 
-#### Step 2: Fire Up the Backend
+This single command will:
 
-Now let's get that Go server running:
+- Create the build directory
+- Install npm dependencies
+- Build the frontend
+- Run `go mod tidy`
+
+### Frontend Development Server
+
+Start the UI development server with hot reload capabilities:
 
 ```bash
-cd core/
+task ui:r
 ```
 
-You'll need to point it to your frontend build from step 1.
-and tell it where to place the compose files:
+This command runs `npm run dev` in the `ui` directory. The frontend will be accessible at http://localhost:5173 with
+automatic hot reload for development.
 
-This command creates a dir named stacks at project root
+### Backend Development Server
+
+Open a new terminal window (keep the frontend server running):
 
 ```bash
-go run cmd/server/main.go --ui=../ui/dist --cr="../stacks"
+task go:develop
 ```
 
-> [!TIP]
-> If it looks like it's hanging, don't panic!
->
-> Go compilation can take a few seconds. Grab a coffee
+This command will:
 
-The Backend will be accessible at http://localhost:8866
+- Build a Go binary server in the `build/develop` directory
+- Create a `develop/` folder structure containing:
+    - `compose/` - Docker Compose root directory for all compose files
+    - `config/` - Configuration directory containing the SQLite database
 
-#### Step 3: Start the Dev Frontend
+The backend will be accessible at http://localhost:8866
 
-Open a new terminal (the backend needs to stay running):
+**Note:** Go does not support hot reload. To apply code changes, stop the server and rerun the `task go:develop` command
+to rebuild with your updates.### Available Task Commands
+
+You can see all available tasks by running:
 
 ```bash
-cd ui
-npm run dev
+task --list
 ```
 
-The frontend will be accessible at http://localhost:5173
+#### Common Development Tasks
 
-> [!IMPORTANT]
-> The frontend needs the backend running to work properly,
-> so make sure step 2 is done first!
->
-> If the server is down, you will get a bunch of error messages on the frontend
+- **`task init`** - Complete setup for new contributors
+- **`task ui`** - Build the frontend
+- **`task ui:dep`** - Install UI dependencies
+- **`task go:server`** - Build and run the server
+- **`task go:b:server`** - Build server binary only
+- **`task clean`** - Remove all build files
+- **`task tidy`** - Run `go mod tidy` in the core directory
 
-#### Quick Reference
+#### Building Specific Components
+
+Build any Go command using the pattern `task go:b:<target>`:
+
+```bash
+task go:b:server    # Build server
+task go:b:updater   # Build updater
+```
+
+Run any Go command using the pattern `task go:<target>`:
+
+```bash
+task go:server      # Build and run server
+task go:updater     # Build and run updater
+```
+
+#### Docker Tasks
+
+- **`task dk:b:<target>`** - Build Docker image for specific target
+- **`task dk:<target>`** - Build and run Docker image
+- **`task dk:up`** - Build the updater image
+- **`task dk:upr`** - Build and run the updater image
+- **`task dk:prune`** - Clean up Docker images
+
+#### UI-Specific Tasks
+
+- **`task ui:native`** - Build UI and copy for native binary embedding
+
+### Development Workflow
+
+#### For Frontend Development
+
+1. Run `task init` for initial setup
+2. Start backend: `task go:server`
+3. Start frontend dev server: `cd ui && npm run dev`
+4. Make your changes in the `ui/` directory
+5. The dev server will auto-reload for most changes
+
+#### For Backend Development
+
+1. Run `task init` for initial setup
+2. Make your changes in the `core/` directory
+3. Rebuild and restart: `task go:server`
+4. Test with real Docker containers
+
+#### For Full Stack Development
+
+1. Run `task init` for initial setup
+2. Use `task ui:native` to rebuild UI for native embedding
+3. Rebuild backend: `task go:b:server`
+4. Test the integrated application
+
+### Quick Reference
 
 Once everything is running:
 
 - **Backend**: Usually runs on port 8866 (check the terminal output)
 - **Frontend Dev Server**: Usually runs on port 5173 (check the terminal output)
 - **Docker Compose Root**: The `../stacks` directory (you can change this with the `--cr` flag)
+- **Build Output**: All binaries go to the `build/` directory
 
 #### Common Issues & Solutions
 
 - **"Frontend won't load"**: Make sure the backend is running first
-- **"Go server won't start"**: Check if you built the frontend (`npm run build` in the ui directory)
-- **"Something broke"**: Try turning it off and on again (seriously, restart both servers)
+- **"Go server won't start"**: Check if you built the frontend with `task ui`
+- **"Task not found"**: Make sure you have Taskfile installed and are in the project root
+- **"Coreutils command not found"**: Install uutils coreutils as mentioned in the requirements
+- **"Something broke"**: Try `task clean` followed by `task init` to start fresh
 
-### Development Workflow
-
-1. Make your changes in the `ui/` directory
-2. The dev server will auto-reload for most changes
-3. For backend changes, you'll need to restart the Go server
-4. Test with real Docker containers to make sure everything works
-
-### Git ops
+#### Git ops
 
 Whether you're fixing a bug, adding a feature, or improving documentation:
 
 1. **Start with an issue** - Open an issue first to discuss your idea
 2. **Fork and branch** - Create a feature branch from `main`
-3. **Submit a PR** - Include a clear description of what you've changed
+3. **Make your changes** - Use the task commands for consistent builds
+4. **Test thoroughly** - Use both `task go:server` and Docker builds to test
+5. **Submit a PR** - Include a clear description of what you've changed
 
 ### Need Help?
 
@@ -619,8 +676,7 @@ If you get stuck, don't hesitate to:
 - Open an issue with your problem
 - Ask questions in the discussions
 - Tag me (@RA341) if you need clarification on anything
-
-Happy coding!
+- Run `task --list` to see all available commands
 
 ## License
 

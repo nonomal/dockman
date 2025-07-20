@@ -44,6 +44,14 @@ tasks:
     cmds:
       - npm run build
 
+  ui:r:
+    desc: "Build the latest web ui in {{.UI_DIR}}"
+    dir: "{{.UI_DIR}}"
+    sources:
+      - "*.tsx"
+    cmds:
+      - npm run dev
+
   ui:dep:
     desc: "calls npm install in {{.UI_DIR}}"
     dir: "{{.UI_DIR}}"
