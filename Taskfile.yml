@@ -85,14 +85,14 @@ tasks:
     cmds:
       - go mod tidy -v -x
 
-  go:*:
-    dir: ${{.CORE_DIR}}
+  go:b:*:
+    dir: "{{.CORE_DIR}}"
     desc: "Builds a Go target. Usage: task go:<target>"
     vars:
       CMD_NAME: "{{index .MATCH 0}}"
       EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
-    preconditions:
-      - task: init
+    deps:
+      - task: init:build
     sources:
       - "**/*.go"
     generates:
@@ -103,24 +103,18 @@ tasks:
       Builds the '{{.CMD_NAME}}' Go command.
       Source: '{{.GO_CMD_DIR}}/{{.CMD_NAME}}'
       Output: '{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}'
-
-  go:r:*:
+  go:*:
     dir: "{{.BUILD_DIR}}"
     desc: "Builds and runs a Go target. Usage: task go:r:<target>"
     vars:
       CMD_NAME: "{{index .MATCH 0}}"
       EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
-    preconditions:
-      - task: init
-    sources:
-      - "**/*.go"
-    generates:
-      - "{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}"
+      ARGS: '{{if eq .CMD_NAME "updater"}} -cr={{.CMD_NAME}}/compose {{else}} -conf={{.CMD_NAME}}/config -cr={{.CMD_NAME}}/compose{{end}}'
     cmds:
-      - task go:{{.CMD_NAME}}
-      - ../{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}} -conf={{.CMD_NAME}}/config -cr={{.CMD_NAME}}/compose
+      - task: go:b:{{.CMD_NAME}}
+      - ../{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}{{.ARGS}}
 
-  dk:*:
+  dk:b:*:
     desc: "Builds the main dockman image for a specific target. Usage: task dk:<target>"
     vars:
       TARGET: "{{index .MATCH 0}}"
@@ -130,12 +124,12 @@ tasks:
       - sh: 'test -n "{{.TARGET}}"'
         msg: "The 'target' variable must be provided. Usage: task dk.<target-name>"
 
-  dk:r:*:
+  dk:*:
     desc: "Builds and runs the main dockman image for a specific target. Usage: task dk:r:<target>"
     vars:
       TARGET: "{{index .MATCH 0}}"
     cmds:
-      - task dk:{{.TARGET}}
+      - task dk:b:{{.TARGET}}
       - docker run -v /var/run/docker.sock:/var/run/docker.sock -p 8221:8866 {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
     preconditions:
       - sh: 'test -n "{{.TARGET}}"'
