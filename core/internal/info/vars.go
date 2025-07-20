@@ -4,6 +4,14 @@ import (
 	"runtime"
 )
 
+// build args to modify vars
+//
+// -X github.com/RA341/dockman/internal/info.Version=${VERSION} \
+// -X github.com/RA341/dockman/internal/info.CommitInfo=${COMMIT_INFO} \
+// -X github.com/RA341/dockman/internal/info.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+// -X github.com/RA341/dockman/internal/info.Branch=${BRANCH}" \
+// cmd/server.go
+
 const (
 	DevMode = "dev"
 )
