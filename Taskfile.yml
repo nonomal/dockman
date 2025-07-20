@@ -1,6 +1,8 @@
 version: '3'
 
 vars:
+  CORE_DIR: core/
+  UI_DIR: ui/
   DOCKMAN_IMAGE_BASE: dockman
   # Directory for Go source commands
   GO_CMD_DIR: cmd
@@ -11,19 +13,56 @@ tasks:
   default:
     desc: "Lists all available tasks"
     cmds:
-      - task --list
+      - task --list --sort=alphanumeric
 
   init:
-    desc: "Setup dockman dev environment should be run once after cloning the project."
-    cmds:
-      - mkdir -p {{.BUILD_DIR}}
-      - task: npmi
-      - task: tidy
-      - task: ui:native
+    desc: "Setup dockman dev environment should be run only once after cloning the project."
+    deps:
+      - init:build
+      - init:ui
+      - tidy
+
+  init:build:
+    desc: "Creates the build dir"
+    cmd: mkdir -p {{.BUILD_DIR}}
     status:
       # This command checks if the directory exists. If it does, the task is considered "up-to-date" and won't run.
       - test -d {{.BUILD_DIR}}
-  # todo cross platform
+
+  init:ui:
+    desc: "calls npm i and builds the ui"
+    dir: "{{.UI_DIR}}"
+    cmds:
+      - task: ui:dep
+      - task: ui
+
+  ui:
+    desc: "Build the latest web ui in {{.UI_DIR}}"
+    dir: "{{.UI_DIR}}"
+    sources:
+      - "*.tsx"
+    cmds:
+      - npm run build
+
+  ui:dep:
+    desc: "calls npm install in {{.UI_DIR}}"
+    dir: "{{.UI_DIR}}"
+    cmds:
+      - npm i
+
+  #  ui:native:
+  #    dir: "{{.UI_DIR}}"
+  #    sources:
+  #      - "*.tsx"
+  #    desc: "Builds ui for embed binary. Usage: task ui:native"
+  #    cmds:
+  #      - vite build --outDir=../core/cmd/native/dist
+  #    generates:
+  #      - "../core/cmd/native/dist"
+  #    summary: |
+  #      Builds native ui for native binary target
+
+  # todo pending cross platform shell utils: https://github.com/go-task/task/issues/197#issuecomment-3014045749
   #  clean:
   #    desc: "Removes all files in {{.BUILD_DIR}}."
   #    cmds:
@@ -41,17 +80,13 @@ tasks:
   #        {{end}}
 
   tidy:
-    dir: core/
+    desc: "Calls go mod tidy in {{.CORE_DIR}}"
+    dir: "{{.CORE_DIR}}"
     cmds:
       - go mod tidy -v -x
 
-  npmi:
-    dir: ui/
-    cmds:
-      - npm i
-
   go:*:
-    dir: core/
+    dir: ${{.CORE_DIR}}
     desc: "Builds a Go target. Usage: task go:<target>"
     vars:
       CMD_NAME: "{{index .MATCH 0}}"
@@ -59,7 +94,7 @@ tasks:
     preconditions:
       - task: init
     sources:
-      - "**/*.go"  # Fixed: removed leading slash
+      - "**/*.go"
     generates:
       - "{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}"
     cmds:
@@ -69,9 +104,9 @@ tasks:
       Source: '{{.GO_CMD_DIR}}/{{.CMD_NAME}}'
       Output: '{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}'
 
-  gor:*:
+  go:r:*:
     dir: "{{.BUILD_DIR}}"
-    desc: "Builds and runs a Go target. Usage: task gor:<target>"
+    desc: "Builds and runs a Go target. Usage: task go:r:<target>"
     vars:
       CMD_NAME: "{{index .MATCH 0}}"
       EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
@@ -85,26 +120,6 @@ tasks:
       - task go:{{.CMD_NAME}}
       - ../{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}} -conf={{.CMD_NAME}}/config -cr={{.CMD_NAME}}/compose
 
-  ui:
-    desc: "Build the latest web ui"
-    dir: ui
-    sources:
-      - "*.tsx"
-    cmds:
-      - npm run build
-
-  ui:native:
-    dir: ui/
-    sources:
-      - "*.tsx"
-    desc: "Builds ui for embed binary. Usage: task ui:native"
-    cmds:
-      - vite build --outDir=../core/cmd/native/dist
-    generates:
-      - "../core/cmd/native/dist"
-    summary: |
-      Builds native ui for native binary target 
-
   dk:*:
     desc: "Builds the main dockman image for a specific target. Usage: task dk:<target>"
     vars:
@@ -115,8 +130,8 @@ tasks:
       - sh: 'test -n "{{.TARGET}}"'
         msg: "The 'target' variable must be provided. Usage: task dk.<target-name>"
 
-  dkr:*:
-    desc: "Builds and runs the main dockman image for a specific target. Usage: task dkr:<target>"
+  dk:r:*:
+    desc: "Builds and runs the main dockman image for a specific target. Usage: task dk:r:<target>"
     vars:
       TARGET: "{{index .MATCH 0}}"
     cmds:
@@ -124,9 +139,9 @@ tasks:
       - docker run -v /var/run/docker.sock:/var/run/docker.sock -p 8221:8866 {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
     preconditions:
       - sh: 'test -n "{{.TARGET}}"'
-        msg: "The 'target' variable must be provided. Usage: task dkr.<target-name>"
+        msg: "The 'target' variable must be provided. Usage: task dk:r.<target-name>"
 
-  dkup:
+  dk:up:
     desc: "Builds the updater image. Usage: task dk:<target>"
     vars:
       UPDATER: "Dockerfile.updater"
@@ -135,7 +150,7 @@ tasks:
     cmds:
       - docker build -f {{.UPDATER}} . -t {{.DOCKMAN_IMAGE_BASE}}/{{.IMAGE}}:{{.TARGET}}
 
-  dkupr:
+  dk:upr:
     desc: "Builds and runs the updater image. Usage: task dk:<target>"
     vars:
       UPDATER: "Dockerfile.updater"
@@ -144,7 +159,7 @@ tasks:
     cmds:
       - docker run -p 8869:8869 {{.DOCKMAN_IMAGE_BASE}}/{{.IMAGE}}:{{.TARGET}}
 
-  prune:
+  dk:prune:
     desc: "Prune docker images."
     cmds:
       - docker image prune -f
