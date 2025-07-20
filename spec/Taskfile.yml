@@ -5,46 +5,65 @@ vars:
   WORKING_DIR:
     sh: pwd
 
+  CORE_DIR: ../core/generated
+  UI_DIR: ../ui/src/gen
+  GENERATED_DIR: generated
+
 tasks:
-  # generate files no moves
   geno:
+    desc: generate files no moves
     deps: [ build ]
     cmds:
       - docker run --rm -v "{{.WORKING_DIR}}:/workspace" protobuilder:latest
 
-  # generate and copy out go files and remove go generated dir
   gen:
+    desc: generate and copy out generated files and remove source generated dir
     deps: [ geno ]
+    sources:
+      - protos/**/
     cmds:
       - task: go
       - task: web
 
   go:
+    desc: Copy generated Go files to core directory
     cmds:
-      - rm -r ../core/generated/*
-      - cp -r generated/go/* ../core/generated/
-      - rm -r generated/go
+      - task: _copy
+        vars:
+          TARGET_DIR: '{{.CORE_DIR}}'
+          SOURCE_PATTERN: '{{.GENERATED_DIR}}/go/*'
 
   web:
+    desc: Copy generated web files to UI directory
     cmds:
-      - rm -r ../ui/src/gen/*
-      - cp -r generated/web/* ../ui/src/gen/
-      - rm -r generated/web
+      - task: _copy
+        vars:
+          TARGET_DIR: '{{.UI_DIR}}'
+          SOURCE_PATTERN: '{{.GENERATED_DIR}}/web/*'
 
-  # drop into a shell and interact with the image
-  # CTRL+D to exit
+  _copy:
+    internal: true
+    vars:
+      TARGET_DIR: '{{.TARGET_DIR}}'
+      SOURCE_PATTERN: '{{.SOURCE_PATTERN}}'
+    cmds:
+      - coreutils rm -f -r {{.TARGET_DIR}}/*
+      - coreutils mkdir -p {{.TARGET_DIR}}
+      - coreutils cp -r {{.SOURCE_PATTERN}} {{.TARGET_DIR}}/
+
   it:
+    desc: drop into a shell and interact with the image. CTRL+D to exit
     deps: [ build ]
     cmds:
       - docker run --rm --name gouda_grpc_shell -v "{{.WORKING_DIR}}:/workspace" -it protobuilder:latest /bin/bash
 
-  # build image
   build:
+    desc: Builds the core docker image with the generated tools installed
     cmds:
       - docker build . -t protobuilder:latest
 
-  # build and push
   bpsh:
+    desc: build and push
     cmds:
       - make build
       - make push

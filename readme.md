@@ -501,12 +501,6 @@ I'd especially love to hear what you think about a couple of things:
 
 Thanks for wanting to help make this project better! Here's everything you need to know to get up and running.
 
-Whether you're fixing a bug, adding a feature, or improving documentation:
-
-1. **Start with an issue** - Open an issue first to discuss your idea
-2. **Fork and branch** - Create a feature branch from `main`
-3. **Submit a PR** - Include a clear description of what you've changed
-
 Dockman is built with Go for the backend and React for the frontend.
 
 ### Project Structure
@@ -520,9 +514,15 @@ Dockman is built with Go for the backend and React for the frontend.
 
 Before diving in, make sure you have these installed:
 
-- **Go 1.24+**
-- **Node.js 22+** and npm/yarn
-- **Docker** (I mean... DUH!) for testing and updating generated code
+- **[Go 1.24+](https://go.dev/dl/)**
+- **[Node.js 22+](https://nodejs.org/en/download/)** and npm/yarn
+- **[Docker](https://www.docker.com/products/docker-desktop/)** (I mean... DUH!) for testing and updating generated code
+- **[Taskfile](https://taskfile.dev/#/installation)** – a modern task runner used for automating development workflows (
+  like Make, but nicer)
+- **[Coreutils](https://uutils.github.io/coreutils/docs/installation.html)** – used to perform cross-platform file
+  operations, since Taskfile doesn’t yet support platform-agnostic shell commands
+  > _Using [uutils/coreutils](https://github.com/uutils/coreutils) as a temporary workaround
+  pending [Taskfile cross-platform shell support](https://github.com/go-task/task/issues/197#issuecomment-3014045749)_
 
 ### The Setup
 
@@ -599,6 +599,14 @@ Once everything is running:
 2. The dev server will auto-reload for most changes
 3. For backend changes, you'll need to restart the Go server
 4. Test with real Docker containers to make sure everything works
+
+### Git ops
+
+Whether you're fixing a bug, adding a feature, or improving documentation:
+
+1. **Start with an issue** - Open an issue first to discuss your idea
+2. **Fork and branch** - Create a feature branch from `main`
+3. **Submit a PR** - Include a clear description of what you've changed
 
 ### Need Help?
 

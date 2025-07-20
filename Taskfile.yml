@@ -50,34 +50,20 @@ tasks:
     cmds:
       - npm i
 
-  #  ui:native:
-  #    dir: "{{.UI_DIR}}"
-  #    sources:
-  #      - "*.tsx"
-  #    desc: "Builds ui for embed binary. Usage: task ui:native"
-  #    cmds:
-  #      - vite build --outDir=../core/cmd/native/dist
-  #    generates:
-  #      - "../core/cmd/native/dist"
-  #    summary: |
-  #      Builds native ui for native binary target
+  ui:native:
+    dir: "{{.UI_DIR}}"
+    vars:
+      NATIVE_DIR: ../{{.CORE_DIR}}/{{.GO_CMD_DIR}}/native
+    desc: "Builds ui and copies for embed binary. Usage: task ui:native"
+    cmds:
+      - task: ui
+      - coreutils rm -f -r {{.NATIVE_DIR}}/dist
+      - coreutils mv -f dist {{.NATIVE_DIR}}/dist
 
-  # todo pending cross platform shell utils: https://github.com/go-task/task/issues/197#issuecomment-3014045749
-  #  clean:
-  #    desc: "Removes all files in {{.BUILD_DIR}}."
-  #    cmds:
-  #      - task: clean-dir
-  #
-  #  clean-dir:
-  #    internal: true
-  #    cmds:
-  #      - |
-  #        {{if eq OS "windows"}}
-  #        Remove-Item -Path "{{.BUILD_DIR}}" -Recurse -Force
-  #        {{else}}
-  #        rm -rf "{{.BUILD_DIR}}"
-  #        mkdir -p "{{.BUILD_DIR}}"
-  #        {{end}}
+  clean:
+    desc: "Removes all files in {{.BUILD_DIR}}."
+    cmds:
+      - task: clean-dir
 
   tidy:
     desc: "Calls go mod tidy in {{.CORE_DIR}}"
@@ -103,6 +89,7 @@ tasks:
       Builds the '{{.CMD_NAME}}' Go command.
       Source: '{{.GO_CMD_DIR}}/{{.CMD_NAME}}'
       Output: '{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}'
+
   go:*:
     dir: "{{.BUILD_DIR}}"
     desc: "Builds and runs a Go target. Usage: task go:r:<target>"
