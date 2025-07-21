@@ -43,13 +43,16 @@ func (s *ComposeService) Up(ctx context.Context, project *types.Project, compose
 
 	upOpts := api.UpOptions{
 		Create: api.CreateOptions{
-			Build:                &api.BuildOptions{Services: services},
-			Services:             services,
-			RemoveOrphans:        false,
-			Recreate:             api.RecreateForce, // Force recreation of the specified services
-			RecreateDependencies: api.RecreateNever, // Do not recreate dependencies
-			Inherit:              true,
-			AssumeYes:            true,
+			Build:    &api.BuildOptions{Services: services},
+			Services: services,
+
+			// todo todo these params need to change for updating dockman
+			RemoveOrphans: true, //  todo this false when updating dockman
+			//Recreate:             api.RecreateForce, // Force recreation of the specified services
+			//RecreateDependencies: api.RecreateNever, // Do not recreate dependencies
+
+			Inherit:   true,
+			AssumeYes: true,
 		},
 		Start: api.StartOptions{
 			//OnExit:   api.CascadeStop,

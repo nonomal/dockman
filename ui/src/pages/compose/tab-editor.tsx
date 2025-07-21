@@ -19,7 +19,7 @@ import {GitService} from "../../gen/git/v1/git_pb";
 import {DiffViewer} from "./components/diff.tsx";
 import {MonacoEditor} from "./components/editor.tsx";
 import {useSnackbar} from "../../hooks/snackbar.ts";
-import {EditorCommitList} from "./components/editor-commit-list.tsx";
+import {GitCommitListOld} from "./components/editor-commit-list-old.tsx";
 
 interface EditorProps {
     selectedPage: string;
@@ -234,7 +234,7 @@ export function TabEditor({selectedPage}: EditorProps) {
                         flexDirection: 'column'
 
                     }}>
-                        <EditorCommitList
+                        <GitCommitListOld
                             key={commitListKey}
                             chooseCommit={commit => {
                                 setDiffCommitId(commit)
