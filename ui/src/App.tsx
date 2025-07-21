@@ -1,7 +1,7 @@
 import {Box, createTheme, CssBaseline, Stack, ThemeProvider, Typography} from '@mui/material';
 import {SnackbarProvider} from "./context/snackbar-context.tsx";
 import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
-import {NavSidebar} from "./components/sidebar.tsx";
+import {RootNavbar} from "./components/navbar.tsx";
 import {AuthProvider} from "./context/auth-context.tsx";
 import NotFoundPage from "./components/not-found.tsx";
 import React from 'react';
@@ -87,19 +87,29 @@ const PrivateRoute = () => {
 };
 
 function HomePage() {
+    const [filesPanelOpen, setFilesPanelOpen] = React.useState(false);
+
     return (
-        <Box sx={{display: 'flex', height: '100vh', overflow: 'hidden'}}>
-            <NavSidebar/>
-            <Box component="main" sx={{
-                flexGrow: 1,
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                minWidth: 0,
-            }}>
+        <>
+            <RootNavbar filesPanelOpen={filesPanelOpen} setFilesPanelOpen={setFilesPanelOpen}/>
+            <Box
+                component="main"
+                sx={() => ({
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minWidth: 0,
+                    ml: `${80 + (filesPanelOpen ? 280 : 0)}px`,
+                    width: `calc(100% - ${80 + (filesPanelOpen ? 280 : 0)}px)`,
+                    mt: `64px`, // Account for the top bar height
+                    height: `calc(100vh - 64px)`, // Subtract top bar height
+                    overflow: 'auto',
+                    p: 2,
+                })}
+            >
                 <Outlet/>
             </Box>
-        </Box>
+        </>
     );
 }
 

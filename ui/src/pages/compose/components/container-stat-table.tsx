@@ -34,7 +34,6 @@ interface ContainersTableProps {
     loading: boolean
 }
 
-// --- NEW HELPER FUNCTION ---
 // Determines the color based on resource usage percentage.
 // - Green for normal usage (< 70%)
 // - Yellow for high usage (70-90%)
@@ -100,7 +99,7 @@ export function ContainerStatTable(
     }
 
     return (
-        <Fade in={true} timeout={400}>
+        <Fade in={true} timeout={100}>
             <TableContainer component={Paper} variant="outlined">
                 {/* By setting table-layout to fixed, the table's layout is determined by the widths of the columns in the header. */}
                 <Table sx={{minWidth: 650, tableLayout: 'fixed'}} aria-label="container stats table">

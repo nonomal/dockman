@@ -15,7 +15,6 @@ interface MonacoEditorProps {
     selectedPage: string;
     fileContent: string;
     handleEditorChange: (value: string | undefined) => void;
-    // We modify handleEditorDidMount to accept monaco as well
     // handleEditorDidMount?: (editor: monacoEditor.editor.IStandaloneCodeEditor, monaco: typeof monacoEditor) => void;
 }
 
