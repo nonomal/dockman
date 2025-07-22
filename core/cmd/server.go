@@ -24,23 +24,24 @@ func init() {
 }
 
 func StartServer(opt ...config.ServerOpt) {
-	if err := config.LoadConfig(opt...); err != nil {
+	conf, err := config.LoadConfig(opt...)
+	if err != nil {
 		log.Fatal().Err(err).Msg("Error parsing config")
 	}
-	logger.InitConsole(config.C.Log.Level, config.C.Log.Verbose)
+	logger.InitConsole(conf.Log.Level, conf.Log.Verbose)
 
-	app, err := NewApp(config.C)
+	app, err := NewApp(conf)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed initializing services")
 	}
 	defer fileutil.Close(app)
 
 	router := http.NewServeMux()
-	app.registerRoutes(router)
-	registerFrontend(router)
+	app.registerApiRoutes(router)
+	registerFrontend(conf, router)
 
 	middleware := cors.New(cors.Options{
-		AllowedOrigins:      config.C.GetAllowedOrigins(),
+		AllowedOrigins:      conf.GetAllowedOrigins(),
 		AllowPrivateNetwork: true,
 		AllowedMethods:      connectcors.AllowedMethods(),
 		AllowedHeaders:      append(connectcors.AllowedHeaders(), "Authorization"),
@@ -49,11 +50,11 @@ func StartServer(opt ...config.ServerOpt) {
 	finalMux := middleware.Handler(router)
 
 	log.Info().
-		Int("port", config.C.Port).
-		Str("url", config.C.GetDockmanWithMachineUrl()).
+		Int("port", conf.Port).
+		Str("url", conf.GetDockmanWithMachineUrl()).
 		Msg("Starting server...")
 	err = http.ListenAndServe(
-		fmt.Sprintf(":%d", config.C.Port),
+		fmt.Sprintf(":%d", conf.Port),
 		h2c.NewHandler(finalMux, &http2.Server{}),
 	)
 	if err != nil {
@@ -61,8 +62,8 @@ func StartServer(opt ...config.ServerOpt) {
 	}
 }
 
-func registerFrontend(router *http.ServeMux) {
-	if config.C.UIFS == nil {
+func registerFrontend(conf *config.AppConfig, router *http.ServeMux) {
+	if conf.UIFS == nil {
 		log.Warn().Msg("no ui files found, setting default page")
 
 		router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +74,7 @@ func registerFrontend(router *http.ServeMux) {
 		return
 	}
 
-	router.Handle("/", newSpaHandler(config.C.UIFS))
+	router.Handle("/", newSpaHandler(conf.UIFS))
 }
 
 // SpaHandler implements the http.Handler interface and serves a single-page

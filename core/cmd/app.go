@@ -36,12 +36,12 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	cr := conf.ComposeRoot
 
 	// initialize services
-	dbSrv := database.NewService(config.C.ConfigDir)
-	authSrv := auth.NewService(config.C.Auth.Username, config.C.Auth.Password)
+	dbSrv := database.NewService(conf.ConfigDir)
+	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password)
 	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
 	fileSrv := files.NewService(cr)
 	gitSrv := git.NewService(cr)
-	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, cr)
+	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, &cr, &conf.LocalAddr)
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{
@@ -67,7 +67,7 @@ func (a *App) Close() error {
 	return nil
 }
 
-func (a *App) registerRoutes(mux *http.ServeMux) {
+func (a *App) registerApiRoutes(mux *http.ServeMux) {
 	authInterceptor := connect.WithInterceptors()
 	if a.Config.Auth.Enable {
 		authInterceptor = connect.WithInterceptors(auth.NewInterceptor(a.Auth))
@@ -89,8 +89,8 @@ func (a *App) registerRoutes(mux *http.ServeMux) {
 		func() (string, http.Handler) {
 			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(
 				a.DockerManager.GetService,
-				config.C.Updater.Addr,
-				config.C.Updater.PassKey,
+				a.Config.Updater.Addr,
+				a.Config.Updater.PassKey,
 			), authInterceptor)
 		},
 		// git

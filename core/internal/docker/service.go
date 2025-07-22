@@ -5,19 +5,19 @@ import (
 )
 
 type Service struct {
-	localAddr string
+	daemonAddr string
 	*ComposeService
 	*ContainerService
 }
 
-func NewService(localAddr, composeRoot string, dockerClient *client.Client, syncer Syncer) *Service {
+func NewService(daemonAddr, composeRoot string, dockerClient *client.Client, syncer Syncer) *Service {
 	containerClient := NewContainerService(dockerClient)
 	composeClient := NewComposeService(composeRoot, containerClient, syncer)
 
 	return &Service{
 		ContainerService: containerClient,
 		ComposeService:   composeClient,
-		localAddr:        localAddr,
+		daemonAddr:       daemonAddr,
 	}
 }
 

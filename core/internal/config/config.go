@@ -14,8 +14,6 @@ import (
 
 const EnvPrefix = "DOCKMAN"
 
-var C *AppConfig
-
 // AppConfig tags are parsed by processStruct
 type AppConfig struct {
 	Port           int           `config:"flag=port,env=PORT,default=8866,usage=Port to run the server on"`
@@ -59,10 +57,10 @@ func (c *AppConfig) GetDockmanWithMachineUrl() string {
 }
 
 // LoadConfig sets global app config
-func LoadConfig(opts ...ServerOpt) error {
+func LoadConfig(opts ...ServerOpt) (*AppConfig, error) {
 	config, err := load()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, o := range opts {
@@ -70,11 +68,8 @@ func LoadConfig(opts ...ServerOpt) error {
 	}
 	defaultIfNotSet(config)
 
-	// set global app config
-	C = config
-
 	args.PrettyPrint(config, EnvPrefix)
-	return nil
+	return config, nil
 }
 
 func load() (*AppConfig, error) {

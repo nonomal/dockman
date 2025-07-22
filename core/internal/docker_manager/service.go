@@ -2,7 +2,6 @@ package docker_manager
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/git"
 	"github.com/RA341/dockman/internal/ssh"
@@ -16,24 +15,28 @@ type Service struct {
 	manager     *ClientManager
 	git         *git.Service
 	ssh         *ssh.Service
-	composeRoot string
+	composeRoot *string
+	localAddr   *string
 
 	mu           sync.RWMutex
 	activeClient *docker.Service
 }
 
-func NewService(git *git.Service, ssh *ssh.Service, composeRoot string) *Service {
-	if !filepath.IsAbs(composeRoot) {
-		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
+func NewService(git *git.Service, ssh *ssh.Service, composeRoot, localAddr *string) *Service {
+	if !filepath.IsAbs(*composeRoot) {
+		log.Fatal().Str("path", *composeRoot).Msg("composeRoot must be an absolute path")
 	}
 
 	clientManager, defaultHost := NewClientManager(ssh)
 	srv := &Service{
 		composeRoot: composeRoot,
-		git:         git,
-		manager:     clientManager,
-		ssh:         ssh,
-		mu:          sync.RWMutex{},
+		localAddr:   localAddr,
+
+		git:     git,
+		manager: clientManager,
+		ssh:     ssh,
+
+		mu: sync.RWMutex{},
 	}
 	if err := srv.SwitchClient(defaultHost); err != nil {
 		log.Fatal().Err(err).Str("name", defaultHost).Msg("unable to switch client")
@@ -189,16 +192,16 @@ func (srv *Service) SwitchClient(name string) error {
 	var syncer docker.Syncer
 	if name == LocalClient {
 		// todo load from service
-		localAddr = config.C.LocalAddr
+		localAddr = *srv.localAddr
 		syncer = &docker.NoopSyncer{}
 	} else {
 		localAddr = mach.dockerClient.DaemonHost()
-		syncer = docker.NewSFTPSyncer(mach.ssh.SftpClient, srv.composeRoot)
+		syncer = docker.NewSFTPSyncer(mach.ssh.SftpClient, *srv.composeRoot)
 	}
 
 	srv.activeClient = docker.NewService(
 		localAddr,
-		srv.composeRoot,
+		*srv.composeRoot,
 		mach.dockerClient,
 		syncer,
 	)
