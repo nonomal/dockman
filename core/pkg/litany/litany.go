@@ -51,6 +51,20 @@ func (conf *FieldConfig) NewStrField(label, value string) {
 	})
 }
 
+// NewGithubMetadata adds GitHub repository metadata fields to the configuration.
+// It creates adds 3 string fields containing repository information:
+//   - "Repo": The repository URL (e.g., "https://github.com/user/repo")
+//   - "Branch": A clickable URL to the specific branch (repo/tree/branch)
+//   - "Commit": A clickable URL to the specific commit (repo/commit/commit)
+func (conf *FieldConfig) NewGithubMetadata(repo, commit, branch string) {
+	branchURL := fmt.Sprintf("%s/tree/%s", repo, branch)
+	commitURL := fmt.Sprintf("%s/commit/%s", repo, commit)
+
+	conf.NewStrField("Repo", repo)
+	conf.NewStrField("Branch", branchURL)
+	conf.NewStrField("Commit", commitURL)
+}
+
 func (conf *FieldConfig) NewTimeField(label, value string) {
 	conf.add(Field{
 		label:     label,

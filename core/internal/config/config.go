@@ -3,7 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/RA341/dockman/pkg/args"
+	"github.com/RA341/dockman/pkg/argos"
 	"github.com/RA341/dockman/pkg/fileutil"
 	"io/fs"
 	"net"
@@ -56,9 +56,8 @@ func (c *AppConfig) GetDockmanWithMachineUrl() string {
 	return fmt.Sprintf("http://%s:%d", c.LocalAddr, c.Port)
 }
 
-// LoadConfig sets global app config
-func LoadConfig(opts ...ServerOpt) (*AppConfig, error) {
-	config, err := load()
+func Load(opts ...ServerOpt) (*AppConfig, error) {
+	config, err := parseStruct()
 	if err != nil {
 		return nil, err
 	}
@@ -68,13 +67,13 @@ func LoadConfig(opts ...ServerOpt) (*AppConfig, error) {
 	}
 	defaultIfNotSet(config)
 
-	args.PrettyPrint(config, EnvPrefix)
+	argos.PrettyPrint(config, EnvPrefix)
 	return config, nil
 }
 
-func load() (*AppConfig, error) {
+func parseStruct() (*AppConfig, error) {
 	conf := &AppConfig{}
-	if err := args.ParseStruct(conf, EnvPrefix); err != nil {
+	if err := argos.Scan(conf, EnvPrefix); err != nil {
 		return nil, err
 	}
 	flag.Parse()

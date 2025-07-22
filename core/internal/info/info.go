@@ -1,7 +1,6 @@
 package info
 
 import (
-	"fmt"
 	"github.com/RA341/dockman/pkg/litany"
 )
 
@@ -72,15 +71,13 @@ func PrintInfo() {
 	fields.NewStrField("CommitInfo", CommitInfo)
 	fields.NewStrField("GoVersion", GoVersion)
 
-	if Branch != "unknown" && CommitInfo != "unknown" {
-		var baseRepo = fmt.Sprintf("https://github.com/RA341/dockman")
-		branchURL := fmt.Sprintf("%s/tree/%s", baseRepo, Branch)
-		commitURL := fmt.Sprintf("%s/commit/%s", baseRepo, CommitInfo)
-
+	if IsKnown(Branch) && IsKnown(CommitInfo) {
 		fields.DashDivider()
-		fields.NewStrField("Repo", baseRepo)
-		fields.NewStrField("Branch", branchURL)
-		fields.NewStrField("Commit", commitURL)
+		fields.NewGithubMetadata(
+			"https://github.com/RA341/dockman",
+			Branch,
+			CommitInfo,
+		)
 	}
 
 	fields.EqualDivider()

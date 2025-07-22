@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/RA341/dockman/pkg/args"
+	"github.com/RA341/dockman/pkg/argos"
 	"github.com/rs/zerolog/log"
 )
 
@@ -20,7 +20,7 @@ type UpdaterConfig struct {
 var conf UpdaterConfig
 
 func Load() {
-	if err := args.ParseStruct(&conf, envPrefix); err != nil {
+	if err := argos.Scan(&conf, envPrefix); err != nil {
 		log.Fatal().Err(err).Msg("unable to parse config struct")
 		return
 	}
@@ -31,5 +31,5 @@ func Load() {
 
 	}
 
-	args.PrettyPrint(&conf, envPrefix)
+	argos.PrettyPrint(&conf, envPrefix)
 }

@@ -24,7 +24,7 @@ func init() {
 }
 
 func StartServer(opt ...config.ServerOpt) {
-	conf, err := config.LoadConfig(opt...)
+	conf, err := config.Load(opt...)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error parsing config")
 	}

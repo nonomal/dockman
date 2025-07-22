@@ -2,6 +2,7 @@ package info
 
 import (
 	"runtime"
+	"strings"
 )
 
 // build args to modify vars
@@ -12,23 +13,35 @@ import (
 // -X github.com/RA341/dockman/internal/info.Branch=${BRANCH}" \
 // cmd/server.go
 
+// defaults
 const (
-	DevMode = "dev"
+	VersionDev = "develop"
+	Unknown    = "unknown"
+)
+
+// flavours
+const (
+	Server = "server"
+	Docker = "docker"
 )
 
 var (
-	Flavour    = "Server"
-	Version    = DevMode
-	CommitInfo = "unknown"
-	BuildDate  = "unknown"
-	Branch     = "unknown"
+	Flavour    = Server
+	Version    = VersionDev
+	CommitInfo = Unknown
+	BuildDate  = Unknown
+	Branch     = Unknown
 	GoVersion  = runtime.Version()
 )
 
+func IsKnown(val string) bool {
+	return val != Unknown
+}
+
 func IsDocker() bool {
-	return Flavour == "Docker"
+	return strings.ToLower(Flavour) == Docker
 }
 
 func IsDev() bool {
-	return Version == DevMode
+	return strings.ToLower(Version) == VersionDev
 }

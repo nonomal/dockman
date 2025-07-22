@@ -1,4 +1,4 @@
-package args
+package argos
 
 import (
 	"flag"
@@ -9,15 +9,19 @@ import (
 	"strings"
 )
 
-// ParseStruct uses reflection to iterate over the fields of a struct,
+// Scan uses reflection to iterate over the fields of a struct,
 // read the 'config' tags, and set up the corresponding flags.
 // and populates it from defaults, environment variables,
 // and command-line flags, and then parses the flags.
+//
 // The order of precedence is:
+//
 // 1. Command-line flags (e.g., -port 9000)
+//
 // 2. Environment variables (e.g., DOCKMAN_PORT=9000)
+//
 // 3. Default values specified in struct tags.
-func ParseStruct(s interface{}, envPrefix string) error {
+func Scan(s interface{}, envPrefix string) error {
 	// Ensure we have a pointer to a struct
 	val := reflect.ValueOf(s)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
@@ -44,7 +48,7 @@ func ParseStruct(s interface{}, envPrefix string) error {
 		}
 
 		if fieldType.Type.Kind() == reflect.Struct {
-			err := ParseStruct(fieldVal.Addr().Interface(), envPrefix)
+			err := Scan(fieldVal.Addr().Interface(), envPrefix)
 			if err != nil {
 				return err
 			}
