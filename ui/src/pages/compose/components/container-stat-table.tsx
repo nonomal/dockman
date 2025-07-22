@@ -98,147 +98,216 @@ export function ContainerStatTable(
         }, 1500)
     }
 
+    const theme = useTheme()
+
     return (
-        <Fade in={true} timeout={100}>
-            <TableContainer component={Paper} variant="outlined">
-                {/* By setting table-layout to fixed, the table's layout is determined by the widths of the columns in the header. */}
-                <Table sx={{minWidth: 650, tableLayout: 'fixed'}} aria-label="container stats table">
-                    <TableHead>
-                        <TableRow sx={{'& th': {fontWeight: 'bold'}}}>
-                            {/* For equally spaced columns, we assign a percentage width to each header cell. */}
-                            <TableCell sx={{width: '15%'}}>
-                                {createSortableHeader(SORT_FIELD.NAME, 'Container Name')}
-                            </TableCell>
-                            <TableCell sx={{width: '10%'}}>
-                                {createSortableHeader(SORT_FIELD.CPU, 'CPU %')}
-                            </TableCell>
-                            <TableCell sx={{width: '10%'}}>
-                                {createSortableHeader(SORT_FIELD.MEM, 'Memory Usage')}
-                            </TableCell>
-                            <TableCell sx={{width: '20%'}}>
-                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                    <Typography variant="body2" sx={{fontWeight: 'bold', mr: 1}}>
-                                        Network:
-                                    </Typography>
-                                    <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                        {createSortableHeader(SORT_FIELD.NETWORK_RX, "Rx",
-                                            <GetAppIcon fontSize="small"/>)
-                                        }
-                                        <Typography component="span" sx={{mx: 0.5}}>/</Typography>
-                                        {createSortableHeader(SORT_FIELD.NETWORK_TX, "Tx",
-                                            <PublishIcon fontSize="small"/>)
-                                        }
-                                    </Box>
+        <TableContainer
+            component={Paper}
+            sx={{
+                flexGrow: 1,
+                boxShadow: 3,
+                borderRadius: 2,
+                height: '98%',
+                maxHeight: '100%',
+                overflow: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                // Custom scrollbar styling
+                '&::-webkit-scrollbar': {
+                    width: '8px',
+                    height: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                    background: theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.1)'
+                        : 'rgba(0, 0, 0, 0.1)',
+                    borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                    background: theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.3)'
+                        : 'rgba(0, 0, 0, 0.3)',
+                    borderRadius: '4px',
+                    '&:hover': {
+                        background: theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.5)'
+                            : 'rgba(0, 0, 0, 0.5)',
+                    }
+                },
+                '&::-webkit-scrollbar-corner': {
+                    background: 'transparent',
+                },
+                // Firefox scrollbar styling
+                scrollbarWidth: 'thin',
+                scrollbarColor: theme.palette.mode === 'dark'
+                    ? 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)'
+                    : 'rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1)',
+            }}
+        >
+            <Table
+                stickyHeader
+                sx={{
+                    minWidth: 900, // Increased minimum width
+                    width: '100%'
+                    // Removed tableLayout: 'fixed' to allow flexible column sizing
+                }}
+                aria-label="container stats table"
+            >
+                <TableHead>
+                    <TableRow sx={{
+                        '& th': {
+                            fontWeight: 'bold',
+                            backgroundColor: 'background.paper',
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 100
+                        }
+                    }}>
+                        <TableCell sx={{minWidth: 140, width: 'auto'}}>
+                            {createSortableHeader(SORT_FIELD.NAME, 'Container Name')}
+                        </TableCell>
+                        <TableCell sx={{minWidth: 80, width: 'auto', textAlign: 'center'}}>
+                            {createSortableHeader(SORT_FIELD.CPU, 'CPU %')}
+                        </TableCell>
+                        <TableCell sx={{minWidth: 120, width: 'auto'}}>
+                            {createSortableHeader(SORT_FIELD.MEM, 'Memory Usage')}
+                        </TableCell>
+                        <TableCell sx={{minWidth: 180, width: 'auto'}}>
+                            <Box sx={{display: 'flex', alignItems: 'center', flexWrap: 'nowrap'}}>
+                                <Typography variant="body2" sx={{fontWeight: 'bold', mr: 1, whiteSpace: 'nowrap'}}>
+                                    Network:
+                                </Typography>
+                                <Box sx={{display: 'flex', alignItems: 'center', flexWrap: 'nowrap'}}>
+                                    {createSortableHeader(SORT_FIELD.NETWORK_RX, "Rx",
+                                        <GetAppIcon fontSize="small"/>)
+                                    }
+                                    <Typography component="span" sx={{mx: 0.5}}>/</Typography>
+                                    {createSortableHeader(SORT_FIELD.NETWORK_TX, "Tx",
+                                        <PublishIcon fontSize="small"/>)
+                                    }
                                 </Box>
-                            </TableCell>
-                            <TableCell sx={{width: '20%'}}>
-                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                    <Typography variant="body2" sx={{fontWeight: 'bold', mr: 1}}>
-                                        Block I/O:
+                            </Box>
+                        </TableCell>
+                        <TableCell sx={{minWidth: 180, width: 'auto'}}>
+                            <Box sx={{display: 'flex', alignItems: 'center', flexWrap: 'nowrap'}}>
+                                <Typography variant="body2" sx={{fontWeight: 'bold', mr: 1, whiteSpace: 'nowrap'}}>
+                                    Block I/O:
+                                </Typography>
+                                <Box sx={{display: 'flex', alignItems: 'center', flexWrap: 'nowrap'}}>
+                                    {createSortableHeader(SORT_FIELD.DISK_W, "Write", <EditIcon fontSize="small"/>)}
+                                    <Typography component="span" sx={{mx: 0.5}}>/</Typography>
+                                    {createSortableHeader(SORT_FIELD.DISK_R, "Read", <Article fontSize="small"/>)}
+                                </Box>
+                            </Box>
+                        </TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {loading ? (
+                        [...Array(placeHolders)].map((_, index) => (
+                            <TableRow key={`skeleton-${index}`}>
+                                <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
+                                <TableCell>
+                                    <Skeleton animation="wave" variant="rounded"
+                                              width={80}
+                                              height={24}/>
+                                </TableCell>
+                                <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
+                                <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
+                                <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
+                            </TableRow>
+                        ))
+                    ) : isEmpty ? (
+                        <TableRow>
+                            <TableCell colSpan={5} sx={{border: 0, height: 200}}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: '100%',
+                                    }}
+                                >
+                                    <Typography variant="h5" color="text.secondary">
+                                        No container stats found
                                     </Typography>
-                                    <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                        {createSortableHeader(SORT_FIELD.DISK_W, "Write", <EditIcon fontSize="small"/>)}
-                                        <Typography component="span" sx={{mx: 0.5}}>/</Typography>
-                                        {createSortableHeader(SORT_FIELD.DISK_R, "Read", <Article fontSize="small"/>)}
-                                    </Box>
                                 </Box>
                             </TableCell>
                         </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {loading ? (
-                            [...Array(placeHolders)].map((_, index) => (
-                                <TableRow key={`skeleton-${index}`}>
-                                    <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
-                                    <TableCell>
-                                        <Skeleton animation="wave" variant="rounded"
-                                                  width={80}
-                                                  height={24}/>
+                    ) : (
+                        containers.map((container) => (
+                            <Fade in={true} timeout={400} key={container.id}>
+                                <TableRow sx={{'&:last-child td, &:last-child th': {border: 0}}}>
+                                    <TableCell component="th" scope="row" sx={{minWidth: 140}}>
+                                        <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
+                                            <Typography variant="body2" sx={{
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                                maxWidth: '120px'
+                                            }}>
+                                                {container.name}
+                                            </Typography>
+                                            <Tooltip
+                                                title={copiedId === container.id ? "Copied!" : "Copy container ID"}
+                                                placement="top">
+                                                <IconButton
+                                                    onClick={(e) => handleCopy(e, container.id)}
+                                                    size="small"
+                                                    sx={{position: 'relative', flexShrink: 0}}
+                                                >
+                                                    <CheckIcon
+                                                        fontSize="inherit"
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            opacity: copiedId === container.id ? 1 : 0,
+                                                            transition: 'opacity 0.2s',
+                                                            color: 'success.main'
+                                                        }}
+                                                    />
+                                                    <ContentCopy
+                                                        fontSize="inherit"
+                                                        sx={{
+                                                            opacity: copiedId === container.id ? 0 : 1,
+                                                            transition: 'opacity 0.2s',
+                                                        }}
+                                                    />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
                                     </TableCell>
-                                    <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
-                                    <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
-                                    <TableCell><Skeleton animation="wave" variant="rounded"/></TableCell>
+                                    <TableCell sx={{ minWidth: 80, maxWidth: 100, textAlign: 'center' }}>
+                                        <CPUStat
+                                            value={container.cpuUsage}
+                                            size={48}
+                                            thickness={1}
+                                        />
+                                    </TableCell>
+                                    <TableCell sx={{ minWidth: 120, maxWidth: 160 }}>
+                                        <UsageBar
+                                            usage={(Number(container.memoryUsage))}
+                                            limit={(Number(container.memoryLimit))}
+                                        />
+                                    </TableCell>
+                                    <TableCell sx={{ minWidth: 180, maxWidth: 240 }}>
+                                        <RWData
+                                            download={Number(container.networkRx)}
+                                            upload={Number(container.networkTx)}
+                                        />
+                                    </TableCell>
+                                    <TableCell sx={{ minWidth: 180, maxWidth: 240 }}>
+                                        <RWData
+                                            download={Number(container.blockWrite)}
+                                            upload={Number(container.blockRead)}
+                                        />
+                                    </TableCell>
                                 </TableRow>
-                            ))
-                        ) : isEmpty ? (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center" sx={{py: 20}}>
-                                    <Typography variant="h5" color="text.secondary">
-                                        No stats found.
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            containers.map((container) => {
-                                return (
-                                    <Fade in={true} timeout={400}>
-                                        <TableRow key={container.id}
-                                                  sx={{'&:last-child td, &:last-child th': {border: 0}}}>
-                                            <TableCell component="th" scope="row">
-                                                <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
-                                                    <span>{container.name}</span>
-                                                    <Tooltip
-                                                        title={copiedId === container.id ? "Copied!" : "Copy container ID"}
-                                                        placement="top">
-                                                        <IconButton
-                                                            onClick={(e) => handleCopy(e, container.id)}
-                                                            size="small"
-                                                            sx={{position: 'relative'}}
-                                                        >
-                                                            <CheckIcon
-                                                                fontSize="inherit"
-                                                                sx={{
-                                                                    position: 'absolute',
-                                                                    opacity: copiedId === container.id ? 1 : 0,
-                                                                    transition: 'opacity 0.2s',
-                                                                    color: 'success.main'
-                                                                }}
-                                                            />
-                                                            <ContentCopy
-                                                                fontSize="inherit"
-                                                                sx={{
-                                                                    opacity: copiedId === container.id ? 0 : 1,
-                                                                    transition: 'opacity 0.2s',
-                                                                }}
-                                                            />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <CPUStat
-                                                    value={container.cpuUsage}
-                                                    size={48}
-                                                    thickness={1}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <UsageBar
-                                                    usage={(Number(container.memoryUsage))}
-                                                    limit={(Number(container.memoryLimit))}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <RWData
-                                                    download={Number(container.networkRx)}
-                                                    upload={Number(container.networkTx)}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <RWData
-                                                    download={Number(container.blockWrite)}
-                                                    upload={Number(container.blockRead)}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    </Fade>
-                                )
-                            })
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </Fade>
+                            </Fade>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+        </TableContainer>
     )
 }
 
@@ -246,24 +315,24 @@ const RWData = ({upload, download}: { upload: number; download: number }) => {
     const rx = Number(upload);
     const tx = Number(download);
 
-    // Calculate the ratio, handling the case where tx is 0 to avoid division errors
-    let ratioText = '0:1';
-    if (tx > 0) {
-        const ratio = (rx / tx).toFixed(1);
-        ratioText = `${ratio}:1`;
-    } else if (rx > 0) {
-        // If there's download but no upload, the ratio is infinite
-        ratioText = '∞';
-    }
+    // todo Calculate the ratio, handling the case where tx is 0 to avoid division errors
+    // let ratioText = '0:1';
+    // if (tx > 0) {
+    //     const ratio = (rx / tx).toFixed(1);
+    //     ratioText = `${ratio}:1`;
+    // } else if (rx > 0) {
+    //     // If there's download but no upload, the ratio is infinite
+    //     ratioText = '∞';
+    // }
 
     return (
         <Box sx={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'start', gap: 1}}>
-            <Typography
-                variant="body2"
-                sx={{color: 'primary.main', fontWeight: 'medium'}}
-            >
-                {ratioText}
-            </Typography>
+            {/*<Typography*/}
+            {/*    variant="body2"*/}
+            {/*    sx={{color: 'primary.main', fontWeight: 'medium'}}*/}
+            {/*>*/}
+            {/*    {ratioText}*/}
+            {/*</Typography>*/}
 
             {/* Download/Upload Column */}
             <Box sx={{display: 'flex', alignItems: 'center'}}>

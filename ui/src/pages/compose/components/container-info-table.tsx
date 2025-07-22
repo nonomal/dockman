@@ -16,7 +16,7 @@ import {
     Typography
 } from '@mui/material'
 import {DocumentScannerOutlined} from '@mui/icons-material'
-import {ContainerPort} from './container-port.tsx'
+import {ContainerInfoPort} from './container-info-port.tsx'
 import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts";
 
 interface ContainerTableProps {
@@ -206,7 +206,7 @@ const formatPorts = (ports: Port[]) => {
         <>
             {ports.map((port, index) => (
                 <React.Fragment key={`${port.host}-${port.public}-${port.private}-${port.type}`}>
-                    <ContainerPort port={port}/>
+                    <ContainerInfoPort port={port}/>
                     {index < ports.length - 1 && ', '}
                 </React.Fragment>
             ))}

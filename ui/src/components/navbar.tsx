@@ -20,7 +20,7 @@ import HostSelectDropdown from "./host-selector.tsx";
 
 const MAIN_SIDEBAR_WIDTH = 80;
 const FILE_PANEL_WIDTH = 280;
-const TOP_BAR_HEIGHT = 72;
+const TOP_BAR_HEIGHT = 69;
 
 interface NavSidebarProps {
     filesPanelOpen: boolean;
@@ -77,10 +77,10 @@ export function RootNavbar({filesPanelOpen, setFilesPanelOpen}: NavSidebarProps)
                             sx={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 1.2,
+                                gap: 1.1,
                                 backgroundColor: 'action.hover',
-                                px: 2,
-                                py: 1,
+                                px: 1.5,
+                                py: 0.5,
                                 borderRadius: 2,
                                 textDecoration: 'none', // Remove underline from link
                                 color: 'inherit', // Inherit color from parent

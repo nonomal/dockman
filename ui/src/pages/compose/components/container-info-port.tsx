@@ -5,7 +5,7 @@ interface PortMappingProps {
     port: Port;
 }
 
-export const ContainerPort = ({port}: PortMappingProps) => {
+export const ContainerInfoPort = ({port}: PortMappingProps) => {
     const {host, public: publicPort, private: privatePort, type} = port;
     return (
         <>

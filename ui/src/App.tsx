@@ -104,7 +104,7 @@ function HomePage() {
                     mt: `64px`, // Account for the top bar height
                     height: `calc(100vh - 64px)`, // Subtract top bar height
                     overflow: 'auto',
-                    p: 2,
+                    pt: 2,
                 })}
             >
                 <Outlet/>
@@ -134,7 +134,7 @@ function EmptyFilePage() {
                     No File Selected
                 </Typography>
                 <Typography variant="body1" color="text.disabled">
-                    Please select a file from the sidebar.
+                    Select a file from the sidebar.
                 </Typography>
             </Stack>
         </Box>
