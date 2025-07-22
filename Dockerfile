@@ -47,26 +47,6 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-s -w \
              -X ${INFO_PACKAGE}.Branch=${BRANCH}" \
     -o dockman "./cmd/server"
 
-# Alpine target
-FROM alpine:latest AS alpine
-
-# incase app needs to make https requests
-#RUN apk add --no-cache ca-certificates
-
-WORKDIR /app
-
-COPY --from=back /core/dockman dockman
-
-COPY --from=front /frontend/dist/ ./dist
-
-# todo non root
-#RUN chown -R appuser:appgroup /app
-#
-#USER appuser
-
-EXPOSE 8866
-
-ENTRYPOINT ["./dockman"]
 
 # Alpine with ssh client target
 FROM alpine:latest AS alpine-ssh
@@ -89,21 +69,22 @@ EXPOSE 8866
 ENTRYPOINT ["./dockman"]
 
 
-# Scratch target
-FROM scratch AS minimal
+# Alpine target
+FROM alpine:latest AS alpine
 
-# todo user perms and certs to make https requests
-#COPY --from=back /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-#
-#COPY --from=back /etc/passwd /etc/passwd
-#
-#COPY --from=back /etc/group /etc/group
+# incase app needs to make https requests
+#RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
 COPY --from=back /core/dockman dockman
 
 COPY --from=front /frontend/dist/ ./dist
+
+# todo non root
+#RUN chown -R appuser:appgroup /app
+#
+#USER appuser
 
 EXPOSE 8866
 

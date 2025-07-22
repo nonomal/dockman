@@ -39,8 +39,8 @@ tasks:
   ui:
     desc: "Build the latest web ui in {{.UI_DIR}}"
     dir: "{{.UI_DIR}}"
-    sources:
-      - "*.tsx"
+#    sources:
+#      - "**/*.tsx"
     cmds:
       - npm run build
 
@@ -125,7 +125,7 @@ tasks:
       TARGET: "{{index .MATCH 0}}"
     cmds:
       - task dk:b:{{.TARGET}}
-      - docker run -v /var/run/docker.sock:/var/run/docker.sock -p 8221:8866 {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
+      - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -p 8221:8866 {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
     preconditions:
       - sh: 'test -n "{{.TARGET}}"'
         msg: "The 'target' variable must be provided. Usage: task dk:r.<target-name>"
