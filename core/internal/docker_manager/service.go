@@ -179,7 +179,7 @@ func (srv *Service) SwitchClient(name string) error {
 
 	if srv.activeClient != nil {
 		// todo maybe dispose
-		//pkg.CloseCloser(srv.activeClient)
+		//fileutil.CloseCloser(srv.activeClient)
 	}
 
 	mach := srv.manager.GetMachine()

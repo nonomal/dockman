@@ -2,7 +2,7 @@ package lsp
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -26,7 +26,7 @@ func WebSocketHandler(up websocket.Upgrader) http.HandlerFunc {
 			return
 		}
 		// Ensure connection is closed when function exits
-		defer pkg.CloseCloser(conn)
+		defer fileutil.Close(conn)
 
 		stream := &WebSocketStream{conn: conn}
 		if err = StartLSP(WithStream(stream), WithZapLogger()); err != nil {

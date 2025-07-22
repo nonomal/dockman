@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	v1 "github.com/RA341/dockman/generated/docker/v1"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
@@ -105,7 +105,7 @@ func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLog
 	if err != nil {
 		return err
 	}
-	defer pkg.CloseCloser(logsReader)
+	defer fileutil.Close(logsReader)
 
 	writer := &ContainerLogWriter{responseStream: responseStream}
 	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
@@ -228,11 +228,11 @@ func (h *Handler) executeComposeStreamCommand(
 	// incase the stream connection is lost context.Background
 	// will allow the service to continue executing, instead of stopping mid-operation
 	if err = action(context.Background(), project, composeClient, services...); err != nil {
-		pkg.CloseCloser(pipeWriter)
+		fileutil.Close(pipeWriter)
 		return err
 	}
 
-	pkg.CloseCloser(pipeWriter)
+	fileutil.Close(pipeWriter)
 	wg.Wait()
 
 	return nil
@@ -326,7 +326,7 @@ func streamManager(streamFn func(val string) error) (*io.PipeWriter, *sync.WaitG
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer pkg.CloseCloser(pipeReader)
+		defer fileutil.Close(pipeReader)
 
 		scanner := bufio.NewScanner(pipeReader)
 		for scanner.Scan() {

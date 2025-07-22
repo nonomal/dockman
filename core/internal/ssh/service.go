@@ -3,7 +3,8 @@ package ssh
 import (
 	"bytes"
 	"fmt"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
+	"github.com/RA341/dockman/pkg/syncmap"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
 	"net"
@@ -13,7 +14,7 @@ import (
 type Service struct {
 	machines         MachineManager
 	keys             KeyManager
-	connectedClients pkg.Map[string, *ConnectedMachine]
+	connectedClients syncmap.Map[string, *ConnectedMachine]
 }
 
 func NewService(keyMan KeyManager, machManager MachineManager) *Service {
@@ -25,7 +26,7 @@ func NewService(keyMan KeyManager, machManager MachineManager) *Service {
 	srv := &Service{
 		machines:         machManager,
 		keys:             keyMan,
-		connectedClients: pkg.Map[string, *ConnectedMachine]{},
+		connectedClients: syncmap.Map[string, *ConnectedMachine]{},
 	}
 
 	if err := srv.loadEnabled(); err != nil {
@@ -79,7 +80,7 @@ func (m *Service) DisableClient(machine *MachineOptions) error {
 	machine.Enable = false
 
 	if conn, ok := m.connectedClients.Load(machine.Name); ok {
-		pkg.CloseCloser(conn)
+		fileutil.Close(conn)
 		m.connectedClients.Delete(machine.Name)
 	}
 
@@ -112,7 +113,7 @@ func (m *Service) LoadClient(machine *MachineOptions, newClient bool) error {
 	defer func() {
 		// if the function returns with an error close client
 		if err != nil {
-			pkg.CloseCloser(cli)
+			fileutil.Close(cli)
 		}
 	}()
 
@@ -147,7 +148,7 @@ func (m *Service) LoadClient(machine *MachineOptions, newClient bool) error {
 			machine.Hash(),
 		))
 	} else {
-		pkg.CloseCloser(cli)
+		fileutil.Close(cli)
 	}
 
 	return nil
@@ -155,7 +156,7 @@ func (m *Service) LoadClient(machine *MachineOptions, newClient bool) error {
 
 func (m *Service) DeleteMachine(machine *MachineOptions) error {
 	if conn, ok := m.connectedClients.Load(machine.Name); ok {
-		pkg.CloseCloser(conn)
+		fileutil.Close(conn)
 		m.connectedClients.Delete(machine.Name)
 	}
 
@@ -238,7 +239,7 @@ func (m *Service) transferPublicKey(client *ssh.Client, machine *MachineOptions)
 	if err != nil {
 		return fmt.Errorf("failed to create session: %w", err)
 	}
-	defer pkg.CloseCloser(session)
+	defer fileutil.Close(session)
 
 	// Set the public key as the standard input to the remote command
 	session.Stdin = bytes.NewReader(keys.PublicKey)

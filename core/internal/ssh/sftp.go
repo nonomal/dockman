@@ -2,7 +2,7 @@ package ssh
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"io"
@@ -75,14 +75,14 @@ func (cli *SftpClient) CopyFileSFTP(localFile, remoteFile string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open local file %s: %w", localFile, err)
 	}
-	defer pkg.CloseCloser(srcFile)
+	defer fileutil.Close(srcFile)
 
 	// Create remote file for writing
 	dstFile, err := cli.sfCli.Create(remoteFile)
 	if err != nil {
 		return fmt.Errorf("failed to create remote file %s: %w", remoteFile, err)
 	}
-	defer pkg.CloseCloser(dstFile)
+	defer fileutil.Close(dstFile)
 
 	// Copy the contents
 	_, err = io.Copy(dstFile, srcFile)

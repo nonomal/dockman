@@ -3,8 +3,8 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/RA341/dockman/pkg"
 	"github.com/RA341/dockman/pkg/args"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"io/fs"
 	"net"
 	"os"
@@ -133,7 +133,7 @@ func getLocalIP() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer pkg.CloseCloser(conn)
+	defer fileutil.Close(conn)
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	return localAddr.IP.String(), nil

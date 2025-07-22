@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/RA341/dockman/internal/ssh"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/rs/zerolog/log"
 	"strings"
@@ -42,7 +42,7 @@ func (s *SFTPSyncer) Sync(_ context.Context, project *types.Project) error {
 				continue
 			}
 
-			if !pkg.FileExists(localSourcePath) {
+			if !fileutil.FileExists(localSourcePath) {
 				log.Debug().Str("path", localSourcePath).Msg("bind mount source path not found, skipping...")
 				continue
 			}

@@ -72,13 +72,6 @@ func Init(config LogConfig) {
 	// Set global logger
 	log.Logger = logger
 	zerolog.SetGlobalLevel(parseLevel(config.Level))
-
-	// Log initialization
-	log.Info().
-		Str("level", config.Level).
-		Bool("verbose", config.Verbose).
-		Bool("caller", config.Caller || config.Verbose).
-		Msg("Global Logger initialized")
 }
 
 // DefaultConfig returns sensible defaults

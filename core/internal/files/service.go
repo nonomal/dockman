@@ -2,7 +2,7 @@ package files
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
@@ -144,7 +144,7 @@ func (s *Service) createFile(filename string) error {
 		return err
 	}
 
-	pkg.CloseCloser(f)
+	fileutil.Close(f)
 	return nil
 }
 

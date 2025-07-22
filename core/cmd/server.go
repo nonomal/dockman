@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/info"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/RA341/dockman/pkg/logger"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -31,9 +31,9 @@ func StartServer(opt ...config.ServerOpt) {
 
 	app, err := NewApp(config.C)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed setting up app")
+		log.Fatal().Err(err).Msg("failed initializing services")
 	}
-	defer pkg.CloseCloser(app)
+	defer fileutil.Close(app)
 
 	router := http.NewServeMux()
 	app.registerRoutes(router)

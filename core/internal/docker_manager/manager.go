@@ -3,7 +3,7 @@ package docker_manager
 import (
 	"fmt"
 	"github.com/RA341/dockman/internal/ssh"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/syncmap"
 	"github.com/rs/zerolog/log"
 	"sync"
 )
@@ -13,7 +13,7 @@ const LocalClient = "local"
 
 type ClientManager struct {
 	ssh              *ssh.Service
-	connectedClients pkg.Map[string, *ConnectedDockerClient]
+	connectedClients syncmap.Map[string, *ConnectedDockerClient]
 
 	activeClient string
 	clientLock   *sync.RWMutex
@@ -22,7 +22,7 @@ type ClientManager struct {
 func NewClientManager(sshSrv *ssh.Service) (*ClientManager, string) {
 	cm := &ClientManager{
 		ssh:              sshSrv,
-		connectedClients: pkg.Map[string, *ConnectedDockerClient]{},
+		connectedClients: syncmap.Map[string, *ConnectedDockerClient]{},
 		clientLock:       &sync.RWMutex{},
 	}
 

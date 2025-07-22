@@ -3,7 +3,7 @@ package ssh
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"golang.org/x/crypto/ssh"
 	"gorm.io/gorm"
 	"strconv"
@@ -99,8 +99,8 @@ func NewConnectedMachine(sshClient *ssh.Client, sftpClient *SftpClient, infoHash
 
 // Close return error to fulfill io.closer we don't need to use it
 func (c *ConnectedMachine) Close() error {
-	pkg.CloseCloser(c.SftpClient.sfCli)
-	pkg.CloseCloser(c.SshClient)
+	fileutil.Close(c.SftpClient.sfCli)
+	fileutil.Close(c.SshClient)
 	return nil
 }
 

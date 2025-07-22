@@ -2,7 +2,7 @@ package docker_manager
 
 import (
 	"github.com/RA341/dockman/internal/ssh"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/docker/docker/client"
 )
 
@@ -20,5 +20,5 @@ func NewConnectedDockerClient(cli *client.Client, sshConn *ssh.ConnectedMachine)
 
 // Close closes docker conn and ssh client
 func (c *ConnectedDockerClient) Close() {
-	pkg.CloseCloser(c.dockerClient)
+	fileutil.Close(c.dockerClient)
 }

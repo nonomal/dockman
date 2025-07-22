@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -82,7 +82,7 @@ func (s *ContainerService) getStats(ctx context.Context, info container.Summary)
 	if err != nil {
 		return ContainerStats{}, fmt.Errorf("failed to get stats for cont %s: %w", contId, err)
 	}
-	defer pkg.CloseCloser(stats.Body)
+	defer fileutil.Close(stats.Body)
 
 	body, err := io.ReadAll(stats.Body)
 	if err != nil {

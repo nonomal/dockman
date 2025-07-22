@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/docker_manager"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
@@ -114,7 +114,7 @@ func UpdateContainersForImage(ctx context.Context, cli *client.Client, imageName
 	if err != nil {
 		return fmt.Errorf("failed to pull image %s: %w", imageName, err)
 	}
-	defer pkg.CloseCloser(reader)
+	defer fileutil.Close(reader)
 
 	// Copy the pull output to stdout to show progress
 	if _, err := io.Copy(os.Stdout, reader); err != nil {

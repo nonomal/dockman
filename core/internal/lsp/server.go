@@ -2,7 +2,7 @@ package lsp
 
 import (
 	"context"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/syncmap"
 	"github.com/goccy/go-yaml"
 	"github.com/rs/zerolog/log"
 	"go.lsp.dev/jsonrpc2"
@@ -12,7 +12,7 @@ import (
 type Server struct {
 	conn jsonrpc2.Conn
 	// documents stores the content of open files.
-	documents pkg.Map[protocol.DocumentURI, string]
+	documents syncmap.Map[protocol.DocumentURI, string]
 }
 
 // StartLSP starts an LSP session on the given stream.
@@ -36,7 +36,7 @@ func StartLSP(opts ...Opts) error {
 
 func NewServer() *Server {
 	return &Server{
-		documents: pkg.Map[protocol.DocumentURI, string]{},
+		documents: syncmap.Map[protocol.DocumentURI, string]{},
 	}
 }
 

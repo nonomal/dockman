@@ -1,4 +1,4 @@
-package pkg
+package fileutil
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ func FileExists(filename string) bool {
 	return !os.IsNotExist(err)
 }
 
-func CloseCloser(rw io.Closer) {
+func Close(rw io.Closer) {
 	err := rw.Close()
 	if err != nil && !errors.Is(err, io.EOF) {
 		log.Warn().Err(err).Msg("Error occurred while closing io.Closer")

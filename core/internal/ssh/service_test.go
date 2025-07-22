@@ -3,8 +3,9 @@ package ssh
 import (
 	"errors"
 	"fmt"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/RA341/dockman/pkg/logger"
+	"github.com/RA341/dockman/pkg/syncmap"
 	"github.com/gliderlabs/ssh"
 	"github.com/stretchr/testify/require"
 	"net"
@@ -17,8 +18,8 @@ func init() {
 }
 
 func TestTransferKey(t *testing.T) {
-	mockMachineManager := MockMachineMan{data: pkg.Map[string, *MachineOptions]{}}
-	mockKeyManager := MockKeyMan{data: pkg.Map[string, KeyConfig]{}}
+	mockMachineManager := MockMachineMan{data: syncmap.Map[string, *MachineOptions]{}}
+	mockKeyManager := MockKeyMan{data: syncmap.Map[string, KeyConfig]{}}
 
 	var capturedCommand string
 	handler := func(s ssh.Session) {
@@ -26,7 +27,7 @@ func TestTransferKey(t *testing.T) {
 		_, _ = fmt.Fprintln(s, "key transferred") // Mock response
 	}
 	mockServer, addr := newMockSSHServer(t, handler)
-	defer pkg.CloseCloser(mockServer)
+	defer fileutil.Close(mockServer)
 
 	host, port, _ := net.SplitHostPort(addr)
 
@@ -79,7 +80,7 @@ func newMockSSHServer(t *testing.T, handler ssh.Handler) (*ssh.Server, string) {
 }
 
 type MockMachineMan struct {
-	data pkg.Map[string, *MachineOptions]
+	data syncmap.Map[string, *MachineOptions]
 }
 
 func (m *MockMachineMan) GetByID(id uint) (MachineOptions, error) {
@@ -140,7 +141,7 @@ func (m *MockMachineMan) Get(machName string) (MachineOptions, error) {
 }
 
 type MockKeyMan struct {
-	data pkg.Map[string, KeyConfig]
+	data syncmap.Map[string, KeyConfig]
 }
 
 func (m *MockKeyMan) SaveKey(config KeyConfig) error {
