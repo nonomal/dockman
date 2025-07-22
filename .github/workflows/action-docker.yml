@@ -84,7 +84,7 @@ jobs:
             # type=sha,prefix=,suffix=,format=short,enable=${{ inputs.source_branch == 'main' }}
 
             # Add 'dev' tag if the source branch is 'main'.
-            type=raw,value=dev,enable=${{ inputs.source_branch == 'main' }}            
+            # type=raw,value=dev,enable=${{ inputs.source_branch == 'main' }}            
             
             # Add 'latest' tag if `is_latest` input is true.
             type=raw,value=latest,enable=${{ inputs.is_latest }}
