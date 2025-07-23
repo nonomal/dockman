@@ -23,6 +23,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import {Article, ContentCopy} from "@mui/icons-material"
 import CheckIcon from "@mui/icons-material/Check"
 import {type ContainerStats, ORDER, SORT_FIELD} from "../../../gen/docker/v1/docker_pb"
+import {formatBytes, getUsageColor} from "../../../lib/editor.ts";
 
 
 interface ContainersTableProps {
@@ -33,21 +34,6 @@ interface ContainersTableProps {
     placeHolders?: number
     loading: boolean
 }
-
-// Determines the color based on resource usage percentage.
-// - Green for normal usage (< 70%)
-// - Yellow for high usage (70-90%)
-// - Red for critical usage (> 90%)
-const getUsageColor = (value: number): 'success.main' | 'warning.main' | 'error.main' => {
-    if (value > 90) {
-        return 'error.main' // Critical
-    }
-    if (value > 70) {
-        return 'warning.main' // High
-    }
-    return 'success.main' // Normal
-}
-
 
 export function ContainerStatTable(
     {
@@ -472,13 +458,4 @@ export function UsageBar(
             </Box>
         </Tooltip>
     )
-}
-
-const formatBytes = (bytes: number | bigint, decimals = 2) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const dm = decimals < 0 ? 0 : decimals
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-    const i = Math.floor(Math.log(Number(bytes)) / Math.log(k))
-    return parseFloat((Number(bytes) / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }

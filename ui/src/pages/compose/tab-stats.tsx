@@ -16,6 +16,7 @@ export function TabStat({selectedPage}: StackStatsProps) {
                 // <ContainerStatChart containers={containers}/> :
                 <></>
             }
+            {/*<ContainerAggregatesGrid containers={containers}/>*/}
             <ContainerStatTable
                 loading={loading}
                 containers={containers}

@@ -1,6 +1,6 @@
-import {Box,} from '@mui/material';
-import {useDockerStats} from "../../hooks/container-stats.ts";
-import {ContainerStatTable} from "../compose/components/container-stat-table.tsx";
+import {Box,} from '@mui/material'
+import {useDockerStats} from "../../hooks/container-stats.ts"
+import {ContainerStatTable} from "../compose/components/container-stat-table.tsx"
 
 export const DashboardPage = () => {
     const {containers, loading, handleSortChange, sortOrder, sortField} = useDockerStats()
@@ -13,6 +13,7 @@ export const DashboardPage = () => {
                 // <ContainerStatChart containers={containers}/> :
                 <></>
             }
+            {/*<ContainerAggregatesGrid containers={containers}/>*/}
             <ContainerStatTable
                 loading={loading}
                 order={sortOrder}
@@ -22,5 +23,5 @@ export const DashboardPage = () => {
             />
         </Box>
         // </Fade>
-    );
-};
+    )
+}
