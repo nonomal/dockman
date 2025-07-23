@@ -142,11 +142,7 @@ func (m *Service) LoadClient(machine *MachineOptions, newClient bool) error {
 	// we check enable again because if a new client is
 	// created we need to check if they want to enable it or not
 	if machine.Enable {
-		m.connectedClients.Store(machine.Name, NewConnectedMachine(
-			cli,
-			sftpCli,
-			machine.Hash(),
-		))
+		m.connectedClients.Store(machine.Name, NewConnectedMachine(cli, sftpCli))
 	} else {
 		fileutil.Close(cli)
 	}
@@ -284,11 +280,7 @@ func (m *Service) loadClients() error {
 			continue
 		}
 
-		m.connectedClients.Store(machine.Name, NewConnectedMachine(
-			sshClient,
-			sftpClient,
-			machine.Hash(),
-		))
+		m.connectedClients.Store(machine.Name, NewConnectedMachine(sshClient, sftpClient))
 	}
 
 	return nil
