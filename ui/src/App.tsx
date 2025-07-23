@@ -6,12 +6,13 @@ import {AuthProvider} from "./context/auth-context.tsx";
 import NotFoundPage from "./components/not-found.tsx";
 import React from 'react';
 import {useAuth} from "./hooks/auth.ts";
-import {HostProvider} from "./context/host.tsx";
+import {HostProvider} from "./context/host-context.tsx";
 import {DescriptionOutlined} from '@mui/icons-material';
 import {AuthPage} from './pages/auth/auth-page.tsx';
 import {DashboardPage} from './pages/dashboard/dashboard-page.tsx';
 import {ComposePage} from './pages/compose/compose-page.tsx';
 import {SettingsPage} from "./pages/settings/settings-page.tsx";
+import {ChangelogProvider} from "./context/changelog-context.tsx";
 
 export function App() {
     return (
@@ -20,56 +21,29 @@ export function App() {
             <SnackbarProvider>
                 <AuthProvider>
                     <BrowserRouter>
-                        <HostProvider>
-                            <Routes>
-                                <Route path="auth" element={<AuthPage/>}/>
-                                <Route element={<PrivateRoute/>}>
-                                    <Route path="/" element={<HomePage/>}>
-                                        <Route index element={<DashboardPage/>}/>
-                                        <Route path="files">
-                                            {/* This route now renders ONLY at the exact path "/files" */}
-                                            <Route index element={<EmptyFilePage/>}/>
-                                            {/* These routes will only match if there is a parameter */}
-                                            <Route path=":file" element={<ComposePage/>}/>
-                                            <Route path=":file/:child" element={<ComposePage/>}/>
-                                        </Route>
-                                        <Route path="settings" element={<SettingsPage/>}/>
+                        <Routes>
+                            <Route path="auth" element={<AuthPage/>}/>
+                            {/*IMPORTANT: providers that need auth need to be injected inside private route not here */}
+                            <Route element={<PrivateRoute/>}>
+                                <Route path="/" element={<HomePage/>}>
+                                    <Route index element={<DashboardPage/>}/>
+                                    <Route path="files">
+                                        <Route index element={<EmptyFilePage/>}/>
+                                        <Route path=":file" element={<ComposePage/>}/>
+                                        <Route path=":file/:child" element={<ComposePage/>}/>
                                     </Route>
+                                    <Route path="settings" element={<SettingsPage/>}/>
                                 </Route>
-                                <Route path="/not-found" element={<NotFoundPage/>}/>
-                                <Route path="*" element={<NotFoundPage/>}/>
-                            </Routes>
-                        </HostProvider>
+                            </Route>
+                            <Route path="/not-found" element={<NotFoundPage/>}/>
+                            <Route path="*" element={<NotFoundPage/>}/>
+                        </Routes>
                     </BrowserRouter>
                 </AuthProvider>
             </SnackbarProvider>
         </ThemeProvider>
     );
 }
-
-const styles: { [key: string]: React.CSSProperties } = {
-    loadingWrapper: {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontFamily: 'sans-serif',
-    },
-    spinner: {
-        border: '4px solid rgba(0, 0, 0, 0.1)',
-        width: '36px',
-        height: '36px',
-        borderRadius: '50%',
-        borderLeftColor: '#09f', // Or your brand color
-        animation: 'spin 1s ease infinite',
-        marginBottom: '20px',
-    },
-    loadingText: {
-        fontSize: '1.1rem',
-        color: '#555',
-    }
-};
 
 const PrivateRoute = () => {
     const {isAuthenticated, isLoading} = useAuth();
@@ -83,7 +57,18 @@ const PrivateRoute = () => {
         )
     }
 
-    return isAuthenticated ? <Outlet/> : <Navigate to="/auth"/>;
+    if (!isAuthenticated) {
+        return <Navigate to="/auth"/>
+    }
+
+    // Once authenticated, render with providers that need auth
+    return (
+        <HostProvider>
+            <ChangelogProvider>
+                <Outlet/>
+            </ChangelogProvider>
+        </HostProvider>
+    );
 };
 
 function HomePage() {
@@ -169,3 +154,27 @@ const darkTheme = createTheme({
     },
 });
 
+
+const styles: { [key: string]: React.CSSProperties } = {
+    loadingWrapper: {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontFamily: 'sans-serif',
+    },
+    spinner: {
+        border: '4px solid rgba(0, 0, 0, 0.1)',
+        width: '36px',
+        height: '36px',
+        borderRadius: '50%',
+        borderLeftColor: '#09f', // Or your brand color
+        animation: 'spin 1s ease infinite',
+        marginBottom: '20px',
+    },
+    loadingText: {
+        fontSize: '1.1rem',
+        color: '#555',
+    }
+};
