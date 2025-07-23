@@ -2,7 +2,7 @@ package files
 
 import (
 	b64 "encoding/base64"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"path/filepath"
@@ -41,7 +41,7 @@ func (h *FileHandler) SaveFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving file from form", http.StatusBadRequest)
 		return
 	}
-	defer pkg.CloseFile(file)
+	defer fileutil.Close(file)
 
 	decodedFileName, err := b64.StdEncoding.DecodeString(meta.Filename)
 	if err != nil {

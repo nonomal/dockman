@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/internal/config"
 	"github.com/rs/zerolog/log"
 	"time"
 )
@@ -11,11 +10,10 @@ type Service struct {
 	authDb DB
 }
 
-func NewService() *Service {
+func NewService(user, pass string) *Service {
 	adb := &MemAuthDB{make(map[string]*User)}
 
-	_, err := adb.NewUser(config.C.AuthUsername, config.C.AuthPassword)
-	if err != nil {
+	if _, err := adb.NewUser(user, pass); err != nil {
 		log.Fatal().Err(err).Msg("unable to create default user")
 	}
 

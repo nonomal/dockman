@@ -63,11 +63,11 @@ export function useFiles() {
             showError(`Error deleting file: ${err}`);
         } else {
             showSuccess(`${filename} deleted.`);
-            // If the user is currently viewing the deleted file, navigate away
-            if (currentPath.startsWith(`/files/${filename}`)) {
-                navigate('/');
-            }
             await fetchFiles(); // Refetch after successful deletion
+            if (currentPath == `/files/${filename}`) {
+                // If the user is currently viewing the deleted file, navigate away
+                navigate('/files');
+            }
         }
         // do not add showError, showSuccess will cause infinite refreshes if request fails
     }, [client, fetchFiles]);

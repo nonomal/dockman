@@ -3,6 +3,8 @@ services:
   dockman:
     container_name: dockman
     image: ghcr.io/ra341/dockman:dev
+    build:
+      context: ..
     volumes:
       - ./stacks:/stacks
       - /var/run/docker.sock:/var/run/docker.sock
@@ -11,5 +13,22 @@ services:
     environment:
       - DOCKMAN_COMPOSE_ROOT=/stacks
       - DOCKMAN_AUTH_ENABLE=false
+      - DOCKMAN_UPDATER_HOST=http://updater:8869
+      - DOCKMAN_UPDATER_KEY=someAuthkey
+      - DOCKMAN_VERBOSE_LOGS=true
     ports:
       - "8432:8866"
+
+  updater:
+    container_name: dockman-updater
+    image: ghcr.io/ra341/dockman/updater:latest
+    #    build:
+    #      context: ..
+    #      dockerfile: Dockerfile.updater
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKMAN_UPDATER_KEY=someAuthkey
+      - DOCKMAN_UPDATER_IMAGE=ghcr.io/ra341/dockman:dev
+    ports:
+      - "8869:8869"

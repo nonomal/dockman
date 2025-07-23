@@ -15,7 +15,7 @@ import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
 import {useLocation, useParams} from 'react-router-dom'
 import type {FileGroup} from '../hooks/files.ts'
 import {useFiles} from "../hooks/files.ts"
-import {FileItem} from './file-item.tsx'
+import FileItem from './file-item.tsx'
 import {AddFileDialog} from "./file-dialog.tsx"
 import {useHost} from "../hooks/host.ts";
 import {ImportFilesDialog} from "./file-import.tsx";

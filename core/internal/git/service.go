@@ -26,30 +26,12 @@ func NewService(root string) *Service {
 		log.Fatal().Err(err).Msg("Failed to create git service")
 	}
 
-	if err = commitSampleFile(repo); err != nil {
-		log.Fatal().Err(err).Msg("Failed to create sample commit")
-	}
-
 	srv := &Service{repo: repo, repoPath: root}
 	if err = srv.CommitAll(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to create commit")
 	}
 
 	return srv
-}
-
-func commitSampleFile(repo *git.Repository) error {
-	worktree, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
-
-	_, err = worktree.Filesystem.Create("sample-compose.yaml")
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func initializeGit(root string) (*git.Repository, error) {
@@ -71,8 +53,28 @@ func initializeGit(root string) (*git.Repository, error) {
 		return nil, fmt.Errorf("Error initializing repository: %s\n", err)
 	}
 
-	log.Info().Str("path", root).Msg("Repository initialized successfully")
+	if err = commitSampleFile(newRepo); err != nil {
+		return nil, err
+	}
+
+	log.Info().Str("path", root).Msg("Created new repository")
 	return newRepo, nil
+}
+
+// an empty git repo will not have any content and will fail to create other branches
+// so we commit an empty compose file
+func commitSampleFile(repo *git.Repository) error {
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	log.Debug().Msg("empty repo, adding sample compose")
+	if _, err = worktree.Filesystem.Create("sample-compose.yaml"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // CommitAll stages all changes (new, modified, deleted) and commits them.
@@ -318,7 +320,6 @@ func (s *Service) LoadFileAtCommit(filePath, commitId string) (string, error) {
 		return "", fmt.Errorf("failed to get file %s from commit %s: %w", filePath, commitId, err)
 	}
 
-	// Get file contents
 	content, err := file.Contents()
 	if err != nil {
 		return "", fmt.Errorf("failed to read file contents: %w", err)

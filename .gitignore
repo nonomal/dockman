@@ -9,10 +9,12 @@ compose/*
 dock/*
 /backend/**/*compose.yml
 install/stacks/
-/backend/**/gitTest
-/backend/compose/
 /config/
 /install/config/
 /core/compose
 /core/internal/docker/controller-docker-compose.yml
 /**/hosts.yaml
+/**/build
+/**/appdata
+/ui/'../
+/**/.task

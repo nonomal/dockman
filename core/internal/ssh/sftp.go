@@ -2,8 +2,9 @@ package ssh
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/pkg"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,6 +16,15 @@ type SftpClient struct {
 
 func NewSFTPCli(cli *sftp.Client) *SftpClient {
 	return &SftpClient{sfCli: cli}
+}
+
+func NewSFTPFromSSH(cli *ssh.Client) (*SftpClient, error) {
+	sftpClient, err := sftp.NewClient(cli)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SftpClient{sfCli: sftpClient}, nil
 }
 
 // CopyLocalToRemoteSFTP Helper function to recursively copy local files/directories via SFTP.
@@ -65,14 +75,14 @@ func (cli *SftpClient) CopyFileSFTP(localFile, remoteFile string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open local file %s: %w", localFile, err)
 	}
-	defer pkg.CloseFile(srcFile)
+	defer fileutil.Close(srcFile)
 
 	// Create remote file for writing
 	dstFile, err := cli.sfCli.Create(remoteFile)
 	if err != nil {
 		return fmt.Errorf("failed to create remote file %s: %w", remoteFile, err)
 	}
-	defer pkg.CloseFile(dstFile)
+	defer fileutil.Close(dstFile)
 
 	// Copy the contents
 	_, err = io.Copy(dstFile, srcFile)

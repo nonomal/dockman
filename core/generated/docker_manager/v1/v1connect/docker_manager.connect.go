@@ -33,18 +33,42 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// DockerManagerServiceListProcedure is the fully-qualified name of the DockerManagerService's List
-	// RPC.
-	DockerManagerServiceListProcedure = "/docker_manager.v1.DockerManagerService/List"
 	// DockerManagerServiceSwitchClientProcedure is the fully-qualified name of the
-	// DockerManagerService's switchClient RPC.
-	DockerManagerServiceSwitchClientProcedure = "/docker_manager.v1.DockerManagerService/switchClient"
+	// DockerManagerService's SwitchClient RPC.
+	DockerManagerServiceSwitchClientProcedure = "/docker_manager.v1.DockerManagerService/SwitchClient"
+	// DockerManagerServiceListClientsProcedure is the fully-qualified name of the
+	// DockerManagerService's ListClients RPC.
+	DockerManagerServiceListClientsProcedure = "/docker_manager.v1.DockerManagerService/ListClients"
+	// DockerManagerServiceListHostsProcedure is the fully-qualified name of the DockerManagerService's
+	// ListHosts RPC.
+	DockerManagerServiceListHostsProcedure = "/docker_manager.v1.DockerManagerService/ListHosts"
+	// DockerManagerServiceGetProcedure is the fully-qualified name of the DockerManagerService's Get
+	// RPC.
+	DockerManagerServiceGetProcedure = "/docker_manager.v1.DockerManagerService/Get"
+	// DockerManagerServiceNewClientProcedure is the fully-qualified name of the DockerManagerService's
+	// NewClient RPC.
+	DockerManagerServiceNewClientProcedure = "/docker_manager.v1.DockerManagerService/NewClient"
+	// DockerManagerServiceEditClientProcedure is the fully-qualified name of the DockerManagerService's
+	// EditClient RPC.
+	DockerManagerServiceEditClientProcedure = "/docker_manager.v1.DockerManagerService/EditClient"
+	// DockerManagerServiceDeleteClientProcedure is the fully-qualified name of the
+	// DockerManagerService's DeleteClient RPC.
+	DockerManagerServiceDeleteClientProcedure = "/docker_manager.v1.DockerManagerService/DeleteClient"
+	// DockerManagerServiceToggleClientProcedure is the fully-qualified name of the
+	// DockerManagerService's ToggleClient RPC.
+	DockerManagerServiceToggleClientProcedure = "/docker_manager.v1.DockerManagerService/ToggleClient"
 )
 
 // DockerManagerServiceClient is a client for the docker_manager.v1.DockerManagerService service.
 type DockerManagerServiceClient interface {
-	List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error)
 	SwitchClient(context.Context, *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error)
+	ListClients(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListClientsResponse], error)
+	ListHosts(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListMachine], error)
+	Get(context.Context, *connect.Request[v1.GetMachine]) (*connect.Response[v1.Machine], error)
+	NewClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error)
+	EditClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error)
+	DeleteClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error)
+	ToggleClient(context.Context, *connect.Request[v1.ToggleReqeust]) (*connect.Response[v1.Empty], error)
 }
 
 // NewDockerManagerServiceClient constructs a client for the docker_manager.v1.DockerManagerService
@@ -58,16 +82,52 @@ func NewDockerManagerServiceClient(httpClient connect.HTTPClient, baseURL string
 	baseURL = strings.TrimRight(baseURL, "/")
 	dockerManagerServiceMethods := v1.File_docker_manager_v1_docker_manager_proto.Services().ByName("DockerManagerService").Methods()
 	return &dockerManagerServiceClient{
-		list: connect.NewClient[v1.Empty, v1.ListResponse](
-			httpClient,
-			baseURL+DockerManagerServiceListProcedure,
-			connect.WithSchema(dockerManagerServiceMethods.ByName("List")),
-			connect.WithClientOptions(opts...),
-		),
 		switchClient: connect.NewClient[v1.SwitchRequest, v1.Empty](
 			httpClient,
 			baseURL+DockerManagerServiceSwitchClientProcedure,
-			connect.WithSchema(dockerManagerServiceMethods.ByName("switchClient")),
+			connect.WithSchema(dockerManagerServiceMethods.ByName("SwitchClient")),
+			connect.WithClientOptions(opts...),
+		),
+		listClients: connect.NewClient[v1.Empty, v1.ListClientsResponse](
+			httpClient,
+			baseURL+DockerManagerServiceListClientsProcedure,
+			connect.WithSchema(dockerManagerServiceMethods.ByName("ListClients")),
+			connect.WithClientOptions(opts...),
+		),
+		listHosts: connect.NewClient[v1.Empty, v1.ListMachine](
+			httpClient,
+			baseURL+DockerManagerServiceListHostsProcedure,
+			connect.WithSchema(dockerManagerServiceMethods.ByName("ListHosts")),
+			connect.WithClientOptions(opts...),
+		),
+		get: connect.NewClient[v1.GetMachine, v1.Machine](
+			httpClient,
+			baseURL+DockerManagerServiceGetProcedure,
+			connect.WithSchema(dockerManagerServiceMethods.ByName("Get")),
+			connect.WithClientOptions(opts...),
+		),
+		newClient: connect.NewClient[v1.Machine, v1.Empty](
+			httpClient,
+			baseURL+DockerManagerServiceNewClientProcedure,
+			connect.WithSchema(dockerManagerServiceMethods.ByName("NewClient")),
+			connect.WithClientOptions(opts...),
+		),
+		editClient: connect.NewClient[v1.Machine, v1.Empty](
+			httpClient,
+			baseURL+DockerManagerServiceEditClientProcedure,
+			connect.WithSchema(dockerManagerServiceMethods.ByName("EditClient")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteClient: connect.NewClient[v1.Machine, v1.Empty](
+			httpClient,
+			baseURL+DockerManagerServiceDeleteClientProcedure,
+			connect.WithSchema(dockerManagerServiceMethods.ByName("DeleteClient")),
+			connect.WithClientOptions(opts...),
+		),
+		toggleClient: connect.NewClient[v1.ToggleReqeust, v1.Empty](
+			httpClient,
+			baseURL+DockerManagerServiceToggleClientProcedure,
+			connect.WithSchema(dockerManagerServiceMethods.ByName("ToggleClient")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -75,25 +135,67 @@ func NewDockerManagerServiceClient(httpClient connect.HTTPClient, baseURL string
 
 // dockerManagerServiceClient implements DockerManagerServiceClient.
 type dockerManagerServiceClient struct {
-	list         *connect.Client[v1.Empty, v1.ListResponse]
 	switchClient *connect.Client[v1.SwitchRequest, v1.Empty]
+	listClients  *connect.Client[v1.Empty, v1.ListClientsResponse]
+	listHosts    *connect.Client[v1.Empty, v1.ListMachine]
+	get          *connect.Client[v1.GetMachine, v1.Machine]
+	newClient    *connect.Client[v1.Machine, v1.Empty]
+	editClient   *connect.Client[v1.Machine, v1.Empty]
+	deleteClient *connect.Client[v1.Machine, v1.Empty]
+	toggleClient *connect.Client[v1.ToggleReqeust, v1.Empty]
 }
 
-// List calls docker_manager.v1.DockerManagerService.List.
-func (c *dockerManagerServiceClient) List(ctx context.Context, req *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
-	return c.list.CallUnary(ctx, req)
-}
-
-// SwitchClient calls docker_manager.v1.DockerManagerService.switchClient.
+// SwitchClient calls docker_manager.v1.DockerManagerService.SwitchClient.
 func (c *dockerManagerServiceClient) SwitchClient(ctx context.Context, req *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error) {
 	return c.switchClient.CallUnary(ctx, req)
+}
+
+// ListClients calls docker_manager.v1.DockerManagerService.ListClients.
+func (c *dockerManagerServiceClient) ListClients(ctx context.Context, req *connect.Request[v1.Empty]) (*connect.Response[v1.ListClientsResponse], error) {
+	return c.listClients.CallUnary(ctx, req)
+}
+
+// ListHosts calls docker_manager.v1.DockerManagerService.ListHosts.
+func (c *dockerManagerServiceClient) ListHosts(ctx context.Context, req *connect.Request[v1.Empty]) (*connect.Response[v1.ListMachine], error) {
+	return c.listHosts.CallUnary(ctx, req)
+}
+
+// Get calls docker_manager.v1.DockerManagerService.Get.
+func (c *dockerManagerServiceClient) Get(ctx context.Context, req *connect.Request[v1.GetMachine]) (*connect.Response[v1.Machine], error) {
+	return c.get.CallUnary(ctx, req)
+}
+
+// NewClient calls docker_manager.v1.DockerManagerService.NewClient.
+func (c *dockerManagerServiceClient) NewClient(ctx context.Context, req *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error) {
+	return c.newClient.CallUnary(ctx, req)
+}
+
+// EditClient calls docker_manager.v1.DockerManagerService.EditClient.
+func (c *dockerManagerServiceClient) EditClient(ctx context.Context, req *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error) {
+	return c.editClient.CallUnary(ctx, req)
+}
+
+// DeleteClient calls docker_manager.v1.DockerManagerService.DeleteClient.
+func (c *dockerManagerServiceClient) DeleteClient(ctx context.Context, req *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error) {
+	return c.deleteClient.CallUnary(ctx, req)
+}
+
+// ToggleClient calls docker_manager.v1.DockerManagerService.ToggleClient.
+func (c *dockerManagerServiceClient) ToggleClient(ctx context.Context, req *connect.Request[v1.ToggleReqeust]) (*connect.Response[v1.Empty], error) {
+	return c.toggleClient.CallUnary(ctx, req)
 }
 
 // DockerManagerServiceHandler is an implementation of the docker_manager.v1.DockerManagerService
 // service.
 type DockerManagerServiceHandler interface {
-	List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error)
 	SwitchClient(context.Context, *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error)
+	ListClients(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListClientsResponse], error)
+	ListHosts(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListMachine], error)
+	Get(context.Context, *connect.Request[v1.GetMachine]) (*connect.Response[v1.Machine], error)
+	NewClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error)
+	EditClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error)
+	DeleteClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error)
+	ToggleClient(context.Context, *connect.Request[v1.ToggleReqeust]) (*connect.Response[v1.Empty], error)
 }
 
 // NewDockerManagerServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -103,24 +205,72 @@ type DockerManagerServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewDockerManagerServiceHandler(svc DockerManagerServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	dockerManagerServiceMethods := v1.File_docker_manager_v1_docker_manager_proto.Services().ByName("DockerManagerService").Methods()
-	dockerManagerServiceListHandler := connect.NewUnaryHandler(
-		DockerManagerServiceListProcedure,
-		svc.List,
-		connect.WithSchema(dockerManagerServiceMethods.ByName("List")),
-		connect.WithHandlerOptions(opts...),
-	)
 	dockerManagerServiceSwitchClientHandler := connect.NewUnaryHandler(
 		DockerManagerServiceSwitchClientProcedure,
 		svc.SwitchClient,
-		connect.WithSchema(dockerManagerServiceMethods.ByName("switchClient")),
+		connect.WithSchema(dockerManagerServiceMethods.ByName("SwitchClient")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dockerManagerServiceListClientsHandler := connect.NewUnaryHandler(
+		DockerManagerServiceListClientsProcedure,
+		svc.ListClients,
+		connect.WithSchema(dockerManagerServiceMethods.ByName("ListClients")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dockerManagerServiceListHostsHandler := connect.NewUnaryHandler(
+		DockerManagerServiceListHostsProcedure,
+		svc.ListHosts,
+		connect.WithSchema(dockerManagerServiceMethods.ByName("ListHosts")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dockerManagerServiceGetHandler := connect.NewUnaryHandler(
+		DockerManagerServiceGetProcedure,
+		svc.Get,
+		connect.WithSchema(dockerManagerServiceMethods.ByName("Get")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dockerManagerServiceNewClientHandler := connect.NewUnaryHandler(
+		DockerManagerServiceNewClientProcedure,
+		svc.NewClient,
+		connect.WithSchema(dockerManagerServiceMethods.ByName("NewClient")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dockerManagerServiceEditClientHandler := connect.NewUnaryHandler(
+		DockerManagerServiceEditClientProcedure,
+		svc.EditClient,
+		connect.WithSchema(dockerManagerServiceMethods.ByName("EditClient")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dockerManagerServiceDeleteClientHandler := connect.NewUnaryHandler(
+		DockerManagerServiceDeleteClientProcedure,
+		svc.DeleteClient,
+		connect.WithSchema(dockerManagerServiceMethods.ByName("DeleteClient")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dockerManagerServiceToggleClientHandler := connect.NewUnaryHandler(
+		DockerManagerServiceToggleClientProcedure,
+		svc.ToggleClient,
+		connect.WithSchema(dockerManagerServiceMethods.ByName("ToggleClient")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/docker_manager.v1.DockerManagerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case DockerManagerServiceListProcedure:
-			dockerManagerServiceListHandler.ServeHTTP(w, r)
 		case DockerManagerServiceSwitchClientProcedure:
 			dockerManagerServiceSwitchClientHandler.ServeHTTP(w, r)
+		case DockerManagerServiceListClientsProcedure:
+			dockerManagerServiceListClientsHandler.ServeHTTP(w, r)
+		case DockerManagerServiceListHostsProcedure:
+			dockerManagerServiceListHostsHandler.ServeHTTP(w, r)
+		case DockerManagerServiceGetProcedure:
+			dockerManagerServiceGetHandler.ServeHTTP(w, r)
+		case DockerManagerServiceNewClientProcedure:
+			dockerManagerServiceNewClientHandler.ServeHTTP(w, r)
+		case DockerManagerServiceEditClientProcedure:
+			dockerManagerServiceEditClientHandler.ServeHTTP(w, r)
+		case DockerManagerServiceDeleteClientProcedure:
+			dockerManagerServiceDeleteClientHandler.ServeHTTP(w, r)
+		case DockerManagerServiceToggleClientProcedure:
+			dockerManagerServiceToggleClientHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -130,10 +280,34 @@ func NewDockerManagerServiceHandler(svc DockerManagerServiceHandler, opts ...con
 // UnimplementedDockerManagerServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedDockerManagerServiceHandler struct{}
 
-func (UnimplementedDockerManagerServiceHandler) List(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.List is not implemented"))
+func (UnimplementedDockerManagerServiceHandler) SwitchClient(context.Context, *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.SwitchClient is not implemented"))
 }
 
-func (UnimplementedDockerManagerServiceHandler) SwitchClient(context.Context, *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.switchClient is not implemented"))
+func (UnimplementedDockerManagerServiceHandler) ListClients(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListClientsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.ListClients is not implemented"))
+}
+
+func (UnimplementedDockerManagerServiceHandler) ListHosts(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListMachine], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.ListHosts is not implemented"))
+}
+
+func (UnimplementedDockerManagerServiceHandler) Get(context.Context, *connect.Request[v1.GetMachine]) (*connect.Response[v1.Machine], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.Get is not implemented"))
+}
+
+func (UnimplementedDockerManagerServiceHandler) NewClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.NewClient is not implemented"))
+}
+
+func (UnimplementedDockerManagerServiceHandler) EditClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.EditClient is not implemented"))
+}
+
+func (UnimplementedDockerManagerServiceHandler) DeleteClient(context.Context, *connect.Request[v1.Machine]) (*connect.Response[v1.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.DeleteClient is not implemented"))
+}
+
+func (UnimplementedDockerManagerServiceHandler) ToggleClient(context.Context, *connect.Request[v1.ToggleReqeust]) (*connect.Response[v1.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.ToggleClient is not implemented"))
 }

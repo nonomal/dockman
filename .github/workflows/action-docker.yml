@@ -24,12 +24,22 @@ on:
 
 jobs:
   build-and-push:
-    name: Build and Push Docker for ${{ github.repository }}
+    strategy:
+      fail-fast: false # Don't cancel other jobs if one fails
+      matrix:
+        target:
+          # "default"
+          - name: alpine
+            suffix: ""
+    #          - name: alpine-ssh
+    #            suffix: -ssh
+
+    # Give the job a dynamic name based on the matrix
+    name: Build Image for (${{ matrix.target.name }})
     runs-on: ubuntu-latest
     permissions:
-      contents: read   # To checkout the repository
-      packages: write  # To push Docker images to GHCR
-      # id-token: write # Uncomment if using OIDC for Docker login to GHCR
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout repository
@@ -39,15 +49,9 @@ jobs:
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-        with:
-          platforms: "linux/amd64,linux/arm64"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          install: true # Enable multi-platform builds
-          driver-opts: |
-            network=host
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -61,6 +65,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
+          # Add a flavor suffix to all tags based on the matrix
+          flavor: |
+            suffix=${{ matrix.target.suffix }}
+            prefix=
           tags: |
             # assumes `version_tag` is valid SemVer skip tag if empty (vX.Y.Z or X.Y.Z), create major and major.minor tags.
             # Example: if version_tag is "v1.2.3", this adds "v1" and "v1.2".
@@ -76,14 +84,14 @@ jobs:
             # type=sha,prefix=,suffix=,format=short,enable=${{ inputs.source_branch == 'main' }}
 
             # Add 'dev' tag if the source branch is 'main'.
-            type=raw,value=dev,enable=${{ inputs.source_branch == 'main' }}            
+            # type=raw,value=dev,enable=${{ inputs.source_branch == 'main' }}            
             
             # Add 'latest' tag if `is_latest` input is true.
             type=raw,value=latest,enable=${{ inputs.is_latest }}
 
           labels: |
             org.opencontainers.image.title=${{ inputs.title }}
-            org.opencontainers.image.description=Docker image for ${{ inputs.title }}.
+            org.opencontainers.image.description=Docker image for ${{ inputs.title }} built for ${{ matrix.target.name }}.
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
@@ -93,10 +101,13 @@ jobs:
         with:
           context: .
           push: true
+          # Use the target from the matrix
+          target: ${{ matrix.target.name }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
+          # platforms: "linux/amd64,linux/arm64" todo takes a long time
           cache-to: type=gha,mode=max
+          cache-from: type=gha
           build-args: |
             VERSION=${{ inputs.version_tag  || steps.meta.outputs.version }}
             COMMIT_INFO=${{ github.sha }}
@@ -108,5 +119,3 @@ jobs:
           echo "🚀 Docker image build and push complete for: ghcr.io/${{ github.repository }}"
           echo "🏷️ Tags created:"
           echo "${{ steps.meta.outputs.tags }}"
-          echo "📋 Labels applied:"
-          echo "${{ steps.meta.outputs.labels }}"

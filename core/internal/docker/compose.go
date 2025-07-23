@@ -3,8 +3,6 @@ package docker
 import (
 	"context"
 	"fmt"
-	"github.com/RA341/dockman/internal/ssh"
-	"github.com/RA341/dockman/pkg"
 	"github.com/compose-spec/compose-go/v2/cli"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
@@ -15,39 +13,46 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rs/zerolog/log"
 	"io"
+	"maps"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 )
 
 // reference: https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
 
 type ComposeService struct {
-	composeRoot string
-	client      *ContainerService
+	composeRoot      string
+	containerService *ContainerService
+	syncer           Syncer
 }
 
-func newComposeService(composeRoot string, client *ContainerService) *ComposeService {
+func NewComposeService(composeRoot string, client *ContainerService, syncer Syncer) *ComposeService {
 	return &ComposeService{
-		composeRoot: composeRoot,
-		client:      client,
+		composeRoot:      composeRoot,
+		containerService: client,
+		syncer:           syncer,
 	}
 }
 
 func (s *ComposeService) Up(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
-	if err := s.syncProjectFilesToHost(project); err != nil {
+	if err := s.syncer.Sync(ctx, project); err != nil {
 		return err
-	}
-
-	if err := composeClient.Build(ctx, project, api.BuildOptions{Services: services}); err != nil {
-		return fmt.Errorf("compose build operation failed: %w", err)
 	}
 
 	upOpts := api.UpOptions{
 		Create: api.CreateOptions{
-			Recreate:      api.RecreateDiverged,
-			RemoveOrphans: true,
-			QuietPull:     true,
+			Build:    &api.BuildOptions{Services: services},
+			Services: services,
+
+			// todo todo these params need to change for updating dockman
+			RemoveOrphans: true, //  todo this false when updating dockman
+			//Recreate:             api.RecreateForce, // Force recreation of the specified services
+			//RecreateDependencies: api.RecreateNever, // Do not recreate dependencies
+
+			Inherit:   true,
+			AssumeYes: true,
 		},
 		Start: api.StartOptions{
 			//OnExit:   api.CascadeStop,
@@ -84,7 +89,7 @@ func (s *ComposeService) Stop(ctx context.Context, project *types.Project, compo
 
 func (s *ComposeService) Restart(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
 	// A restart might involve changes to the compose file, so we sync first.
-	if err := s.syncProjectFilesToHost(project); err != nil {
+	if err := s.syncer.Sync(ctx, project); err != nil {
 		return err
 	}
 
@@ -105,7 +110,7 @@ func (s *ComposeService) Pull(ctx context.Context, project *types.Project, compo
 	return nil
 }
 
-func (s *ComposeService) Update(ctx context.Context, project *types.Project, composeClient api.Service) error {
+func (s *ComposeService) Update(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
 	beforeImages, err := s.getProjectImageDigests(ctx, project)
 	if err != nil {
 		return fmt.Errorf("failed to get image info before pull: %w", err)
@@ -128,7 +133,7 @@ func (s *ComposeService) Update(ctx context.Context, project *types.Project, com
 
 	log.Info().Str("stack", project.Name).Msg("New images were downloaded, updating stack...")
 	// If images changed, run Up to recreate the containers with the new images.
-	if err = s.Up(ctx, project, composeClient); err != nil {
+	if err = s.Up(ctx, project, composeClient, services...); err != nil {
 		return err
 	}
 
@@ -141,7 +146,7 @@ func (s *ComposeService) ListStack(ctx context.Context, project *types.Project, 
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
-	result, err := s.client.daemon().ContainerList(ctx, container.ListOptions{
+	result, err := s.containerService.ListContainers(ctx, container.ListOptions{
 		All:     all,
 		Filters: containerFilters,
 	})
@@ -159,7 +164,7 @@ func (s *ComposeService) StatStack(ctx context.Context, project *types.Project) 
 		return nil, err
 	}
 
-	result := s.client.GetStatsFromContainerList(ctx, stackList)
+	result := s.containerService.GetStatsFromContainerList(ctx, stackList)
 	return result, nil
 }
 
@@ -171,7 +176,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 			continue
 		}
 
-		imageInspect, err := s.client.daemon().ImageInspect(ctx, service.Image)
+		imageInspect, err := s.containerService.daemon.ImageInspect(ctx, service.Image)
 		if err != nil {
 			// Image might not exist locally yet
 			digests[serviceName] = ""
@@ -189,9 +194,9 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 	return digests, nil
 }
 
-func (s *ComposeService) loadComposeClient(outputStream io.Writer, inputStream io.ReadCloser) (api.Service, error) {
+func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream io.ReadCloser) (api.Service, error) {
 	dockerCli, err := command.NewDockerCli(
-		command.WithAPIClient(s.client.daemon()),
+		command.WithAPIClient(s.containerService.daemon),
 		command.WithCombinedStreams(outputStream),
 		command.WithInputStream(inputStream),
 	)
@@ -207,20 +212,22 @@ func (s *ComposeService) loadComposeClient(outputStream io.Writer, inputStream i
 	return compose.NewComposeService(dockerCli), nil
 }
 
-func (s *ComposeService) loadProject(ctx context.Context, filename string) (*types.Project, error) {
+func (s *ComposeService) LoadProject(ctx context.Context, filename string) (*types.Project, error) {
 	filename = filepath.Join(s.composeRoot, filename)
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(filename)
 
 	options, err := cli.NewProjectOptions(
 		[]string{filename},
-		// important maintain this order to load .env: workingdir -> env -> os -> load dot env
+		// important maintain this order to load .env properly
+		// workingdir -> env -> os -> dot env -> sub dir .envs
 		cli.WithWorkingDirectory(s.composeRoot),
 		cli.WithEnvFiles(),
 		cli.WithOsEnv,
 		cli.WithDotEnv,
 		cli.WithDefaultProfiles(),
 		cli.WithWorkingDirectory(workingDir),
+		cli.WithDotEnv,
 		cli.WithResolvedPaths(true),
 	)
 	if err != nil {
@@ -242,51 +249,49 @@ func (s *ComposeService) loadProject(ctx context.Context, filename string) (*typ
 	return project.WithoutUnnecessaryResources(), nil
 }
 
-func (s *ComposeService) sftpProjectFiles(project *types.Project, sfCli *ssh.SftpClient) error {
-	for _, service := range project.Services {
-		// iterate over each volume mount for that service.
-		for _, vol := range service.Volumes {
-			// We only care about "bind" mounts, which map a host path to a container path.
-			// We ignore named volumes, tmpfs, etc.
-			if vol.Bind == nil {
-				continue
-			}
+// todo move to config flag
+const dockmanImage = "ghcr.io/ra341/dockman"
 
-			// `vol.Source` is the local path on the host machine.
-			// Because we used `WithResolvedPaths(true)`, this is an absolute path.
-			localSourcePath := vol.Source
+func (s *ComposeService) withoutDockman(project *types.Project, services ...string) []string {
+	// If sftp client exists, it's a remote machine. Do not filter.
+	// todo
+	//if isRemoteDockman := s.containerService.daemon.DaemonHost() != nil; isRemoteDockman {
+	//	return services
+	//}
 
-			// Copy files only whose volume starts with the project's root directory path.
-			if !strings.HasPrefix(localSourcePath, s.composeRoot) {
-				log.Debug().
-					Str("local", localSourcePath).
-					Msg("Skipping bind mount outside of project root")
-				continue
-			}
-
-			// Before copying, check if the source file/directory actually exists.
-			// It might be a path that gets created by another process or container,
-			// so just log/skip if it doesn't exist.
-			if !pkg.FileExists(localSourcePath) {
-				log.Debug().Str("path", localSourcePath).Msg("bind mount source path not found, skipping...")
-				continue
-			}
-
-			// The remote destination path will mirror the local absolute path.
-			// This ensures the file structure is identical on the remote host.
-			remoteDestPath := localSourcePath
-			log.Info().
-				Str("name", service.Name).
-				Str("src (local)", localSourcePath).
-				Str("dest (remote)", remoteDestPath).
-				Msg("Syncing bind mount for service")
-
-			if err := sfCli.CopyLocalToRemoteSFTP(localSourcePath, remoteDestPath); err != nil {
-				return fmt.Errorf("failed to sync bind mount %s for service %s: %w", localSourcePath, service.Name, err)
-			}
+	// Find the name of the service running the "dockman" image.
+	var dockmanServiceName string
+	for name, conf := range project.Services {
+		if strings.HasPrefix(conf.Image, dockmanImage) {
+			dockmanServiceName = name
+			log.Info().Msg("Found dockman service to filter from action")
+			log.Debug().Str("image", conf.Image).Str("service-name", name).
+				Msg("This service will be excluded from the final list.")
+			break // Found it, no need to keep searching
 		}
 	}
-	return nil
+
+	// If no service is using the dockman image, there's nothing to filter.
+	if dockmanServiceName == "" {
+		if len(services) == 0 {
+			// empty list implies all services, since no other services were explicitly passed
+			return []string{}
+		}
+		return services
+	}
+
+	// Determine which list of services to filter.
+	targetServices := services
+	// If the user did not provide a specific list of services,
+	// use all services from the project as the target.
+	if len(services) == 0 {
+		targetServices = slices.Collect(maps.Keys(project.Services))
+	}
+
+	// Remove the dockman service from the target list and return the result.
+	return slices.DeleteFunc(targetServices, func(serviceName string) bool {
+		return serviceName == dockmanServiceName
+	})
 }
 
 func addServiceLabels(project *types.Project) {
@@ -302,15 +307,4 @@ func addServiceLabels(project *types.Project) {
 
 		project.Services[i] = s
 	}
-}
-
-func (s *ComposeService) syncProjectFilesToHost(project *types.Project) error {
-	log.Debug().Msg("syncing bind mount to remote host")
-	// nil client implies local client or I done fucked up
-	if sfCli := s.client.sftp(); sfCli != nil {
-		if err := s.sftpProjectFiles(project, sfCli); err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package info.v1;
+
+option go_package = "github.com/RA341/dockman/generated/info/v1";
+
+service InfoService {
+  rpc GetChangelog(Empty) returns (Changelog);
+  rpc GetAppInfo(Empty) returns (AppInfo);
+  rpc ReadVersion(ReadVersionRequest) returns (Empty);
+}
+
+message ReadVersionRequest {
+  string version = 1;
+}
+
+message AppInfo {
+  string version = 1;
+  string flavour = 2;
+  string commit = 3;
+  string buildDate = 4;
+  string branch = 5;
+}
+
+message Changelog {
+  string version = 1;
+  string url = 2;
+  string changelog = 3;
+}
+
+message Empty {}

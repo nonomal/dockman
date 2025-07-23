@@ -3,7 +3,7 @@ name: Develop-Build
 on:
   push:
     branches:
-      - main # publish a dev build on main
+      - dev
     paths:
       - Dockerfile
       - .github/workflows/action-docker.yml
@@ -14,7 +14,6 @@ on:
 permissions:
   contents: read   # To checkout the repository
   packages: write  # To push Docker images to GHCR
-
 
 jobs:
   build-docker:

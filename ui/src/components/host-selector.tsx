@@ -1,17 +1,24 @@
-import {Box, FormControl, InputLabel, MenuItem, Select, Typography} from "@mui/material";
-import {useEffect, useState} from "react";
+import {Box, Button, Menu, MenuItem, Typography} from "@mui/material";
+import {useEffect, useRef, useState} from "react";
 import {KeyChar} from "./keychar.tsx";
 import {useHost} from "../hooks/host.ts";
+import {ExpandMore} from "@mui/icons-material";
 
 function HostSelectDropdown() {
     const {selectedHost, availableHosts, switchMachine, isLoading} = useHost()
-    const [open, setOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const open = Boolean(anchorEl);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.altKey && event.key.toLowerCase() === 'w') {
                 event.preventDefault();
-                setOpen(true);
+                if (!open) {
+                    setAnchorEl(buttonRef.current);
+                } else {
+                    setAnchorEl(null);
+                }
             }
         };
 
@@ -19,55 +26,91 @@ function HostSelectDropdown() {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, []);
+    }, [open]);
 
-    const label = "Docker Host";
-    const labelId = "host-select-label";
+    const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleSelect = (hostName: string) => {
+        switchMachine(hostName).then(() => {
+            handleClose();
+        });
+    };
+
     return (
-        <FormControl sx={{minWidth: 260}} disabled={isLoading}>
-            <InputLabel id={labelId}>{label}</InputLabel>
-            <Select
-                id="host-machine-select"
-                label={label}
-                labelId={labelId}
-                value={selectedHost}
-                onChange={event => {
-                    switchMachine(event.target.value ?? "").then();
+        <>
+            <Button
+                ref={buttonRef}
+                id="host-select-button"
+                aria-controls={open ? 'host-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={open ? 'true' : undefined}
+                onClick={handleOpen}
+                disabled={isLoading}
+                variant="outlined"
+                sx={{
+                    justifyContent: 'space-between',
+                    textTransform: 'none', // Keep the text as is
+                    color: 'text.primary',
+                    borderColor: 'divider',
+                    px: 1.5, // Add horizontal padding
+                    py: 1.5, // Add vertical padding
                 }}
-                open={open}
-                onClose={() => setOpen(false)}
-                onOpen={() => setOpen(true)}
-                renderValue={(selected) => (
-                    <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
-                        {/* The selected host name */}
-                        <span>{selected}</span>
-                        {/* The keyboard hint with icons */}
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.5,
-                                color: 'text.secondary',
-                                pointerEvents: 'none',
-                            }}
-                        >
-                            <KeyChar>ALT</KeyChar>
-                            <Typography variant="body2">+</Typography>
-                            <KeyChar>W</KeyChar>
-                        </Box>
-                    </Box>
-                )}
+                endIcon={<ExpandMore/>}
             >
-                <MenuItem value="" disabled>
-                    <em>{isLoading ? 'Loading hosts...' : 'Select a host...'}</em>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                    <Typography variant="subtitle1" >
+                        {selectedHost || 'Select host...'}
+                    </Typography>
+                </Box>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        color: 'text.secondary',
+                        ml: 2,
+                    }}
+                >
+                    <KeyChar>ALT</KeyChar>
+                    <Typography variant="body2">+</Typography>
+                    <KeyChar>W</KeyChar>
+                </Box>
+            </Button>
+            <Menu
+                id="host-menu"
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                MenuListProps={{
+                    'aria-labelledby': 'host-select-button',
+                }}
+                PaperProps={{
+                    sx: {
+                        minWidth: buttonRef.current?.offsetWidth, // Match the button width
+                        marginTop: 1,
+                    }
+                }}
+            >
+                <MenuItem disabled>
+                    <em>{isLoading ? 'Loading...' : 'Select...'}</em>
                 </MenuItem>
                 {availableHosts.map((hostName) => (
-                    <MenuItem key={hostName} value={hostName}>
+                    <MenuItem
+                        key={hostName}
+                        selected={hostName === selectedHost}
+                        onClick={() => handleSelect(hostName)}
+                    >
                         {hostName}
                     </MenuItem>
                 ))}
-            </Select>
-        </FormControl>
+            </Menu>
+        </>
     );
 }
 

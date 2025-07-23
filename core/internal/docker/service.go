@@ -1,36 +1,23 @@
 package docker
 
 import (
-	"github.com/RA341/dockman/internal/config"
-	dm "github.com/RA341/dockman/internal/docker_manager"
-	"github.com/rs/zerolog/log"
-	"path/filepath"
+	"github.com/docker/docker/client"
 )
 
-type ComposeManager interface {
-}
-
 type Service struct {
+	daemonAddr string
 	*ComposeService
 	*ContainerService
-	localAddress string
 }
 
-func NewService(composeRoot string, cliFn dm.GetDocker, sftpFn dm.GetSftp) *Service {
-	if !filepath.IsAbs(composeRoot) {
-		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
-	}
-
-	containerClient := &ContainerService{
-		daemon: cliFn,
-		sftp:   sftpFn,
-	}
-	composeClient := newComposeService(composeRoot, containerClient)
+func NewService(daemonAddr, composeRoot string, dockerClient *client.Client, syncer Syncer) *Service {
+	containerClient := NewContainerService(dockerClient)
+	composeClient := NewComposeService(composeRoot, containerClient, syncer)
 
 	return &Service{
 		ContainerService: containerClient,
 		ComposeService:   composeClient,
-		localAddress:     config.C.LocalAddr,
+		daemonAddr:       daemonAddr,
 	}
 }
 
