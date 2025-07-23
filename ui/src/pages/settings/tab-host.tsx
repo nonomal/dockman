@@ -240,8 +240,7 @@ const MachineToggle = (
 interface MachineFormDialogProps {
     open: boolean
     onClose: () => void
-    onSave: (machine: Omit<Machine, '$unknown' | '$typeName'>) => void
-    onTest?: (machine: Omit<Machine, '$unknown' | '$typeName'>) => Promise<{ success: boolean; error?: string }>
+    onSave: (machine: Omit<Machine, '$unknown' | '$typeName'>) => Promise<void>
     machine: Machine | null
 }
 
@@ -273,7 +272,7 @@ const emptyMachine = {
 export function MachineFormDialog({open, onClose, onSave, machine}: MachineFormDialogProps) {
     const [formData, setFormData] = useState(machine || emptyMachine)
     const [error, setError] = useState<string>('')
-    // const [isTesting, setIsTesting] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         setFormData(machine || emptyMachine)
@@ -310,29 +309,11 @@ export function MachineFormDialog({open, onClose, onSave, machine}: MachineFormD
             (formData.usePublicKeyAuth || formData.password.trim() !== '')
     }
 
-    // const handleTest = async () => {
-    //     if (!onTest || !isFormValid()) return
-    //
-    //     setIsTesting(true)
-    //     setError('')
-    //
-    //     try {
-    //         const result = await onTest(formData)
-    //         if (!result.success) {
-    //             setError(result.error || 'Connection test failed')
-    //         } else {
-    //             // You might want to show a success message here
-    //             setError('')
-    //         }
-    //     } catch (err) {
-    //         setError('Connection test failed: ' + (err instanceof Error ? err.message : 'Unknown error'))
-    //     } finally {
-    //         setIsTesting(false)
-    //     }
-    // }
-
     const handleSave = () => {
-        onSave(formData)
+        setIsLoading(true)
+        onSave(formData).finally(() => {
+            setIsLoading(false)
+        })
     }
 
     return (
@@ -443,22 +424,15 @@ export function MachineFormDialog({open, onClose, onSave, machine}: MachineFormD
                 </Box>
             </DialogContent>
             <DialogActions sx={{p: '16px 24px'}}>
-                <Button onClick={onClose}>Cancel</Button>
-                {/*<Button*/}
-                {/*    onClick={handleTest}*/}
-                {/*    disabled={!isFormValid() || isTesting || !onTest}*/}
-                {/*    variant="outlined"*/}
-                {/*    sx={{mr: 1}}*/}
-                {/*>*/}
-                {/*    {isTesting ? 'Testing...' : 'Test Connection'}*/}
-                {/*</Button>*/}
                 <Button
                     onClick={handleSave}
                     variant="contained"
-                    disabled={!isFormValid()}
+                    disabled={!isFormValid() || isLoading}
+                    startIcon={isLoading ? <CircularProgress size={16} color="inherit"/> : null}
                 >
-                    Save
+                    {isLoading ? 'Saving...' : 'Save'}
                 </Button>
+                <Button onClick={onClose}>Cancel</Button>
             </DialogActions>
         </Dialog>
     )
