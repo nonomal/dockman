@@ -8,19 +8,52 @@ vars:
   CORE_DIR: ../core/generated
   UI_DIR: ../ui/src/gen
   GENERATED_DIR: generated
+  PROTODIR: protos
+  GO_PACKAGE_BASE: "github.com/RA341/dockman/generated"
 
 tasks:
+  proto:*:*:
+    desc: "Creates a new proto file with a custom version. Usage: task proto:<package>[:version]"
+    vars:
+      PROTO_PACKAGE: "{{ index .MATCH 0 }}"
+      VERSION: '{{ index .MATCH 1 }}'
+      PACKAGE_PATH: "{{ .PROTODIR }}/{{ .PROTO_PACKAGE }}/{{ .VERSION }}"
+      FILE_PATH: "{{ .PACKAGE_PATH }}/{{ .PROTO_PACKAGE }}.proto"
+    cmds:
+      - coreutils mkdir -p {{ .PACKAGE_PATH }}
+      - |
+        coreutils cat <<EOF > {{ .FILE_PATH }}
+        syntax = "proto3";
+
+        package {{ .PROTO_PACKAGE }}.{{ .VERSION }};
+
+        option go_package = "{{ .GO_PACKAGE_BASE }}/{{ .PROTO_PACKAGE }}/{{ .VERSION }}";
+        
+        service {{ .PROTO_PACKAGE }}Service {
+        }
+        EOF
+
+  proto:*:
+    desc: "Creates a new v1 proto file. Usage: task proto:<package>"
+    vars:
+      PROTO_PACKAGE: "{{ index .MATCH 0 }}"
+      VERSION: "v1"
+      PACKAGE_PATH: "{{ .PROTODIR }}/{{ .PROTO_PACKAGE }}/{{ .VERSION }}"
+      FILE_PATH: "{{ .PACKAGE_PATH }}/{{ .PROTO_PACKAGE }}.proto"
+    cmds:
+      - task: proto:{{ .PROTO_PACKAGE }}:{{ .VERSION }}
+
   geno:
     desc: generate files no moves
     deps: [ build ]
+    sources:
+      - protos/**/
     cmds:
       - docker run --rm -v "{{.WORKING_DIR}}:/workspace" protobuilder:latest
 
   gen:
     desc: generate and copy out generated files and remove source generated dir
     deps: [ geno ]
-    sources:
-      - protos/**/
     cmds:
       - task: go
       - task: web

@@ -59,6 +59,8 @@ var headers = []string{
 `,
 }
 
+const repo = "https://github.com/RA341/dockman"
+
 func PrintInfo() {
 	fields := litany.NewFieldConfig()
 
@@ -74,7 +76,7 @@ func PrintInfo() {
 	if IsKnown(Branch) && IsKnown(CommitInfo) {
 		fields.DashDivider()
 		fields.NewGithubMetadata(
-			"https://github.com/RA341/dockman",
+			repo,
 			Branch,
 			CommitInfo,
 		)

@@ -2,15 +2,15 @@
 // @generated from file docker_manager/v1/docker_manager.proto (package docker_manager.v1, syntax proto3)
 /* eslint-disable */
 
-import type {GenFile, GenMessage, GenService} from "@bufbuild/protobuf/codegenv2";
-import {fileDesc, messageDesc, serviceDesc} from "@bufbuild/protobuf/codegenv2";
-import type {Message} from "@bufbuild/protobuf";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file docker_manager/v1/docker_manager.proto.
  */
 export const file_docker_manager_v1_docker_manager: GenFile = /*@__PURE__*/
-    fileDesc("CiZkb2NrZXJfbWFuYWdlci92MS9kb2NrZXJfbWFuYWdlci5wcm90bxIRZG9ja2VyX21hbmFnZXIudjEiGgoKR2V0TWFjaGluZRIMCgRuYW1lGAEgASgJIi0KDVRvZ2dsZVJlcWV1c3QSDgoGZW5hYmxlGAEgASgIEgwKBG5hbWUYAiABKAkiPAoTTGlzdENsaWVudHNSZXNwb25zZRIUCgxhY3RpdmVDbGllbnQYASABKAkSDwoHY2xpZW50cxgCIAMoCSI7CgtMaXN0TWFjaGluZRIsCghtYWNoaW5lcxgCIAMoCzIaLmRvY2tlcl9tYW5hZ2VyLnYxLk1hY2hpbmUijAEKB01hY2hpbmUSCgoCaWQYASABKAQSDAoEbmFtZRgCIAEoCRIOCgZlbmFibGUYAyABKAgSDAoEaG9zdBgEIAEoCRIMCgRwb3J0GAUgASgFEgwKBHVzZXIYBiABKAkSEAoIcGFzc3dvcmQYByABKAkSGwoTdXNlX3B1YmxpY19rZXlfYXV0aBgIIAEoCCIiCg1Td2l0Y2hSZXF1ZXN0EhEKCW1hY2hpbmVJRBgBIAEoCSIHCgVFbXB0eTLlBAoURG9ja2VyTWFuYWdlclNlcnZpY2USTAoMU3dpdGNoQ2xpZW50EiAuZG9ja2VyX21hbmFnZXIudjEuU3dpdGNoUmVxdWVzdBoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgASUQoLTGlzdENsaWVudHMSGC5kb2NrZXJfbWFuYWdlci52MS5FbXB0eRomLmRvY2tlcl9tYW5hZ2VyLnYxLkxpc3RDbGllbnRzUmVzcG9uc2UiABJHCglMaXN0SG9zdHMSGC5kb2NrZXJfbWFuYWdlci52MS5FbXB0eRoeLmRvY2tlcl9tYW5hZ2VyLnYxLkxpc3RNYWNoaW5lIgASQgoDR2V0Eh0uZG9ja2VyX21hbmFnZXIudjEuR2V0TWFjaGluZRoaLmRvY2tlcl9tYW5hZ2VyLnYxLk1hY2hpbmUiABJDCglOZXdDbGllbnQSGi5kb2NrZXJfbWFuYWdlci52MS5NYWNoaW5lGhguZG9ja2VyX21hbmFnZXIudjEuRW1wdHkiABJECgpFZGl0Q2xpZW50EhouZG9ja2VyX21hbmFnZXIudjEuTWFjaGluZRoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgASRgoMRGVsZXRlQ2xpZW50EhouZG9ja2VyX21hbmFnZXIudjEuTWFjaGluZRoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgASTAoMVG9nZ2xlQ2xpZW50EiAuZG9ja2VyX21hbmFnZXIudjEuVG9nZ2xlUmVxZXVzdBoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgBCwgEKFWNvbS5kb2NrZXJfbWFuYWdlci52MUISRG9ja2VyTWFuYWdlclByb3RvUAFaNGdpdGh1Yi5jb20vUkEzNDEvZG9ja21hbi9nZW5lcmF0ZWQvZG9ja2VyX21hbmFnZXIvdjGiAgNEWFiqAhBEb2NrZXJNYW5hZ2VyLlYxygIQRG9ja2VyTWFuYWdlclxWMeICHERvY2tlck1hbmFnZXJcVjFcR1BCTWV0YWRhdGHqAhFEb2NrZXJNYW5hZ2VyOjpWMWIGcHJvdG8z");
+  fileDesc("CiZkb2NrZXJfbWFuYWdlci92MS9kb2NrZXJfbWFuYWdlci5wcm90bxIRZG9ja2VyX21hbmFnZXIudjEiGgoKR2V0TWFjaGluZRIMCgRuYW1lGAEgASgJIi0KDVRvZ2dsZVJlcWV1c3QSDgoGZW5hYmxlGAEgASgIEgwKBG5hbWUYAiABKAkiPAoTTGlzdENsaWVudHNSZXNwb25zZRIUCgxhY3RpdmVDbGllbnQYASABKAkSDwoHY2xpZW50cxgCIAMoCSI7CgtMaXN0TWFjaGluZRIsCghtYWNoaW5lcxgCIAMoCzIaLmRvY2tlcl9tYW5hZ2VyLnYxLk1hY2hpbmUijAEKB01hY2hpbmUSCgoCaWQYASABKAQSDAoEbmFtZRgCIAEoCRIOCgZlbmFibGUYAyABKAgSDAoEaG9zdBgEIAEoCRIMCgRwb3J0GAUgASgFEgwKBHVzZXIYBiABKAkSEAoIcGFzc3dvcmQYByABKAkSGwoTdXNlX3B1YmxpY19rZXlfYXV0aBgIIAEoCCIiCg1Td2l0Y2hSZXF1ZXN0EhEKCW1hY2hpbmVJRBgBIAEoCSIHCgVFbXB0eTLlBAoURG9ja2VyTWFuYWdlclNlcnZpY2USTAoMU3dpdGNoQ2xpZW50EiAuZG9ja2VyX21hbmFnZXIudjEuU3dpdGNoUmVxdWVzdBoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgASUQoLTGlzdENsaWVudHMSGC5kb2NrZXJfbWFuYWdlci52MS5FbXB0eRomLmRvY2tlcl9tYW5hZ2VyLnYxLkxpc3RDbGllbnRzUmVzcG9uc2UiABJHCglMaXN0SG9zdHMSGC5kb2NrZXJfbWFuYWdlci52MS5FbXB0eRoeLmRvY2tlcl9tYW5hZ2VyLnYxLkxpc3RNYWNoaW5lIgASQgoDR2V0Eh0uZG9ja2VyX21hbmFnZXIudjEuR2V0TWFjaGluZRoaLmRvY2tlcl9tYW5hZ2VyLnYxLk1hY2hpbmUiABJDCglOZXdDbGllbnQSGi5kb2NrZXJfbWFuYWdlci52MS5NYWNoaW5lGhguZG9ja2VyX21hbmFnZXIudjEuRW1wdHkiABJECgpFZGl0Q2xpZW50EhouZG9ja2VyX21hbmFnZXIudjEuTWFjaGluZRoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgASRgoMRGVsZXRlQ2xpZW50EhouZG9ja2VyX21hbmFnZXIudjEuTWFjaGluZRoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgASTAoMVG9nZ2xlQ2xpZW50EiAuZG9ja2VyX21hbmFnZXIudjEuVG9nZ2xlUmVxZXVzdBoYLmRvY2tlcl9tYW5hZ2VyLnYxLkVtcHR5IgBCwgEKFWNvbS5kb2NrZXJfbWFuYWdlci52MUISRG9ja2VyTWFuYWdlclByb3RvUAFaNGdpdGh1Yi5jb20vUkEzNDEvZG9ja21hbi9nZW5lcmF0ZWQvZG9ja2VyX21hbmFnZXIvdjGiAgNEWFiqAhBEb2NrZXJNYW5hZ2VyLlYxygIQRG9ja2VyTWFuYWdlclxWMeICHERvY2tlck1hbmFnZXJcVjFcR1BCTWV0YWRhdGHqAhFEb2NrZXJNYW5hZ2VyOjpWMWIGcHJvdG8z");
 
 /**
  * @generated from message docker_manager.v1.GetMachine
@@ -49,7 +49,7 @@ export type ToggleReqeust = Message<"docker_manager.v1.ToggleReqeust"> & {
  * Use `create(ToggleReqeustSchema)` to create a new message.
  */
 export const ToggleReqeustSchema: GenMessage<ToggleReqeust> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 1);
+  messageDesc(file_docker_manager_v1_docker_manager, 1);
 
 /**
  * @generated from message docker_manager.v1.ListClientsResponse
@@ -71,7 +71,7 @@ export type ListClientsResponse = Message<"docker_manager.v1.ListClientsResponse
  * Use `create(ListClientsResponseSchema)` to create a new message.
  */
 export const ListClientsResponseSchema: GenMessage<ListClientsResponse> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 2);
+  messageDesc(file_docker_manager_v1_docker_manager, 2);
 
 /**
  * @generated from message docker_manager.v1.ListMachine
@@ -88,7 +88,7 @@ export type ListMachine = Message<"docker_manager.v1.ListMachine"> & {
  * Use `create(ListMachineSchema)` to create a new message.
  */
 export const ListMachineSchema: GenMessage<ListMachine> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 3);
+  messageDesc(file_docker_manager_v1_docker_manager, 3);
 
 /**
  * @generated from message docker_manager.v1.Machine
@@ -140,7 +140,7 @@ export type Machine = Message<"docker_manager.v1.Machine"> & {
  * Use `create(MachineSchema)` to create a new message.
  */
 export const MachineSchema: GenMessage<Machine> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 4);
+  messageDesc(file_docker_manager_v1_docker_manager, 4);
 
 /**
  * @generated from message docker_manager.v1.SwitchRequest
@@ -157,7 +157,7 @@ export type SwitchRequest = Message<"docker_manager.v1.SwitchRequest"> & {
  * Use `create(SwitchRequestSchema)` to create a new message.
  */
 export const SwitchRequestSchema: GenMessage<SwitchRequest> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 5);
+  messageDesc(file_docker_manager_v1_docker_manager, 5);
 
 /**
  * @generated from message docker_manager.v1.Empty
@@ -170,7 +170,7 @@ export type Empty = Message<"docker_manager.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-    messageDesc(file_docker_manager_v1_docker_manager, 6);
+  messageDesc(file_docker_manager_v1_docker_manager, 6);
 
 /**
  * @generated from service docker_manager.v1.DockerManagerService

@@ -26,8 +26,10 @@ const (
 )
 
 var (
-	Flavour    = Server
-	Version    = VersionDev
+	Flavour = Server
+	//Version    = VersionDev
+	// todo do not commit this
+	Version    = "v1.1.0"
 	CommitInfo = Unknown
 	BuildDate  = Unknown
 	Branch     = Unknown

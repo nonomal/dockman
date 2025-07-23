@@ -9,6 +9,7 @@ import (
 type Service struct {
 	SshKeyDB  ssh.KeyManager
 	MachineDB ssh.MachineManager
+	InfoDB    *impl.VersionDB
 }
 
 func NewService(basepath string) *Service {
@@ -20,10 +21,12 @@ func NewService(basepath string) *Service {
 
 	keyman := impl.NewKeyManagerDB(gormDB)
 	macMan := impl.NewMachineManagerDB(gormDB)
+	verMan := impl.NewVersionHistoryManager(gormDB)
 
 	return &Service{
 		SshKeyDB:  keyman,
 		MachineDB: macMan,
+		InfoDB:    verMan,
 	}
 }
 

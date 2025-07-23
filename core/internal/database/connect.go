@@ -39,7 +39,13 @@ func connect(basepath string) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	if err = db.AutoMigrate(&ssh.MachineOptions{}, &ssh.KeyConfig{}); err != nil {
+	tables := []interface{}{
+		&ssh.MachineOptions{},
+		&ssh.KeyConfig{},
+		&info.VersionHistory{},
+	}
+
+	if err = db.AutoMigrate(tables...); err != nil {
 		return nil, fmt.Errorf("failed to auto migrate DB: %w", err)
 	}
 

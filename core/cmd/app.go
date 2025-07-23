@@ -8,6 +8,7 @@ import (
 	dockermanagerrpc "github.com/RA341/dockman/generated/docker_manager/v1/v1connect"
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
 	gitrpc "github.com/RA341/dockman/generated/git/v1/v1connect"
+	inforpc "github.com/RA341/dockman/generated/info/v1/v1connect"
 	"github.com/RA341/dockman/internal/auth"
 	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/database"
@@ -15,6 +16,7 @@ import (
 	dm "github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/internal/git"
+	"github.com/RA341/dockman/internal/info"
 	"github.com/RA341/dockman/internal/lsp"
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
@@ -29,6 +31,7 @@ type App struct {
 	Git           *git.Service
 	File          *files.Service
 	DB            *database.Service
+	Info          *info.Service
 	SSH           *ssh.Service
 }
 
@@ -42,6 +45,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	fileSrv := files.NewService(cr)
 	gitSrv := git.NewService(cr)
 	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, &cr, &conf.LocalAddr)
+	infoSrv := info.NewService(dbSrv.InfoDB)
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{
@@ -51,6 +55,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		Git:           gitSrv,
 		DockerManager: dockerManagerSrv,
 		DB:            dbSrv,
+		Info:          infoSrv,
 		SSH:           sshSrv,
 	}, nil
 }
@@ -78,6 +83,10 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		func() (string, http.Handler) {
 			return authrpc.NewAuthServiceHandler(auth.NewConnectHandler(a.Auth))
 		},
+		// info
+		func() (string, http.Handler) {
+			return inforpc.NewInfoServiceHandler(info.NewConnectHandler(a.Info), authInterceptor)
+		},
 		// files
 		func() (string, http.Handler) {
 			return filesrpc.NewFileServiceHandler(files.NewConnectHandler(a.File), authInterceptor)
@@ -91,7 +100,9 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 				a.DockerManager.GetService,
 				a.Config.Updater.Addr,
 				a.Config.Updater.PassKey,
-			), authInterceptor)
+			),
+				authInterceptor,
+			)
 		},
 		// git
 		func() (string, http.Handler) {
