@@ -61,6 +61,7 @@ services:
     volumes:
       #  2️⃣              3️⃣                
       - /path/to/stacks:/path/to/stacks
+      - /path/to/dockman/config:/config
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8866:8866"
@@ -79,8 +80,11 @@ services:
     environment:
       - DOCKMAN_COMPOSE_ROOT=/home/zaphodb/stacks
     volumes:
-      - /home/zaphodb/stacks:/home/zaphodb/stacks
       - /var/run/docker.sock:/var/run/docker.sock
+      - /home/zaphodb/stacks:/home/zaphodb/stacks
+
+      # never mount this dir in your stacks
+      - /home/zaphodb/appdata/dockman/config:/config
     ports:
       - "8866:8866"
     restart: always
@@ -275,15 +279,13 @@ stacks/
 ```
 
 Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/issues) and we can argue about it.
-
 ## Multihost Support
 
 > [!IMPORTANT]
 >
-> This is now available in [v1.1+](https://github.com/RA341/dockman/releases/tag/v1.1.0)
+> From [v2+](https://github.com/RA341/dockman/releases/tag/v2.0.0) onwards, hosts.yaml method is removed,
+> in favour of a more easier UI method
 >
-> Ensure you are on [v1.1 tag](https://github.com/RA341/dockman/pkgs/container/dockman/454581385?tag=v1.1),
-> or on [latest tag](https://github.com/RA341/dockman/pkgs/container/dockman/454581385?tag=latest)
 
 Dockman's multihost feature lets you manage remote docker hosts from one interface.
 Jump between servers, keep your configurations perfectly organized,
@@ -312,11 +314,7 @@ but you can still sync configurations between branches.
 3. **Network**: Docker daemon running on remote hosts with network connectivity to Dockman
 
 ### Getting Started
-
-First, create an empty `hosts.yaml` file before running docker-compose
-> [!CAUTION]
-> Docker-compose will create a directory instead if it doesn't exist,
-> this will cause dockman to fail since it's expecting a file
+Ensure you have added the following mounts in your docker-compose.yml:
 
 ```yaml
 name: dockman
@@ -325,20 +323,78 @@ services:
     container_name: dockman
     image: ghcr.io/ra341/dockman:latest
     environment:
-      - DOCKMAN_COMPOSE_ROOT=/home/zaphodb/stacks
+      - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
     volumes:
-      - /home/zaphodb/stacks:/home/zaphodb/stacks
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./config/ssh:/app/config/ssh
-      - ./hosts.yaml:/app/config/hosts.yaml
+      - /path/to/dockman/config:/config
     ports:
       - "8866:8866"
     restart: always
 ```
 
-### Configuration
+**Migration from hosts.yaml:**
+1. Remove the `./hosts.yaml:/app/config/hosts.yaml` volume mount from docker-compose
+2. Remove the `./config/ssh/` volume mount from docker-compose
+3. Reconfigure your hosts through the web UI
+4. Keep your SSH keys in(they'll still work)
 
-Basic `hosts.yaml` structure:
+```yaml
+# docker compose sample
+name: dockman
+services:
+  dockman:
+    container_name: dockman
+    image: ghcr.io/ra341/dockman:latest
+    environment:
+      - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
+    volumes:
+      # these mounts can now be removed
+      # - ./config/ssh:/app/config/ssh
+      # - ./hosts.yaml:/app/config/hosts.yaml
+
+      # 4️⃣ NEW: Mount config directory for database storage
+      # DO NOT store this in dockman compose root
+      - /path/to/dockman/config:/config
+    ports:
+      - "8866:8866"
+    restart: always
+```
+
+### Adding Hosts via Web UI
+
+1. **Navigate to the Settings icon on the top right** and click "Add New Machine"
+
+2. **Configure your host** with the following fields:
+   - <img height="300" alt="image" src="https://github.com/user-attachments/assets/7ef19e3a-0589-4ca5-b6f8-fe479c711375" />
+   - **Name**: A friendly name for your host (e.g., "apollo", "production-server")
+   - **Host**: IP address or hostname of your Docker host
+   - **Port**: SSH port (default: 22)
+   - **User**: SSH username that has Docker access
+   - **Enable Machine**: Toggle to enable/disable this host
+   - **Authentication**: Choose between Password or Public Key authentication
+
+### Authentication Methods
+
+#### 1. SSH Keys (Recommended)
+- Toggle **"Public Key"** to enabled
+- Dockman generates its own SSH key pair when it first runs
+- **Automatic Key transfer**: Dockman will automatically copy the public key to your target host during the initial connection
+- These are separate from your personal SSH keys in `~/.ssh/`
+
+#### 2. Password Authentication
+- Toggle **"Public Key"** to disabled
+- Enter your password in the **Password** field
+- Your password will be stored and used for subsequent connections
+
+### Legacy Configuration (Deprecated)
+
+> [!WARNING]
+> The `hosts.yaml` configuration method is **deprecated** as of [v2.0.0](https://github.com/RA341/dockman/releases/tag/v2.0.0) and has been removed.
+> For v2+, use the web UI method described above.
+>  
+> This is only available in [v1](https://github.com/RA341/dockman/releases/tag/v1.1.0) and below
+
+For reference, the old `hosts.yaml` structure was:
 
 ```yaml
 default_host: local
@@ -350,91 +406,13 @@ machines:
     port: 22
     user: root
     use_public_key_auth: true
-```
-
-### Auth Methods (in order of priority)
-
-1. **SSH Keys** - Set `use_public_key_auth: true` and copy your public key:
-   ```bash
-   ssh-copy-id -i ./config/ssh/id_rsa.pub user@host
-   ```
-
-   Dockman generates its own SSH key pair in `./config/ssh/` when it first runs. These are separate from your personal
-   SSH keys in `~/.ssh/`. The container uses these dedicated keys for all remote connections.
-
-2. **Password** - If `use_public_key_auth: false` then dockman uses `password: yourpassword`
-
-3. **Host SSH Config** - If both `use_public_key_auth: false` and `password` is empty, then dockman falls back to your
-   personal `~/.ssh` config.
-
-> [!CAUTION]
-> **Host SSH Config** method is intended for local development when running Dockman directly (not in Docker).
-> Inside a Docker container, this behavior is undefined and will likely fail
-> since the container doesn't have access to your user's SSH directory.
-
-### Multiple Machines Example
-
-```yaml
-default_host: apollo # apollo will be the default connecting machine 
-enable_local_docker: true # load the local client mounted at /var/run/docker.sock
-machines:
-  apollo:
-    enable: true
-    host: 192.169.69.0
-    port: 22
-    user: root
-    use_public_key_auth: true
-
   ares:
     enable: true
     host: 10.0.1.100
     port: 2222
     user: deploy
-    password: someSecretPassword # this machine will use password auth
+    password: someSecretPassword
     use_public_key_auth: false
-
-  artemis:
-    enable: false  # disabled will not be loaded
-    host: staging.example.com
-    port: 22
-    user: ubuntu
-    use_public_key_auth: true
-```
-
-### Config Parameters
-
-| Parameter             | Required | Description                      |
-|-----------------------|----------|----------------------------------|
-| `enable`              | Yes      | Enable/disable this machine      |
-| `host`                | Yes      | IP or hostname                   |
-| `port`                | Yes      | SSH port (usually 22)            |
-| `user`                | Yes      | SSH username                     |
-| `password`            | No       | Password for auth                |
-| `use_public_key_auth` | Yes      | Use SSH keys instead of password |
-| `remote_public_key`   | No       | Auto-populated, don't touch      |
-
-> [!IMPORTANT]
-> The `remote_public_key` field gets filled automatically when you connect.
->
-> NEVER MODIFY THIS FIELD MANUALLY AS IT MAY BREAK AUTH
-
-#### Troubleshooting
-
-**SSH Connection Failed:**
-
-```bash
-# Test SSH connection manually
-ssh user@host-address
-
-# Check SSH key permissions
-chmod 600 ~/.ssh/id_rsa
-```
-
-**Docker Daemon Not Accessible:**
-
-```bash
-# Verify Docker is running on remote host and accessible without root access
-ssh user@host-address 'docker version'
 ```
 
 ## Security Considerations
@@ -446,18 +424,18 @@ ssh user@host-address 'docker version'
 #### Why Exposing Dockman to the Internet Is a Terrible Idea
 
 Dockman has access to your Docker socket, which is essentially root access to your entire system. One compromised
-dockman instance means a bad day for you.
+Dockman instance means a bad day for you.
 
-It gets worse if you're using dockman to manage remote Docker hosts. Since it connects via SSH, a breach doesn't just
-compromise one server, it potentially compromises every connected machine in your setup.
+It gets worse if you're using Dockman to manage remote Docker hosts. Since it connects via SSH, a breach doesn't just
+compromise one server it potentially compromises every connected machine in your setup.
 
-#### How to Actually Secure Dockman
+#### How to Secure Dockman
 
 Keep dockman local only. It's designed for your private network, not the wild west of the internet. When you need remote
 access, use a VPN like [Netbird](https://netbird.io/) or [Tailscale](https://tailscale.com/) to securely tunnel into
 your network.
 
-Turn on dockman's built-in authentication too. On a private network, this gives you sufficient protection for most home
+Also, enable Dockman's built-in authentication. On a private network, this gives you sufficient protection for most home
 setups without making things overly complicated.
 
 ### **Git Repository Security**
@@ -467,7 +445,7 @@ setups without making things overly complicated.
 Your dockman repo breaks the usual rules about secrets in git repositories, and that's intentional. Unlike most
 projects, this repository lives permanently on your homelab server, which changes everything about secret management.
 
-Git actually makes secrets tracking easier here. When you update your Plex API key or database password and something
+Git makes secret tracking easier here. When you update your Plex API key or database password and something
 breaks, you can roll back to the previous working configuration. Since this isn't a collaboration repo, the typical
 concerns about team access don't apply.
 
@@ -477,22 +455,22 @@ The stories about secrets in git involve one mistake: pushing to public reposito
 API keys to public GitHub repos. If you need remote backup, use private self-hosted solutions
 like [Gitea](https://about.gitea.com/) on a VPS.
 
-#### What Actually Works
+#### What Works
 
-Keep secrets directly in your local repository, it makes change tracking easier. Your homelab repo should never touch
+Keep secrets directly in your local repository; it makes change tracking easier. Your homelab repo should never touch
 public services like GitHub or GitLab.
 
-If you prefer .env files with `.gitignore`, that works too, dockman doesn't enforce any particular convention.
+If you prefer .env files with `.gitignore`, that works too; dockman doesn't enforce any particular convention.
 
 ## Feedback
 
 If you spot a bug, have an idea for a feature, or just want to share your thoughts, please open an issue any and all
-feedback is welcome.
+Feedback is welcome.
 
 I'd especially love to hear what you think about a couple of things:
 
 * The UI
-    * I'm not a UI expert, in fact I hate HTML/CSS in general. The current interface is mostly built using Material-UI
+    * I'm not a UI expert; in fact, I hate HTML/CSS in general. The current interface is mostly built using Material-UI
       and Gemini.
     * If you have ideas on how to make it look better or easier to use, I'm all ears. Feel free to open an issue with
       your suggestions.
@@ -521,8 +499,8 @@ Before diving in, make sure you have these installed:
   like Make, but nicer)
 - **[Coreutils](https://uutils.github.io/coreutils/docs/installation.html)** – used to perform cross-platform file
   operations, since Taskfile doesn't yet support platform-agnostic shell commands
-  > _Using [uutils/coreutils](https://github.com/uutils/coreutils) as a temporary workaround
-  pending [Taskfile cross-platform shell support](https://github.com/go-task/task/issues/197#issuecomment-3014045749)_
+  > Using [uutils/coreutils](https://github.com/uutils/coreutils) as a temporary workaround
+  until [Taskfile cross-platform shell support](https://github.com/go-task/task/issues/197#issuecomment-3014045749) added
 
 ### Init
 
