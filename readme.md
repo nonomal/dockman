@@ -435,7 +435,6 @@ services:
 1. Remove the `./hosts.yaml:/app/config/hosts.yaml` volume mount from docker-compose
 2. Remove the `./config/ssh/` volume mount from docker-compose
 3. Reconfigure your hosts through the web UI
-4. Keep your SSH keys in(they'll still work)
 
 ```yaml
 # docker compose sample
