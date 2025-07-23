@@ -25,7 +25,7 @@ export function DiffViewer({commitId, currentContent, selectedFile}: DiffViewPro
             setCommitContent(file);
         }
         setLoading(false);
-    }, [commitId, selectedFile, showError]);
+    }, [commitId, selectedFile]);
 
     useEffect(() => {
         fetchFileAtCommit().then();
