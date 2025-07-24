@@ -31,6 +31,7 @@ func NewService(root string) *Service {
 		log.Fatal().Err(err).Msg("Failed to create commit")
 	}
 
+	log.Debug().Msg("Git service loaded successfully")
 	return srv
 }
 

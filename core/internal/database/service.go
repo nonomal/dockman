@@ -23,6 +23,7 @@ func NewService(basepath string) *Service {
 	macMan := impl.NewMachineManagerDB(gormDB)
 	verMan := impl.NewVersionHistoryManager(gormDB)
 
+	log.Debug().Msg("DB service loaded successfully")
 	return &Service{
 		SshKeyDB:  keyman,
 		MachineDB: macMan,

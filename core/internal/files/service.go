@@ -24,6 +24,7 @@ func NewService(composeRoot string) *Service {
 		log.Fatal().Err(err).Str("compose-root", composeRoot).Msg("failed to create compose root folder")
 	}
 
+	log.Debug().Msg("File service loaded successfully")
 	return &Service{
 		composeRoot: composeRoot,
 	}
