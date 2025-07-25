@@ -24,3 +24,4 @@ install/stacks/
 /install/docker/data/dockman/dockman.db-wal
 /install/docker/stacks/
 /core/internal/git/tests/
+/install/docker/

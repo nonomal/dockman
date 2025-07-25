@@ -39,8 +39,8 @@ tasks:
   ui:
     desc: "Build the latest web ui in {{.UI_DIR}}"
     dir: "{{.UI_DIR}}"
-#    sources:
-#      - "**/*.tsx"
+    #    sources:
+    #      - "**/*.tsx"
     cmds:
       - npm run build
 
@@ -109,6 +109,13 @@ tasks:
       - task: go:b:{{.CMD_NAME}}
       - ../{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}{{.ARGS}}
 
+  go:
+    desc: "Builds and runs the default Go target of develop. Usage: task go"
+    vars:
+      CMD_NAME: "develop"
+    cmds:
+      - task: go:{{.CMD_NAME}}
+
   dk:b:*:
     desc: "Builds the main dockman image for a specific target. Usage: task dk:<target>"
     vars:
@@ -129,6 +136,13 @@ tasks:
     preconditions:
       - sh: 'test -n "{{.TARGET}}"'
         msg: "The 'target' variable must be provided. Usage: task dk:r.<target-name>"
+
+  dk:
+    desc: "Builds and runs the main dockman image. Usage: task dk"
+    vars:
+      TARGET: "alpine"
+    cmds:
+      - task dk:{{.TARGET}}
 
   dk:up:
     desc: "Builds the updater image. Usage: task dk:<target>"
