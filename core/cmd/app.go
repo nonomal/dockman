@@ -91,6 +91,11 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		func() (string, http.Handler) {
 			return filesrpc.NewFileServiceHandler(files.NewConnectHandler(a.File), authInterceptor)
 		},
+		// fuzzy file searcher
+		func() (string, http.Handler) {
+			wsFunc := files.NewWebSocketHandler(a.File, lsp.DefaultUpgrader)
+			return a.registerHttpHandler("/ws/fuzz", wsFunc)
+		},
 		func() (string, http.Handler) {
 			return a.registerHttpHandler("/api/file", files.NewFileHandler(a.File))
 		},
@@ -127,7 +132,7 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		// lsp
 		func() (string, http.Handler) {
 			wsFunc := lsp.WebSocketHandler(lsp.DefaultUpgrader)
-			return a.registerHttpHandler("/api/lsp", wsFunc)
+			return a.registerHttpHandler("/ws/lsp", wsFunc)
 		},
 	}
 
