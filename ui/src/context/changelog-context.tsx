@@ -3,7 +3,7 @@ import {callRPC, useClient} from '../lib/api'
 import {useSnackbar} from '../hooks/snackbar'
 import {InfoService} from "../gen/info/v1/info_pb.ts";
 import {ChangelogContext} from '../hooks/changelog.ts';
-import GithubMarkdownPopup from "../components/change-log-modal.tsx";
+import GithubMarkdownPopup from "../pages/.components/change-log-modal.tsx";
 
 interface ChangelogProviderProps {
     children: ReactNode

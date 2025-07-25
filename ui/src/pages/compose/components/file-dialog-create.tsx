@@ -9,7 +9,7 @@ interface AddFileDialogProps {
     parentName: string
 }
 
-export function AddFileDialog({open, onClose, onConfirm, parentName}: AddFileDialogProps) {
+export function FileDialogCreate({open, onClose, onConfirm, parentName}: AddFileDialogProps) {
     const [name, setName] = useState('')
     const [error, setError] = useState('')
 

@@ -1,10 +1,10 @@
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 import {Box, Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Tooltip} from '@mui/material';
 import {Add, Analytics, Delete, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material';
-import type {FileGroup} from "../hooks/files.ts";
 import React from "react";
 import {amber} from "@mui/material/colors";
 import FileIcon from "./file-icon.tsx";
+import type {FileGroup} from "../../../hooks/files.ts";
 
 interface FileItemProps {
     group: FileGroup;

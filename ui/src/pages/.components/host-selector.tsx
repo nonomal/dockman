@@ -1,8 +1,8 @@
 import {Box, Button, Menu, MenuItem, Typography} from "@mui/material";
 import {useEffect, useRef, useState} from "react";
 import {KeyChar} from "./keychar.tsx";
-import {useHost} from "../hooks/host.ts";
 import {ExpandMore} from "@mui/icons-material";
+import { useHost } from "../../hooks/host.ts";
 
 function HostSelectDropdown() {
     const {selectedHost, availableHosts, switchMachine, isLoading} = useHost()
