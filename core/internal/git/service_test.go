@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"github.com/RA341/dockman/internal/files"
+	"github.com/RA341/dockman/pkg/logger"
 	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,10 @@ import (
 	"testing"
 )
 
+func init() {
+	logger.InitForTest()
+}
+
 func TestImportSync(t *testing.T) {
 	// create test repo
 
@@ -20,6 +25,10 @@ func TestImportSync(t *testing.T) {
 	// commit and save
 
 	// assert 2
+}
+
+func Test_DUMB(t *testing.T) {
+	_ = NewService("./git_test")
 }
 
 func createTestRepo(t *testing.T, repoPath string) (*git.Repository, *Service) {

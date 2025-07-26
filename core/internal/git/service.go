@@ -3,6 +3,7 @@ package git
 import (
 	"errors"
 	"fmt"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -10,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -39,7 +41,12 @@ func initializeGit(root string) (*git.Repository, error) {
 	// Check if the repository already exists
 	existingRepo, err := git.PlainOpen(root)
 	if err == nil {
+		log.Debug().Msg("Loaded existing git repository")
 		return existingRepo, nil
+	}
+
+	if !errors.Is(err, git.ErrRepositoryNotExists) {
+		return nil, fmt.Errorf("failed to open git repository: %w", err)
 	}
 
 	// PlainOpen returns an error, implies the directory doesn't exist,
@@ -51,11 +58,18 @@ func initializeGit(root string) (*git.Repository, error) {
 		Bare: false,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error initializing repository: %s\n", err)
+		return nil, fmt.Errorf("error initializing repository: %s\n", err)
 	}
 
-	if err = commitSampleFile(newRepo); err != nil {
-		return nil, err
+	dir, err := os.ReadDir(root)
+	if err != nil {
+		return nil, fmt.Errorf("error reading directory: %s\n", err)
+	}
+	// .git will be counted in ReadDir, excluding that
+	if len(dir) < 2 {
+		if err = createSampleFile(root); err != nil {
+			return nil, err
+		}
 	}
 
 	log.Info().Str("path", root).Msg("Created new repository")
@@ -64,15 +78,22 @@ func initializeGit(root string) (*git.Repository, error) {
 
 // an empty git repo will not have any content and will fail to create other branches
 // so we commit an empty compose file
-func commitSampleFile(repo *git.Repository) error {
-	worktree, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
+func createSampleFile(root string) error {
+	log.Debug().Msg("empty repo, adding dummy readme")
 
-	log.Debug().Msg("empty repo, adding sample compose")
-	if _, err = worktree.Filesystem.Create("sample-compose.yaml"); err != nil {
-		return err
+	const dummyFileContent = `Hey there! Hello,
+
+Thanks for using Dockman
+
+This file was auto-created because Dockman needs to initialize a Git repo —
+and Git doesn’t like empty folders. So here we are, making history with this very first file.
+
+Feel free to delete or replace me. I won't take it personally.
+`
+
+	err := fileutil.CreateSampleFile(filepath.Join(root, "readme.txt"), dummyFileContent)
+	if err != nil {
+		return fmt.Errorf("error writing to dummy readme: %s", err)
 	}
 
 	return nil

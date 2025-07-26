@@ -18,3 +18,4 @@ install/stacks/
 /**/appdata
 /ui/'../
 /**/.task
+/core/internal/git/git_test/
