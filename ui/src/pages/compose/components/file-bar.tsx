@@ -1,19 +1,18 @@
-import React, {useCallback, useEffect, useState} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import {Box, CircularProgress, Divider, IconButton, List, styled, Toolbar, Tooltip, Typography} from '@mui/material'
 import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
-import {useLocation, useParams} from 'react-router-dom'
+import {useParams} from 'react-router-dom'
 import FileItem from './file-item.tsx'
 import {FileDialogCreate} from "./file-dialog-create.tsx"
 import {FilesDialogImport} from "./file-dialog-import.tsx";
 import {useFiles} from "../../../hooks/files.ts";
 import {useHost} from "../../../hooks/host.ts";
 import {useTelescope} from "../context/telescope-hook.ts";
-import {KeyChar} from "../../.components/keychar.tsx";
+import {ShortcutFormatter} from "./shortcut-formatter.tsx";
 
 export function FileList() {
-    const location = useLocation()
     const {file: currentDir} = useParams<{ file: string }>()
-    const {files, isLoading, addFile, deleteFile} = useFiles()
+    const {files, isLoading, addFile} = useFiles()
     const {selectedHost} = useHost()
     const {showTelescope} = useTelescope()
 
@@ -59,7 +58,7 @@ export function FileList() {
     }, [])
 
     const openAddDialog = (parentName: string) => {
-        setDialogState({open: true, parent: parentName})
+        setDialogState(() => ({open: true, parent: parentName}))
     }
 
     const closeAddDialog = () => {
@@ -71,10 +70,6 @@ export function FileList() {
         addFile(filename, dialogState.parent).then(() => {
             closeAddDialog()
         })
-    }
-
-    const handleDelete = (filename: string) => {
-        deleteFile(filename, location.pathname).then()
     }
 
     const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -162,7 +157,6 @@ export function FileList() {
                                 key={group.name}
                                 group={group}
                                 onAdd={openAddDialog}
-                                onDelete={handleDelete}
                                 isOpen={openDirs.has(group.name)}
                                 onToggle={handleToggle}
                             />
@@ -188,29 +182,6 @@ export function FileList() {
     )
 }
 
-const ShortcutFormatter = ({title, keyCombo}: { title: string, keyCombo: string[] }) => {
-    return (
-        <Box display="flex" alignItems="center" gap={0.5}>
-            <Typography variant="body2">{title}</Typography>
-            {
-                keyCombo.length > 0 && <Box display="flex" alignItems="center" gap={0.3} ml={1}>{
-                    keyCombo.map((key, index) => (
-                        <React.Fragment key={key}>
-                            <KeyChar>{key}</KeyChar>
-                            {index < keyCombo.length - 1 && (
-                                <Typography variant="body2" component="span" sx={{mx: 0.3}}>
-                                    +
-                                </Typography>
-                            )}
-                        </React.Fragment>
-                    ))
-                }
-                </Box>
-            }
-
-        </Box>
-    );
-};
 
 const StyledScrollbarBox = styled(Box)(({theme}) => ({
     overflowY: 'auto',

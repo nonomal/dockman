@@ -51,35 +51,21 @@ export function FileDialogCreate({open, onClose, onConfirm, parentName}: AddFile
         ? `Add file to "${parentName}"`
         : "Add new file"
 
-    const helperTextContent = parentName ? (
+    const helperBullets = parentName ? [
+            // !W are special bullet points and will be rendered as warnings
+            `${WarningBullet}File name cannot contain slashes ('/').`,
+            `${WarningBullet}Cannot create child folders inside existing folders.`,
+        ]
+        : [
+            "Directories will be created automatically.",
+            "Empty directories will not be shown or created: folder -> will be considered a text file ",
+            "e.g., my-file.txt or new-folder/file.txt",
+            "directories with compose files will be considered special"
+        ]
+
+    const helperTextContent = (
         <Box>
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
-                <WarningAmberOutlined color="error" sx={{fontSize: '1rem'}}/>
-                <Typography component="span" variant="body2">
-                    File name cannot contain slashes ('/').
-                </Typography>
-            </Box>
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5}}>
-                <WarningAmberOutlined color="error" sx={{fontSize: '1rem'}}/>
-                <Typography component="span" variant="body2">
-                    Cannot create child folders inside existing folders.
-                </Typography>
-            </Box>
-        </Box>
-    ) : (
-        <Box>
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
-                <InfoOutlined color="action" sx={{fontSize: '1rem'}}/>
-                <Typography component="span" variant="body2">
-                    e.g., my-file.txt or new-folder/file.txt
-                </Typography>
-            </Box>
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5}}>
-                <InfoOutlined color="action" sx={{fontSize: '1rem'}}/>
-                <Typography component="span" variant="body2">
-                    Directories will be created automatically.
-                </Typography>
-            </Box>
+            <InfoMessages bullets={helperBullets}/>
         </Box>
     )
 
@@ -126,4 +112,38 @@ export function FileDialogCreate({open, onClose, onConfirm, parentName}: AddFile
             </DialogActions>
         </Dialog>
     )
+}
+
+const WarningBullet = "!W"
+
+function InfoMessages({bullets}: { bullets: string[] }) {
+    return (
+        <Box>
+            {bullets.map((text, index) => {
+                const isWarning = text.startsWith(WarningBullet);
+                const message = isWarning ? text.slice(WarningBullet.length).trimStart() : text;
+
+                return (
+                    <Box
+                        key={index}
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            mt: index === 0 ? 0 : 0.5,
+                        }}
+                    >
+                        {isWarning ? (
+                            <WarningAmberOutlined color="error" sx={{fontSize: '1rem'}}/>
+                        ) : (
+                            <InfoOutlined color="action" sx={{fontSize: '1rem'}}/>
+                        )}
+                        <Typography component="span" variant="body2">
+                            {message}
+                        </Typography>
+                    </Box>
+                );
+            })}
+        </Box>
+    );
 }

@@ -38,6 +38,9 @@ const GitignoreIcon = () => (
 const DefaultFileIcon = () => (
     <Description sx={{color: blue[200]}}/>
 );
+export const DockerFolderIcon = () => (
+    <SvgFromUrl url={'/docker-folder.svg'}/>
+);
 
 
 interface FileIconProps {

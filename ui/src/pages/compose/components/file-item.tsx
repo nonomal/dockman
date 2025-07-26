@@ -1,143 +1,254 @@
-import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
-import {Box, Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Tooltip} from '@mui/material';
-import {Add, Analytics, Delete, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material';
+import {Link as RouterLink, useLocation} from 'react-router-dom';
+import {Box, Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemText} from '@mui/material';
+import {Add, Delete, ExpandLess, ExpandMore, Folder} from '@mui/icons-material';
+import {type FileGroup, useFiles} from "../../../hooks/files.ts";
 import React from "react";
+import FileIcon, {DockerFolderIcon} from "./file-icon.tsx";
 import {amber} from "@mui/material/colors";
-import FileIcon from "./file-icon.tsx";
-import type {FileGroup} from "../../../hooks/files.ts";
 
 interface FileItemProps {
-    group: FileGroup;
-    isOpen: boolean;
-    onToggle: (name: string) => void;
-    onAdd: (name: string) => void;
-    onDelete: (name: string) => void;
+    group: FileGroup,
+    isOpen: boolean,
+    onToggle: (name: string) => void,
+    onAdd: (name: string) => void,
+    isSelected?: boolean; // Add this
+    level?: number; // Add this
 }
 
-const FileItem = React.memo(({group, onAdd, onDelete, isOpen, onToggle}: FileItemProps) => {
-        const location = useLocation();
-        const isDirectory = group.children.length !== 0;
-        const isComposeFile = !isDirectory && group.name.endsWith('compose.yaml');
+const FileItem = React.memo(({group, onAdd, isOpen, onToggle}: FileItemProps) => {
+    const location = useLocation();
+    const {deleteFile} = useFiles()
 
-        const handleToggle = () => {
-            if (isDirectory) {
-                onToggle(group.name);
+    const isDirectory = group.children.length > 0;
+    const isRootFile = !isDirectory;
+
+    // For root files, check if it's a compose file
+    const isRootComposeFile = isRootFile && group.name.endsWith('compose.yaml');
+
+    const onDelete = (filename: string) => {
+        deleteFile(filename, location.pathname).then()
+    }
+
+    // Extract compose file and supporting files from directory
+    const extractComposeInfo = () => {
+        if (!isDirectory) return {compose: null, support: []};
+
+        let compose: string | null = null;
+        const support: string[] = [];
+
+        for (const child of group.children) {
+            if (!compose && child.endsWith('compose.yaml')) {
+                compose = child;
+            } else {
+                support.push(child);
             }
-        };
+        }
 
-        const ParentProps = !isDirectory ? {
-            component: RouterLink,
-            to: `/files/${group.name}`,
-            selected: location.pathname === `/files/${group.name}`,
-        } : {
-            onClick: handleToggle,
-        };
+        return {compose, support};
+    };
 
+    const {compose, support} = extractComposeInfo();
+    const hasCompose = Boolean(compose);
+
+    const handleToggle = () => {
+        if (isDirectory) {
+            onToggle(group.name);
+        }
+    };
+
+    // Render root file (non-directory)
+    if (isRootFile) {
         return (
-            <>
-                <ListItemButton {...ParentProps} sx={{py: isComposeFile ? 1.25 : 1}}>
-                    <ListItemIcon>
-                        {isDirectory
-                            ? <Folder sx={{color: amber[800]}}/>
-                            : <FileIcon filename={group.name}/>
-                        }
-                    </ListItemIcon>
+            <ListItemButton
+                component={RouterLink}
+                to={`/files/${group.name}`}
+                selected={location.pathname === `/files/${group.name}`}
+                sx={{py: isRootComposeFile ? 1.25 : 1}}
+            >
+                <ListItemIcon sx={{minWidth: 32}}>
+                    <FileIcon filename={group.name}/>
+                </ListItemIcon>
 
-                    <Box sx={{flex: 1, mr: 1}}>
-                        <ListItemText
-                            primary={group.name}
-                            slotProps={{
-                                primary: {sx: {fontSize: '0.95rem'}}
-                            }}
-                        />
-                        {isComposeFile && <ComposeActions urlPath={`files/${group.name}`}/>}
-                    </Box>
+                <Box sx={{flex: 1, mr: 1}}>
+                    <ListItemText
+                        primary={group.name}
+                        slotProps={{
+                            primary: {sx: {fontSize: '0.85rem'}}
+                        }}
+                    />
+                    {isRootComposeFile && <ComposeActions urlPath={`files/${group.name}`}/>}
+                </Box>
 
-                    {/* Actions on the far right */}
-                    {isDirectory && (
-                        <IconButton size="small" onClick={(e) => handleActionClick(e, () => onAdd(group.name))}
-                                    color="success">
-                            <Add fontSize="small"/>
-                        </IconButton>
-                    )}
-                    <IconButton size="small" onClick={(e) => handleActionClick(e, () => onDelete(group.name))}
-                                color="error">
-                        <Delete fontSize="small"/>
-                    </IconButton>
-                    {isDirectory && (isOpen ? <ExpandLess/> : <ExpandMore/>)}
-                </ListItemButton>
-
-                {isDirectory && (
-                    <Collapse in={isOpen} timeout={125} unmountOnExit>
-                        <List disablePadding sx={{pl: 4}}>
-                            {group.children.map((child: string) => {
-                                const childBase = `${group.name}/${child}`;
-                                const childPath = `/files/${childBase}`;
-                                const isChildComposeFile = child.endsWith('compose.yaml');
-
-                                return (
-                                    <ListItemButton
-                                        key={child}
-                                        component={RouterLink}
-                                        to={`${childPath}`}
-                                        selected={location.pathname === childPath}
-                                        sx={{py: isChildComposeFile ? 1.25 : 1}}
-                                    >
-                                        <ListItemIcon>
-                                            <FileIcon filename={child}/>
-                                        </ListItemIcon>
-                                        <Box sx={{flex: 1, mr: 1}}>
-                                            <ListItemText
-                                                primary={child}
-                                                slotProps={{
-                                                    primary: {sx: {fontSize: '0.95rem'}}
-                                                }}
-                                            />
-                                            {isChildComposeFile && <ComposeActions urlPath={childPath}/>}
-                                        </Box>
-                                        <IconButton
-                                            size="small"
-                                            onClick={(e) => handleActionClick(e, () => onDelete(childBase))}
-                                            color="error"
-                                        >
-                                            <Delete fontSize="small"/>
-                                        </IconButton>
-                                    </ListItemButton>
-                                );
-                            })}
-                        </List>
-                    </Collapse>
-                )}
-            </>
+                <IconButton
+                    size="small"
+                    onClick={(e) => handleActionClick(e, () => onDelete(group.name))}
+                    color="error"
+                >
+                    <Delete fontSize="small"/>
+                </IconButton>
+            </ListItemButton>
         );
     }
-);
 
-function ComposeActions({urlPath}: { urlPath: string }) {
-    const navigate = useNavigate();
+    // Render directory
+    const composePath = compose ? `${group.name}/${compose}` : null;
+    const composeUrlPath = composePath ? `/files/${composePath}` : null;
+
+    // Handle click for compose folders - navigate on first click, toggle on subsequent clicks
+    const handleMainItemClick = () => {
+        if (hasCompose && composeUrlPath) {
+            // If already selected (open), toggle instead of navigate
+            if (location.pathname === composeUrlPath) {
+                handleToggle();
+                return;
+            }
+            // If not selected, let RouterLink handle navigation
+        } else {
+            handleToggle();
+        }
+    };
+
+    // Determine main item props based on whether compose file exists
+    const mainItemProps = hasCompose && composeUrlPath ? {
+        component: RouterLink,
+        to: composeUrlPath,
+        selected: location.pathname === composeUrlPath,
+        onClick: handleMainItemClick
+    } : {
+        onClick: handleToggle
+    };
+
     return (
-        <Box sx={{mt: 0.5}}>
-            <Tooltip title="Deploy" arrow>
+        <>
+            {/* Main directory item */}
+            <ListItemButton
+                {...mainItemProps}
+                sx={{py: hasCompose ? 1.25 : 1}}
+            >
+                <ListItemIcon sx={{minWidth: 32}}>
+                    {hasCompose ? (
+                        <DockerFolderIcon/>
+                    ) : (
+                        <Folder sx={{color: amber[800], fontSize: '1.1rem'}}/>
+                    )}
+                </ListItemIcon>
+
+                <Box sx={{flex: 1, mr: 1}}>
+                    <ListItemText
+                        primary={hasCompose ? compose : group.name}
+                        slotProps={{
+                            primary: {sx: {fontSize: '0.85rem'}}
+                        }}
+                    />
+                    {hasCompose && composeUrlPath && (
+                        <ComposeActions urlPath={composeUrlPath}/>
+                    )}
+                </Box>
+
+                {/* Directory actions */}
                 <IconButton
                     size="small"
-                    // Use the helper to navigate without triggering the parent
-                    onClick={(e) => handleActionClick(e, () => navigate(`${urlPath}?tab=1`))}
-                    color="primary"
+                    onClick={(e) => handleActionClick(e, () => onAdd(group.name))}
+                    color="success"
                 >
-                    <RocketLaunch fontSize="small"/>
+                    <Add fontSize="small"/>
                 </IconButton>
-            </Tooltip>
-            <Tooltip title="Stats" arrow>
+
                 <IconButton
                     size="small"
-                    // Corrected the onClick and used the helper
-                    onClick={(e) => handleActionClick(e, () => navigate(`${urlPath}?tab=2`))}
-                    color="secondary"
+                    onClick={(e) => handleActionClick(e, () => onDelete(group.name))}
+                    color="error"
                 >
-                    <Analytics fontSize="small"/>
+                    <Delete fontSize="small"/>
                 </IconButton>
-            </Tooltip>
-        </Box>
+
+                {/* Show expand/collapse icon */}
+                {(hasCompose ? support.length > 0 : group.children.length > 0) && (
+                    <IconButton
+                        size="small"
+                        onClick={(e) => handleActionClick(e, handleToggle)}
+                        sx={{ml: 0.5}}
+                    >
+                        {isOpen ? <ExpandLess fontSize="small"/> : <ExpandMore fontSize="small"/>}
+                    </IconButton>
+                )}
+            </ListItemButton>
+
+            {/* Collapsible children section */}
+            {isDirectory && (
+                <Collapse in={isOpen} timeout={125} unmountOnExit>
+                    <List disablePadding sx={{pl: 4}}>
+                        {(hasCompose ? support : group.children).map((child: string) => {
+                            const childBase = `${group.name}/${child}`;
+                            const childPath = `/files/${childBase}`;
+                            const isChildComposeFile = child.endsWith('compose.yaml');
+
+                            return (
+                                <ListItemButton
+                                    key={child}
+                                    component={RouterLink}
+                                    to={childPath}
+                                    selected={location.pathname === childPath}
+                                    sx={{py: isChildComposeFile ? 1.25 : 1}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 32}}>
+                                        <FileIcon filename={child}/>
+                                    </ListItemIcon>
+
+                                    <Box sx={{flex: 1, mr: 1}}>
+                                        <ListItemText
+                                            primary={child}
+                                            slotProps={{
+                                                primary: {sx: {fontSize: '0.85rem'}}
+                                            }}
+                                        />
+                                        {isChildComposeFile && (
+                                            <ComposeActions urlPath={childPath}/>
+                                        )}
+                                    </Box>
+
+                                    <IconButton
+                                        size="small"
+                                        onClick={(e) => handleActionClick(e, () => onDelete(childBase))}
+                                        color="error"
+                                    >
+                                        <Delete fontSize="small"/>
+                                    </IconButton>
+                                </ListItemButton>
+                            );
+                        })}
+                    </List>
+                </Collapse>
+            )}
+        </>
+    );
+});
+
+// eslint-disable-next-line no-empty-pattern
+function ComposeActions({}: { urlPath: string }) {
+    // const navigate = useNavigate();
+    // todo
+    return (<></>
+        //     <Box sx={{mt: 0.5}}>
+        //         <Tooltip title="Deploy" arrow>
+        //             <IconButton
+        //                 size="small"
+        //                 onClick={(e) => handleActionClick(e, () => navigate(`${urlPath}?tab=1`))}
+        //                 color="primary"
+        //             >
+        //                 <RocketLaunch fontSize="small"/>
+        //             </IconButton>
+        //         </Tooltip>
+        //         <Tooltip title="Stats" arrow>
+        //             <IconButton
+        //                 size="small"
+        //                 onClick={(e) => handleActionClick(e, () => navigate(`${urlPath}?tab=2`))}
+        //                 color="secondary"
+        //             >
+        //                 <Analytics fontSize="small"/>
+        //             </IconButton>
+        //         </Tooltip>
+        //     </Box>
     );
 }
 
