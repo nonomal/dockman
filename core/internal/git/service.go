@@ -103,10 +103,14 @@ Feel free to delete or replace me. I won't take it personally.
 // It uses a generic commit message.
 func (s *Service) CommitAll() error {
 	return s.WithWorkTree(func(workTree *git.Worktree) error {
+		log.Debug().Msg("Commiting all files in worktree")
+
 		status, err := workTree.Status()
 		if err != nil {
 			return fmt.Errorf("could not get worktree status: %w", err)
 		}
+
+		log.Debug().Msg("Got tree status")
 
 		if status.IsClean() {
 			log.Info().Msg("Working directory is clean, no changes to commit")
