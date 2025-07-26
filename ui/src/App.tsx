@@ -1,8 +1,8 @@
 import {Box, createTheme, CssBaseline, ThemeProvider} from '@mui/material';
 import {SnackbarProvider} from "./context/snackbar-context.tsx";
-import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
+import {BrowserRouter, Navigate, Outlet, Route, Routes, useNavigate} from "react-router-dom";
 import {AuthProvider} from "./context/auth-context.tsx";
-import React from 'react';
+import React, {useEffect} from 'react';
 import {useAuth} from "./hooks/auth.ts";
 import {HostProvider} from "./context/host-context.tsx";
 import {AuthPage} from './pages/auth/auth-page.tsx';
@@ -63,11 +63,43 @@ const PrivateRoute = () => {
     return (
         <HostProvider>
             <ChangelogProvider>
+                <GlobalShortcuts/>
                 <Outlet/>
             </ChangelogProvider>
         </HostProvider>
     );
 };
+
+function GlobalShortcuts() {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.altKey && !e.repeat) {
+                switch (e.code) {
+                    case "Digit1":
+                        e.preventDefault();
+                        navigate("/");
+                        break;
+                    case "Digit2":
+                        e.preventDefault();
+                        navigate("/files");
+                        break;
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [navigate]);
+
+    // this component doesn't render anything
+    return null;
+}
+
 
 function HomePage() {
     return (

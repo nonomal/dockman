@@ -15,6 +15,7 @@ import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
 import HostSelectDropdown from "./host-selector.tsx";
 import {useAuth} from "../../hooks/auth.ts";
+import {ShortcutFormatter} from "../compose/components/shortcut-formatter.tsx";
 
 export const TOP_BAR_HEIGHT = 69;
 const MAIN_SIDEBAR_WIDTH = 80;
@@ -128,7 +129,9 @@ export function RootLayout() {
                 <Box sx={{display: 'flex', flexDirection: 'column', height: '100%'}}>
                     {/* Main Navigation */}
                     <List sx={{px: 1, pt: 2}}>
-                        <Tooltip title="Dashboard" placement="right">
+                        <Tooltip placement="right" title={
+                            <ShortcutFormatter title={"Dashboard"} keyCombo={["ALT", "1"]}/>
+                        }>
                             <ListItemButton
                                 component={RouterLink}
                                 to="/"
@@ -146,7 +149,9 @@ export function RootLayout() {
                             </ListItemButton>
                         </Tooltip>
 
-                        <Tooltip title="Files" placement="right">
+                        <Tooltip placement="right" title={
+                            <ShortcutFormatter title={"Files"} keyCombo={["ALT", "2"]}/>
+                        }>
                             <ListItemButton
                                 onClick={() => navigate('/files')}
                                 selected={location.pathname.startsWith('/files')}
