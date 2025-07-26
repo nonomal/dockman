@@ -113,7 +113,9 @@ func (s *Service) CommitAll() error {
 			return nil
 		}
 
-		if _, err = workTree.Add("."); err != nil {
+		if err = workTree.AddWithOptions(&git.AddOptions{
+			All: true,
+		}); err != nil {
 			return fmt.Errorf("could not stage changes: %w", err)
 		}
 
