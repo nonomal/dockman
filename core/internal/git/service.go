@@ -357,11 +357,14 @@ func (s *Service) LoadFileAtCommit(filePath, commitId string) (string, error) {
 }
 
 func (s *Service) WithWorkTree(execFn func(worktree *git.Worktree) error) error {
+	log.Debug().Msg("extracting worktree")
+
 	worktree, err := s.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("unable to get worktree: %w", err)
 	}
 
+	log.Debug().Msg("Executing closure")
 	return execFn(worktree)
 }
 func (s *Service) ListFiles() error {
