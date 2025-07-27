@@ -1,6 +1,7 @@
 package git
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/RA341/dockman/pkg/fileutil"
@@ -110,11 +111,20 @@ func (s *Service) CommitAll() error {
 			return fmt.Errorf("could not get worktree status: %w", err)
 		}
 
-		log.Debug().Msg("Got tree status")
+		log.Debug().Any("stat", status).Msg("Got tree status")
 
-		if status.IsClean() {
-			log.Info().Msg("Working directory is clean, no changes to commit")
-			return nil
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("timed out waiting for commit")
+		default:
+			if status.IsClean() {
+				log.Info().Msg("Working directory is clean, no changes to commit")
+				return nil
+			}
+			log.Debug().Msg("Working directory is not clean")
 		}
 
 		if err = workTree.AddWithOptions(&git.AddOptions{
