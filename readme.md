@@ -195,17 +195,14 @@ Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/
 
 - **Editor LSP** - Smart autocompletion, syntax checking, formatter and custom Docker Compose helpers like port
   conflict detection and auto network setup
-    - Status: [In Progress](https://github.com/RA341/dockman/issues/8)
-
+    
 - **Smart Updater** - Built-in container update management that replaces watchtower and diun. Choose between
   auto-updates or just get notified when updates are available
-    - Status: [In Progress](https://github.com/RA341/dockman/issues/30)
-
+    
 ### 📋 Planned
 
 - **Backup & Restore** - Complete backup and restore for your entire Docker setup, so you never lose
   your configs
-    - Status: TBA
 
 Have ideas for new features?
 [open an issue](https://github.com/RA341/dockman/issues/new) to share your suggestions!
