@@ -17,11 +17,10 @@ import (
 )
 
 type Service struct {
-	username         string
-	authToken        string
-	repoPath         string
-	repo             *git.Repository
-	testStatingDelay bool
+	username  string
+	authToken string
+	repoPath  string
+	repo      *git.Repository
 }
 
 func NewService(root string) *Service {
