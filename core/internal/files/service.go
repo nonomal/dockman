@@ -24,6 +24,7 @@ func NewService(composeRoot string) *Service {
 		log.Fatal().Err(err).Str("compose-root", composeRoot).Msg("failed to create compose root folder")
 	}
 
+	log.Debug().Msg("File service loaded successfully")
 	return &Service{
 		composeRoot: composeRoot,
 	}
@@ -139,17 +140,13 @@ func (s *Service) createFile(filename string) error {
 		return err
 	}
 
-	f, err := openFile(filename)
+	f, err := fileutil.OpenFile(filename)
 	if err != nil {
 		return err
 	}
 
 	fileutil.Close(f)
 	return nil
-}
-
-func openFile(filename string) (*os.File, error) {
-	return os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 }
 
 func (s *Service) WithPath(filename string) string {

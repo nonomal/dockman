@@ -33,6 +33,7 @@ func NewService(keyMan KeyManager, machManager MachineManager) *Service {
 		log.Fatal().Err(err).Msg("Failed to load SSH keys")
 	}
 
+	log.Debug().Msg("SSH service loaded successfully")
 	return srv
 }
 

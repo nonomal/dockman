@@ -41,6 +41,8 @@ func NewService(git *git.Service, ssh *ssh.Service, composeRoot, localAddr *stri
 	if err := srv.SwitchClient(defaultHost); err != nil {
 		log.Fatal().Err(err).Str("name", defaultHost).Msg("unable to switch client")
 	}
+
+	log.Debug().Msg("Docker manager service loaded successfully")
 	return srv
 }
 

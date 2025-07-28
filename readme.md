@@ -10,10 +10,10 @@
 ## Contents
 
 - [Install](#install)
-    - [Config](#config)
+    - [Env Vars](#env-vars)
 - [Roadmap](#roadmap)
 - [Why](#why-dockman)
-    - [How It Compares](#how-it-compares)
+- [Common Errors](#common-errors)
 - [File Layout](#file-layout)
 - [Multihost support](#multihost-support)
 - [Feedback](#feedback)
@@ -61,6 +61,7 @@ services:
     volumes:
       #  2️⃣              3️⃣                
       - /path/to/stacks:/path/to/stacks
+      - /path/to/dockman/config:/config
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8866:8866"
@@ -79,16 +80,19 @@ services:
     environment:
       - DOCKMAN_COMPOSE_ROOT=/home/zaphodb/stacks
     volumes:
-      - /home/zaphodb/stacks:/home/zaphodb/stacks
       - /var/run/docker.sock:/var/run/docker.sock
+      - /home/zaphodb/stacks:/home/zaphodb/stacks
+
+      # never mount this dir in your stacks
+      - /home/zaphodb/appdata/dockman/config:/config
     ports:
       - "8866:8866"
     restart: always
 ```
 
-### Config
+### Env vars
 
-Dockman can be customized through environment variables to better suit your workflow.
+Dockman can be customized through environment variables to suit your preferences.
 
 When you launch a Dockman instance, a detailed configuration table will automatically appear in the startup logs. This
 table provides:
@@ -96,7 +100,7 @@ table provides:
 * Configuration names
 * Current values
 * Descriptions
-* Corresponding environment variable names (if applicable)
+* Corresponding environment variable names
 
 To see all available configuration options for your specific version, refer to this table in the startup logs.
 
@@ -146,7 +150,9 @@ Find all available tags
 [here](https://github.com/RA341/dockman/pkgs/container/dockman/versions?filters%5Bversion_type%5D=tagged)
 
 > [!TIP]
-> We recommend using (`vX`) or (`latest`)
+> Use `vX` for stability - guarantees your installation will always work
+>
+> Use `latest` for newest features - may contain breaking changes requiring manual intervention
 
 #### Tags
 
@@ -156,7 +162,7 @@ Find all available tags
 | `vX.Y`      | Latest patch for minor version       | `v1.2`   | Bug fixes                                                    |
 | `vX`        | Latest minor/patch for major version | `v1`     | New features                                                 |
 | `latest`    | Latest stable release                | `latest` | Always get the latest updates (May contain breaking changes) |
-| `dev`       | Development builds                   | `dev`    | Contributing/testing unreleased features                     |
+| `canary`    | Development builds                   | `canary` | Contributing/testing unreleased features                     |
 
 #### Docker Compose Example
 
@@ -191,31 +197,28 @@ Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/
 
 - **Editor LSP** - Smart autocompletion, syntax checking, formatter and custom Docker Compose helpers like port
   conflict detection and auto network setup
-    - Status: [In Progress](https://github.com/RA341/dockman/issues/8)
 
 - **Smart Updater** - Built-in container update management that replaces watchtower and diun. Choose between
   auto-updates or just get notified when updates are available
-    - Status: [In Progress](https://github.com/RA341/dockman/issues/30)
 
 ### 📋 Planned
 
 - **Backup & Restore** - Complete backup and restore for your entire Docker setup, so you never lose
   your configs
-    - Status: TBA
 
 Have ideas for new features?
 [open an issue](https://github.com/RA341/dockman/issues/new) to share your suggestions!
 
 ## **Why Dockman**
 
-I built Dockman to solve a frustrating workflow problem in my homelab. While other Docker management tools exist,
-none matched how I actually wanted to work.
+I built Dockman to solve a workflow problem in my homelab.
+While other Docker management tools exist, none matched how I actually wanted to work.
 
-My previous setup required manually using scp to transfer compose files to my server after every change. The workflow
+My previous setup was manually using scp to transfer compose files to my server after every change. The workflow
 was tedious, but it had one major upside: I could edit configurations in my IDE where I'm most productive.
 
-Dockman eliminates the friction while preserving what worked. You get the comfort of your local development environment
-with easy deployment for your homelab.
+Dockman attempts to eliminate this friction while preserving what worked.
+You get the comfort of your local development environment with easy deployment for your homelab.
 
 **Dockman is built for people who:**
 
@@ -225,17 +228,71 @@ with easy deployment for your homelab.
 
 If this matches your workflow, I'd appreciate a star. If not, let me know what's missing.
 
-### How It Compares
+## Common errors
 
-**vs. [Portainer](https://github.com/portainer/portainer)**: Dockman delivers a focused, minimalist experience designed
-for homelabs. If you find Portainer's extensive feature set overwhelming and prefer a streamlined interface dedicated
-specifically to compose file management, Dockman might be your solution.
+This section documents common errors you might encounter when using Dockman, along with their causes
+and recommended fixes.
 
-**vs. [Dockge](https://github.com/louislam/dockge)**: The fundamental difference lies in editing philosophy. Dockman
-embraces direct compose file editing, like working with your favorite text editor. Instead of UI-generated code, you get
-hands-on control over your configurations.
+### Contents:
 
-The project takes inspiration from both these excellent tools.
+* [STAGING_LAG](#staging_lag)
+
+### STAGING_LAG
+
+Dockman times out while waiting for files to be staged with Git. This usually occurs when your compose directory
+contains large files or folders (e.g., databases, media, or volumes) that slow down the git add process.
+
+Dockman will only see top level directories but Git will attempt to load all files/folders at full depth regardless.
+
+**Original issue:** [#40](https://github.com/RA341/dockman/issues/40)
+
+* **Message:**
+    ```
+    CODE: [STAGING_LAG] Git timed out waiting for the staging operation, it took more than 5 seconds to add files.
+    This is likely due to large files/folders in your compose root.
+    To resolve this, refer to: https://github.com/RA341/dockman?tab=readme-ov-file#staging_lag
+    ```
+
+* **Cause:** By default, Dockman stages the entire stack directory for versioning. If there are large or unnecessary
+  files (such as volume data, logs, or other artifacts) in your stacks folder, Git may become slow or unresponsive
+  during the staging operation.
+
+* **Solution:**
+    * **Separate data from configuration:** Move large or dynamic files to a separate `data/` or `volumes/` folder
+      outside the stack root.
+        * **Example directory structure:**
+            ```
+            /home/zaphodb/docker/compose  ← use only to store your compose files and configs
+            /home/zaphodb/docker/data     ← use only to store your docker container data
+            ```
+        * **Examples**
+            * **❌ Wrong (causes STAGING_LAG):**
+                ```yaml
+                  postgres:
+                    image: postgres:15
+                    volumes:
+                      - ./data/postgres:/var/lib/postgresql/data  # <- Large data inside compose root caused by './'
+                      - ./logs:/var/log  # Log files inside compose root
+                ```
+
+            * **✅ Correct (avoids STAGING_LAG):**
+              ```yaml
+                postgres:
+                  image: postgres:15
+                  volumes:
+                    - ../data/postgres:/var/lib/postgresql/data  # Data stored outside compose root
+                    - ../logs:/var/log  # Logs stored outside compose root
+                    # or with a full path
+                    # - /home/zaphodb/docker/data/postgres/logs
+                    # - /home/zaphodb/docker/data/postgres/data
+                    - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql  # keep simple Config files in compose root
+              ```
+    * **Keep stack root clean:** Only include Docker Compose files and relevant configuration files in your stack
+      directory.
+    * **Avoid .gitignore as a workaround**: While you can use .gitignore to exclude files, this is not recommended for
+      Dockman. The better cleaner practice is to keep only relevant configuration files in your compose root and separate your
+      stack definitions from your data directories entirely.
+    * **See also:** [Recommended file layout](#file-layout) for best practices.
 
 ## File Layout
 
@@ -280,65 +337,250 @@ Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/iss
 
 > [!IMPORTANT]
 >
-> This is now available in [v1.1+](https://github.com/RA341/dockman/releases/tag/v1.1.0)
->
-> Ensure you are on [v1.1 tag](https://github.com/RA341/dockman/pkgs/container/dockman/454581385?tag=v1.1),
-> or on [latest tag](https://github.com/RA341/dockman/pkgs/container/dockman/454581385?tag=latest)
+> From [v2+](https://github.com/RA341/dockman/releases/tag/v2.0.0) onwards, hosts.yaml method is removed,
+> in favour of a easier UI method
 
-Dockman's multihost feature lets you manage remote docker hosts from one interface.
-Jump between servers, keep your configurations perfectly organized,
-and deploy across your machines.
+Dockman's multihost feature lets you manage remote Docker hosts from one centralized interface.
+Jump between servers, keep your configurations perfectly organized, and deploy across your entire infrastructure
+seamlessly.
 
 ### How It Works
 
+```
+                    ┌─────────────────────────────────┐
+                    │        Dockman Instance         │
+                    │                                 │
+                    │  ┌───────────────────────────┐  │
+                    │  │      Git Repository       │  │
+                    │  │                           │  │
+                    │  │  ┌─ main branch           │  │
+                    │  │  ├─ host-a branch ────┐   │  │
+                    │  │  ├─ host-b branch ────┼── ┼──┼─── docker-compose.yml
+                    │  │  └─ host-c branch ────┘   │  │    .env files
+                    │  │                           │  │    bind mount files
+                    │  └───────────────────────────┘  │
+                    └─────────────────┬───────────────┘
+                                      │
+                          ┌───────────┼───────────┐
+                          │           │           │
+                 Compose via API      │      Compose via API
+                  + File Transfer     │       + File Transfer
+                          │           │           │
+                          ▼           ▼           ▼
+                   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+                   │   Host A    │ │   Host B    │ │   Host C    │
+                   │             │ │             │ │             │
+                   │ Docker      │ │ Docker      │ │ Docker      │
+                   │ API/Daemon  │ │ API/Daemon  │ │ API/Daemon  │
+                   │             │ │             │ │             │
+                   │ ┌─────────┐ │ │ ┌─────────┐ │ │ ┌─────────┐ │
+                   │ │Container│ │ │ │Container│ │ │ │Container│ │
+                   │ │ Stack   │ │ │ │ Stack   │ │ │ │ Stack   │ │
+                   │ └─────────┘ │ │ └─────────┘ │ │ └─────────┘ │
+                   │             │ │             │ │             │
+                   │ bind mounts │ │ bind mounts │ │ bind mounts │
+                   │ (transferred│ │ (transferred│ │ (transferred│
+                   │  from local)│ │  from local)│ │  from local)│
+                   └─────────────┘ └─────────────┘ └─────────────┘
+```
+
+This architecture provides centralized management of all your remote Docker Compose setups from a single interface, with
+all configurations version-controlled in Git. Dockman keeps your compose files local and sends them directly to the
+remote Docker API, only transferring necessary bind mount files via SSH.
+
+### Key Features
+
 #### Agentless Architecture
 
-No bloated agents cluttering your servers, Dockman keeps it clean with **SSH-only connections**.
-Just point it at your Docker hosts and watch the magic happen. All you need is SSH access.
+```
+    Dockman ──SSH + Docker API──> Remote Host
+       │                            │
+       │                            ├─ No agents installed
+       │                            ├─ No background processes  
+       │                            ├─ Compose files never transferred
+       └─ Local compose files       └─ Only bind mounts transferred
+         sent via Docker API
+```
+
+No bloated agents cluttering your servers—Dockman keeps it clean with **SSH-only connections** to the Docker API. Your
+`docker-compose.yml` and `.env` files never leave your local machine.
+
+Instead, Dockman sends the compose configuration directly to the remote Docker daemon via its API, only transferring the
+specific bind mount files that your containers need.
+
+**What gets transferred vs. what stays local:**
+
+```yaml
+# docker-compose.yaml -> (sent to Docker daemon directly)
+services:
+  nginx:
+  image: nginx
+  environment_file:
+    - .env # -> (sent to Docker daemon directly)
+  volumes:
+    - ./config/nginx.conf:/etc/nginx/nginx.conf # -> automatically transferred via sftp
+    - /home/zaphodb/data:/var/lib/data # -> this will not be transferred since its outside of compose root
+```
 
 #### Git-Based Configuration Management
 
-Each host gets its own **Git branch**. Tweak one host's setup without breaking another's.
-When you switch hosts, Dockman automatically saves your work, hops to the right branch,
-and connects to your target server.
+Each host gets its own **Git branch** for complete isolation.
+Modify one host's setup without affecting others.
 
-Your Docker Compose files, environment variables, and deployment settings stay perfectly isolated per host,
-but you can still sync configurations between branches.
+When you switch hosts, Dockman automatically:
+
+- Saves your current work on branch
+- Switches to the target host's branch
+- Connects to the remote server
+- Loads the host-specific configuration
+
+Your Docker Compose files, environment variables,
+and deployment settings stay perfectly isolated per host,
+while still allowing you to sync configurations between branches when needed.
+
+```
+Compose Root/
+├── local/ <- git branch for local docker
+│   ├── docker-compose.yml
+│   ├── .env
+│   └── config.yaml
+│
+├── apollo/ <- git branch for host: apollo
+│   ├── .env
+│   ├── README.md
+│   ├── caddy/
+│   │   ├── docker-compose.yml
+│   │   ├── Caddyfile
+│   │   └── .env
+│   ├── calibre/
+│   │   ├── docker-compose.yml
+│   │   ├── config.json
+│   │   └── .env
+│   └── prometheus/
+│       ├── docker-compose.yml
+│       ├── prometheus.yml
+│       └── rules.yml
+│
+├── ares/  <- git branch for host: ares
+│   ├── .env
+│   ├── README.md
+│   ├── docker-compose.yml
+│   ├── grafana/
+│   │   ├── docker-compose.yml
+│   │   ├── provisioning/
+│   │   │   └── dashboards/
+│   │   │       └── default.json
+│   │   └── grafana.ini
+├── artemis/ <- git branch for host artemis
+│   ├── .env
+│   ├── README.md
+│   ├── docker-compose.yml
+│   ├── node-exporter/
+│   │   ├── docker-compose.yml
+│   │   └── config.yaml
+│   └── settings.json
+
+```
 
 ### Prerequisites
 
-1. **SSH Access**: SSH access to all target Docker hosts (recommended: public-private key auth)
+1. **SSH Access**: SSH connectivity to all target Docker hosts
+    - SSH user should be in the `docker` group for daemon access
+
 2. **Docker Access**: SSH user must have Docker daemon access without requiring root
-3. **Network**: Docker daemon running on remote hosts with network connectivity to Dockman
+   ```bash
+   # Add user to docker group on remote hosts
+   sudo usermod -aG docker $USER
+   ```
 
-### Getting Started
+3. **Network Connectivity**: Docker daemon running on remote hosts with network access from Dockman instance
 
-First, create an empty `hosts.yaml` file before running docker-compose
-> [!CAUTION]
-> Docker-compose will create a directory instead if it doesn't exist,
-> this will cause dockman to fail since it's expecting a file
+4. Ensure you have added the following mounts in your docker-compose.yml:
+    ```yaml
+    name: dockman
+    services:
+      dockman:
+        container_name: dockman
+        image: ghcr.io/ra341/dockman:latest
+        environment:
+          - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - /path/to/dockman/config:/config
+        ports:
+          - "8866:8866"
+        restart: always
+    ```
+
+### Add Hosts via Web UI
+
+1. **Navigate to the Settings page by clicking the settings icon on the top right** and click "Add New Machine"
+
+2. **Configure your host** with the following fields:
+    - <img height="300" alt="image" src="https://github.com/user-attachments/assets/7ef19e3a-0589-4ca5-b6f8-fe479c711375" />
+    - **Name**: A friendly name for your host (e.g., "apollo", "production-server")
+    - **Host**: IP address or hostname of your Docker host
+    - **Port**: SSH port (default: 22)
+    - **User**: SSH username that has Docker access
+    - **Enable Machine**: Toggle to enable/disable this host
+    - **Authentication**: Choose between Password or Public Key authentication
+
+### Authentication Methods
+
+#### 1. SSH Keys (Recommended)
+
+- Toggle **"Public Key"** to enabled
+- Dockman generates its own SSH key pair when it first runs
+- **Automatic Key transfer**: Dockman will automatically copy the public key to your target host during the initial
+  connection
+- These are separate from your personal SSH keys in `~/.ssh/`
+
+#### 2. Password Authentication
+
+- Toggle **"Public Key"** to disabled
+- Enter your password in the **Password** field
+- Your password will be stored and used for subsequent connections
+
+### Legacy Configuration (Deprecated)
+
+**Migration from hosts.yaml:**
+
+For users coming from v1, following are the steps to miagrate away from hosts.yaml
+
+1. Remove the `./hosts.yaml:/app/config/hosts.yaml` volume mount from docker-compose
+2. Remove the `./config/ssh/` volume mount from docker-compose
+3. Reconfigure your hosts through the web UI
 
 ```yaml
+# docker compose sample
 name: dockman
 services:
   dockman:
     container_name: dockman
     image: ghcr.io/ra341/dockman:latest
     environment:
-      - DOCKMAN_COMPOSE_ROOT=/home/zaphodb/stacks
+      - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
     volumes:
-      - /home/zaphodb/stacks:/home/zaphodb/stacks
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./config/ssh:/app/config/ssh
-      - ./hosts.yaml:/app/config/hosts.yaml
+      # these mounts can now be removed
+      # - ./config/ssh:/app/config/ssh
+      # - ./hosts.yaml:/app/config/hosts.yaml
+
+      # 4️⃣ NEW: Mount config directory for database storage
+      # DO NOT store this in dockman compose root
+      - /path/to/dockman/config:/config
     ports:
       - "8866:8866"
     restart: always
 ```
 
-### Configuration
+> [!WARNING]
+> The `hosts.yaml` configuration method is **deprecated** as
+> of [v2.0.0](https://github.com/RA341/dockman/releases/tag/v2.0.0) and has been removed.
+> For v2+, use the web UI method described above.
+>
+> This is only available in [v1](https://github.com/RA341/dockman/releases/tag/v1.1.0) and below
 
-Basic `hosts.yaml` structure:
+For reference, the old `hosts.yaml` structure was:
 
 ```yaml
 default_host: local
@@ -350,91 +592,13 @@ machines:
     port: 22
     user: root
     use_public_key_auth: true
-```
-
-### Auth Methods (in order of priority)
-
-1. **SSH Keys** - Set `use_public_key_auth: true` and copy your public key:
-   ```bash
-   ssh-copy-id -i ./config/ssh/id_rsa.pub user@host
-   ```
-
-   Dockman generates its own SSH key pair in `./config/ssh/` when it first runs. These are separate from your personal
-   SSH keys in `~/.ssh/`. The container uses these dedicated keys for all remote connections.
-
-2. **Password** - If `use_public_key_auth: false` then dockman uses `password: yourpassword`
-
-3. **Host SSH Config** - If both `use_public_key_auth: false` and `password` is empty, then dockman falls back to your
-   personal `~/.ssh` config.
-
-> [!CAUTION]
-> **Host SSH Config** method is intended for local development when running Dockman directly (not in Docker).
-> Inside a Docker container, this behavior is undefined and will likely fail
-> since the container doesn't have access to your user's SSH directory.
-
-### Multiple Machines Example
-
-```yaml
-default_host: apollo # apollo will be the default connecting machine 
-enable_local_docker: true # load the local client mounted at /var/run/docker.sock
-machines:
-  apollo:
-    enable: true
-    host: 192.169.69.0
-    port: 22
-    user: root
-    use_public_key_auth: true
-
   ares:
     enable: true
     host: 10.0.1.100
     port: 2222
     user: deploy
-    password: someSecretPassword # this machine will use password auth
+    password: someSecretPassword
     use_public_key_auth: false
-
-  artemis:
-    enable: false  # disabled will not be loaded
-    host: staging.example.com
-    port: 22
-    user: ubuntu
-    use_public_key_auth: true
-```
-
-### Config Parameters
-
-| Parameter             | Required | Description                      |
-|-----------------------|----------|----------------------------------|
-| `enable`              | Yes      | Enable/disable this machine      |
-| `host`                | Yes      | IP or hostname                   |
-| `port`                | Yes      | SSH port (usually 22)            |
-| `user`                | Yes      | SSH username                     |
-| `password`            | No       | Password for auth                |
-| `use_public_key_auth` | Yes      | Use SSH keys instead of password |
-| `remote_public_key`   | No       | Auto-populated, don't touch      |
-
-> [!IMPORTANT]
-> The `remote_public_key` field gets filled automatically when you connect.
->
-> NEVER MODIFY THIS FIELD MANUALLY AS IT MAY BREAK AUTH
-
-#### Troubleshooting
-
-**SSH Connection Failed:**
-
-```bash
-# Test SSH connection manually
-ssh user@host-address
-
-# Check SSH key permissions
-chmod 600 ~/.ssh/id_rsa
-```
-
-**Docker Daemon Not Accessible:**
-
-```bash
-# Verify Docker is running on remote host and accessible without root access
-ssh user@host-address 'docker version'
 ```
 
 ## Security Considerations
@@ -446,18 +610,18 @@ ssh user@host-address 'docker version'
 #### Why Exposing Dockman to the Internet Is a Terrible Idea
 
 Dockman has access to your Docker socket, which is essentially root access to your entire system. One compromised
-dockman instance means a bad day for you.
+Dockman instance means a bad day for you.
 
-It gets worse if you're using dockman to manage remote Docker hosts. Since it connects via SSH, a breach doesn't just
-compromise one server, it potentially compromises every connected machine in your setup.
+It gets worse if you're using Dockman to manage remote Docker hosts. Since it connects via SSH, a breach doesn't just
+compromise one server it potentially compromises every connected machine in your setup.
 
-#### How to Actually Secure Dockman
+#### How to Secure Dockman
 
 Keep dockman local only. It's designed for your private network, not the wild west of the internet. When you need remote
 access, use a VPN like [Netbird](https://netbird.io/) or [Tailscale](https://tailscale.com/) to securely tunnel into
 your network.
 
-Turn on dockman's built-in authentication too. On a private network, this gives you sufficient protection for most home
+Also, enable Dockman's built-in authentication. On a private network, this gives you sufficient protection for most home
 setups without making things overly complicated.
 
 ### **Git Repository Security**
@@ -467,7 +631,7 @@ setups without making things overly complicated.
 Your dockman repo breaks the usual rules about secrets in git repositories, and that's intentional. Unlike most
 projects, this repository lives permanently on your homelab server, which changes everything about secret management.
 
-Git actually makes secrets tracking easier here. When you update your Plex API key or database password and something
+Git makes secret tracking easier here. When you update your Plex API key or database password and something
 breaks, you can roll back to the previous working configuration. Since this isn't a collaboration repo, the typical
 concerns about team access don't apply.
 
@@ -477,24 +641,26 @@ The stories about secrets in git involve one mistake: pushing to public reposito
 API keys to public GitHub repos. If you need remote backup, use private self-hosted solutions
 like [Gitea](https://about.gitea.com/) on a VPS.
 
-#### What Actually Works
+#### What Works
 
-Keep secrets directly in your local repository, it makes change tracking easier. Your homelab repo should never touch
+Keep secrets directly in your local repository; it makes change tracking easier. Your homelab repo should never touch
 public services like GitHub or GitLab.
 
-If you prefer .env files with `.gitignore`, that works too, dockman doesn't enforce any particular convention.
+If you prefer .env files with `.gitignore`, that works too; dockman doesn't enforce any particular convention.
 
 ## Feedback
 
-If you spot a bug, have an idea for a feature, or just want to share your thoughts, please open an issue any and all
+If you spot a bug, have an idea for a feature, or just want to share your thoughts, please open
+an [discussion](https://github.com/RA341/dockman/discussions) any and all
 feedback is welcome.
 
-I'd especially love to hear what you think about a couple of things:
+I'd especially love to hear what you think about:
 
 * The UI
-    * I'm not a UI expert, in fact I hate HTML/CSS in general. The current interface is mostly built using Material-UI
-      and Gemini.
-    * If you have ideas on how to make it look better or easier to use, I'm all ears. Feel free to open an issue with
+    * I'm not a UI guy; in fact, I hate HTML/CSS in general. The current interface is mostly built using Material-UI
+      and Gemini and designed for my preferences.
+    * If you have ideas on how to make it look better or easier to use, I'm all ears. Feel free to open
+      an [discussion](https://github.com/RA341/dockman/discussions) with
       your suggestions.
 
 ## Contributing
@@ -521,8 +687,9 @@ Before diving in, make sure you have these installed:
   like Make, but nicer)
 - **[Coreutils](https://uutils.github.io/coreutils/docs/installation.html)** – used to perform cross-platform file
   operations, since Taskfile doesn't yet support platform-agnostic shell commands
-  > _Using [uutils/coreutils](https://github.com/uutils/coreutils) as a temporary workaround
-  pending [Taskfile cross-platform shell support](https://github.com/go-task/task/issues/197#issuecomment-3014045749)_
+  > Using [uutils/coreutils](https://github.com/uutils/coreutils) as a temporary workaround
+  until [Taskfile cross-platform shell support](https://github.com/go-task/task/issues/197#issuecomment-3014045749)
+  added
 
 ### Init
 

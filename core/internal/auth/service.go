@@ -17,6 +17,7 @@ func NewService(user, pass string) *Service {
 		log.Fatal().Err(err).Msg("unable to create default user")
 	}
 
+	log.Debug().Msg("Auth service loaded successfully")
 	return &Service{adb}
 }
 

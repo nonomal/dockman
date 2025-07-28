@@ -1,8 +1,10 @@
 package git
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -10,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -21,24 +24,39 @@ type Service struct {
 }
 
 func NewService(root string) *Service {
+	service, err := newSrv(root)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to init git service")
+	}
+	return service
+}
+
+// returns an error instead of fataling useful for testing
+func newSrv(root string) (*Service, error) {
 	repo, err := initializeGit(root)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create git service")
+		return nil, fmt.Errorf("failed to init git repo: %w", err)
 	}
 
 	srv := &Service{repo: repo, repoPath: root}
 	if err = srv.CommitAll(); err != nil {
-		log.Fatal().Err(err).Msg("Failed to create commit")
+		return nil, fmt.Errorf("failed to create commit: %w", err)
 	}
 
-	return srv
+	log.Debug().Msg("Git service loaded successfully")
+	return srv, err
 }
 
 func initializeGit(root string) (*git.Repository, error) {
 	// Check if the repository already exists
 	existingRepo, err := git.PlainOpen(root)
 	if err == nil {
+		log.Debug().Msg("Loaded existing git repository")
 		return existingRepo, nil
+	}
+
+	if !errors.Is(err, git.ErrRepositoryNotExists) {
+		return nil, fmt.Errorf("failed to open git repository: %w", err)
 	}
 
 	// PlainOpen returns an error, implies the directory doesn't exist,
@@ -50,11 +68,18 @@ func initializeGit(root string) (*git.Repository, error) {
 		Bare: false,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error initializing repository: %s\n", err)
+		return nil, fmt.Errorf("error initializing repository: %s\n", err)
 	}
 
-	if err = commitSampleFile(newRepo); err != nil {
-		return nil, err
+	dir, err := os.ReadDir(root)
+	if err != nil {
+		return nil, fmt.Errorf("error reading directory: %s\n", err)
+	}
+	// .git will be counted in ReadDir, excluding that
+	if len(dir) < 2 {
+		if err = createSampleFile(root); err != nil {
+			return nil, err
+		}
 	}
 
 	log.Info().Str("path", root).Msg("Created new repository")
@@ -63,19 +88,30 @@ func initializeGit(root string) (*git.Repository, error) {
 
 // an empty git repo will not have any content and will fail to create other branches
 // so we commit an empty compose file
-func commitSampleFile(repo *git.Repository) error {
-	worktree, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
+func createSampleFile(root string) error {
+	log.Debug().Msg("empty repo, adding dummy readme")
 
-	log.Debug().Msg("empty repo, adding sample compose")
-	if _, err = worktree.Filesystem.Create("sample-compose.yaml"); err != nil {
-		return err
+	const dummyFileContent = `Hey there! Hello,
+
+Thanks for using Dockman
+
+This file was auto-created because Dockman needs to initialize a Git repo —
+and Git doesn’t like empty folders. So here we are, making history with this very first file.
+
+Feel free to delete or replace me. I won't take it personally.
+`
+
+	err := fileutil.CreateSampleFile(filepath.Join(root, "readme.txt"), dummyFileContent)
+	if err != nil {
+		return fmt.Errorf("error writing to dummy readme: %s", err)
 	}
 
 	return nil
 }
+
+var ErrStagingDelay = errors.New(`CODE: [STAGING_LAG] Git timed out waiting for the staging operation, it took more than 5 seconds to add files.
+				this is likely due to large files/folders in your compose root
+				To resolve this, refer to: https://github.com/RA341/dockman?tab=readme-ov-file#staging_lag`)
 
 // CommitAll stages all changes (new, modified, deleted) and commits them.
 // It uses a generic commit message.
@@ -86,12 +122,27 @@ func (s *Service) CommitAll() error {
 			return fmt.Errorf("could not get worktree status: %w", err)
 		}
 
-		if status.IsClean() {
-			log.Info().Msg("Working directory is clean, no changes to commit")
+		log.Debug().Msg("Got tree status")
+		// todo add proper checks for directory and length checks for more helpful err message
+		err = runWithTimeout(func() error {
+			if status.IsClean() {
+				log.Info().Msg("Working directory is clean, no changes to commit")
+				return nil
+			}
+
+			return fmt.Errorf("working tree is not clean")
+		}, 5*time.Second)
+
+		if errors.Is(err, context.DeadlineExceeded) {
+			return ErrStagingDelay
+		}
+		if err == nil {
+			// ran within limit and no changes to commit
 			return nil
 		}
 
-		if _, err = workTree.Add("."); err != nil {
+		err = workTree.AddWithOptions(&git.AddOptions{All: true})
+		if err != nil {
 			return fmt.Errorf("could not stage changes: %w", err)
 		}
 
@@ -113,6 +164,23 @@ func (s *Service) CommitAll() error {
 		log.Info().Str("hash", commitHash.String()).Msg("Successfully created commit with hash")
 		return nil
 	})
+}
+
+func runWithTimeout(fn func() error, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- fn()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err() // returns context.DeadlineExceeded
+	case err := <-done:
+		return err
+	}
 }
 
 // SwitchBranch switches to a different branch.
