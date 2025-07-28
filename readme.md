@@ -10,10 +10,9 @@
 ## Contents
 
 - [Install](#install)
-    - [Config](#config)
+    - [Env Vars](#env-vars)
 - [Roadmap](#roadmap)
 - [Why](#why-dockman)
-    - [How It Compares](#how-it-compares)
 - [File Layout](#file-layout)
 - [Multihost support](#multihost-support)
 - [Feedback](#feedback)
@@ -90,9 +89,9 @@ services:
     restart: always
 ```
 
-### Config
+### Env vars
 
-Dockman can be customized through environment variables to better suit your workflow.
+Dockman can be customized through environment variables to suit your preferences.
 
 When you launch a Dockman instance, a detailed configuration table will automatically appear in the startup logs. This
 table provides:
@@ -100,7 +99,7 @@ table provides:
 * Configuration names
 * Current values
 * Descriptions
-* Corresponding environment variable names (if applicable)
+* Corresponding environment variable names
 
 To see all available configuration options for your specific version, refer to this table in the startup logs.
 
@@ -150,7 +149,10 @@ Find all available tags
 [here](https://github.com/RA341/dockman/pkgs/container/dockman/versions?filters%5Bversion_type%5D=tagged)
 
 > [!TIP]
-> We recommend using (`vX`) or (`latest`)
+> Use `vX` for stability - guarantees your installation will always work
+>
+> Use `latest` for newest features - may contain breaking changes requiring manual intervention
+
 
 #### Tags
 
@@ -160,7 +162,7 @@ Find all available tags
 | `vX.Y`      | Latest patch for minor version       | `v1.2`   | Bug fixes                                                    |
 | `vX`        | Latest minor/patch for major version | `v1`     | New features                                                 |
 | `latest`    | Latest stable release                | `latest` | Always get the latest updates (May contain breaking changes) |
-| `dev`       | Development builds                   | `dev`    | Contributing/testing unreleased features                     |
+| `canary`    | Development builds                   | `canary` | Contributing/testing unreleased features                     |
 
 #### Docker Compose Example
 
@@ -370,28 +372,48 @@ Your Docker Compose files, environment variables,
 and deployment settings stay perfectly isolated per host,
 while still allowing you to sync configurations between branches when needed.
 
-(b) -> indicates a git branch
-
 ```
-    (b) local/
-    ├─ docker-compose.yml
-    ├─ .env
-    └─ config.yaml
-    
-    (b) apollo/ <- different host
-    ├─ docker-compose.yml
-    ├─ .env
-    └─ volumes/
-    
-    (b) ares/ <- different host
-    ├─ docker-compose.yml
-    ├─ .env
-    └─ volumes/
-    
-    (b) artemis/ <- different host
-    ├─ docker-compose.yml
-    ├─ .env
-    └─ volumes/
+Compose Root/
+├── local/ <- git branch for local docker
+│   ├── docker-compose.yml
+│   ├── .env
+│   └── config.yaml
+│
+├── apollo/ <- git branch for host: apollo
+│   ├── .env
+│   ├── README.md
+│   ├── caddy/
+│   │   ├── docker-compose.yml
+│   │   ├── Caddyfile
+│   │   └── .env
+│   ├── calibre/
+│   │   ├── docker-compose.yml
+│   │   ├── config.json
+│   │   └── .env
+│   └── prometheus/
+│       ├── docker-compose.yml
+│       ├── prometheus.yml
+│       └── rules.yml
+│
+├── ares/  <- git branch for host: ares
+│   ├── .env
+│   ├── README.md
+│   ├── docker-compose.yml
+│   ├── grafana/
+│   │   ├── docker-compose.yml
+│   │   ├── provisioning/
+│   │   │   └── dashboards/
+│   │   │       └── default.json
+│   │   └── grafana.ini
+├── artemis/ <- git branch for host artemis
+│   ├── .env
+│   ├── README.md
+│   ├── docker-compose.yml
+│   ├── node-exporter/
+│   │   ├── docker-compose.yml
+│   │   └── config.yaml
+│   └── settings.json
+
 ```
 
 ### Prerequisites
@@ -407,57 +429,26 @@ while still allowing you to sync configurations between branches when needed.
 
 3. **Network Connectivity**: Docker daemon running on remote hosts with network access from Dockman instance
 
-Ensure you have added the following mounts in your docker-compose.yml:
+4. Ensure you have added the following mounts in your docker-compose.yml:
+    ```yaml
+    name: dockman
+    services:
+      dockman:
+        container_name: dockman
+        image: ghcr.io/ra341/dockman:latest
+        environment:
+          - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - /path/to/dockman/config:/config
+        ports:
+          - "8866:8866"
+        restart: always
+    ```
 
-### Getting started
+### Add Hosts via Web UI
 
-```yaml
-name: dockman
-services:
-  dockman:
-    container_name: dockman
-    image: ghcr.io/ra341/dockman:latest
-    environment:
-      - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /path/to/dockman/config:/config
-    ports:
-      - "8866:8866"
-    restart: always
-```
-
-**Migration from hosts.yaml:**
-
-1. Remove the `./hosts.yaml:/app/config/hosts.yaml` volume mount from docker-compose
-2. Remove the `./config/ssh/` volume mount from docker-compose
-3. Reconfigure your hosts through the web UI
-
-```yaml
-# docker compose sample
-name: dockman
-services:
-  dockman:
-    container_name: dockman
-    image: ghcr.io/ra341/dockman:latest
-    environment:
-      - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
-    volumes:
-      # these mounts can now be removed
-      # - ./config/ssh:/app/config/ssh
-      # - ./hosts.yaml:/app/config/hosts.yaml
-
-      # 4️⃣ NEW: Mount config directory for database storage
-      # DO NOT store this in dockman compose root
-      - /path/to/dockman/config:/config
-    ports:
-      - "8866:8866"
-    restart: always
-```
-
-### Adding Hosts via Web UI
-
-1. **Navigate to the Settings icon on the top right** and click "Add New Machine"
+1. **Navigate to the Settings page by clicking the settings icon on the top right** and click "Add New Machine"
 
 2. **Configure your host** with the following fields:
     - <img height="300" alt="image" src="https://github.com/user-attachments/assets/7ef19e3a-0589-4ca5-b6f8-fe479c711375" />
@@ -485,6 +476,36 @@ services:
 - Your password will be stored and used for subsequent connections
 
 ### Legacy Configuration (Deprecated)
+
+**Migration from hosts.yaml:**
+
+For users coming from v1, following are the steps to miagrate away from hosts.yaml
+
+1. Remove the `./hosts.yaml:/app/config/hosts.yaml` volume mount from docker-compose
+2. Remove the `./config/ssh/` volume mount from docker-compose
+3. Reconfigure your hosts through the web UI
+
+```yaml
+# docker compose sample
+name: dockman
+services:
+  dockman:
+    container_name: dockman
+    image: ghcr.io/ra341/dockman:latest
+    environment:
+      - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
+    volumes:
+      # these mounts can now be removed
+      # - ./config/ssh:/app/config/ssh
+      # - ./hosts.yaml:/app/config/hosts.yaml
+
+      # 4️⃣ NEW: Mount config directory for database storage
+      # DO NOT store this in dockman compose root
+      - /path/to/dockman/config:/config
+    ports:
+      - "8866:8866"
+    restart: always
+```
 
 > [!WARNING]
 > The `hosts.yaml` configuration method is **deprecated** as
@@ -563,15 +584,15 @@ If you prefer .env files with `.gitignore`, that works too; dockman doesn't enfo
 
 ## Feedback
 
-If you spot a bug, have an idea for a feature, or just want to share your thoughts, please open an issue any and all
-Feedback is welcome.
+If you spot a bug, have an idea for a feature, or just want to share your thoughts, please open an [discussion](https://github.com/RA341/dockman/discussions) any and all
+feedback is welcome.
 
-I'd especially love to hear what you think about a couple of things:
+I'd especially love to hear what you think about:
 
 * The UI
-    * I'm not a UI expert; in fact, I hate HTML/CSS in general. The current interface is mostly built using Material-UI
-      and Gemini.
-    * If you have ideas on how to make it look better or easier to use, I'm all ears. Feel free to open an issue with
+    * I'm not a UI guy; in fact, I hate HTML/CSS in general. The current interface is mostly built using Material-UI
+      and Gemini and designed for my preferences.
+    * If you have ideas on how to make it look better or easier to use, I'm all ears. Feel free to open an [discussion](https://github.com/RA341/dockman/discussions) with
       your suggestions.
 
 ## Contributing
