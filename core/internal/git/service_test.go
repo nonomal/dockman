@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"github.com/RA341/dockman/internal/files"
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/RA341/dockman/pkg/logger"
 	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/assert"
@@ -27,8 +28,187 @@ func TestImportSync(t *testing.T) {
 	// assert 2
 }
 
-func Test_DUMB(t *testing.T) {
-	_ = NewService("./git_test")
+func Test_WithStagingDelay(t *testing.T) {
+	root := "./tests"
+	defer os.RemoveAll(root)
+
+	err := os.MkdirAll(root, os.ModePerm)
+	require.NoError(t, err)
+	// Create a large garbage files to slow down git operations
+	createComplexDirectoryStructure(t, root)
+
+	_, err = newSrv(root)
+	require.ErrorIs(t, err, ErrStagingDelay, "new srv should fail with a complex dir structure")
+
+	err = os.RemoveAll(root)
+	require.NoError(t, err)
+
+	err = os.MkdirAll(root, os.ModePerm)
+	require.NoError(t, err)
+
+	err = createLargeGarbageFile(t, root, fileSize10MB)
+
+	_, err = newSrv(root)
+	require.NoError(t, err)
+}
+
+func createComplexDirectoryStructure(t *testing.T, root string) {
+	// Define directory structure
+	directories := []string{
+		"data/postgres/backups",
+		"data/postgres/logs",
+		"data/redis/dump",
+		"data/elasticsearch/nodes/0/indices",
+		"volumes/app/uploads/images",
+		"volumes/app/uploads/documents",
+		"volumes/app/cache/sessions",
+		"volumes/app/cache/templates",
+		"logs/nginx/access",
+		"logs/nginx/error",
+		"logs/app/debug",
+		"logs/app/error",
+		"media/videos/processed",
+		"media/videos/raw",
+		"media/images/thumbnails",
+		"media/images/original",
+		"backups/daily",
+		"backups/weekly",
+		"backups/monthly",
+		"tmp/uploads",
+		"tmp/processing",
+		"config/secrets",
+		"config/templates",
+		"node_modules/package1/dist",
+		"node_modules/package2/src",
+		"node_modules/package3/lib",
+		"build/artifacts",
+		"build/temp",
+		"vendor/libs",
+		"vendor/assets",
+	}
+
+	// File extensions and types
+	fileTypes := []string{
+		".log", ".dump", ".sql", ".json", ".xml", ".csv",
+		".jpg", ".png", ".gif", ".mp4", ".avi", ".mkv",
+		".pdf", ".doc", ".txt", ".md", ".yaml", ".conf",
+		".js", ".css", ".html", ".php", ".py", ".go",
+		".tar.gz", ".zip", ".bak", ".tmp", ".cache",
+	}
+
+	// Create directories and files
+	for _, dir := range directories {
+		fullDirPath := filepath.Join(root, dir)
+		err := os.MkdirAll(fullDirPath, 0755)
+		require.NoError(t, err)
+
+		// Create 3-8 files per directory
+		numFiles := rand.Intn(6) + 3
+		for i := 0; i < numFiles; i++ {
+			// Random filename
+			baseName := generateRandomString(8, 15)
+			extension := fileTypes[rand.Intn(len(fileTypes))]
+			filename := fmt.Sprintf("%s%s", baseName, extension)
+			filePath := filepath.Join(fullDirPath, filename)
+
+			// Random file size between 50KB and 10MB
+			minSize := 50 * 1024        // 50KB
+			maxSize := 10 * 1024 * 1024 // 10MB
+			fileSize := rand.Intn(maxSize-minSize) + minSize
+
+			createRandomFile(t, filePath, fileSize)
+		}
+	}
+
+	// Create some additional deeply nested structures
+	deepDirs := []string{
+		"deep/level1/level2/level3/level4/level5",
+		"another/very/deep/nested/structure/here",
+		"data/complex/hierarchy/with/many/levels",
+	}
+
+	for _, deepDir := range deepDirs {
+		fullDirPath := filepath.Join(root, deepDir)
+		err := os.MkdirAll(fullDirPath, 0755)
+		require.NoError(t, err)
+
+		// Create fewer but larger files in deep directories
+		numFiles := rand.Intn(3) + 1
+		for i := 0; i < numFiles; i++ {
+			filename := fmt.Sprintf("large_file_%d.dat", i)
+			filePath := filepath.Join(fullDirPath, filename)
+
+			// Larger files in deep directories (1MB to 10MB)
+			minSize := 1024 * 1024      // 1MB
+			maxSize := 10 * 1024 * 1024 // 10MB
+			fileSize := rand.Intn(maxSize-minSize) + minSize
+
+			createRandomFile(t, filePath, fileSize)
+		}
+	}
+}
+
+func createRandomFile(t *testing.T, filePath string, size int) {
+	file, err := os.Create(filePath)
+	require.NoError(t, err)
+	defer file.Close()
+
+	// Write random data in chunks to avoid memory issues
+	const chunkSize = 64 * 1024 // 64KB chunks
+	buffer := make([]byte, chunkSize)
+
+	bytesWritten := 0
+	for bytesWritten < size {
+		remainingBytes := size - bytesWritten
+		currentChunkSize := chunkSize
+		if remainingBytes < chunkSize {
+			currentChunkSize = remainingBytes
+			buffer = buffer[:currentChunkSize]
+		}
+
+		// Fill buffer with pseudo-random data
+		for i := 0; i < currentChunkSize; i++ {
+			buffer[i] = byte(rand.Intn(256))
+		}
+
+		n, err := file.Write(buffer)
+		require.NoError(t, err)
+		bytesWritten += n
+	}
+}
+
+func generateRandomString(minLen, maxLen int) string {
+	length := rand.Intn(maxLen-minLen) + minLen
+	chars := "abcdefghijklmnopqrstuvwxyz0123456789_"
+	result := make([]byte, length)
+
+	for i := 0; i < length; i++ {
+		result[i] = chars[rand.Intn(len(chars))]
+	}
+
+	return string(result)
+}
+
+const fileSize10MB = 10 * 1024 * 1024    // 100MB
+const fileSize100MB = 1000 * 1024 * 1024 // 100MB
+
+func createLargeGarbageFile(t *testing.T, root string, fileSize int) error {
+	largeFile := filepath.Join(root, "large_garbage_file.bin")
+	file, err := os.Create(largeFile)
+	require.NoError(t, err)
+	defer fileutil.Close(file)
+
+	buffer := make([]byte, 1024*1024) // 1MB buffer
+
+	for i := 0; i < fileSize/(1024*1024); i++ {
+		// Fill buffer with pseudo-random data
+		for j := range buffer {
+			buffer[j] = byte(i + j)
+		}
+		_, err = file.Write(buffer)
+		require.NoError(t, err)
+	}
+	return err
 }
 
 func createTestRepo(t *testing.T, repoPath string) (*git.Repository, *Service) {

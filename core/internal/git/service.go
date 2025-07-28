@@ -17,25 +17,35 @@ import (
 )
 
 type Service struct {
-	username  string
-	authToken string
-	repoPath  string
-	repo      *git.Repository
+	username         string
+	authToken        string
+	repoPath         string
+	repo             *git.Repository
+	testStatingDelay bool
 }
 
 func NewService(root string) *Service {
+	service, err := newSrv(root)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to init git service")
+	}
+	return service
+}
+
+// returns an error instead of fataling useful for testing
+func newSrv(root string) (*Service, error) {
 	repo, err := initializeGit(root)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create git service")
+		return nil, fmt.Errorf("failed to init git repo: %w", err)
 	}
 
 	srv := &Service{repo: repo, repoPath: root}
 	if err = srv.CommitAll(); err != nil {
-		log.Fatal().Err(err).Msg("Failed to create commit")
+		return nil, fmt.Errorf("failed to create commit: %w", err)
 	}
 
 	log.Debug().Msg("Git service loaded successfully")
-	return srv
+	return srv, err
 }
 
 func initializeGit(root string) (*git.Repository, error) {
@@ -100,36 +110,40 @@ Feel free to delete or replace me. I won't take it personally.
 	return nil
 }
 
+var ErrStagingDelay = errors.New(`CODE: [STAGING_LAG] Git timed out waiting for the staging operation, it took more than 5 seconds to add files.
+				this is likely due to large files/folders in your compose root
+				To resolve this, refer to: https://github.com/RA341/dockman?tab=readme-ov-file#staging_lag`)
+
 // CommitAll stages all changes (new, modified, deleted) and commits them.
 // It uses a generic commit message.
 func (s *Service) CommitAll() error {
 	return s.WithWorkTree(func(workTree *git.Worktree) error {
-		log.Debug().Msg("Commiting all files in worktree")
-
 		status, err := workTree.Status()
 		if err != nil {
 			return fmt.Errorf("could not get worktree status: %w", err)
 		}
 
-		log.Debug().Any("stat", status).Msg("Got tree status")
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("timed out waiting for commit")
-		default:
+		log.Debug().Msg("Got tree status")
+		// todo add proper checks for directory and length checks for more helpful err message
+		err = runWithTimeout(func() error {
 			if status.IsClean() {
 				log.Info().Msg("Working directory is clean, no changes to commit")
 				return nil
 			}
-			log.Debug().Msg("Working directory is not clean")
+
+			return fmt.Errorf("working tree is not clean")
+		}, 5*time.Second)
+
+		if errors.Is(err, context.DeadlineExceeded) {
+			return ErrStagingDelay
+		}
+		if err == nil {
+			// ran within limit and no changes to commit
+			return nil
 		}
 
-		if err = workTree.AddWithOptions(&git.AddOptions{
-			All: true,
-		}); err != nil {
+		err = workTree.AddWithOptions(&git.AddOptions{All: true})
+		if err != nil {
 			return fmt.Errorf("could not stage changes: %w", err)
 		}
 
@@ -151,6 +165,23 @@ func (s *Service) CommitAll() error {
 		log.Info().Str("hash", commitHash.String()).Msg("Successfully created commit with hash")
 		return nil
 	})
+}
+
+func runWithTimeout(fn func() error, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- fn()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err() // returns context.DeadlineExceeded
+	case err := <-done:
+		return err
+	}
 }
 
 // SwitchBranch switches to a different branch.
@@ -367,14 +398,11 @@ func (s *Service) LoadFileAtCommit(filePath, commitId string) (string, error) {
 }
 
 func (s *Service) WithWorkTree(execFn func(worktree *git.Worktree) error) error {
-	log.Debug().Msg("extracting worktree")
-
 	worktree, err := s.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("unable to get worktree: %w", err)
 	}
 
-	log.Debug().Msg("Executing closure")
 	return execFn(worktree)
 }
 func (s *Service) ListFiles() error {
