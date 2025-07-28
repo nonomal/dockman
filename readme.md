@@ -13,6 +13,7 @@
     - [Env Vars](#env-vars)
 - [Roadmap](#roadmap)
 - [Why](#why-dockman)
+- [Common Errors](#common-errors)
 - [File Layout](#file-layout)
 - [Multihost support](#multihost-support)
 - [Feedback](#feedback)
@@ -227,6 +228,17 @@ You get the comfort of your local development environment with easy deployment f
 * Value simplicity and reliability over comprehensive features
 
 If this matches your workflow, I'd appreciate a star. If not, let me know what's missing.
+
+## Common errors
+
+This section contains fixes to some common errors you may see in dockman and servers as documentation
+
+Contents:
+todo
+
+### STAGING_LAG
+
+
 
 ## File Layout
 
