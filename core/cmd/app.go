@@ -37,10 +37,14 @@ type App struct {
 
 func NewApp(conf *config.AppConfig) (*App, error) {
 	cr := conf.ComposeRoot
+	limit, err := conf.Auth.GetCookieExpiryLimit()
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse cookie expiry: %w", err)
+	}
 
 	// initialize services
+	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password, limit)
 	dbSrv := database.NewService(conf.ConfigDir)
-	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password)
 	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
 	fileSrv := files.NewService(cr)
 	gitSrv := git.NewService(cr)

@@ -132,7 +132,13 @@ tasks:
       TARGET: "{{index .MATCH 0}}"
     cmds:
       - task dk:b:{{.TARGET}}
-      - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -p 8221:8866 {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
+      - docker run --rm
+          -e DOCKMAN_AUTH_ENABLE=true
+          -e DOCKMAN_AUTH_USERNAME=wow
+          -e DOCKMAN_AUTH_PASSWORD=wow
+          -v /var/run/docker.sock:/var/run/docker.sock 
+          -p 8221:8866 
+        {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
     preconditions:
       - sh: 'test -n "{{.TARGET}}"'
         msg: "The 'target' variable must be provided. Usage: task dk:r.<target-name>"
