@@ -193,15 +193,13 @@ Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/
   isolated configs per host
     - Released: [v1.1](https://github.com/RA341/dockman/releases/tag/v1.1.0)
 
-### 🚀 Active Development
+### 📋 Planned
 
 - **Editor LSP** - Smart autocompletion, syntax checking, formatter and custom Docker Compose helpers like port
   conflict detection and auto network setup
 
 - **Smart Updater** - Built-in container update management that replaces watchtower and diun. Choose between
   auto-updates or just get notified when updates are available
-
-### 📋 Planned
 
 - **Backup & Restore** - Complete backup and restore for your entire Docker setup, so you never lose
   your configs
