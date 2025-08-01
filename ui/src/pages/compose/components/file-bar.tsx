@@ -23,10 +23,21 @@ export function FileList() {
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            // Check for Ctrl+k on Windows/Linux or Cmd+F on macOS
-            if ((event.ctrlKey) && event.key === 'k') {
+            // alt+k to open search
+            if ((event.altKey) && event.key === 'k') {
                 event.preventDefault() // Prevent the browser's default find action
                 showTelescope()
+            }
+            // alt + a for creating files
+            if ((event.altKey) && event.key === 'a') {
+                event.preventDefault()
+                openAddDialog("")
+            }
+
+            // alt + s for importing files
+            if ((event.altKey) && event.key === 's') {
+                event.preventDefault()
+                setImportDialogOpen(() => true)
             }
         }
         // Add the event listener to the window
@@ -95,7 +106,7 @@ export function FileList() {
                 <Tooltip arrow title={
                     <ShortcutFormatter
                         title="Search"
-                        keyCombo={[]}
+                        keyCombo={["ALT", "K"]}
                     />
                 }>
                     <IconButton
@@ -111,7 +122,7 @@ export function FileList() {
                 <Tooltip arrow title={
                     <ShortcutFormatter
                         title="Add"
-                        keyCombo={[]}
+                        keyCombo={["ALT", "A"]}
                     />
                 }>
                     <IconButton
@@ -128,7 +139,7 @@ export function FileList() {
                 <Tooltip arrow title={
                     <ShortcutFormatter
                         title="Import"
-                        keyCombo={[]}
+                        keyCombo={["ALT", "S"]}
                     />
                 }>
                     <IconButton

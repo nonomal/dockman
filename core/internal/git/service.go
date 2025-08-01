@@ -96,7 +96,7 @@ func createSampleFile(root string) error {
 Thanks for using Dockman
 
 This file was auto-created because Dockman needs to initialize a Git repo —
-and Git doesn’t like empty folders. So here we are, making history with this very first file.
+and Git doesn't like empty folders. So here we are, making history with this very first file.
 
 Feel free to delete or replace me. I won't take it personally.
 `

@@ -170,15 +170,15 @@ function CoreComposeEmpty() {
                 subtitle: "Try the sidebar."
             },
             {
-                title: "Nah, I don’t know nothin’ about no file.",
-                subtitle: "Check the sidebar, maybe you’ll find what you’re lookin’ for."
+                title: "Nah, I don't know nothin' about no file.",
+                subtitle: "Check the sidebar, maybe you'll find what you're lookin' for."
             },
             {
                 title: "No file, no problem. Just kidding, we need one.",
                 subtitle: "Pick one from the sidebar."
             },
             {
-                title: "File not found? Maybe it’s under the couch.",
+                title: "File not found? Maybe it's under the couch.",
                 subtitle: "or the sidebar."
             },
         ];

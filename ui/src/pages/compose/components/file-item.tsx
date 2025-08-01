@@ -1,6 +1,6 @@
-import {Link as RouterLink, useLocation} from 'react-router-dom';
-import {Box, Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemText} from '@mui/material';
-import {Add, Delete, ExpandLess, ExpandMore, Folder} from '@mui/icons-material';
+import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
+import {Box, Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Tooltip} from '@mui/material';
+import {Add, Analytics, Delete, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material';
 import {type FileGroup, useFiles} from "../../../hooks/files.ts";
 import React from "react";
 import FileIcon, {DockerFolderIcon} from "./file-icon.tsx";
@@ -11,210 +11,132 @@ interface FileItemProps {
     isOpen: boolean,
     onToggle: (name: string) => void,
     onAdd: (name: string) => void,
-    isSelected?: boolean; // Add this
-    level?: number; // Add this
+    isSelected?: boolean;
+    level?: number;
+}
+
+const COMPOSE_EXTENSIONS = ['compose.yaml', 'compose.yml'];
+
+function isComposeFile(filename: string): boolean {
+    return COMPOSE_EXTENSIONS.some(ext => filename.endsWith(ext));
+}
+
+// Transform FileGroup into a normalized structure for easier rendering
+interface NormalizedFileGroup {
+    type: 'file' | 'folder' | 'promoted-compose';
+    name: string;
+    displayName: string;
+    composePath?: string; // Full path to compose file for promoted folders
+    supportingFiles: string[]; // Supporting files for promoted compose folders
+    allChildren: string[]; // All children for regular folders
+    isCompose: boolean;
+}
+
+function normalizeFileGroup(group: FileGroup): NormalizedFileGroup {
+    const isFile = group.children.length === 0;
+
+    if (isFile) {
+        return {
+            type: 'file',
+            name: group.name,
+            displayName: group.name,
+            supportingFiles: [],
+            allChildren: [],
+            isCompose: isComposeFile(group.name)
+        };
+    }
+
+    // It's a folder - check for compose file promotion
+    const composeFiles = group.children.filter(isComposeFile);
+
+    if (composeFiles.length === 1) {
+        // Single compose file - promote it
+        const composeFile = composeFiles[0];
+        const supportingFiles = group.children.filter(child => !isComposeFile(child));
+
+        return {
+            type: 'promoted-compose',
+            name: group.name,
+            displayName: composeFile,
+            composePath: `${group.name}/${composeFile}`,
+            supportingFiles,
+            allChildren: group.children,
+            isCompose: true
+        };
+    }
+
+    // Multiple compose files or no compose files - display as regular folder
+    return {
+        type: 'folder',
+        name: group.name,
+        displayName: group.name,
+        supportingFiles: [],
+        allChildren: group.children,
+        isCompose: false
+    };
 }
 
 const FileItem = React.memo(({group, onAdd, isOpen, onToggle}: FileItemProps) => {
-    const location = useLocation();
-    const {deleteFile} = useFiles()
-
-    const isDirectory = group.children.length > 0;
-    const isRootFile = !isDirectory;
-
-    // For root files, check if it's a compose file
-    const isRootComposeFile = isRootFile && group.name.endsWith('compose.yaml');
+    const {deleteFile} = useFiles();
+    const normalized = normalizeFileGroup(group);
 
     const onDelete = (filename: string) => {
-        deleteFile(filename, location.pathname).then()
-    }
-
-    // Extract compose file and supporting files from directory
-    const extractComposeInfo = () => {
-        if (!isDirectory) return {compose: null, support: []};
-
-        let compose: string | null = null;
-        const support: string[] = [];
-
-        for (const child of group.children) {
-            if (!compose && child.endsWith('compose.yaml')) {
-                compose = child;
-            } else {
-                support.push(child);
-            }
-        }
-
-        return {compose, support};
+        deleteFile(filename).then();
     };
-
-    const {compose, support} = extractComposeInfo();
-    const hasCompose = Boolean(compose);
 
     const handleToggle = () => {
-        if (isDirectory) {
-            onToggle(group.name);
-        }
+        onToggle(group.name);
     };
 
-    // Render root file (non-directory)
-    if (isRootFile) {
+    // Render a simple file
+    if (normalized.type === 'file') {
         return (
-            <ListItemButton
-                component={RouterLink}
-                to={`/files/${group.name}`}
-                selected={location.pathname === `/files/${group.name}`}
-                sx={{py: isRootComposeFile ? 1.25 : 1}}
-            >
-                <ListItemIcon sx={{minWidth: 32}}>
-                    <FileIcon filename={group.name}/>
-                </ListItemIcon>
-
-                <Box sx={{flex: 1, mr: 1}}>
-                    <ListItemText
-                        primary={group.name}
-                        slotProps={{
-                            primary: {sx: {fontSize: '0.85rem'}}
-                        }}
-                    />
-                    {isRootComposeFile && <ComposeActions urlPath={`files/${group.name}`}/>}
-                </Box>
-
-                <IconButton
-                    size="small"
-                    onClick={(e) => handleActionClick(e, () => onDelete(group.name))}
-                    color="error"
-                >
-                    <Delete fontSize="small"/>
-                </IconButton>
-            </ListItemButton>
+            <FileListItem
+                filename={normalized.name}
+                displayName={normalized.displayName}
+                isCompose={normalized.isCompose}
+                onDelete={() => onDelete(normalized.name)}
+            />
         );
     }
 
-    // Render directory
-    const composePath = compose ? `${group.name}/${compose}` : null;
-    const composeUrlPath = composePath ? `/files/${composePath}` : null;
-
-    // Handle click for compose folders - navigate on first click, toggle on subsequent clicks
-    const handleMainItemClick = () => {
-        if (hasCompose && composeUrlPath) {
-            // If already selected (open), toggle instead of navigate
-            if (location.pathname === composeUrlPath) {
-                handleToggle();
-                return;
-            }
-            // If not selected, let RouterLink handle navigation
-        } else {
-            handleToggle();
-        }
-    };
-
-    // Determine main item props based on whether compose file exists
-    const mainItemProps = hasCompose && composeUrlPath ? {
-        component: RouterLink,
-        to: composeUrlPath,
-        selected: location.pathname === composeUrlPath,
-        onClick: handleMainItemClick
-    } : {
-        onClick: handleToggle
-    };
+    // Render a promoted compose folder or regular folder
+    const shouldShowAsNavigable = normalized.type === 'promoted-compose';
+    const hasChildren = normalized.type === 'promoted-compose'
+        ? normalized.supportingFiles.length > 0
+        : normalized.allChildren.length > 0;
 
     return (
         <>
-            {/* Main directory item */}
-            <ListItemButton
-                {...mainItemProps}
-                sx={{py: hasCompose ? 1.25 : 1}}
-            >
-                <ListItemIcon sx={{minWidth: 32}}>
-                    {hasCompose ? (
-                        <DockerFolderIcon/>
-                    ) : (
-                        <Folder sx={{color: amber[800], fontSize: '1.1rem'}}/>
-                    )}
-                </ListItemIcon>
+            <FolderListItem
+                folderName={normalized.name}
+                displayName={normalized.displayName}
+                composePath={normalized.composePath}
+                isCompose={normalized.isCompose}
+                navigable={shouldShowAsNavigable}
+                hasChildren={hasChildren}
+                isOpen={isOpen}
+                onAdd={() => onAdd(normalized.name)}
+                onDelete={() => onDelete(normalized.name)}
+                onToggle={handleToggle}
+            />
 
-                <Box sx={{flex: 1, mr: 1}}>
-                    <ListItemText
-                        primary={hasCompose ? compose : group.name}
-                        slotProps={{
-                            primary: {sx: {fontSize: '0.85rem'}}
-                        }}
-                    />
-                    {hasCompose && composeUrlPath && (
-                        <ComposeActions urlPath={composeUrlPath}/>
-                    )}
-                </Box>
-
-                {/* Directory actions */}
-                <IconButton
-                    size="small"
-                    onClick={(e) => handleActionClick(e, () => onAdd(group.name))}
-                    color="success"
-                >
-                    <Add fontSize="small"/>
-                </IconButton>
-
-                <IconButton
-                    size="small"
-                    onClick={(e) => handleActionClick(e, () => onDelete(group.name))}
-                    color="error"
-                >
-                    <Delete fontSize="small"/>
-                </IconButton>
-
-                {/* Show expand/collapse icon */}
-                {(hasCompose ? support.length > 0 : group.children.length > 0) && (
-                    <IconButton
-                        size="small"
-                        onClick={(e) => handleActionClick(e, handleToggle)}
-                        sx={{ml: 0.5}}
-                    >
-                        {isOpen ? <ExpandLess fontSize="small"/> : <ExpandMore fontSize="small"/>}
-                    </IconButton>
-                )}
-            </ListItemButton>
-
-            {/* Collapsible children section */}
-            {isDirectory && (
+            {hasChildren && (
                 <Collapse in={isOpen} timeout={125} unmountOnExit>
                     <List disablePadding sx={{pl: 4}}>
-                        {(hasCompose ? support : group.children).map((child: string) => {
-                            const childBase = `${group.name}/${child}`;
-                            const childPath = `/files/${childBase}`;
-                            const isChildComposeFile = child.endsWith('compose.yaml');
-
+                        {(normalized.type === 'promoted-compose'
+                                ? normalized.supportingFiles
+                                : normalized.allChildren
+                        ).map((child: string) => {
+                            const childPath = `${normalized.name}/${child}`;
                             return (
-                                <ListItemButton
+                                <FileListItem
                                     key={child}
-                                    component={RouterLink}
-                                    to={childPath}
-                                    selected={location.pathname === childPath}
-                                    sx={{py: isChildComposeFile ? 1.25 : 1}}
-                                >
-                                    <ListItemIcon sx={{minWidth: 32}}>
-                                        <FileIcon filename={child}/>
-                                    </ListItemIcon>
-
-                                    <Box sx={{flex: 1, mr: 1}}>
-                                        <ListItemText
-                                            primary={child}
-                                            slotProps={{
-                                                primary: {sx: {fontSize: '0.85rem'}}
-                                            }}
-                                        />
-                                        {isChildComposeFile && (
-                                            <ComposeActions urlPath={childPath}/>
-                                        )}
-                                    </Box>
-
-                                    <IconButton
-                                        size="small"
-                                        onClick={(e) => handleActionClick(e, () => onDelete(childBase))}
-                                        color="error"
-                                    >
-                                        <Delete fontSize="small"/>
-                                    </IconButton>
-                                </ListItemButton>
+                                    filename={childPath}
+                                    displayName={child}
+                                    isCompose={isComposeFile(child)}
+                                    onDelete={() => onDelete(childPath)}
+                                />
                             );
                         })}
                     </List>
@@ -224,39 +146,193 @@ const FileItem = React.memo(({group, onAdd, isOpen, onToggle}: FileItemProps) =>
     );
 });
 
-// eslint-disable-next-line no-empty-pattern
-function ComposeActions({}: { urlPath: string }) {
-    // const navigate = useNavigate();
-    // todo
-    return (<></>
-        //     <Box sx={{mt: 0.5}}>
-        //         <Tooltip title="Deploy" arrow>
-        //             <IconButton
-        //                 size="small"
-        //                 onClick={(e) => handleActionClick(e, () => navigate(`${urlPath}?tab=1`))}
-        //                 color="primary"
-        //             >
-        //                 <RocketLaunch fontSize="small"/>
-        //             </IconButton>
-        //         </Tooltip>
-        //         <Tooltip title="Stats" arrow>
-        //             <IconButton
-        //                 size="small"
-        //                 onClick={(e) => handleActionClick(e, () => navigate(`${urlPath}?tab=2`))}
-        //                 color="secondary"
-        //             >
-        //                 <Analytics fontSize="small"/>
-        //             </IconButton>
-        //         </Tooltip>
-        //     </Box>
+// Extracted component for file list items
+interface FileListItemProps {
+    filename: string;
+    displayName: string;
+    isCompose: boolean;
+    onDelete: () => void;
+}
+
+const FileListItem = React.memo(({filename, displayName, isCompose, onDelete}: FileListItemProps) => {
+    const location = useLocation();
+    const filePath = `/files/${filename}`;
+
+    return (
+        <ListItemButton
+            component={RouterLink}
+            to={filePath}
+            selected={location.pathname === filePath}
+            sx={{py: isCompose ? 1.25 : 1}}
+        >
+            <ListItemIcon sx={{minWidth: 32}}>
+                <FileIcon filename={displayName}/>
+            </ListItemIcon>
+
+            <Box sx={{flex: 1, mr: 1}}>
+                <ListItemText
+                    primary={displayName}
+                    slotProps={{
+                        primary: {sx: {fontSize: '0.85rem'}}
+                    }}
+                />
+                {isCompose && <ComposeActions urlPath={filePath}/>}
+            </Box>
+
+            <IconButton
+                size="small"
+                onClick={(e) => handleActionClick(e, onDelete)}
+                color="error"
+            >
+                <Delete fontSize="small"/>
+            </IconButton>
+        </ListItemButton>
+    );
+});
+
+// Extracted component for folder list items
+interface FolderListItemProps {
+    folderName: string;
+    displayName: string;
+    composePath?: string;
+    isCompose: boolean;
+    navigable: boolean;
+    hasChildren: boolean;
+    isOpen: boolean;
+    onAdd: () => void;
+    onDelete: () => void;
+    onToggle: () => void;
+}
+
+const FolderListItem = React.memo(
+    ({
+         displayName,
+         composePath,
+         isCompose,
+         navigable,
+         hasChildren,
+         isOpen,
+         onAdd,
+         onDelete,
+         onToggle
+     }: FolderListItemProps) => {
+        const location = useLocation();
+
+        const handleMainItemClick = () => {
+            if (navigable && composePath) {
+                const composeUrlPath = `/files/${composePath}`;
+                // If already selected, toggle instead of navigate
+                if (location.pathname === composeUrlPath) {
+                    onToggle();
+                    return;
+                }
+                // Otherwise let RouterLink handle navigation
+            } else {
+                onToggle();
+            }
+        };
+
+        // Determine main item props based on whether it's navigable
+        const mainItemProps = navigable && composePath ? {
+            component: RouterLink,
+            to: `/files/${composePath}`,
+            selected: location.pathname === `/files/${composePath}`,
+            onClick: handleMainItemClick
+        } : {
+            onClick: onToggle
+        };
+
+        return (
+            <ListItemButton
+                {...mainItemProps}
+                sx={{py: isCompose ? 1.25 : 1}}
+            >
+                <ListItemIcon sx={{minWidth: 32}}>
+                    {isCompose ? (
+                        <DockerFolderIcon/>
+                    ) : (
+                        <Folder sx={{color: amber[800], fontSize: '1.1rem'}}/>
+                    )}
+                </ListItemIcon>
+
+                <Box sx={{flex: 1, mr: 1}}>
+                    <ListItemText
+                        primary={displayName}
+                        slotProps={{
+                            primary: {sx: {fontSize: '0.85rem'}}
+                        }}
+                    />
+                    {isCompose && composePath && (
+                        <ComposeActions urlPath={`/files/${composePath}`}/>
+                    )}
+                </Box>
+
+                {/* Folder actions */}
+                <IconButton
+                    size="small"
+                    onClick={(e) => handleActionClick(e, onAdd)}
+                    color="success"
+                >
+                    <Add fontSize="small"/>
+                </IconButton>
+
+                <IconButton
+                    size="small"
+                    onClick={(e) => handleActionClick(e, onDelete)}
+                    color="error"
+                >
+                    <Delete fontSize="small"/>
+                </IconButton>
+
+                {/* Show expand/collapse icon */}
+                {hasChildren && (
+                    <IconButton
+                        size="small"
+                        onClick={(e) => handleActionClick(e, onToggle)}
+                        sx={{ml: 0.5}}
+                    >
+                        {isOpen ? <ExpandLess fontSize="small"/> : <ExpandMore fontSize="small"/>}
+                    </IconButton>
+                )}
+            </ListItemButton>
+        );
+    });
+
+function ComposeActions({urlPath}: { urlPath: string }) {
+    const navigate = useNavigate();
+
+    return (<Box sx={{mt: 0.5}}>
+            <Tooltip title="Deploy" arrow>
+                <IconButton
+                    size="small"
+                    onClick={(e) => handleActionClick(e, () => navigate(`${urlPath}?tab=1`))}
+                    color="primary"
+                >
+                    <RocketLaunch fontSize="small"/>
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Stats" arrow>
+                <IconButton
+                    size="small"
+                    onClick={(e) => handleActionClick(e, () => navigate(`${urlPath}?tab=2`))}
+                    color="secondary"
+                >
+                    <Analytics fontSize="small"/>
+                </IconButton>
+            </Tooltip>
+        </Box>
     );
 }
 
 // Helper to stop click from propagating to parent ListItemButton
 const handleActionClick = (e: React.MouseEvent, action: () => void) => {
-    e.preventDefault(); // Prevent default link behavior
-    e.stopPropagation(); // Stop the click event from bubbling up
+    e.preventDefault();
+    e.stopPropagation();
     action();
 };
+
+FileItem.displayName = 'FileItem';
+FileListItem.displayName = 'FileListItem';
+FolderListItem.displayName = 'FolderListItem';
 
 export default FileItem;
