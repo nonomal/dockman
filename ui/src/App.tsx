@@ -1,8 +1,8 @@
 import {Box, createTheme, CssBaseline, ThemeProvider} from '@mui/material';
 import {SnackbarProvider} from "./context/snackbar-context.tsx";
-import {BrowserRouter, Navigate, Outlet, Route, Routes, useNavigate} from "react-router-dom";
+import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
 import {AuthProvider} from "./context/auth-context.tsx";
-import React, {useEffect} from 'react';
+import React from 'react';
 import {useAuth} from "./hooks/auth.ts";
 import {HostProvider} from "./context/host-context.tsx";
 import {AuthPage} from './pages/auth/auth-page.tsx';
@@ -11,7 +11,11 @@ import {ComposePage} from './pages/compose/compose-page.tsx';
 import {SettingsPage} from "./pages/settings/settings-page.tsx";
 import {ChangelogProvider} from "./context/changelog-context.tsx";
 import NotFoundPage from "./pages/.components/not-found.tsx";
-import {RootLayout, TOP_BAR_HEIGHT} from "./pages/.components/root.tsx";
+import {RootLayout, TOP_BAR_HEIGHT} from "./pages/home/home.tsx";
+import NetworkPage from "./pages/networks/networks.tsx";
+import VolumesPage from "./pages/volumes/volumes.tsx";
+import ImagesPage from "./pages/images/images.tsx";
+import ContainersPage from "./pages/containers/containers.tsx";
 
 export function App() {
     return (
@@ -25,11 +29,32 @@ export function App() {
                             {/*IMPORTANT: providers that need auth need to be injected inside private route not here */}
                             <Route element={<PrivateRoute/>}>
                                 <Route path="/" element={<HomePage/>}>
-                                    <Route index element={<DashboardPage/>}/>
-                                    <Route path="files">
+                                    <Route path="/" element={<Navigate to="/stacks" replace />}/>
+                                    <Route path="stacks">
                                         <Route index element={<ComposePage/>}/>
                                         <Route path=":file/:child?" element={<ComposePage/>}/>
                                     </Route>
+
+                                    <Route path="stats">
+                                        <Route index element={<DashboardPage/>}/>
+                                    </Route>
+
+                                    <Route path="containers">
+                                        <Route index element={<ContainersPage/>}/>
+                                    </Route>
+
+                                    <Route path="images">
+                                        <Route index element={<ImagesPage/>}/>
+                                    </Route>
+
+                                    <Route path="volumes">
+                                        <Route index element={<VolumesPage/>}/>
+                                    </Route>
+
+                                    <Route path="networks">
+                                        <Route index element={<NetworkPage/>}/>
+                                    </Route>
+
                                     <Route path="settings" element={<SettingsPage/>}/>
                                 </Route>
                             </Route>
@@ -71,30 +96,30 @@ const PrivateRoute = () => {
 };
 
 function GlobalShortcuts() {
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.altKey && !e.repeat) {
-                switch (e.code) {
-                    case "Digit1":
-                        e.preventDefault();
-                        navigate("/");
-                        break;
-                    case "Digit2":
-                        e.preventDefault();
-                        navigate("/files");
-                        break;
-                }
-            }
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [navigate]);
+    // const navigate = useNavigate();
+    //
+    // useEffect(() => {
+    //     const handleKeyDown = (e: KeyboardEvent) => {
+    //         if (e.altKey && !e.repeat) {
+    //             switch (e.code) {
+    //                 case "Digit1":
+    //                     e.preventDefault();
+    //                     navigate("/");
+    //                     break;
+    //                 case "Digit2":
+    //                     e.preventDefault();
+    //                     navigate('/stacks');
+    //                     break;
+    //             }
+    //         }
+    //     };
+    //
+    //     window.addEventListener("keydown", handleKeyDown);
+    //
+    //     return () => {
+    //         window.removeEventListener("keydown", handleKeyDown);
+    //     };
+    // }, [navigate]);
 
     // this component doesn't render anything
     return null;

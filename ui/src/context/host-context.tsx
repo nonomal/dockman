@@ -49,8 +49,8 @@ export function HostProvider({children}: HostProviderProps) {
             setSelectedHost(machine)
         }
 
-        if (loc.pathname.startsWith('/files')) {
-            navigate("/files")
+        if (loc.pathname.startsWith('/stacks')) {
+            navigate('/stacks')
         }
 
     }, [hostManagerClient, loc.pathname, navigate, selectedHost])

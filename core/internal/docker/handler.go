@@ -11,6 +11,7 @@ import (
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/rs/zerolog/log"
 	"io"
@@ -194,6 +195,126 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 	return connect.NewResponse(&v1.StatsResponse{
 		Containers: stats,
 	}), nil
+}
+
+func (h *Handler) ImageList(ctx context.Context, c *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
+	images, err := h.srv().ListImages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var unusedContainers int64
+	var totalDisk int64
+	var untagged int64
+	var rpcImages []*v1.Image
+
+	for _, img := range images {
+		totalDisk += img.Size
+
+		if img.Containers == 0 {
+			unusedContainers++
+		}
+
+		if len(img.RepoTags) == 0 {
+			untagged++
+		}
+
+		rpcImages = append(rpcImages, &v1.Image{
+			Containers:  img.Containers,
+			Created:     img.Created,
+			Id:          img.ID,
+			Labels:      img.Labels,
+			ParentId:    img.ParentID,
+			RepoDigests: img.RepoDigests,
+			RepoTags:    img.RepoTags,
+			SharedSize:  img.SharedSize,
+			Size:        img.Size,
+			Manifests:   []*v1.ManifestSummary{}, // todo
+		})
+	}
+
+	return connect.NewResponse(&v1.ListImagesResponse{
+		TotalDiskUsage:   totalDisk,
+		Images:           rpcImages,
+		UnusedImageCount: unusedContainers,
+	}), err
+}
+
+func (h *Handler) ImageRemove(ctx context.Context, req *connect.Request[v1.RemoveImageRequest]) (*connect.Response[v1.RemoveImageResponse], error) {
+	for _, img := range req.Msg.ImageIds {
+		_, err := h.srv().ImageDelete(ctx, img)
+		if err != nil {
+			return nil, fmt.Errorf("unable to remove image %s: %w", img, err)
+		}
+	}
+
+	return connect.NewResponse(&v1.RemoveImageResponse{}), nil
+}
+
+func (h *Handler) ImagePruneUnused(ctx context.Context, req *connect.Request[v1.ImagePruneRequest]) (*connect.Response[v1.ImagePruneResponse], error) {
+	var result image.PruneReport
+	var err error
+	if req.Msg.GetPruneAll() {
+		result, err = h.srv().PruneUnusedImages(ctx)
+	} else {
+		result, err = h.srv().PruneUntaggedImages(ctx)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	response := v1.ImagePruneResponse{
+		SpaceReclaimed: result.SpaceReclaimed,
+	}
+
+	var deleted []*v1.ImagesDeleted
+	for _, res := range result.ImagesDeleted {
+		deleted = append(deleted, &v1.ImagesDeleted{
+			Deleted:  res.Deleted,
+			Untagged: res.Untagged,
+		})
+	}
+	response.Deleted = deleted
+
+	return connect.NewResponse(&response), nil
+}
+
+func (h *Handler) VolumeList(_ context.Context, req *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me VolumeList")
+}
+
+func (h *Handler) VolumeCreate(_ context.Context, req *connect.Request[v1.CreateVolumeRequest]) (*connect.Response[v1.CreateVolumeResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me VolumeCreate")
+}
+
+func (h *Handler) VolumeDelete(_ context.Context, req *connect.Request[v1.DeleteVolumeRequest]) (*connect.Response[v1.DeleteVolumeResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me VolumeDelete")
+}
+
+func (h *Handler) NetworkList(ctx context.Context, _ *connect.Request[v1.ListNetworksRequest]) (*connect.Response[v1.ListNetworksResponse], error) {
+	//networks, err := h.srv().NetworksList(ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//for _, network := range networks {
+	//
+	//}
+
+	return nil, fmt.Errorf(" implement me NetworkList")
+}
+
+func (h *Handler) NetworkCreate(_ context.Context, req *connect.Request[v1.CreateNetworkRequest]) (*connect.Response[v1.CreateNetworkResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me NetworkCreate")
+}
+
+func (h *Handler) NetworkDelete(_ context.Context, req *connect.Request[v1.DeleteNetworkRequest]) (*connect.Response[v1.DeleteNetworkResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me NetworkDelete")
 }
 
 // executeComposeStreamCommand handles the boilerplate for running a Docker Compose command that streams logs.

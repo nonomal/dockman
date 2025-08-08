@@ -1,6 +1,6 @@
 import React from 'react';
-import {Description} from '@mui/icons-material';
-import {blue} from "@mui/material/colors";
+import {Description, Folder} from '@mui/icons-material';
+import {amber, blue} from "@mui/material/colors";
 
 interface SvgFromUrlProps {
     url: string;
@@ -24,7 +24,7 @@ const DockerComposeIcon = () => (
 );
 
 const YamlIcon = () => (
-    <SvgFromUrl url={'/yaml.png'} />
+    <SvgFromUrl url={'/yaml.png'}/>
 );
 
 const EnvIcon = () => (
@@ -38,17 +38,47 @@ const GitignoreIcon = () => (
 const DefaultFileIcon = () => (
     <Description sx={{color: blue[200]}}/>
 );
+
 export const DockerFolderIcon = () => (
     <SvgFromUrl url={'/docker-folder.svg'}/>
 );
 
+export const FolderIcon = () => (
+    <Folder sx={{color: amber[800], fontSize: '1.4rem'}}/>
+);
+
+export const ContainerIcon = () => (
+    <SvgFromUrl url={'/container.svg'}/>
+);
+
+
+export const StacksIcon = () => (
+    <SvgFromUrl url={'/stacks.svg'}/>
+);
+
+
+export const StatsIcon = () => (
+    <SvgFromUrl url={'/stats.svg'}/>
+);
+
+export const ImagesIcon = () => (
+    <SvgFromUrl url={'/images.svg'}/>
+);
+
+export const NetworkIcon = () => (
+    <SvgFromUrl url={'/network.svg'}/>
+);
+
+export const VolumeIcon = () => (
+    <SvgFromUrl url={'/volumes.svg'}/>
+);
 
 interface FileIconProps {
     filename: string;
 }
 
 const FileIcon: React.FC<FileIconProps> = ({filename}) => {
-    if (filename.endsWith('compose.yaml') || filename.endsWith('compose.yml') ) {
+    if (filename.endsWith('compose.yaml') || filename.endsWith('compose.yml')) {
         return <DockerComposeIcon/>;
     }
     if (filename.endsWith('.yaml') || filename.endsWith('.yml')) {

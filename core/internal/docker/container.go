@@ -9,6 +9,9 @@ import (
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
 	"io"
@@ -74,6 +77,59 @@ func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, contai
 		}
 		return stats, true
 	})
+}
+
+func (s *ContainerService) ListImages(ctx context.Context) ([]image.Summary, error) {
+	return s.daemon.ImageList(ctx, image.ListOptions{
+		All:        true,
+		SharedSize: true,
+		Manifests:  true,
+	})
+}
+
+func (s *ContainerService) ImageDelete(ctx context.Context, imageId string) ([]image.DeleteResponse, error) {
+	return s.daemon.ImageRemove(ctx, imageId, image.RemoveOptions{})
+}
+
+func (s *ContainerService) PruneUntaggedImages(ctx context.Context) (image.PruneReport, error) {
+	filter := filters.NewArgs()
+	filter.Add("dangling", "true")
+
+	// removes dangling
+	return s.daemon.ImagesPrune(ctx, filter)
+}
+
+func (s *ContainerService) PruneUnusedImages(ctx context.Context) (image.PruneReport, error) {
+	filter := filters.NewArgs()
+	filter.Add("dangling", "false")
+	// force remove all unused
+	return s.daemon.ImagesPrune(ctx, filter)
+}
+
+func (s *ContainerService) NetworksList(ctx context.Context) ([]network.Summary, error) {
+	return s.daemon.NetworkList(ctx, network.ListOptions{})
+}
+
+func (s *ContainerService) NetworksCreate(ctx context.Context, name string) (network.CreateResponse, error) {
+	return s.daemon.NetworkCreate(ctx, name, network.CreateOptions{})
+}
+
+func (s *ContainerService) NetworksDelete(ctx context.Context, networkID string) error {
+	return s.daemon.NetworkRemove(ctx, networkID)
+}
+
+func (s *ContainerService) VolumesList(ctx context.Context) (volume.ListResponse, error) {
+	return s.daemon.VolumeList(ctx, volume.ListOptions{})
+}
+
+func (s *ContainerService) VolumesCreate(ctx context.Context, name string) (volume.Volume, error) {
+	return s.daemon.VolumeCreate(ctx, volume.CreateOptions{
+		Name: name,
+	})
+}
+
+func (s *ContainerService) VolumesDelete(ctx context.Context, volumeName string, force bool) error {
+	return s.daemon.VolumeRemove(ctx, volumeName, force)
 }
 
 func (s *ContainerService) getStats(ctx context.Context, info container.Summary) (ContainerStats, error) {

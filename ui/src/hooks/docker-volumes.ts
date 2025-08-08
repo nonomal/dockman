@@ -3,7 +3,7 @@ import {callRPC, useClient} from '../lib/api.ts'
 import {type ContainerList, DockerService} from '../gen/docker/v1/docker_pb.ts'
 import {useSnackbar} from "./snackbar.ts"
 
-export function useDockerContainers(selectedPage: string) {
+export function useDockerVolumes(selectedPage: string) {
     const dockerService = useClient(DockerService)
     const {showWarning} = useSnackbar()
 

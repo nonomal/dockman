@@ -18,6 +18,7 @@ import {
 import {DocumentScannerOutlined} from '@mui/icons-material'
 import {ContainerInfoPort} from './container-info-port.tsx'
 import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts";
+import {getImageHomePageUrl} from "../../../hooks/docker-images.ts";
 
 interface ContainerTableProps {
     containers: ContainerList[]
@@ -222,57 +223,3 @@ const getStatusChipColor = (status: string): "success" | "warning" | "default" |
 }
 
 
-/**
- * Generates a clickable URL for a container image, pointing to its repository.
- * Handles Docker Hub and other public/private registries.
- * @param {
- string
- } imageName The full name of the docker image (e.g., "nginx:latest", "gcr.io/my-project/my-image:v1").
- * @returns {
- string
- } The full URL to the image's web home page.
- */
-const getImageHomePageUrl = (imageName: string): string => {
-    if (!imageName) {
-        return '#' // Return a non-functional link if name is missing
-    }
-
-    // Strip the tag or digest from the image name
-    // e.g., "nginx:latest" -> "nginx", "gcr.io/img@sha256:..." -> "gcr.io/img"
-    let cleanName = imageName.split('@')[0]
-    const tagIndex = cleanName.lastIndexOf(':')
-    if (tagIndex > 0 && !cleanName.substring(tagIndex + 1).includes('/')) {
-        cleanName = cleanName.substring(0, tagIndex)
-    }
-
-    const nameSplit = cleanName.split('/')
-    const firstPart = nameSplit[0]
-    const isCustomRegistry = firstPart.includes('.') || firstPart.includes(':')
-
-    const customRegistryMap: Record<string, (image: string[]) => string> = {
-        "lscr.io": (splits: string[]) => {
-            // expected ["lscr.io", "linuxserver", "radarr"] <- get last part
-            return `https://docs.linuxserver.io/images/docker-${splits[2]}`
-        },
-    }
-
-    if (isCustomRegistry) {
-        const registryDomain = nameSplit[0]
-        const customUrl = customRegistryMap[registryDomain]
-        if (customUrl) {
-            // For known custom registries with special URL patterns
-            return customUrl(nameSplit)
-        }
-        // For other registries, link to the registry itself
-        return `https://${cleanName}`
-    } else {
-        // It's a Docker Hub image
-        if (nameSplit.length === 1) {
-            // Official Docker Hub image (e.g., "nginx")
-            return `https://hub.docker.com/_/${cleanName}`
-        } else {
-            // User/organization image (e.g., "user/image")
-            return `https://hub.docker.com/r/${cleanName}`
-        }
-    }
-}

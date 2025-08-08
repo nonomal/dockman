@@ -44,6 +44,14 @@ tasks:
     cmds:
       - npm run build
 
+  ui:page:*:
+    vars:
+      NATIVE_DIR: "{{.UI_DIR}}src/pages"
+      CMD_NAME: "{{index .MATCH 0}}"
+    cmds:
+      - coreutils mkdir -p {{ .NATIVE_DIR }}/{{ .CMD_NAME }}
+      - coreutils touch {{ .NATIVE_DIR }}/{{ .CMD_NAME }}/{{ .CMD_NAME }}.tsx
+
   ui:r:
     desc: "Build the latest web ui in {{.UI_DIR}}"
     dir: "{{.UI_DIR}}"
@@ -133,7 +141,7 @@ tasks:
     cmds:
       - task dk:b:{{.TARGET}}
       - docker run --rm
-          -e DOCKMAN_AUTH_ENABLE=true
+          -e DOCKMAN_AUTH_ENABLE=false
           -e DOCKMAN_AUTH_USERNAME=wow
           -e DOCKMAN_AUTH_PASSWORD=wow
           -v /var/run/docker.sock:/var/run/docker.sock 

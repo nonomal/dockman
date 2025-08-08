@@ -36,7 +36,7 @@ func NewService(infoDB VersionHistoryManager) *Service {
 		log.Fatal().Err(err).Msg("version check failed")
 	}
 
-	log.Info().Any("result", result).Msg("checking version")
+	log.Info().Str("last checked", result.CurrentVersion.Version).Str("current", Version).Msg("checking version")
 
 	log.Debug().Msg("Info service loaded successfully")
 	return s

@@ -156,7 +156,7 @@ interface FileListItemProps {
 
 const FileListItem = React.memo(({filename, displayName, isCompose, onDelete}: FileListItemProps) => {
     const location = useLocation();
-    const filePath = `/files/${filename}`;
+    const filePath = `/stacks/${filename}`;
 
     return (
         <ListItemButton
@@ -220,7 +220,7 @@ const FolderListItem = React.memo(
 
         const handleMainItemClick = () => {
             if (navigable && composePath) {
-                const composeUrlPath = `/files/${composePath}`;
+                const composeUrlPath = `/stacks/${composePath}`;
                 // If already selected, toggle instead of navigate
                 if (location.pathname === composeUrlPath) {
                     onToggle();
@@ -235,8 +235,8 @@ const FolderListItem = React.memo(
         // Determine main item props based on whether it's navigable
         const mainItemProps = navigable && composePath ? {
             component: RouterLink,
-            to: `/files/${composePath}`,
-            selected: location.pathname === `/files/${composePath}`,
+            to: `/stacks/${composePath}`,
+            selected: location.pathname === `/stacks/${composePath}`,
             onClick: handleMainItemClick
         } : {
             onClick: onToggle
@@ -263,7 +263,7 @@ const FolderListItem = React.memo(
                         }}
                     />
                     {isCompose && composePath && (
-                        <ComposeActions urlPath={`/files/${composePath}`}/>
+                        <ComposeActions urlPath={`/stacks/${composePath}`}/>
                     )}
                 </Box>
 

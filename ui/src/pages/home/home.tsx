@@ -10,12 +10,21 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
-import {Dashboard, FolderOpen, Logout, Settings} from '@mui/icons-material';
+import {Logout, Settings} from '@mui/icons-material';
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
-import HostSelectDropdown from "./host-selector.tsx";
+import HostSelectDropdown from "../.components/host-selector.tsx";
 import {useAuth} from "../../hooks/auth.ts";
 import {ShortcutFormatter} from "../compose/components/shortcut-formatter.tsx";
+import React, {useEffect, useMemo} from "react";
+import {
+    ContainerIcon,
+    ImagesIcon,
+    NetworkIcon,
+    StacksIcon,
+    StatsIcon,
+    VolumeIcon
+} from "../compose/components/file-icon.tsx";
 
 export const TOP_BAR_HEIGHT = 69;
 const MAIN_SIDEBAR_WIDTH = 80;
@@ -29,6 +38,91 @@ export function RootLayout() {
         logout();
         navigate('/');
     };
+
+    const navigationItems = useMemo(() => [
+        {
+            id: 'files',
+            title: 'Stacks',
+            path: '/stacks',
+            icon: StacksIcon,
+            keyCombo: ['ALT', '1'],
+            exact: false, // for startsWith matching
+            onClick: () => navigate('/stacks'),
+        },
+        {
+            id: 'dashboard',
+            title: 'Stats',
+            path: '/stats',
+            icon: StatsIcon,
+            keyCombo: ['ALT', '2'],
+            exact: true, // for exact path matching
+        },
+
+        {
+            id: 'containers',
+            title: 'Containers',
+            path: '/containers',
+            icon: ContainerIcon,
+            keyCombo: ['ALT', '3'],
+            exact: false, // for startsWith matching
+            onClick: () => navigate('/containers'),
+        },
+        {
+            id: 'images',
+            title: 'Images',
+            path: '/images',
+            icon: ImagesIcon,
+            keyCombo: ['ALT', '4'],
+            exact: false, // for startsWith matching
+            onClick: () => navigate('/images'),
+        },
+        {
+            id: 'volumes',
+            title: 'Volumes',
+            path: '/volumes',
+            icon: VolumeIcon,
+            keyCombo: ['ALT', '5'],
+            exact: false, // for startsWith matching
+            onClick: () => navigate('/volumes'),
+        },
+        {
+            id: 'networks',
+            title: 'Networks',
+            path: '/networks',
+            icon: NetworkIcon,
+            keyCombo: ['ALT', '6'],
+            exact: false, // for startsWith matching
+            onClick: () => navigate('/networks'),
+        }
+    ], [navigate]);
+
+    useEffect(() => {
+        // Create a map of key codes to navigation actions
+        const shortcutMap = navigationItems.reduce((acc, item) => {
+            const [modifier, key] = item.keyCombo;
+            if (modifier === 'ALT') {
+                acc[`Digit${key}`] = item;
+            }
+            return acc;
+        }, {} as Record<string, typeof navigationItems[0]>);
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.altKey && !e.repeat) {
+                const matchedItem = shortcutMap[e.code];
+                if (matchedItem) {
+                    e.preventDefault();
+                    if (matchedItem.onClick) {
+                        matchedItem.onClick();
+                    } else {
+                        navigate(matchedItem.path);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [navigate, navigationItems]);
 
     return (
         <>
@@ -87,6 +181,7 @@ export function RootLayout() {
 
                     {/* Right Side Controls */}
                     <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+
                         {/* Settings Button */}
                         <Tooltip title="Settings">
                             <IconButton
@@ -104,6 +199,7 @@ export function RootLayout() {
                                 <Logout/>
                             </IconButton>
                         </Tooltip>
+
                     </Box>
                 </Toolbar>
             </AppBar>
@@ -127,46 +223,55 @@ export function RootLayout() {
                 anchor="left"
             >
                 <Box sx={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-                    {/* Main Navigation */}
+                    {/* Main Sidebar */}
                     <List sx={{px: 1, pt: 2}}>
-                        <Tooltip placement="right" title={
-                            <ShortcutFormatter title={"Dashboard"} keyCombo={["ALT", "1"]}/>
-                        }>
-                            <ListItemButton
-                                component={RouterLink}
-                                to="/"
-                                selected={location.pathname === '/'}
-                                sx={{
-                                    borderRadius: 1,
-                                    mb: 1,
-                                    justifyContent: 'center',
-                                    minHeight: 48
-                                }}
-                            >
-                                <ListItemIcon sx={{minWidth: 'auto'}}>
-                                    <Dashboard/>
-                                </ListItemIcon>
-                            </ListItemButton>
-                        </Tooltip>
+                        {navigationItems.map((item) => {
+                            const IconComponent = item.icon as React.ComponentType;
+                            const isSelected = item.exact
+                                ? location.pathname === item.path
+                                : location.pathname.startsWith(item.path);
 
-                        <Tooltip placement="right" title={
-                            <ShortcutFormatter title={"Files"} keyCombo={["ALT", "2"]}/>
-                        }>
-                            <ListItemButton
-                                onClick={() => navigate('/files')}
-                                selected={location.pathname.startsWith('/files')}
-                                sx={{
+                            const buttonContent = (
+                                <ListItemIcon sx={{minWidth: 'auto'}}>
+                                    <IconComponent/>
+                                </ListItemIcon>
+                            );
+
+                            const buttonProps = {
+                                selected: isSelected,
+                                sx: {
                                     borderRadius: 1,
                                     mb: 1,
                                     justifyContent: 'center',
                                     minHeight: 48
-                                }}
-                            >
-                                <ListItemIcon sx={{minWidth: 'auto'}}>
-                                    <FolderOpen/>
-                                </ListItemIcon>
-                            </ListItemButton>
-                        </Tooltip>
+                                }
+                            };
+
+                            return (
+                                <Tooltip
+                                    key={item.id}
+                                    placement="right"
+                                    title={<ShortcutFormatter title={item.title} keyCombo={item.keyCombo}/>}
+                                >
+                                    {item.onClick ? (
+                                        <ListItemButton
+                                            onClick={item.onClick}
+                                            {...buttonProps}
+                                        >
+                                            {buttonContent}
+                                        </ListItemButton>
+                                    ) : (
+                                        <ListItemButton
+                                            component={RouterLink}
+                                            to={item.path}
+                                            {...buttonProps}
+                                        >
+                                            {buttonContent}
+                                        </ListItemButton>
+                                    )}
+                                </Tooltip>
+                            );
+                        })}
                     </List>
                 </Box>
             </Drawer>

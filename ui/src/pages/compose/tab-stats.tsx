@@ -1,5 +1,5 @@
 import {Box} from '@mui/material';
-import {useDockerStats} from "../../hooks/container-stats.ts";
+import {useDockerStats} from "../../hooks/docker-container-stats.ts";
 import {ContainerStatTable} from './components/container-stat-table.tsx';
 
 interface StackStatsProps {

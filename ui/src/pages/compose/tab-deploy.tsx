@@ -21,7 +21,7 @@ import { LogsPanel } from './components/logs-panel';
 import {Code, ConnectError } from '@connectrpc/connect';
 import {useClient} from "../../lib/api.ts";
 import { DockerService } from '../../gen/docker/v1/docker_pb.ts';
-import { useDockerContainers } from '../../hooks/container.ts';
+import { useDockerContainers } from '../../hooks/docker-container.ts';
 import {useSnackbar} from "../../hooks/snackbar.ts";
 
 const deployActionsConfig = [

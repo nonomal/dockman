@@ -106,12 +106,12 @@ function CoreCompose({filename}: { filename: string }) {
     const currentTab = selectedTab ?? 'editor';
 
     const handleTabChange = (_event: SyntheticEvent, newKey: string) => {
-        navigate(`/files/${filename}?tab=${newKey}`);
+        navigate(`/stacks/${filename}?tab=${newKey}`);
     };
 
     useEffect(() => {
         if (selectedTab && tabsList.length > 0) {
-            navigate(`/files/${filename}?tab=${selectedTab}`, {replace: true});
+            navigate(`/stacks/${filename}?tab=${selectedTab}`, {replace: true});
         }
     }, [filename, selectedTab, tabsList, navigate]);
 
