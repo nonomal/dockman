@@ -146,7 +146,7 @@ func (s *ComposeService) ListStack(ctx context.Context, project *types.Project, 
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
-	result, err := s.containerService.ContainersList(ctx, container.ListOptions{
+	result, err := s.containerService.listWithFilter(ctx, container.ListOptions{
 		All:     all,
 		Filters: containerFilters,
 	})

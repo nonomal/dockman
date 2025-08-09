@@ -2,8 +2,7 @@ import {Box, Button, CircularProgress} from '@mui/material';
 import {Delete, PlayArrow, RestartAlt, Stop, Update} from '@mui/icons-material';
 import {ContainerTable} from '../compose/components/container-info-table';
 import {useState} from "react";
-import {useDockerCompose} from "../../hooks/docker-compose.ts";
-import {useSnackbar} from '../../hooks/snackbar.ts';
+import {useDockerContainers} from "../../hooks/docker-containers.ts";
 
 const deployActionsConfig = [
     {name: 'start', message: "started", icon: <PlayArrow/>},
@@ -14,18 +13,21 @@ const deployActionsConfig = [
 ] as const;
 
 function ContainersPage() {
-    const {containers, fetchContainers, loading} = useDockerCompose('');
-    const {showSuccess} = useSnackbar()
+    const {containers, loading} = useDockerContainers();
 
     const [activeAction, setActiveAction] = useState('')
     const [selectedContainers, setSelectedContainers] = useState<string[]>([])
 
     function handleContainerLogs(containerId: string, containerName: string): void {
+        // todo
         console.log(containerId, containerName)
     }
 
     function handleComposeAction(name: string, message: string) {
+        setActiveAction(name)
+        // todo
         console.log(name, message)
+        setActiveAction('')
     }
 
     return (

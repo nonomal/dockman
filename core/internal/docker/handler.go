@@ -112,6 +112,11 @@ func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.Compo
 		return nil, err
 	}
 
+	rpcResult := h.containersToRpc(result)
+	return connect.NewResponse(&v1.ListResponse{List: rpcResult}), err
+}
+
+func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerList {
 	var dockerResult []*v1.ContainerList
 	for _, stack := range result {
 		var portSlice []*v1.Port
@@ -133,8 +138,7 @@ func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.Compo
 
 		dockerResult = append(dockerResult, toRPContainer(stack, portSlice))
 	}
-
-	return connect.NewResponse(&v1.ListResponse{List: dockerResult}), err
+	return dockerResult
 }
 
 ////////////////////////////////////////////
@@ -166,9 +170,14 @@ func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.C
 	return fmt.Errorf("ContainerUpdate: implement me")
 }
 
-func (h *Handler) ContainerList(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
-	//TODO implement me
-	return nil, fmt.Errorf("ContainerList: implement me")
+func (h *Handler) ContainerList(ctx context.Context, _ *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+	result, err := h.srv().ContainersList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rpcResult := h.containersToRpc(result)
+	return connect.NewResponse(&v1.ListResponse{List: rpcResult}), err
 }
 
 func (h *Handler) ContainerStats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {

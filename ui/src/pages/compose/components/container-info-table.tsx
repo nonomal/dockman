@@ -115,7 +115,7 @@ export function ContainerTable(
                                     }}
                                 >
                                     <Typography variant="h5" color="text.secondary">
-                                        No containers found for this deployment
+                                        No containers found
                                     </Typography>
                                 </Box>
                             </TableCell>

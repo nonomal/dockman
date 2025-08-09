@@ -26,29 +26,32 @@ func NewContainerService(cli *client.Client) *ContainerService {
 	return &ContainerService{daemon: cli}
 }
 
-func (s *ContainerService) ContainersStart(ctx context.Context) error {
-	return fmt.Errorf("[Service]: ContainersStart implement me")
+func (s *ContainerService) ContainersStart(ctx context.Context, containerId string) error {
+	return s.daemon.ContainerStart(ctx, containerId, container.StartOptions{})
 }
 
-func (s *ContainerService) ContainersStop(ctx context.Context) error {
-	return fmt.Errorf("[Service]: ContainersStop implement me")
+func (s *ContainerService) ContainersStop(ctx context.Context, containerId string) error {
+	return s.daemon.ContainerStop(ctx, containerId, container.StopOptions{})
 }
 
-func (s *ContainerService) ContainersRestart(ctx context.Context) error {
-	return fmt.Errorf("[Service]: ContainersRestart implement me")
+func (s *ContainerService) ContainersRestart(ctx context.Context, containerId string) error {
+	return s.daemon.ContainerRestart(ctx, containerId, container.StopOptions{})
 }
 
-func (s *ContainerService) ContainersRemove(ctx context.Context) error {
-	return fmt.Errorf("[Service]: ContainersRemove implement me")
+func (s *ContainerService) ContainersRemove(ctx context.Context, containerId string) error {
+	return s.daemon.ContainerRemove(ctx, containerId, container.RemoveOptions{})
 }
 
-func (s *ContainerService) ContainersList(ctx context.Context, filter container.ListOptions) ([]container.Summary, error) {
-	containers, err := s.daemon.ContainerList(ctx, filter)
-	if err != nil {
-		return nil, fmt.Errorf("could not list containers: %w", err)
-	}
+func (s *ContainerService) ContainersList(ctx context.Context) ([]container.Summary, error) {
+	return s.listWithFilter(ctx, container.ListOptions{
+		All:    true,
+		Size:   false,
+		Latest: false,
+	})
+}
 
-	return containers, nil
+func (s *ContainerService) listWithFilter(ctx context.Context, opts container.ListOptions) ([]container.Summary, error) {
+	return s.daemon.ContainerList(ctx, opts)
 }
 
 func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
@@ -61,7 +64,7 @@ func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string
 }
 
 func (s *ContainerService) ContainerStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
-	containers, err := s.ContainersList(ctx, filter)
+	containers, err := s.daemon.ContainerList(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("could not list containers: %w", err)
 	}

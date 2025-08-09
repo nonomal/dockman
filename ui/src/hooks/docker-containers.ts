@@ -2,10 +2,12 @@ import {useCallback, useEffect, useState} from 'react'
 import {callRPC, useClient} from '../lib/api.ts'
 import {type ContainerList, DockerService} from '../gen/docker/v1/docker_pb.ts'
 import {useSnackbar} from "./snackbar.ts"
+import {useHost} from "./host.ts";
 
 export function useDockerContainers() {
     const dockerService = useClient(DockerService)
     const {showWarning} = useSnackbar()
+    const {selectedHost} = useHost()
 
     const [containers, setContainers] = useState<ContainerList[]>([])
     const [loading, setLoading] = useState(true)
@@ -20,7 +22,7 @@ export function useDockerContainers() {
         }
 
         setContainers(val?.list || [])
-    }, [dockerService, composeFile])
+    }, [dockerService, selectedHost])
 
     useEffect(() => {
         setLoading(true)
