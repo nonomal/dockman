@@ -16,20 +16,20 @@ import {
     Stop as StopIcon,
     Update as UpdateIcon
 } from '@mui/icons-material';
-import { ContainerTable } from './components/container-info-table';
-import { LogsPanel } from './components/logs-panel';
-import {Code, ConnectError } from '@connectrpc/connect';
+import {ContainerTable} from './components/container-info-table';
+import {LogsPanel} from './components/logs-panel';
+import {Code, ConnectError} from '@connectrpc/connect';
 import {useClient} from "../../lib/api.ts";
-import { DockerService } from '../../gen/docker/v1/docker_pb.ts';
-import { useDockerContainers } from '../../hooks/docker-container.ts';
+import {DockerService} from '../../gen/docker/v1/docker_pb.ts';
+import {useDockerCompose} from '../../hooks/docker-compose.ts';
 import {useSnackbar} from "../../hooks/snackbar.ts";
 
 const deployActionsConfig = [
-    {name: 'start', message: "started", icon: <PlayArrowIcon/>},
-    {name: 'stop', message: "stopped", icon: <StopIcon/>},
-    {name: 'remove', message: "removed", icon: <DeleteIcon/>},
-    {name: 'restart', message: "restarted", icon: <RestartAltIcon/>},
-    {name: 'update', message: "updated", icon: <UpdateIcon/>},
+    {name: 'start', rpcName: 'composeStart', message: "started", icon: <PlayArrowIcon/>},
+    {name: 'stop', rpcName: 'composeStop', message: "stopped", icon: <StopIcon/>},
+    {name: 'remove', rpcName: 'composeRemove', message: "removed", icon: <DeleteIcon/>},
+    {name: 'restart', rpcName: 'composeRestart', message: "restarted", icon: <RestartAltIcon/>},
+    {name: 'update', rpcName: 'composeUpdate', message: "updated", icon: <UpdateIcon/>},
 ] as const;
 
 interface DeployPageProps {
@@ -38,7 +38,7 @@ interface DeployPageProps {
 
 export function TabDeploy({selectedPage}: DeployPageProps) {
     const dockerService = useClient(DockerService);
-    const {containers, fetchContainers, loading} = useDockerContainers(selectedPage);
+    const {containers, fetchContainers, loading} = useDockerCompose(selectedPage);
     const {showSuccess} = useSnackbar()
 
     const [panelTitle, setPanelTitle] = useState("Logs")
@@ -67,11 +67,15 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
         };
     }, []);
 
-    const handleComposeAction = (name: typeof deployActionsConfig[number]['name'], message: string) => {
+    const handleComposeAction = (
+        name: typeof deployActionsConfig[number]['name'],
+        message: string,
+        rpcName: typeof deployActionsConfig[number]['rpcName'],
+    ) => {
         setActiveAction(name)
 
         manageStream({
-            getStream: signal => dockerService[name]({
+            getStream: signal => dockerService[rpcName]({
                 filename: selectedPage,
                 selectedServices: selectedServices,
             }, {signal: signal}),
@@ -92,7 +96,7 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
 
     const handleContainerLogs = (containerId: string, containerName: string) => {
         manageStream({
-            getStream: signal => dockerService.logs({containerID: containerId}, {signal: signal}),
+            getStream: signal => dockerService.containerLogs({containerID: containerId}, {signal: signal}),
             transform: item => item.message,
             panelTitle: `Logs - ${containerName}`,
         })
@@ -158,7 +162,7 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
                             key={action.name}
                             variant="outlined"
                             disabled={!!activeAction}
-                            onClick={() => handleComposeAction(action.name, action.message)}
+                            onClick={() => handleComposeAction(action.name, action.message, action.rpcName)}
                             startIcon={activeAction === action.name ?
                                 <CircularProgress size={20} color="inherit"/> : action.icon}
                         >

@@ -40,7 +40,11 @@ func NewConnectHandler(srv GetService, host, pass string) *Handler {
 	}
 }
 
-func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+////////////////////////////////////////////
+// 			Compose Actions 			  //
+////////////////////////////////////////////
+
+func (h *Handler) ComposeStart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	return h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
@@ -50,7 +54,7 @@ func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile
 	)
 }
 
-func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+func (h *Handler) ComposeStop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	return h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
@@ -60,7 +64,7 @@ func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile]
 	)
 }
 
-func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+func (h *Handler) ComposeRemove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	return h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
@@ -70,7 +74,7 @@ func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFil
 	)
 }
 
-func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+func (h *Handler) ComposeRestart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	return h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
@@ -80,7 +84,7 @@ func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFi
 	)
 }
 
-func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+func (h *Handler) ComposeUpdate(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	err := h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
@@ -97,26 +101,7 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 	return nil
 }
 
-func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLogsRequest], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	if req.Msg.GetContainerID() == "" {
-		return fmt.Errorf("container id is required")
-	}
-
-	logsReader, err := h.srv().ContainerLogs(ctx, req.Msg.GetContainerID())
-	if err != nil {
-		return err
-	}
-	defer fileutil.Close(logsReader)
-
-	writer := &ContainerLogWriter{responseStream: responseStream}
-	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
 	project, err := h.srv().LoadProject(ctx, req.Msg.GetFilename())
 	if err != nil {
 		return nil, err
@@ -152,7 +137,41 @@ func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]
 	return connect.NewResponse(&v1.ListResponse{List: dockerResult}), err
 }
 
-func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
+////////////////////////////////////////////
+// 			Container Actions 			  //
+////////////////////////////////////////////
+
+func (h *Handler) ContainerStart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	//TODO implement me
+	return fmt.Errorf("ContainerStart: implement me")
+}
+
+func (h *Handler) ContainerStop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	//TODO implement me
+	return fmt.Errorf("ContainerStop: implement me")
+}
+
+func (h *Handler) ContainerRemove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	//TODO implement me
+	return fmt.Errorf("ContainerRemove: implement me")
+}
+
+func (h *Handler) ContainerRestart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	//TODO implement me
+	return fmt.Errorf("ContainerRestart: implement me")
+}
+
+func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	//TODO implement me
+	return fmt.Errorf("ContainerUpdate: implement me")
+}
+
+func (h *Handler) ContainerList(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf("ContainerList: implement me")
+}
+
+func (h *Handler) ContainerStats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
 	file := req.Msg.GetFile()
 
 	var containers []ContainerStats
@@ -165,7 +184,7 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 		}
 		containers, err = h.srv().StatStack(ctx, project)
 	} else {
-		containers, err = h.srv().GetStats(ctx, container.ListOptions{})
+		containers, err = h.srv().ContainerStats(ctx, container.ListOptions{})
 	}
 	if err != nil {
 		return nil, err
@@ -197,7 +216,30 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 	}), nil
 }
 
-func (h *Handler) ImageList(ctx context.Context, c *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
+func (h *Handler) ContainerLogs(ctx context.Context, req *connect.Request[v1.ContainerLogsRequest], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	if req.Msg.GetContainerID() == "" {
+		return fmt.Errorf("container id is required")
+	}
+
+	logsReader, err := h.srv().ContainerLogs(ctx, req.Msg.GetContainerID())
+	if err != nil {
+		return err
+	}
+	defer fileutil.Close(logsReader)
+
+	writer := &ContainerLogWriter{responseStream: responseStream}
+	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+////////////////////////////////////////////
+// 				Image Actions 			  //
+////////////////////////////////////////////
+
+func (h *Handler) ImageList(ctx context.Context, req *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
 	images, err := h.srv().ListImages(ctx)
 	if err != nil {
 		return nil, err
@@ -279,6 +321,10 @@ func (h *Handler) ImagePruneUnused(ctx context.Context, req *connect.Request[v1.
 	return connect.NewResponse(&response), nil
 }
 
+////////////////////////////////////////////
+// 				Volume Actions 			  //
+////////////////////////////////////////////
+
 func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
 	volumes, err := h.srv().VolumesList(ctx)
 	if err != nil {
@@ -309,6 +355,10 @@ func (h *Handler) VolumeDelete(_ context.Context, req *connect.Request[v1.Delete
 	//TODO implement me
 	return nil, fmt.Errorf(" implement me VolumeDelete")
 }
+
+////////////////////////////////////////////
+// 				Network Actions 		  //
+////////////////////////////////////////////
 
 func (h *Handler) NetworkList(ctx context.Context, _ *connect.Request[v1.ListNetworksRequest]) (*connect.Response[v1.ListNetworksResponse], error) {
 	networks, err := h.srv().NetworksList(ctx)
@@ -344,6 +394,10 @@ func (h *Handler) NetworkDelete(_ context.Context, req *connect.Request[v1.Delet
 	//TODO implement me
 	return nil, fmt.Errorf(" implement me NetworkDelete")
 }
+
+////////////////////////////////////////////
+// 				Utils 			  		  //
+////////////////////////////////////////////
 
 // executeComposeStreamCommand handles the boilerplate for running a Docker Compose command that streams logs.
 func (h *Handler) executeComposeStreamCommand(

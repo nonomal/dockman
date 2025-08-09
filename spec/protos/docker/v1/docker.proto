@@ -5,14 +5,23 @@ package docker.v1;
 option go_package = "github.com/RA341/dockman/generated/docker/v1";
 
 service DockerService {
-  rpc Start(ComposeFile) returns (stream LogsMessage) {}
-  rpc Stop(ComposeFile) returns (stream LogsMessage) {}
-  rpc Remove(ComposeFile) returns (stream LogsMessage) {}
-  rpc Restart(ComposeFile) returns (stream LogsMessage) {}
-  rpc Update(ComposeFile) returns (stream LogsMessage) {}
-  rpc List(ComposeFile) returns (ListResponse) {}
-  rpc Stats(StatsRequest) returns (StatsResponse) {}
-  rpc Logs(ContainerLogsRequest) returns (stream LogsMessage) {}
+  // container
+  rpc ContainerStart(ComposeFile) returns (stream LogsMessage) {}
+  rpc ContainerStop(ComposeFile) returns (stream LogsMessage) {}
+  rpc ContainerRemove(ComposeFile) returns (stream LogsMessage) {}
+  rpc ContainerRestart(ComposeFile) returns (stream LogsMessage) {}
+  rpc ContainerUpdate(ComposeFile) returns (stream LogsMessage) {}
+  rpc ContainerList(ComposeFile) returns (ListResponse) {}
+  rpc ContainerStats(StatsRequest) returns (StatsResponse) {}
+  rpc ContainerLogs(ContainerLogsRequest) returns (stream LogsMessage) {}
+
+  // compose
+  rpc ComposeStart(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeStop(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeRemove(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeRestart(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeUpdate(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeList(ComposeFile) returns (ListResponse) {}
 
   // images
   rpc ImageList(ListImagesRequest) returns (ListImagesResponse) {}
@@ -29,8 +38,6 @@ service DockerService {
   rpc NetworkCreate(CreateNetworkRequest) returns (CreateNetworkResponse) {}
   rpc NetworkDelete(DeleteNetworkRequest) returns (DeleteNetworkResponse) {}
 }
-
-import "google/protobuf/descriptor.proto";
 
 // Image-related messages
 message Image {

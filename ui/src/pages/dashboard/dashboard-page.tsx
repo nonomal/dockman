@@ -1,5 +1,5 @@
 import {Box,} from '@mui/material'
-import {useDockerStats} from "../../hooks/docker-container-stats.ts"
+import {useDockerStats} from "../../hooks/docker-containers-stats.ts"
 import {ContainerStatTable} from "../compose/components/container-stat-table.tsx"
 
 export const DashboardPage = () => {

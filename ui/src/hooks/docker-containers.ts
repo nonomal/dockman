@@ -3,7 +3,7 @@ import {callRPC, useClient} from '../lib/api.ts'
 import {type ContainerList, DockerService} from '../gen/docker/v1/docker_pb.ts'
 import {useSnackbar} from "./snackbar.ts"
 
-export function useDockerContainers(selectedPage: string) {
+export function useDockerContainers() {
     const dockerService = useClient(DockerService)
     const {showWarning} = useSnackbar()
 
@@ -12,12 +12,7 @@ export function useDockerContainers(selectedPage: string) {
     const [refreshInterval, setRefreshInterval] = useState(2000)
 
     const fetchContainers = useCallback(async () => {
-        if (!selectedPage) {
-            setContainers([])
-            return
-        }
-
-        const {val, err} = await callRPC(() => dockerService.list({filename: selectedPage}))
+        const {val, err} = await callRPC(() => dockerService.containerList({}))
         if (err) {
             showWarning(`Failed to refresh containers: ${err}`)
             setContainers([])
@@ -25,7 +20,7 @@ export function useDockerContainers(selectedPage: string) {
         }
 
         setContainers(val?.list || [])
-    }, [dockerService, selectedPage])
+    }, [dockerService, composeFile])
 
     useEffect(() => {
         setLoading(true)

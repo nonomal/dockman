@@ -26,22 +26,29 @@ func NewContainerService(cli *client.Client) *ContainerService {
 	return &ContainerService{daemon: cli}
 }
 
-func (s *ContainerService) ListContainers(ctx context.Context, filter container.ListOptions) ([]container.Summary, error) {
+func (s *ContainerService) ContainersStart(ctx context.Context) error {
+	return fmt.Errorf("[Service]: ContainersStart implement me")
+}
+
+func (s *ContainerService) ContainersStop(ctx context.Context) error {
+	return fmt.Errorf("[Service]: ContainersStop implement me")
+}
+
+func (s *ContainerService) ContainersRestart(ctx context.Context) error {
+	return fmt.Errorf("[Service]: ContainersRestart implement me")
+}
+
+func (s *ContainerService) ContainersRemove(ctx context.Context) error {
+	return fmt.Errorf("[Service]: ContainersRemove implement me")
+}
+
+func (s *ContainerService) ContainersList(ctx context.Context, filter container.ListOptions) ([]container.Summary, error) {
 	containers, err := s.daemon.ContainerList(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("could not list containers: %w", err)
 	}
 
 	return containers, nil
-}
-
-func (s *ContainerService) GetStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
-	containerInfo, err := s.StatContainers(ctx, filter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get container stats: %w", err)
-	}
-
-	return containerInfo, nil
 }
 
 func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
@@ -53,8 +60,8 @@ func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string
 	})
 }
 
-func (s *ContainerService) StatContainers(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
-	containers, err := s.ListContainers(ctx, filter)
+func (s *ContainerService) ContainerStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
+	containers, err := s.ContainersList(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("could not list containers: %w", err)
 	}
@@ -63,20 +70,8 @@ func (s *ContainerService) StatContainers(ctx context.Context, filter container.
 		return []ContainerStats{}, nil
 	}
 
-	statsList := s.GetStatsFromContainerList(ctx, containers)
-
+	statsList := s.getStatsFromContainerList(ctx, containers)
 	return statsList, nil
-}
-
-func (s *ContainerService) GetStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
-	return parallelLoop(containers, func(r container.Summary) (ContainerStats, bool) {
-		stats, err := s.getStats(ctx, r)
-		if err != nil && !errors.Is(err, context.Canceled) {
-			log.Warn().Err(err).Str("container", r.ID[:12]).Msg("could not convert stats, skipping...")
-			return ContainerStats{}, false
-		}
-		return stats, true
-	})
 }
 
 func (s *ContainerService) ListImages(ctx context.Context) ([]image.Summary, error) {
@@ -132,7 +127,18 @@ func (s *ContainerService) VolumesDelete(ctx context.Context, volumeName string,
 	return s.daemon.VolumeRemove(ctx, volumeName, force)
 }
 
-func (s *ContainerService) getStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
+func (s *ContainerService) getStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
+	return parallelLoop(containers, func(r container.Summary) (ContainerStats, bool) {
+		stats, err := s.getAndFormatStats(ctx, r)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			log.Warn().Err(err).Str("container", r.ID[:12]).Msg("could not convert stats, skipping...")
+			return ContainerStats{}, false
+		}
+		return stats, true
+	})
+}
+
+func (s *ContainerService) getAndFormatStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
 	contId := info.ID[:12]
 	stats, err := s.daemon.ContainerStats(ctx, info.ID, false)
 	if err != nil {
