@@ -20,7 +20,8 @@ export const ComposePage = () => {
             <Box sx={{
                 display: 'flex',
                 height: '100vh',
-                width: '100%'
+                width: '100%',
+                overflow: 'hidden',
             }}>
                 <Box sx={{width: 280, flexShrink: 0, borderRight: 1, borderColor: 'divider', overflowY: 'auto'}}>
                     <FileList/>

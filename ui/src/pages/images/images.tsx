@@ -79,7 +79,8 @@ const ImagesPage = () => {
                     gap: 3,
                     backgroundColor: 'background.paper',
                     boxShadow: 2,
-                    borderRadius: 2
+                    borderRadius: 2,
+                    flexShrink: 0,
                 }}
             >
                 {/* Title and Stats */}

@@ -639,6 +639,90 @@ func (x *ImagesDeleted) GetUntagged() string {
 }
 
 // Volume-related messages
+type Volume struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CreatedAt     string                 `protobuf:"bytes,1,opt,name=CreatedAt,proto3" json:"CreatedAt,omitempty"`
+	Driver        string                 `protobuf:"bytes,2,opt,name=Driver,proto3" json:"Driver,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,3,rep,name=Labels,proto3" json:"Labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	MountPoint    string                 `protobuf:"bytes,4,opt,name=MountPoint,proto3" json:"MountPoint,omitempty"`
+	Name          string                 `protobuf:"bytes,5,opt,name=Name,proto3" json:"Name,omitempty"`
+	Scope         string                 `protobuf:"bytes,6,opt,name=Scope,proto3" json:"Scope,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Volume) Reset() {
+	*x = Volume{}
+	mi := &file_docker_v1_docker_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Volume) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Volume) ProtoMessage() {}
+
+func (x *Volume) ProtoReflect() protoreflect.Message {
+	mi := &file_docker_v1_docker_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Volume.ProtoReflect.Descriptor instead.
+func (*Volume) Descriptor() ([]byte, []int) {
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Volume) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *Volume) GetDriver() string {
+	if x != nil {
+		return x.Driver
+	}
+	return ""
+}
+
+func (x *Volume) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *Volume) GetMountPoint() string {
+	if x != nil {
+		return x.MountPoint
+	}
+	return ""
+}
+
+func (x *Volume) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Volume) GetScope() string {
+	if x != nil {
+		return x.Scope
+	}
+	return ""
+}
+
 type ListVolumesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -647,7 +731,7 @@ type ListVolumesRequest struct {
 
 func (x *ListVolumesRequest) Reset() {
 	*x = ListVolumesRequest{}
-	mi := &file_docker_v1_docker_proto_msgTypes[9]
+	mi := &file_docker_v1_docker_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -659,7 +743,7 @@ func (x *ListVolumesRequest) String() string {
 func (*ListVolumesRequest) ProtoMessage() {}
 
 func (x *ListVolumesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[9]
+	mi := &file_docker_v1_docker_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -672,18 +756,19 @@ func (x *ListVolumesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListVolumesRequest.ProtoReflect.Descriptor instead.
 func (*ListVolumesRequest) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{9}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{10}
 }
 
 type ListVolumesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Volumes       []*Volume              `protobuf:"bytes,1,rep,name=volumes,proto3" json:"volumes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListVolumesResponse) Reset() {
 	*x = ListVolumesResponse{}
-	mi := &file_docker_v1_docker_proto_msgTypes[10]
+	mi := &file_docker_v1_docker_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -695,7 +780,7 @@ func (x *ListVolumesResponse) String() string {
 func (*ListVolumesResponse) ProtoMessage() {}
 
 func (x *ListVolumesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[10]
+	mi := &file_docker_v1_docker_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -708,7 +793,14 @@ func (x *ListVolumesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListVolumesResponse.ProtoReflect.Descriptor instead.
 func (*ListVolumesResponse) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{10}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListVolumesResponse) GetVolumes() []*Volume {
+	if x != nil {
+		return x.Volumes
+	}
+	return nil
 }
 
 type CreateVolumeRequest struct {
@@ -719,7 +811,7 @@ type CreateVolumeRequest struct {
 
 func (x *CreateVolumeRequest) Reset() {
 	*x = CreateVolumeRequest{}
-	mi := &file_docker_v1_docker_proto_msgTypes[11]
+	mi := &file_docker_v1_docker_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -731,7 +823,7 @@ func (x *CreateVolumeRequest) String() string {
 func (*CreateVolumeRequest) ProtoMessage() {}
 
 func (x *CreateVolumeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[11]
+	mi := &file_docker_v1_docker_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -744,7 +836,7 @@ func (x *CreateVolumeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateVolumeRequest.ProtoReflect.Descriptor instead.
 func (*CreateVolumeRequest) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{11}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{12}
 }
 
 type CreateVolumeResponse struct {
@@ -755,7 +847,7 @@ type CreateVolumeResponse struct {
 
 func (x *CreateVolumeResponse) Reset() {
 	*x = CreateVolumeResponse{}
-	mi := &file_docker_v1_docker_proto_msgTypes[12]
+	mi := &file_docker_v1_docker_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -767,7 +859,7 @@ func (x *CreateVolumeResponse) String() string {
 func (*CreateVolumeResponse) ProtoMessage() {}
 
 func (x *CreateVolumeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[12]
+	mi := &file_docker_v1_docker_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -780,7 +872,7 @@ func (x *CreateVolumeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateVolumeResponse.ProtoReflect.Descriptor instead.
 func (*CreateVolumeResponse) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{12}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{13}
 }
 
 type DeleteVolumeRequest struct {
@@ -791,7 +883,7 @@ type DeleteVolumeRequest struct {
 
 func (x *DeleteVolumeRequest) Reset() {
 	*x = DeleteVolumeRequest{}
-	mi := &file_docker_v1_docker_proto_msgTypes[13]
+	mi := &file_docker_v1_docker_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -803,7 +895,7 @@ func (x *DeleteVolumeRequest) String() string {
 func (*DeleteVolumeRequest) ProtoMessage() {}
 
 func (x *DeleteVolumeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[13]
+	mi := &file_docker_v1_docker_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -816,7 +908,7 @@ func (x *DeleteVolumeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteVolumeRequest.ProtoReflect.Descriptor instead.
 func (*DeleteVolumeRequest) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{13}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{14}
 }
 
 type DeleteVolumeResponse struct {
@@ -827,7 +919,7 @@ type DeleteVolumeResponse struct {
 
 func (x *DeleteVolumeResponse) Reset() {
 	*x = DeleteVolumeResponse{}
-	mi := &file_docker_v1_docker_proto_msgTypes[14]
+	mi := &file_docker_v1_docker_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -839,7 +931,7 @@ func (x *DeleteVolumeResponse) String() string {
 func (*DeleteVolumeResponse) ProtoMessage() {}
 
 func (x *DeleteVolumeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[14]
+	mi := &file_docker_v1_docker_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -852,10 +944,126 @@ func (x *DeleteVolumeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteVolumeResponse.ProtoReflect.Descriptor instead.
 func (*DeleteVolumeResponse) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{14}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{15}
 }
 
 // Network-related messages
+type Network struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Scope         string                 `protobuf:"bytes,4,opt,name=scope,proto3" json:"scope,omitempty"`
+	Driver        string                 `protobuf:"bytes,5,opt,name=driver,proto3" json:"driver,omitempty"`
+	EnableIpv4    bool                   `protobuf:"varint,6,opt,name=enable_ipv4,json=enableIpv4,proto3" json:"enable_ipv4,omitempty"`
+	EnableIpv6    bool                   `protobuf:"varint,7,opt,name=enable_ipv6,json=enableIpv6,proto3" json:"enable_ipv6,omitempty"`
+	Internal      bool                   `protobuf:"varint,9,opt,name=internal,proto3" json:"internal,omitempty"`
+	Attachable    bool                   `protobuf:"varint,10,opt,name=attachable,proto3" json:"attachable,omitempty"`
+	Ingress       bool                   `protobuf:"varint,11,opt,name=ingress,proto3" json:"ingress,omitempty"`
+	ConfigOnly    bool                   `protobuf:"varint,13,opt,name=config_only,json=configOnly,proto3" json:"config_only,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Network) Reset() {
+	*x = Network{}
+	mi := &file_docker_v1_docker_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Network) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Network) ProtoMessage() {}
+
+func (x *Network) ProtoReflect() protoreflect.Message {
+	mi := &file_docker_v1_docker_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Network.ProtoReflect.Descriptor instead.
+func (*Network) Descriptor() ([]byte, []int) {
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *Network) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Network) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Network) GetScope() string {
+	if x != nil {
+		return x.Scope
+	}
+	return ""
+}
+
+func (x *Network) GetDriver() string {
+	if x != nil {
+		return x.Driver
+	}
+	return ""
+}
+
+func (x *Network) GetEnableIpv4() bool {
+	if x != nil {
+		return x.EnableIpv4
+	}
+	return false
+}
+
+func (x *Network) GetEnableIpv6() bool {
+	if x != nil {
+		return x.EnableIpv6
+	}
+	return false
+}
+
+func (x *Network) GetInternal() bool {
+	if x != nil {
+		return x.Internal
+	}
+	return false
+}
+
+func (x *Network) GetAttachable() bool {
+	if x != nil {
+		return x.Attachable
+	}
+	return false
+}
+
+func (x *Network) GetIngress() bool {
+	if x != nil {
+		return x.Ingress
+	}
+	return false
+}
+
+func (x *Network) GetConfigOnly() bool {
+	if x != nil {
+		return x.ConfigOnly
+	}
+	return false
+}
+
 type ListNetworksRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -864,7 +1072,7 @@ type ListNetworksRequest struct {
 
 func (x *ListNetworksRequest) Reset() {
 	*x = ListNetworksRequest{}
-	mi := &file_docker_v1_docker_proto_msgTypes[15]
+	mi := &file_docker_v1_docker_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -876,7 +1084,7 @@ func (x *ListNetworksRequest) String() string {
 func (*ListNetworksRequest) ProtoMessage() {}
 
 func (x *ListNetworksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[15]
+	mi := &file_docker_v1_docker_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -889,18 +1097,19 @@ func (x *ListNetworksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListNetworksRequest.ProtoReflect.Descriptor instead.
 func (*ListNetworksRequest) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{15}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{17}
 }
 
 type ListNetworksResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Networks      []*Network             `protobuf:"bytes,1,rep,name=networks,proto3" json:"networks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListNetworksResponse) Reset() {
 	*x = ListNetworksResponse{}
-	mi := &file_docker_v1_docker_proto_msgTypes[16]
+	mi := &file_docker_v1_docker_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -912,7 +1121,7 @@ func (x *ListNetworksResponse) String() string {
 func (*ListNetworksResponse) ProtoMessage() {}
 
 func (x *ListNetworksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[16]
+	mi := &file_docker_v1_docker_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -925,7 +1134,14 @@ func (x *ListNetworksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListNetworksResponse.ProtoReflect.Descriptor instead.
 func (*ListNetworksResponse) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{16}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ListNetworksResponse) GetNetworks() []*Network {
+	if x != nil {
+		return x.Networks
+	}
+	return nil
 }
 
 type CreateNetworkRequest struct {
@@ -936,7 +1152,7 @@ type CreateNetworkRequest struct {
 
 func (x *CreateNetworkRequest) Reset() {
 	*x = CreateNetworkRequest{}
-	mi := &file_docker_v1_docker_proto_msgTypes[17]
+	mi := &file_docker_v1_docker_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -948,7 +1164,7 @@ func (x *CreateNetworkRequest) String() string {
 func (*CreateNetworkRequest) ProtoMessage() {}
 
 func (x *CreateNetworkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[17]
+	mi := &file_docker_v1_docker_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -961,7 +1177,7 @@ func (x *CreateNetworkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateNetworkRequest.ProtoReflect.Descriptor instead.
 func (*CreateNetworkRequest) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{17}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{19}
 }
 
 type CreateNetworkResponse struct {
@@ -972,7 +1188,7 @@ type CreateNetworkResponse struct {
 
 func (x *CreateNetworkResponse) Reset() {
 	*x = CreateNetworkResponse{}
-	mi := &file_docker_v1_docker_proto_msgTypes[18]
+	mi := &file_docker_v1_docker_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -984,7 +1200,7 @@ func (x *CreateNetworkResponse) String() string {
 func (*CreateNetworkResponse) ProtoMessage() {}
 
 func (x *CreateNetworkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[18]
+	mi := &file_docker_v1_docker_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -997,7 +1213,7 @@ func (x *CreateNetworkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateNetworkResponse.ProtoReflect.Descriptor instead.
 func (*CreateNetworkResponse) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{18}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{20}
 }
 
 type DeleteNetworkRequest struct {
@@ -1008,7 +1224,7 @@ type DeleteNetworkRequest struct {
 
 func (x *DeleteNetworkRequest) Reset() {
 	*x = DeleteNetworkRequest{}
-	mi := &file_docker_v1_docker_proto_msgTypes[19]
+	mi := &file_docker_v1_docker_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1020,7 +1236,7 @@ func (x *DeleteNetworkRequest) String() string {
 func (*DeleteNetworkRequest) ProtoMessage() {}
 
 func (x *DeleteNetworkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[19]
+	mi := &file_docker_v1_docker_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1033,7 +1249,7 @@ func (x *DeleteNetworkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteNetworkRequest.ProtoReflect.Descriptor instead.
 func (*DeleteNetworkRequest) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{19}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{21}
 }
 
 type DeleteNetworkResponse struct {
@@ -1044,7 +1260,7 @@ type DeleteNetworkResponse struct {
 
 func (x *DeleteNetworkResponse) Reset() {
 	*x = DeleteNetworkResponse{}
-	mi := &file_docker_v1_docker_proto_msgTypes[20]
+	mi := &file_docker_v1_docker_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1056,7 +1272,7 @@ func (x *DeleteNetworkResponse) String() string {
 func (*DeleteNetworkResponse) ProtoMessage() {}
 
 func (x *DeleteNetworkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[20]
+	mi := &file_docker_v1_docker_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1069,7 +1285,7 @@ func (x *DeleteNetworkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteNetworkResponse.ProtoReflect.Descriptor instead.
 func (*DeleteNetworkResponse) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{20}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{22}
 }
 
 type ContainerLogsRequest struct {
@@ -1081,7 +1297,7 @@ type ContainerLogsRequest struct {
 
 func (x *ContainerLogsRequest) Reset() {
 	*x = ContainerLogsRequest{}
-	mi := &file_docker_v1_docker_proto_msgTypes[21]
+	mi := &file_docker_v1_docker_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1093,7 +1309,7 @@ func (x *ContainerLogsRequest) String() string {
 func (*ContainerLogsRequest) ProtoMessage() {}
 
 func (x *ContainerLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[21]
+	mi := &file_docker_v1_docker_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1106,7 +1322,7 @@ func (x *ContainerLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerLogsRequest.ProtoReflect.Descriptor instead.
 func (*ContainerLogsRequest) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{21}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ContainerLogsRequest) GetContainerID() string {
@@ -1125,7 +1341,7 @@ type LogsMessage struct {
 
 func (x *LogsMessage) Reset() {
 	*x = LogsMessage{}
-	mi := &file_docker_v1_docker_proto_msgTypes[22]
+	mi := &file_docker_v1_docker_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1137,7 +1353,7 @@ func (x *LogsMessage) String() string {
 func (*LogsMessage) ProtoMessage() {}
 
 func (x *LogsMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[22]
+	mi := &file_docker_v1_docker_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1150,7 +1366,7 @@ func (x *LogsMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogsMessage.ProtoReflect.Descriptor instead.
 func (*LogsMessage) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{22}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *LogsMessage) GetMessage() string {
@@ -1170,7 +1386,7 @@ type StatsResponse struct {
 
 func (x *StatsResponse) Reset() {
 	*x = StatsResponse{}
-	mi := &file_docker_v1_docker_proto_msgTypes[23]
+	mi := &file_docker_v1_docker_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1182,7 +1398,7 @@ func (x *StatsResponse) String() string {
 func (*StatsResponse) ProtoMessage() {}
 
 func (x *StatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[23]
+	mi := &file_docker_v1_docker_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1195,7 +1411,7 @@ func (x *StatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatsResponse.ProtoReflect.Descriptor instead.
 func (*StatsResponse) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{23}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *StatsResponse) GetSystem() *SystemInfo {
@@ -1223,7 +1439,7 @@ type StatsRequest struct {
 
 func (x *StatsRequest) Reset() {
 	*x = StatsRequest{}
-	mi := &file_docker_v1_docker_proto_msgTypes[24]
+	mi := &file_docker_v1_docker_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1235,7 +1451,7 @@ func (x *StatsRequest) String() string {
 func (*StatsRequest) ProtoMessage() {}
 
 func (x *StatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[24]
+	mi := &file_docker_v1_docker_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1248,7 +1464,7 @@ func (x *StatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatsRequest.ProtoReflect.Descriptor instead.
 func (*StatsRequest) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{24}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *StatsRequest) GetFile() *ComposeFile {
@@ -1282,7 +1498,7 @@ type SystemInfo struct {
 
 func (x *SystemInfo) Reset() {
 	*x = SystemInfo{}
-	mi := &file_docker_v1_docker_proto_msgTypes[25]
+	mi := &file_docker_v1_docker_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1294,7 +1510,7 @@ func (x *SystemInfo) String() string {
 func (*SystemInfo) ProtoMessage() {}
 
 func (x *SystemInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[25]
+	mi := &file_docker_v1_docker_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1307,7 +1523,7 @@ func (x *SystemInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemInfo.ProtoReflect.Descriptor instead.
 func (*SystemInfo) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{25}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *SystemInfo) GetCPU() float64 {
@@ -1333,7 +1549,7 @@ type ListResponse struct {
 
 func (x *ListResponse) Reset() {
 	*x = ListResponse{}
-	mi := &file_docker_v1_docker_proto_msgTypes[26]
+	mi := &file_docker_v1_docker_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1345,7 +1561,7 @@ func (x *ListResponse) String() string {
 func (*ListResponse) ProtoMessage() {}
 
 func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[26]
+	mi := &file_docker_v1_docker_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1358,7 +1574,7 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{26}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListResponse) GetList() []*ContainerList {
@@ -1385,7 +1601,7 @@ type ContainerList struct {
 
 func (x *ContainerList) Reset() {
 	*x = ContainerList{}
-	mi := &file_docker_v1_docker_proto_msgTypes[27]
+	mi := &file_docker_v1_docker_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1397,7 +1613,7 @@ func (x *ContainerList) String() string {
 func (*ContainerList) ProtoMessage() {}
 
 func (x *ContainerList) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[27]
+	mi := &file_docker_v1_docker_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1626,7 @@ func (x *ContainerList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerList.ProtoReflect.Descriptor instead.
 func (*ContainerList) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{27}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ContainerList) GetId() string {
@@ -1496,7 +1712,7 @@ type ContainerStats struct {
 
 func (x *ContainerStats) Reset() {
 	*x = ContainerStats{}
-	mi := &file_docker_v1_docker_proto_msgTypes[28]
+	mi := &file_docker_v1_docker_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1508,7 +1724,7 @@ func (x *ContainerStats) String() string {
 func (*ContainerStats) ProtoMessage() {}
 
 func (x *ContainerStats) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[28]
+	mi := &file_docker_v1_docker_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1521,7 +1737,7 @@ func (x *ContainerStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStats.ProtoReflect.Descriptor instead.
 func (*ContainerStats) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{28}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ContainerStats) GetId() string {
@@ -1599,7 +1815,7 @@ type Port struct {
 
 func (x *Port) Reset() {
 	*x = Port{}
-	mi := &file_docker_v1_docker_proto_msgTypes[29]
+	mi := &file_docker_v1_docker_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1611,7 +1827,7 @@ func (x *Port) String() string {
 func (*Port) ProtoMessage() {}
 
 func (x *Port) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[29]
+	mi := &file_docker_v1_docker_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1624,7 +1840,7 @@ func (x *Port) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Port.ProtoReflect.Descriptor instead.
 func (*Port) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{29}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *Port) GetPublic() int32 {
@@ -1663,7 +1879,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_docker_v1_docker_proto_msgTypes[30]
+	mi := &file_docker_v1_docker_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1675,7 +1891,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[30]
+	mi := &file_docker_v1_docker_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1688,7 +1904,7 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{30}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{32}
 }
 
 type ComposeFile struct {
@@ -1701,7 +1917,7 @@ type ComposeFile struct {
 
 func (x *ComposeFile) Reset() {
 	*x = ComposeFile{}
-	mi := &file_docker_v1_docker_proto_msgTypes[31]
+	mi := &file_docker_v1_docker_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1713,7 +1929,7 @@ func (x *ComposeFile) String() string {
 func (*ComposeFile) ProtoMessage() {}
 
 func (x *ComposeFile) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[31]
+	mi := &file_docker_v1_docker_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1726,7 +1942,7 @@ func (x *ComposeFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ComposeFile.ProtoReflect.Descriptor instead.
 func (*ComposeFile) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{31}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ComposeFile) GetFilename() string {
@@ -1787,15 +2003,46 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\bpruneAll\x18\x01 \x01(\bR\bpruneAll\"E\n" +
 	"\rImagesDeleted\x12\x18\n" +
 	"\aDeleted\x18\x01 \x01(\tR\aDeleted\x12\x1a\n" +
-	"\bUntagged\x18\x02 \x01(\tR\bUntagged\"\x14\n" +
-	"\x12ListVolumesRequest\"\x15\n" +
-	"\x13ListVolumesResponse\"\x15\n" +
+	"\bUntagged\x18\x02 \x01(\tR\bUntagged\"\xfa\x01\n" +
+	"\x06Volume\x12\x1c\n" +
+	"\tCreatedAt\x18\x01 \x01(\tR\tCreatedAt\x12\x16\n" +
+	"\x06Driver\x18\x02 \x01(\tR\x06Driver\x125\n" +
+	"\x06Labels\x18\x03 \x03(\v2\x1d.docker.v1.Volume.LabelsEntryR\x06Labels\x12\x1e\n" +
+	"\n" +
+	"MountPoint\x18\x04 \x01(\tR\n" +
+	"MountPoint\x12\x12\n" +
+	"\x04Name\x18\x05 \x01(\tR\x04Name\x12\x14\n" +
+	"\x05Scope\x18\x06 \x01(\tR\x05Scope\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x14\n" +
+	"\x12ListVolumesRequest\"B\n" +
+	"\x13ListVolumesResponse\x12+\n" +
+	"\avolumes\x18\x01 \x03(\v2\x11.docker.v1.VolumeR\avolumes\"\x15\n" +
 	"\x13CreateVolumeRequest\"\x16\n" +
 	"\x14CreateVolumeResponse\"\x15\n" +
 	"\x13DeleteVolumeRequest\"\x16\n" +
-	"\x14DeleteVolumeResponse\"\x15\n" +
-	"\x13ListNetworksRequest\"\x16\n" +
-	"\x14ListNetworksResponse\"\x16\n" +
+	"\x14DeleteVolumeResponse\"\x94\x02\n" +
+	"\aNetwork\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n" +
+	"\x05scope\x18\x04 \x01(\tR\x05scope\x12\x16\n" +
+	"\x06driver\x18\x05 \x01(\tR\x06driver\x12\x1f\n" +
+	"\venable_ipv4\x18\x06 \x01(\bR\n" +
+	"enableIpv4\x12\x1f\n" +
+	"\venable_ipv6\x18\a \x01(\bR\n" +
+	"enableIpv6\x12\x1a\n" +
+	"\binternal\x18\t \x01(\bR\binternal\x12\x1e\n" +
+	"\n" +
+	"attachable\x18\n" +
+	" \x01(\bR\n" +
+	"attachable\x12\x18\n" +
+	"\aingress\x18\v \x01(\bR\aingress\x12\x1f\n" +
+	"\vconfig_only\x18\r \x01(\bR\n" +
+	"configOnly\"\x15\n" +
+	"\x13ListNetworksRequest\"F\n" +
+	"\x14ListNetworksResponse\x12.\n" +
+	"\bnetworks\x18\x01 \x03(\v2\x12.docker.v1.NetworkR\bnetworks\"\x16\n" +
 	"\x14CreateNetworkRequest\"\x17\n" +
 	"\x15CreateNetworkResponse\"\x16\n" +
 	"\x14DeleteNetworkRequest\"\x17\n" +
@@ -1904,7 +2151,7 @@ func file_docker_v1_docker_proto_rawDescGZIP() []byte {
 }
 
 var file_docker_v1_docker_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_docker_v1_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_docker_v1_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_docker_v1_docker_proto_goTypes = []any{
 	(SORT_FIELD)(0),               // 0: docker.v1.SORT_FIELD
 	(ORDER)(0),                    // 1: docker.v1.ORDER
@@ -1917,82 +2164,88 @@ var file_docker_v1_docker_proto_goTypes = []any{
 	(*ImagePruneResponse)(nil),    // 8: docker.v1.ImagePruneResponse
 	(*ImagePruneRequest)(nil),     // 9: docker.v1.ImagePruneRequest
 	(*ImagesDeleted)(nil),         // 10: docker.v1.ImagesDeleted
-	(*ListVolumesRequest)(nil),    // 11: docker.v1.ListVolumesRequest
-	(*ListVolumesResponse)(nil),   // 12: docker.v1.ListVolumesResponse
-	(*CreateVolumeRequest)(nil),   // 13: docker.v1.CreateVolumeRequest
-	(*CreateVolumeResponse)(nil),  // 14: docker.v1.CreateVolumeResponse
-	(*DeleteVolumeRequest)(nil),   // 15: docker.v1.DeleteVolumeRequest
-	(*DeleteVolumeResponse)(nil),  // 16: docker.v1.DeleteVolumeResponse
-	(*ListNetworksRequest)(nil),   // 17: docker.v1.ListNetworksRequest
-	(*ListNetworksResponse)(nil),  // 18: docker.v1.ListNetworksResponse
-	(*CreateNetworkRequest)(nil),  // 19: docker.v1.CreateNetworkRequest
-	(*CreateNetworkResponse)(nil), // 20: docker.v1.CreateNetworkResponse
-	(*DeleteNetworkRequest)(nil),  // 21: docker.v1.DeleteNetworkRequest
-	(*DeleteNetworkResponse)(nil), // 22: docker.v1.DeleteNetworkResponse
-	(*ContainerLogsRequest)(nil),  // 23: docker.v1.ContainerLogsRequest
-	(*LogsMessage)(nil),           // 24: docker.v1.LogsMessage
-	(*StatsResponse)(nil),         // 25: docker.v1.StatsResponse
-	(*StatsRequest)(nil),          // 26: docker.v1.StatsRequest
-	(*SystemInfo)(nil),            // 27: docker.v1.SystemInfo
-	(*ListResponse)(nil),          // 28: docker.v1.ListResponse
-	(*ContainerList)(nil),         // 29: docker.v1.ContainerList
-	(*ContainerStats)(nil),        // 30: docker.v1.ContainerStats
-	(*Port)(nil),                  // 31: docker.v1.Port
-	(*Empty)(nil),                 // 32: docker.v1.Empty
-	(*ComposeFile)(nil),           // 33: docker.v1.ComposeFile
-	nil,                           // 34: docker.v1.Image.LabelsEntry
+	(*Volume)(nil),                // 11: docker.v1.Volume
+	(*ListVolumesRequest)(nil),    // 12: docker.v1.ListVolumesRequest
+	(*ListVolumesResponse)(nil),   // 13: docker.v1.ListVolumesResponse
+	(*CreateVolumeRequest)(nil),   // 14: docker.v1.CreateVolumeRequest
+	(*CreateVolumeResponse)(nil),  // 15: docker.v1.CreateVolumeResponse
+	(*DeleteVolumeRequest)(nil),   // 16: docker.v1.DeleteVolumeRequest
+	(*DeleteVolumeResponse)(nil),  // 17: docker.v1.DeleteVolumeResponse
+	(*Network)(nil),               // 18: docker.v1.Network
+	(*ListNetworksRequest)(nil),   // 19: docker.v1.ListNetworksRequest
+	(*ListNetworksResponse)(nil),  // 20: docker.v1.ListNetworksResponse
+	(*CreateNetworkRequest)(nil),  // 21: docker.v1.CreateNetworkRequest
+	(*CreateNetworkResponse)(nil), // 22: docker.v1.CreateNetworkResponse
+	(*DeleteNetworkRequest)(nil),  // 23: docker.v1.DeleteNetworkRequest
+	(*DeleteNetworkResponse)(nil), // 24: docker.v1.DeleteNetworkResponse
+	(*ContainerLogsRequest)(nil),  // 25: docker.v1.ContainerLogsRequest
+	(*LogsMessage)(nil),           // 26: docker.v1.LogsMessage
+	(*StatsResponse)(nil),         // 27: docker.v1.StatsResponse
+	(*StatsRequest)(nil),          // 28: docker.v1.StatsRequest
+	(*SystemInfo)(nil),            // 29: docker.v1.SystemInfo
+	(*ListResponse)(nil),          // 30: docker.v1.ListResponse
+	(*ContainerList)(nil),         // 31: docker.v1.ContainerList
+	(*ContainerStats)(nil),        // 32: docker.v1.ContainerStats
+	(*Port)(nil),                  // 33: docker.v1.Port
+	(*Empty)(nil),                 // 34: docker.v1.Empty
+	(*ComposeFile)(nil),           // 35: docker.v1.ComposeFile
+	nil,                           // 36: docker.v1.Image.LabelsEntry
+	nil,                           // 37: docker.v1.Volume.LabelsEntry
 }
 var file_docker_v1_docker_proto_depIdxs = []int32{
-	34, // 0: docker.v1.Image.labels:type_name -> docker.v1.Image.LabelsEntry
+	36, // 0: docker.v1.Image.labels:type_name -> docker.v1.Image.LabelsEntry
 	3,  // 1: docker.v1.Image.manifests:type_name -> docker.v1.ManifestSummary
 	2,  // 2: docker.v1.ListImagesResponse.images:type_name -> docker.v1.Image
 	10, // 3: docker.v1.ImagePruneResponse.deleted:type_name -> docker.v1.ImagesDeleted
-	27, // 4: docker.v1.StatsResponse.system:type_name -> docker.v1.SystemInfo
-	30, // 5: docker.v1.StatsResponse.containers:type_name -> docker.v1.ContainerStats
-	33, // 6: docker.v1.StatsRequest.file:type_name -> docker.v1.ComposeFile
-	0,  // 7: docker.v1.StatsRequest.sortBy:type_name -> docker.v1.SORT_FIELD
-	1,  // 8: docker.v1.StatsRequest.order:type_name -> docker.v1.ORDER
-	29, // 9: docker.v1.ListResponse.list:type_name -> docker.v1.ContainerList
-	31, // 10: docker.v1.ContainerList.ports:type_name -> docker.v1.Port
-	33, // 11: docker.v1.DockerService.Start:input_type -> docker.v1.ComposeFile
-	33, // 12: docker.v1.DockerService.Stop:input_type -> docker.v1.ComposeFile
-	33, // 13: docker.v1.DockerService.Remove:input_type -> docker.v1.ComposeFile
-	33, // 14: docker.v1.DockerService.Restart:input_type -> docker.v1.ComposeFile
-	33, // 15: docker.v1.DockerService.Update:input_type -> docker.v1.ComposeFile
-	33, // 16: docker.v1.DockerService.List:input_type -> docker.v1.ComposeFile
-	26, // 17: docker.v1.DockerService.Stats:input_type -> docker.v1.StatsRequest
-	23, // 18: docker.v1.DockerService.Logs:input_type -> docker.v1.ContainerLogsRequest
-	4,  // 19: docker.v1.DockerService.ImageList:input_type -> docker.v1.ListImagesRequest
-	6,  // 20: docker.v1.DockerService.ImageRemove:input_type -> docker.v1.RemoveImageRequest
-	9,  // 21: docker.v1.DockerService.ImagePruneUnused:input_type -> docker.v1.ImagePruneRequest
-	11, // 22: docker.v1.DockerService.VolumeList:input_type -> docker.v1.ListVolumesRequest
-	13, // 23: docker.v1.DockerService.VolumeCreate:input_type -> docker.v1.CreateVolumeRequest
-	15, // 24: docker.v1.DockerService.VolumeDelete:input_type -> docker.v1.DeleteVolumeRequest
-	17, // 25: docker.v1.DockerService.NetworkList:input_type -> docker.v1.ListNetworksRequest
-	19, // 26: docker.v1.DockerService.NetworkCreate:input_type -> docker.v1.CreateNetworkRequest
-	21, // 27: docker.v1.DockerService.NetworkDelete:input_type -> docker.v1.DeleteNetworkRequest
-	24, // 28: docker.v1.DockerService.Start:output_type -> docker.v1.LogsMessage
-	24, // 29: docker.v1.DockerService.Stop:output_type -> docker.v1.LogsMessage
-	24, // 30: docker.v1.DockerService.Remove:output_type -> docker.v1.LogsMessage
-	24, // 31: docker.v1.DockerService.Restart:output_type -> docker.v1.LogsMessage
-	24, // 32: docker.v1.DockerService.Update:output_type -> docker.v1.LogsMessage
-	28, // 33: docker.v1.DockerService.List:output_type -> docker.v1.ListResponse
-	25, // 34: docker.v1.DockerService.Stats:output_type -> docker.v1.StatsResponse
-	24, // 35: docker.v1.DockerService.Logs:output_type -> docker.v1.LogsMessage
-	5,  // 36: docker.v1.DockerService.ImageList:output_type -> docker.v1.ListImagesResponse
-	7,  // 37: docker.v1.DockerService.ImageRemove:output_type -> docker.v1.RemoveImageResponse
-	8,  // 38: docker.v1.DockerService.ImagePruneUnused:output_type -> docker.v1.ImagePruneResponse
-	12, // 39: docker.v1.DockerService.VolumeList:output_type -> docker.v1.ListVolumesResponse
-	14, // 40: docker.v1.DockerService.VolumeCreate:output_type -> docker.v1.CreateVolumeResponse
-	16, // 41: docker.v1.DockerService.VolumeDelete:output_type -> docker.v1.DeleteVolumeResponse
-	18, // 42: docker.v1.DockerService.NetworkList:output_type -> docker.v1.ListNetworksResponse
-	20, // 43: docker.v1.DockerService.NetworkCreate:output_type -> docker.v1.CreateNetworkResponse
-	22, // 44: docker.v1.DockerService.NetworkDelete:output_type -> docker.v1.DeleteNetworkResponse
-	28, // [28:45] is the sub-list for method output_type
-	11, // [11:28] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	37, // 4: docker.v1.Volume.Labels:type_name -> docker.v1.Volume.LabelsEntry
+	11, // 5: docker.v1.ListVolumesResponse.volumes:type_name -> docker.v1.Volume
+	18, // 6: docker.v1.ListNetworksResponse.networks:type_name -> docker.v1.Network
+	29, // 7: docker.v1.StatsResponse.system:type_name -> docker.v1.SystemInfo
+	32, // 8: docker.v1.StatsResponse.containers:type_name -> docker.v1.ContainerStats
+	35, // 9: docker.v1.StatsRequest.file:type_name -> docker.v1.ComposeFile
+	0,  // 10: docker.v1.StatsRequest.sortBy:type_name -> docker.v1.SORT_FIELD
+	1,  // 11: docker.v1.StatsRequest.order:type_name -> docker.v1.ORDER
+	31, // 12: docker.v1.ListResponse.list:type_name -> docker.v1.ContainerList
+	33, // 13: docker.v1.ContainerList.ports:type_name -> docker.v1.Port
+	35, // 14: docker.v1.DockerService.Start:input_type -> docker.v1.ComposeFile
+	35, // 15: docker.v1.DockerService.Stop:input_type -> docker.v1.ComposeFile
+	35, // 16: docker.v1.DockerService.Remove:input_type -> docker.v1.ComposeFile
+	35, // 17: docker.v1.DockerService.Restart:input_type -> docker.v1.ComposeFile
+	35, // 18: docker.v1.DockerService.Update:input_type -> docker.v1.ComposeFile
+	35, // 19: docker.v1.DockerService.List:input_type -> docker.v1.ComposeFile
+	28, // 20: docker.v1.DockerService.Stats:input_type -> docker.v1.StatsRequest
+	25, // 21: docker.v1.DockerService.Logs:input_type -> docker.v1.ContainerLogsRequest
+	4,  // 22: docker.v1.DockerService.ImageList:input_type -> docker.v1.ListImagesRequest
+	6,  // 23: docker.v1.DockerService.ImageRemove:input_type -> docker.v1.RemoveImageRequest
+	9,  // 24: docker.v1.DockerService.ImagePruneUnused:input_type -> docker.v1.ImagePruneRequest
+	12, // 25: docker.v1.DockerService.VolumeList:input_type -> docker.v1.ListVolumesRequest
+	14, // 26: docker.v1.DockerService.VolumeCreate:input_type -> docker.v1.CreateVolumeRequest
+	16, // 27: docker.v1.DockerService.VolumeDelete:input_type -> docker.v1.DeleteVolumeRequest
+	19, // 28: docker.v1.DockerService.NetworkList:input_type -> docker.v1.ListNetworksRequest
+	21, // 29: docker.v1.DockerService.NetworkCreate:input_type -> docker.v1.CreateNetworkRequest
+	23, // 30: docker.v1.DockerService.NetworkDelete:input_type -> docker.v1.DeleteNetworkRequest
+	26, // 31: docker.v1.DockerService.Start:output_type -> docker.v1.LogsMessage
+	26, // 32: docker.v1.DockerService.Stop:output_type -> docker.v1.LogsMessage
+	26, // 33: docker.v1.DockerService.Remove:output_type -> docker.v1.LogsMessage
+	26, // 34: docker.v1.DockerService.Restart:output_type -> docker.v1.LogsMessage
+	26, // 35: docker.v1.DockerService.Update:output_type -> docker.v1.LogsMessage
+	30, // 36: docker.v1.DockerService.List:output_type -> docker.v1.ListResponse
+	27, // 37: docker.v1.DockerService.Stats:output_type -> docker.v1.StatsResponse
+	26, // 38: docker.v1.DockerService.Logs:output_type -> docker.v1.LogsMessage
+	5,  // 39: docker.v1.DockerService.ImageList:output_type -> docker.v1.ListImagesResponse
+	7,  // 40: docker.v1.DockerService.ImageRemove:output_type -> docker.v1.RemoveImageResponse
+	8,  // 41: docker.v1.DockerService.ImagePruneUnused:output_type -> docker.v1.ImagePruneResponse
+	13, // 42: docker.v1.DockerService.VolumeList:output_type -> docker.v1.ListVolumesResponse
+	15, // 43: docker.v1.DockerService.VolumeCreate:output_type -> docker.v1.CreateVolumeResponse
+	17, // 44: docker.v1.DockerService.VolumeDelete:output_type -> docker.v1.DeleteVolumeResponse
+	20, // 45: docker.v1.DockerService.NetworkList:output_type -> docker.v1.ListNetworksResponse
+	22, // 46: docker.v1.DockerService.NetworkCreate:output_type -> docker.v1.CreateNetworkResponse
+	24, // 47: docker.v1.DockerService.NetworkDelete:output_type -> docker.v1.DeleteNetworkResponse
+	31, // [31:48] is the sub-list for method output_type
+	14, // [14:31] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_docker_v1_docker_proto_init() }
@@ -2006,7 +2259,7 @@ func file_docker_v1_docker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_docker_v1_docker_proto_rawDesc), len(file_docker_v1_docker_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   33,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

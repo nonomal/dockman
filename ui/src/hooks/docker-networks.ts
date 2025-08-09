@@ -1,45 +1,38 @@
 import {useCallback, useEffect, useState} from 'react'
 import {callRPC, useClient} from '../lib/api.ts'
-import {type ContainerList, DockerService} from '../gen/docker/v1/docker_pb.ts'
+import {DockerService, type Network} from '../gen/docker/v1/docker_pb.ts'
 import {useSnackbar} from "./snackbar.ts"
+import {useHost} from "./host.ts";
 
-export function useDockerNetwork(selectedPage: string) {
+export function useDockerNetwork() {
     const dockerService = useClient(DockerService)
     const {showWarning} = useSnackbar()
 
-    const [containers, setContainers] = useState<ContainerList[]>([])
+    const {selectedHost} = useHost()
+
+    const [networks, setNetworks] = useState<Network[]>([])
     const [loading, setLoading] = useState(true)
-    const [refreshInterval, setRefreshInterval] = useState(2000)
 
-    const fetchContainers = useCallback(async () => {
-        if (!selectedPage) {
-            setContainers([])
-            return
-        }
+    const fetchNetworks = useCallback(async () => {
+        setLoading(true)
 
-        const {val, err} = await callRPC(() => dockerService.list({filename: selectedPage}))
+        const {val, err} = await callRPC(() => dockerService.networkList({}))
         if (err) {
             showWarning(`Failed to refresh containers: ${err}`)
-            setContainers([])
+            setNetworks([])
             return
         }
 
-        setContainers(val?.list || [])
-    }, [dockerService, selectedPage])
-
+        setNetworks(val?.networks || [])
+    }, [dockerService, selectedHost])
+    
+    const loadNetworks = useCallback(() => {
+        fetchNetworks().finally(() => setLoading(false))
+    }, [fetchNetworks])
+    
     useEffect(() => {
-        setLoading(true)
-        fetchContainers().then(() => {
-            setLoading(false)
-        })
-    }, []) // run only once on page load
+        loadNetworks()
+    }, [loadNetworks])
 
-    // fetch without setting load
-    useEffect(() => {
-        fetchContainers().then()
-        const intervalId = setInterval(fetchContainers, refreshInterval)
-        return () => clearInterval(intervalId)
-    }, [fetchContainers, refreshInterval])
-
-    return {containers, loading, fetchContainers, refreshInterval, setRefreshInterval}
+    return {networks, loading, loadNetworks}
 }

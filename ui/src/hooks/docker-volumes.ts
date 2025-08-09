@@ -1,45 +1,38 @@
 import {useCallback, useEffect, useState} from 'react'
 import {callRPC, useClient} from '../lib/api.ts'
-import {type ContainerList, DockerService} from '../gen/docker/v1/docker_pb.ts'
+import {DockerService, type Volume} from '../gen/docker/v1/docker_pb.ts'
 import {useSnackbar} from "./snackbar.ts"
+import {useHost} from "./host.ts";
 
-export function useDockerVolumes(selectedPage: string) {
+export function useDockerVolumes() {
     const dockerService = useClient(DockerService)
     const {showWarning} = useSnackbar()
 
-    const [containers, setContainers] = useState<ContainerList[]>([])
+    const {selectedHost} = useHost()
+
+    const [volumes, setVolumes] = useState<Volume[]>([])
     const [loading, setLoading] = useState(true)
-    const [refreshInterval, setRefreshInterval] = useState(2000)
 
-    const fetchContainers = useCallback(async () => {
-        if (!selectedPage) {
-            setContainers([])
-            return
-        }
+    const fetchVolumes = useCallback(async () => {
+        setLoading(true)
 
-        const {val, err} = await callRPC(() => dockerService.list({filename: selectedPage}))
+        const {val, err} = await callRPC(() => dockerService.volumeList({}))
         if (err) {
             showWarning(`Failed to refresh containers: ${err}`)
-            setContainers([])
+            setVolumes([])
             return
         }
 
-        setContainers(val?.list || [])
-    }, [dockerService, selectedPage])
+        setVolumes(val?.volumes || [])
+    }, [dockerService, selectedHost])
+
+    const loadVolumes = useCallback(() => {
+        fetchVolumes().finally(() => setLoading(false))
+    }, [fetchVolumes])
 
     useEffect(() => {
-        setLoading(true)
-        fetchContainers().then(() => {
-            setLoading(false)
-        })
-    }, []) // run only once on page load
+        loadVolumes()
+    }, [loadVolumes])
 
-    // fetch without setting load
-    useEffect(() => {
-        fetchContainers().then()
-        const intervalId = setInterval(fetchContainers, refreshInterval)
-        return () => clearInterval(intervalId)
-    }, [fetchContainers, refreshInterval])
-
-    return {containers, loading, fetchContainers, refreshInterval, setRefreshInterval}
+    return {volumes, loadVolumes, loading}
 }

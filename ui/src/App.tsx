@@ -12,7 +12,7 @@ import {SettingsPage} from "./pages/settings/settings-page.tsx";
 import {ChangelogProvider} from "./context/changelog-context.tsx";
 import NotFoundPage from "./pages/.components/not-found.tsx";
 import {RootLayout, TOP_BAR_HEIGHT} from "./pages/home/home.tsx";
-import NetworkPage from "./pages/networks/networks.tsx";
+import NetworksPage from "./pages/networks/networks.tsx";
 import VolumesPage from "./pages/volumes/volumes.tsx";
 import ImagesPage from "./pages/images/images.tsx";
 import ContainersPage from "./pages/containers/containers.tsx";
@@ -52,7 +52,7 @@ export function App() {
                                     </Route>
 
                                     <Route path="networks">
-                                        <Route index element={<NetworkPage/>}/>
+                                        <Route index element={<NetworksPage/>}/>
                                     </Route>
 
                                     <Route path="settings" element={<SettingsPage/>}/>

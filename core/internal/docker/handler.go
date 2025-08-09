@@ -279,9 +279,25 @@ func (h *Handler) ImagePruneUnused(ctx context.Context, req *connect.Request[v1.
 	return connect.NewResponse(&response), nil
 }
 
-func (h *Handler) VolumeList(_ context.Context, req *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
-	//TODO implement me
-	return nil, fmt.Errorf(" implement me VolumeList")
+func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
+	volumes, err := h.srv().VolumesList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var rpcVolumes []*v1.Volume
+	for _, vol := range volumes.Volumes {
+		rpcVolumes = append(rpcVolumes, &v1.Volume{
+			CreatedAt:  vol.CreatedAt,
+			Driver:     vol.Driver,
+			Labels:     vol.Labels,
+			MountPoint: vol.Mountpoint,
+			Name:       vol.Name,
+			Scope:      vol.Scope,
+		})
+	}
+
+	return connect.NewResponse(&v1.ListVolumesResponse{Volumes: rpcVolumes}), nil
 }
 
 func (h *Handler) VolumeCreate(_ context.Context, req *connect.Request[v1.CreateVolumeRequest]) (*connect.Response[v1.CreateVolumeResponse], error) {
@@ -295,16 +311,28 @@ func (h *Handler) VolumeDelete(_ context.Context, req *connect.Request[v1.Delete
 }
 
 func (h *Handler) NetworkList(ctx context.Context, _ *connect.Request[v1.ListNetworksRequest]) (*connect.Response[v1.ListNetworksResponse], error) {
-	//networks, err := h.srv().NetworksList(ctx)
-	//if err != nil {
-	//	return nil, err
-	//}
+	networks, err := h.srv().NetworksList(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	//for _, network := range networks {
-	//
-	//}
+	var rpcNetworks []*v1.Network
+	for _, netI := range networks {
+		rpcNetworks = append(rpcNetworks, &v1.Network{
+			Name:       netI.Name,
+			Id:         netI.ID,
+			Scope:      netI.Scope,
+			Driver:     netI.Driver,
+			EnableIpv4: netI.EnableIPv4,
+			EnableIpv6: netI.EnableIPv6,
+			Internal:   netI.Internal,
+			Attachable: netI.Attachable,
+			Ingress:    netI.Ingress,
+			ConfigOnly: netI.ConfigOnly,
+		})
+	}
 
-	return nil, fmt.Errorf(" implement me NetworkList")
+	return connect.NewResponse(&v1.ListNetworksResponse{Networks: rpcNetworks}), nil
 }
 
 func (h *Handler) NetworkCreate(_ context.Context, req *connect.Request[v1.CreateNetworkRequest]) (*connect.Response[v1.CreateNetworkResponse], error) {

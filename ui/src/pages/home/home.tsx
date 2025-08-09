@@ -19,9 +19,9 @@ import {ShortcutFormatter} from "../compose/components/shortcut-formatter.tsx";
 import React, {useEffect, useMemo} from "react";
 import {
     ContainerIcon,
+    DockerFolderIcon,
     ImagesIcon,
     NetworkIcon,
-    StacksIcon,
     StatsIcon,
     VolumeIcon
 } from "../compose/components/file-icon.tsx";
@@ -44,7 +44,7 @@ export function RootLayout() {
             id: 'files',
             title: 'Stacks',
             path: '/stacks',
-            icon: StacksIcon,
+            icon: DockerFolderIcon,
             keyCombo: ['ALT', '1'],
             exact: false, // for startsWith matching
             onClick: () => navigate('/stacks'),

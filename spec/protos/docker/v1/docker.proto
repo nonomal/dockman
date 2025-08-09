@@ -82,10 +82,19 @@ message ImagesDeleted {
 }
 
 // Volume-related messages
-message ListVolumesRequest {
+message Volume {
+  string CreatedAt = 1;
+  string Driver = 2;
+  map<string, string> Labels = 3;
+  string MountPoint = 4;
+  string Name = 5;
+  string Scope = 6;
 }
 
+message ListVolumesRequest {}
+
 message ListVolumesResponse {
+  repeated Volume volumes = 1;
 }
 
 message CreateVolumeRequest {
@@ -101,9 +110,23 @@ message DeleteVolumeResponse {
 }
 
 // Network-related messages
+message Network {
+  string name = 1;
+  string id = 2;
+  string scope = 4;
+  string driver = 5;
+  bool enable_ipv4 = 6;
+  bool enable_ipv6 = 7;
+  bool internal = 9;
+  bool attachable = 10;
+  bool ingress = 11;
+  bool config_only = 13;
+}
+
 message ListNetworksRequest {}
 
 message ListNetworksResponse {
+  repeated Network networks = 1;
 }
 
 message CreateNetworkRequest {
