@@ -30,7 +30,7 @@ export const ComposePage = () => {
 
                 // If we're at the limit, remove the oldest tab (first in array)
                 if (prevTabs.length >= TAB_LIMIT) {
-                    return [...prevTabs.slice(1), filename]; // Remove first, add new at end
+                    return [...prevTabs.slice(0, prevTabs.length - 1), filename]; // Remove last, add new at end
                 }
 
                 // Add the new filename to tabs
