@@ -10,7 +10,7 @@ import {DashboardPage} from './pages/dashboard/dashboard-page.tsx';
 import {ComposePage} from './pages/compose/compose-page.tsx';
 import {SettingsPage} from "./pages/settings/settings-page.tsx";
 import {ChangelogProvider} from "./context/changelog-context.tsx";
-import NotFoundPage from "./pages/.components/not-found.tsx";
+import NotFoundPage from "./pages/home/not-found.tsx";
 import {RootLayout, TOP_BAR_HEIGHT} from "./pages/home/home.tsx";
 import NetworksPage from "./pages/networks/networks.tsx";
 import VolumesPage from "./pages/volumes/volumes.tsx";
@@ -29,7 +29,7 @@ export function App() {
                             {/*IMPORTANT: providers that need auth need to be injected inside private route not here */}
                             <Route element={<PrivateRoute/>}>
                                 <Route path="/" element={<HomePage/>}>
-                                    <Route path="/" element={<Navigate to="/stacks" replace />}/>
+                                    <Route path="/" element={<Navigate to="/stacks" replace/>}/>
                                     <Route path="stacks">
                                         <Route index element={<ComposePage/>}/>
                                         <Route path=":file/:child?" element={<ComposePage/>}/>

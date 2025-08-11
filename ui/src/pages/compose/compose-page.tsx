@@ -2,7 +2,7 @@ import React, {type SyntheticEvent, useEffect, useMemo, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {TabEditor} from "./tab-editor.tsx";
 import {TabDeploy} from "./tab-deploy.tsx";
-import {Box, CircularProgress, Fade, IconButton, Stack, Tab, Tabs, Typography} from '@mui/material';
+import {Box, CircularProgress, Fade, IconButton, Stack, Tab, Tabs, Tooltip, Typography} from '@mui/material';
 import {TabStat} from "./tab-stats.tsx";
 import {callRPC, useClient} from "../../lib/api.ts";
 import {FileService} from "../../gen/files/v1/files_pb.ts";
@@ -11,6 +11,7 @@ import {FileList} from "./components/file-bar.tsx";
 import {DescriptionOutlined} from '@mui/icons-material';
 import {TelescopeProvider} from './context/telescope-context.tsx';
 import CloseIcon from '@mui/icons-material/Close';
+import {ShortcutFormatter} from "./components/shortcut-formatter.tsx";
 
 export const ComposePage = () => {
     const {file, child} = useParams<{ file: string; child?: string }>();
@@ -42,18 +43,35 @@ export const ComposePage = () => {
     // Find the index of the currently active tab
     const activeTabIndex = filename ? openTabs.indexOf(filename) : false;
 
+
     // Navigate to the correct URL when a tab is clicked
     const handleTabChange = (_event: React.SyntheticEvent, newIndex: number) => {
         const newFilename = openTabs[newIndex];
-        const [newFile, ...newChildParts] = newFilename.split('/');
-        const newChild = newChildParts.join('/');
-
-        if (newChild) {
-            navigate(`/stacks/${newFile}/${newChild}`);
-        } else {
-            navigate(`/stacks/${newFile}`);
-        }
+        navigate(`/stacks/${newFilename}`);
     };
+
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Check for the base shortcut combination (Ctrl + Alt)
+            if (e.ctrlKey && !e.altKey && !e.shiftKey && !e.repeat) {
+                // Test if the pressed key is a single digit ('0'-'9')
+                // Convert the key string (e.g., "7") to a number
+                const tabIndex = parseInt(e.key, 10) - 1;
+                if (!isNaN(tabIndex)) {
+                    e.preventDefault();
+
+                    const page = openTabs[tabIndex]
+                    if (page) {
+                        navigate(`/stacks/${page}`)
+                    }
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [navigate])
 
     // Close a tab and navigate to an appropriate new tab
     const handleCloseTab = (event: React.MouseEvent, tabToClose: string) => {
@@ -100,24 +118,31 @@ export const ComposePage = () => {
                                 variant="scrollable"
                                 scrollButtons="auto"
                             >
-                                {openTabs.map((tabFilename) => (
-                                    <Tab
-                                        key={tabFilename}
-                                        sx={{textTransform: 'none', p: 0.5}}
-                                        label={
-                                            <Box sx={{display: 'flex', alignItems: 'center', px: 1}}>
-                                                {tabFilename.split('/').pop()}
-                                                <IconButton
-                                                    size="small"
-                                                    component="div"
-                                                    onClick={(e) => handleCloseTab(e, tabFilename)}
-                                                    sx={{ml: 1.5}}
-                                                >
-                                                    <CloseIcon sx={{fontSize: '1rem'}}/>
-                                                </IconButton>
-                                            </Box>
-                                        }
-                                    />
+                                {openTabs.map((tabFilename, index) => (
+                                    <Tooltip title={
+                                        <ShortcutFormatter
+                                            title=""
+                                            keyCombo={["CTRL", `${index + 1}`]}
+                                        />
+                                    }>
+                                        <Tab
+                                            key={tabFilename}
+                                            sx={{textTransform: 'none', p: 0.5}}
+                                            label={
+                                                <Box sx={{display: 'flex', alignItems: 'center', px: 1}}>
+                                                    {tabFilename.split('/').pop()}
+                                                    <IconButton
+                                                        size="small"
+                                                        component="div"
+                                                        onClick={(e) => handleCloseTab(e, tabFilename)}
+                                                        sx={{ml: 1.5}}
+                                                    >
+                                                        <CloseIcon sx={{fontSize: '1rem'}}/>
+                                                    </IconButton>
+                                                </Box>
+                                            }
+                                        />
+                                    </Tooltip>
                                 ))}
                             </Tabs>
                         </Box>

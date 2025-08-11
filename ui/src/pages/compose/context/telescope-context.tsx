@@ -1,6 +1,5 @@
 import {type ReactNode, useCallback, useState} from 'react'
 import Telescope from "../components/telescope.tsx";
-import { useSnackbar } from '../../../hooks/snackbar.ts';
 import {TelescopeContext} from "./telescope-hook.ts";
 
 interface TelescopeProviderProps {
@@ -8,12 +7,9 @@ interface TelescopeProviderProps {
 }
 
 export function TelescopeProvider({children}: TelescopeProviderProps) {
-    const {showError} = useSnackbar()
-
     const [isVisible, setIsVisible] = useState(false)
 
     const dismissChangelog = useCallback(async () => {
-        showError("")
         setIsVisible(false)
     }, [])
 

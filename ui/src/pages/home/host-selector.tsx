@@ -1,8 +1,8 @@
 import {Box, Button, Menu, MenuItem, Typography} from "@mui/material";
 import {useEffect, useRef, useState} from "react";
-import {KeyChar} from "./keychar.tsx";
+import {KeyChar} from "../../components/keychar.tsx";
 import {ExpandMore} from "@mui/icons-material";
-import { useHost } from "../../hooks/host.ts";
+import {useHost} from "../../hooks/host.ts";
 
 function HostSelectDropdown() {
     const {selectedHost, availableHosts, switchMachine, isLoading} = useHost()
@@ -64,7 +64,7 @@ function HostSelectDropdown() {
                 endIcon={<ExpandMore/>}
             >
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                    <Typography variant="subtitle1" >
+                    <Typography variant="subtitle1">
                         {selectedHost || 'Select host...'}
                     </Typography>
                 </Box>

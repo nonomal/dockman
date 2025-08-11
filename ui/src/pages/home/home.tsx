@@ -13,7 +13,7 @@ import {
 import {Logout, Settings} from '@mui/icons-material';
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
-import HostSelectDropdown from "../.components/host-selector.tsx";
+import HostSelectDropdown from "./host-selector.tsx";
 import {useAuth} from "../../hooks/auth.ts";
 import {ShortcutFormatter} from "../compose/components/shortcut-formatter.tsx";
 import React, {useEffect, useMemo} from "react";
@@ -45,7 +45,6 @@ export function RootLayout() {
             title: 'Stacks',
             path: '/stacks',
             icon: DockerFolderIcon,
-            keyCombo: ['ALT', '1'],
             exact: false, // for startsWith matching
             onClick: () => navigate('/stacks'),
         },
@@ -54,7 +53,6 @@ export function RootLayout() {
             title: 'Stats',
             path: '/stats',
             icon: StatsIcon,
-            keyCombo: ['ALT', '2'],
             exact: true, // for exact path matching
         },
 
@@ -63,7 +61,6 @@ export function RootLayout() {
             title: 'Containers',
             path: '/containers',
             icon: ContainerIcon,
-            keyCombo: ['ALT', '3'],
             exact: false, // for startsWith matching
             onClick: () => navigate('/containers'),
         },
@@ -72,7 +69,6 @@ export function RootLayout() {
             title: 'Images',
             path: '/images',
             icon: ImagesIcon,
-            keyCombo: ['ALT', '4'],
             exact: false, // for startsWith matching
             onClick: () => navigate('/images'),
         },
@@ -81,7 +77,6 @@ export function RootLayout() {
             title: 'Volumes',
             path: '/volumes',
             icon: VolumeIcon,
-            keyCombo: ['ALT', '5'],
             exact: false, // for startsWith matching
             onClick: () => navigate('/volumes'),
         },
@@ -90,31 +85,24 @@ export function RootLayout() {
             title: 'Networks',
             path: '/networks',
             icon: NetworkIcon,
-            keyCombo: ['ALT', '6'],
             exact: false, // for startsWith matching
             onClick: () => navigate('/networks'),
         }
     ], [navigate]);
 
     useEffect(() => {
-        // Create a map of key codes to navigation actions
-        const shortcutMap = navigationItems.reduce((acc, item) => {
-            const [modifier, key] = item.keyCombo;
-            if (modifier === 'ALT') {
-                acc[`Digit${key}`] = item;
-            }
-            return acc;
-        }, {} as Record<string, typeof navigationItems[0]>);
-
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.altKey && !e.repeat) {
-                const matchedItem = shortcutMap[e.code];
-                if (matchedItem) {
+            // capture alt + num only, ignore alt + ctrl etc
+            if (e.altKey && !e.ctrlKey && !e.shiftKey && !e.repeat) {
+                // Test if the pressed key is a single digit ('0'-'9')
+                // Convert the key string (e.g., "7") to a number
+                const pageIndex = parseInt(e.key, 10) - 1;
+                if (!isNaN(pageIndex)) {
                     e.preventDefault();
-                    if (matchedItem.onClick) {
-                        matchedItem.onClick();
-                    } else {
-                        navigate(matchedItem.path);
+
+                    const page = navigationItems[pageIndex]
+                    if (page) {
+                        navigate(page.path)
                     }
                 }
             }
@@ -225,7 +213,7 @@ export function RootLayout() {
                 <Box sx={{display: 'flex', flexDirection: 'column', height: '100%'}}>
                     {/* Main Sidebar */}
                     <List sx={{px: 1, pt: 2}}>
-                        {navigationItems.map((item) => {
+                        {navigationItems.map((item, index) => {
                             const IconComponent = item.icon as React.ComponentType;
                             const isSelected = item.exact
                                 ? location.pathname === item.path
@@ -251,7 +239,10 @@ export function RootLayout() {
                                 <Tooltip
                                     key={item.id}
                                     placement="right"
-                                    title={<ShortcutFormatter title={item.title} keyCombo={item.keyCombo}/>}
+                                    title={<ShortcutFormatter
+                                        title={item.title}
+                                        keyCombo={["ALT", `${index + 1}`]}
+                                    />}
                                 >
                                     {item.onClick ? (
                                         <ListItemButton

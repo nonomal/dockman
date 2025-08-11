@@ -1,11 +1,11 @@
 import {Box, Typography} from "@mui/material";
 import React from "react";
-import {KeyChar} from "../../.components/keychar.tsx";
+import {KeyChar} from "../../../components/keychar.tsx";
 
 export const ShortcutFormatter = ({title, keyCombo}: { title: string, keyCombo: string[] }) => {
     return (
         <Box display="flex" alignItems="center" gap={0.5}>
-            <Typography variant="body2">{title}</Typography>
+            {title !== "" && <Typography variant="body2">{title}</Typography>}
             {
                 keyCombo.length > 0 && <Box display="flex" alignItems="center" gap={0.3} ml={1}>{
                     keyCombo.map((key, index) => (
@@ -21,7 +21,6 @@ export const ShortcutFormatter = ({title, keyCombo}: { title: string, keyCombo: 
                 }
                 </Box>
             }
-
         </Box>
     );
 };
