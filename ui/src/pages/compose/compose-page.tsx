@@ -2,7 +2,7 @@ import React, {type SyntheticEvent, useEffect, useMemo, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {TabEditor} from "./tab-editor.tsx";
 import {TabDeploy} from "./tab-deploy.tsx";
-import {Box, CircularProgress, Fade, Stack, Tab, Tabs, Typography} from '@mui/material';
+import {Box, CircularProgress, Fade, IconButton, Stack, Tab, Tabs, Typography} from '@mui/material';
 import {TabStat} from "./tab-stats.tsx";
 import {callRPC, useClient} from "../../lib/api.ts";
 import {FileService} from "../../gen/files/v1/files_pb.ts";
@@ -10,28 +10,126 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import {FileList} from "./components/file-bar.tsx";
 import {DescriptionOutlined} from '@mui/icons-material';
 import {TelescopeProvider} from './context/telescope-context.tsx';
+import CloseIcon from '@mui/icons-material/Close';
 
 export const ComposePage = () => {
     const {file, child} = useParams<{ file: string; child?: string }>();
     const filename = child ? `${file}/${child}` : file;
+    const navigate = useNavigate();
+    const [openTabs, setOpenTabs] = useState<string[]>([]);
+    const TAB_LIMIT = 5;
+
+    // This effect syncs the URL with the open tabs.
+    // When the `filename` in the URL changes, it adds it as a new tab if not already open.
+    useEffect(() => {
+        if (filename) {
+            setOpenTabs(prevTabs => {
+                if (prevTabs.includes(filename)) {
+                    return prevTabs;
+                }
+
+                // If we're at the limit, remove the oldest tab (first in array)
+                if (prevTabs.length >= TAB_LIMIT) {
+                    return [...prevTabs.slice(1), filename]; // Remove first, add new at end
+                }
+
+                // Add the new filename to tabs
+                return [...prevTabs, filename];
+            });
+        }
+    }, [filename]); // Re-run only when the filename from the URL changes
+
+    // Find the index of the currently active tab
+    const activeTabIndex = filename ? openTabs.indexOf(filename) : false;
+
+    // Navigate to the correct URL when a tab is clicked
+    const handleTabChange = (_event: React.SyntheticEvent, newIndex: number) => {
+        const newFilename = openTabs[newIndex];
+        const [newFile, ...newChildParts] = newFilename.split('/');
+        const newChild = newChildParts.join('/');
+
+        if (newChild) {
+            navigate(`/stacks/${newFile}/${newChild}`);
+        } else {
+            navigate(`/stacks/${newFile}`);
+        }
+    };
+
+    // Close a tab and navigate to an appropriate new tab
+    const handleCloseTab = (event: React.MouseEvent, tabToClose: string) => {
+        event.stopPropagation(); // Prevents `handleTabChange` from firing
+
+        const closingTabIndex = openTabs.indexOf(tabToClose);
+        const newTabs = openTabs.filter(tab => tab !== tabToClose);
+        setOpenTabs(newTabs);
+
+        // If the active tab is being closed, determine the next tab to show
+        if (filename === tabToClose) {
+            if (newTabs.length === 0) {
+                navigate('/stacks'); // No tabs left, show empty page
+            } else {
+                // Default to the tab to the left, or the new first tab
+                const newActiveIndex = Math.max(0, closingTabIndex - 1);
+                const newFilename = newTabs[newActiveIndex];
+                const [newFile, ...newChildParts] = newFilename.split('/');
+                const newChild = newChildParts.join('/');
+
+                if (newChild) {
+                    navigate(`/stacks/${newFile}/${newChild}`);
+                } else {
+                    navigate(`/stacks/${newFile}`);
+                }
+            }
+        }
+    };
 
     return (
         <TelescopeProvider>
-            <Box sx={{
-                display: 'flex',
-                height: '100vh',
-                width: '100%',
-                overflow: 'hidden',
-            }}>
+            <Box sx={{display: 'flex', height: '100vh', width: '100%', overflow: 'hidden'}}>
                 <Box sx={{width: 280, flexShrink: 0, borderRight: 1, borderColor: 'divider', overflowY: 'auto'}}>
                     <FileList/>
                 </Box>
 
-                <Box sx={{flexGrow: 1, overflow: 'auto', display: 'flex', flexDirection: 'column'}}>
-                    {!filename ?
-                        <CoreComposeEmpty/> :
-                        <CoreCompose filename={filename}/>
-                    }
+                <Box sx={{flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
+                    {/* Tab Bar */}
+                    {openTabs.length > 0 && (
+                        <Box sx={{borderBottom: 1, borderColor: 'divider', flexShrink: 0}}>
+                            <Tabs
+                                value={activeTabIndex === -1 ? false : activeTabIndex}
+                                onChange={handleTabChange}
+                                variant="scrollable"
+                                scrollButtons="auto"
+                            >
+                                {openTabs.map((tabFilename) => (
+                                    <Tab
+                                        key={tabFilename}
+                                        sx={{textTransform: 'none', p: 0.5}}
+                                        label={
+                                            <Box sx={{display: 'flex', alignItems: 'center', px: 1}}>
+                                                {tabFilename.split('/').pop()}
+                                                <IconButton
+                                                    size="small"
+                                                    component="div"
+                                                    onClick={(e) => handleCloseTab(e, tabFilename)}
+                                                    sx={{ml: 1.5}}
+                                                >
+                                                    <CloseIcon sx={{fontSize: '1rem'}}/>
+                                                </IconButton>
+                                            </Box>
+                                        }
+                                    />
+                                ))}
+                            </Tabs>
+                        </Box>
+                    )}
+
+                    {/* Content Area */}
+                    <Box sx={{flexGrow: 1, overflow: 'auto', display: 'flex', flexDirection: 'column'}}>
+                        {!filename ?
+                            <CoreComposeEmpty/> :
+                            <CoreCompose filename={filename}/>
+                        }
+                    </Box>
                 </Box>
             </Box>
         </TelescopeProvider>

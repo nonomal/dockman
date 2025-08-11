@@ -142,7 +142,7 @@ function HomePage() {
                     mt: `${TOP_BAR_HEIGHT}px`, // Account for the top bar height
                     height: `calc(100vh - ${TOP_BAR_HEIGHT}px)`, // Subtract top bar height
                     overflow: 'auto',
-                    pt: 2,
+                    pt: 0.3,
                 })}
             >
                 <Outlet/>
