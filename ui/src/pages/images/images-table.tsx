@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import {useState} from 'react';
 import {
     Box,
     Checkbox,
@@ -17,24 +17,33 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
-import {CalendarToday as CalendarIcon, CopyAll, Tag as TagIcon} from '@mui/icons-material';
-import {getImageHomePageUrl, useDockerImages} from "../../hooks/docker-images.ts";
+import {CalendarToday as CalendarIcon, ContentCopy, Tag as TagIcon} from '@mui/icons-material';
+import {getImageHomePageUrl} from "../../hooks/docker-images.ts";
 import {formatBytes} from "../../lib/editor.ts";
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
+import {useCopyButton} from "../../hooks/copy.ts";
+import CheckIcon from "@mui/icons-material/Check";
+import type {Image} from "../../gen/docker/v1/docker_pb.ts";
 
 
 type SortField = 'name' | 'size' | 'sharedSize' | 'containers' | 'created';
 type SortOrder = 'asc' | 'desc';
 
 interface ImageTableProps {
-    selectedImages?: string[];
-    onSelectionChange?: (selectedIds: string[]) => void;
+    images: Image[]
+    selectedImages: string[],
+    onSelectionChange: (selectedIds: string[]) => void,
 }
 
-export const ImageTable = ({selectedImages = [], onSelectionChange}: ImageTableProps) => {
+export const ImageTable = (
+    {
+        selectedImages,
+        onSelectionChange,
+        images
+    }: ImageTableProps
+) => {
     const [sortField, setSortField] = useState<SortField>('size');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-    const {images} = useDockerImages()
 
     // Handle sorting
     const handleSort = (field: SortField) => {
@@ -95,18 +104,6 @@ export const ImageTable = ({selectedImages = [], onSelectionChange}: ImageTableP
         return sortOrder === 'asc' ? result : -result;
     });
 
-    // Handle copy image ID
-    const handleCopyId = useCallback(async (imageId: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        try {
-            await navigator.clipboard.writeText(imageId);
-            // You might want to show a toast notification here
-            console.log('Image ID copied to clipboard');
-        } catch (err) {
-            console.error('Failed to copy image ID:', err);
-        }
-    }, []);
-
     // Handle individual row selection
     const handleRowSelection = (imageId: string) => {
         if (!onSelectionChange) return;
@@ -130,13 +127,14 @@ export const ImageTable = ({selectedImages = [], onSelectionChange}: ImageTableP
     const isAllSelected = selectedImages.length === images.length && images.length > 0;
     const isIndeterminate = selectedImages.length > 0 && selectedImages.length < images.length;
 
+    const {handleCopy, copiedId} = useCopyButton()
+
     return (
         <TableContainer
             component={Paper}
             sx={{
                 height: '100%',
                 overflow: 'auto',
-                // Custom scrollbar styles
                 ...scrollbarStyles
             }}
         >
@@ -206,7 +204,12 @@ export const ImageTable = ({selectedImages = [], onSelectionChange}: ImageTableP
                         </TableCell>
                     </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody
+                    sx={{
+                        // opacity: loading ? 1 : 0,
+                        // transition: 'opacity 200ms ease-in-out',
+                    }}
+                >
                     {sortedImages.map((image) => (
                         <TableRow
                             key={image.id}
@@ -254,16 +257,30 @@ export const ImageTable = ({selectedImages = [], onSelectionChange}: ImageTableP
                                             </Typography>
                                         )}
                                     </Box>
-                                    <Tooltip title="Copy Image ID" arrow>
+                                    <Tooltip
+                                        title={copiedId === image.id ? "Copied!" : "Copy Image ID"}
+                                        placement="top">
                                         <IconButton
+                                            onClick={(e) => handleCopy(e, image.id)}
                                             size="small"
-                                            onClick={(e) => handleCopyId(image.id, e)}
-                                            sx={{
-                                                opacity: 0.7,
-                                                '&:hover': {opacity: 1}
-                                            }}
+                                            sx={{position: 'relative', flexShrink: 0}}
                                         >
-                                            <CopyAll fontSize="small"/>
+                                            <CheckIcon
+                                                fontSize="inherit"
+                                                sx={{
+                                                    position: 'absolute',
+                                                    opacity: copiedId === image.id ? 1 : 0,
+                                                    transition: 'opacity 0.2s',
+                                                    color: 'success.main'
+                                                }}
+                                            />
+                                            <ContentCopy
+                                                fontSize="inherit"
+                                                sx={{
+                                                    opacity: copiedId === image.id ? 0 : 1,
+                                                    transition: 'opacity 0.2s',
+                                                }}
+                                            />
                                         </IconButton>
                                     </Tooltip>
                                 </Box>

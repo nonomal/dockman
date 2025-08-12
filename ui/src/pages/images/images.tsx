@@ -1,6 +1,6 @@
-import {useState} from 'react';
-import {Box, Button, Card, CircularProgress, Stack, Tooltip, Typography} from '@mui/material';
-import {Delete, Refresh, Timer} from '@mui/icons-material';
+import {useEffect, useMemo, useRef, useState} from 'react';
+import {Box, Button, Card, CircularProgress, Fade, Stack, TextField, Tooltip, Typography} from '@mui/material';
+import {CleaningServices, Delete, Refresh, Sanitizer, Search} from '@mui/icons-material';
 import {useDockerImages} from "../../hooks/docker-images.ts";
 import {ImagesEmpty} from "./images-empty.tsx";
 import {ImageTable} from './images-table.tsx';
@@ -21,23 +21,75 @@ const ImagesPage = () => {
     } = useDockerImages();
 
     const [selectedImages, setSelectedImages] = useState<string[]>([])
+    const [activeAction, setActiveAction] = useState('')
+    const searchInputRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.altKey && event.key === 'q') {
+                event.preventDefault()
+                searchInputRef.current?.focus()
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [])
 
     const handleRefresh = () => {
         refreshImages();
     };
+    const [search, setSearch] = useState("")
 
-    const handlePruneUnused = async () => {
-        await pruneUnused(true)
-    };
+    const buttonAction = async (callback: () => Promise<void>, actionName: string) => {
+        setActiveAction(actionName)
+        await callback()
+        setActiveAction('')
+    }
 
-    const handlePruneUntagged = async () => {
-        await pruneUnused()
-    };
+    const filteredImages = useMemo(() => {
+        if (search) {
+            return images.filter(image =>
+                image.repoTags[0]
+                    .toLowerCase()
+                    .includes(search))
+        }
+        return images;
+    }, [images, search]);
 
-    const handleDelete = async () => {
-        await deleteImages(selectedImages)
-        setSelectedImages([])
-    };
+    const actions = [
+        {
+            action: 'deleteSelected',
+            buttonText: `Delete ${selectedImages.length === 0 ? "" : `${selectedImages.length}`} images`,
+            icon: <Delete/>,
+            disabled: loading || !!activeAction || selectedImages.length === 0,
+            handler: async () => {
+                await deleteImages(selectedImages)
+                setSelectedImages([])
+            },
+            tooltip: 'Delete selected images',
+        },
+        {
+            action: 'deleteUntagged',
+            buttonText: `Prune Untagged (${untagged})`,
+            icon: <Sanitizer/>,
+            disabled: loading || !!activeAction,
+            handler: async () => {
+                await pruneUnused()
+            },
+            tooltip: 'Delete Untagged images',
+        },
+        {
+            action: 'deleteUnused',
+            buttonText: `Prune Unused (${unusedContainerCount})`,
+            tooltip: 'Delete all unused images',
+            icon: <CleaningServices/>,
+            disabled: loading || !!activeAction,
+            handler: async () => {
+                await pruneUnused(true)
+            },
+        }
+    ]
 
     return (
         <Box sx={{
@@ -75,57 +127,56 @@ const ImagesPage = () => {
                     </Typography>
                 </Box>
 
-                <Button
-                    variant="contained"
-                    startIcon={loading ? <CircularProgress size={16} color="inherit"/> : <Refresh/>}
-                    onClick={handleRefresh}
-                    disabled={loading}
-                    sx={{minWidth: 100}}
-                >
-                    {loading ? 'Refreshing...' : 'Refresh'}
-                </Button>
+                <TextField
+                    inputRef={searchInputRef}
+                    size="small"
+                    placeholder={`Search... ALT+Q`}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    slotProps={{
+                        input: {
+                            startAdornment: <Search sx={{mr: 1, color: 'action.active'}}/>,
+                        }
+                    }}
+                    sx={{
+                        minWidth: 250,
+                        '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        }
+                    }}
+                />
+
+                <Tooltip title={loading ? 'Refreshing...' : 'Refresh images'}>
+                    <Button
+                        variant="contained"
+                        size="small"
+                        onClick={handleRefresh}
+                        disabled={loading}
+                        sx={{minWidth: 'auto', px: 1.5}}
+                    >
+                        {loading ? <CircularProgress size={16} color="inherit"/> : <Refresh/>}
+                    </Button>
+                </Tooltip>
 
                 {/* Spacer */}
                 <Box sx={{flexGrow: 0.95}}/>
 
                 {/* Actions */}
                 <Stack direction="row" spacing={2}>
-
-                    <Tooltip title={"Remove selected images"}>
-                        <Button
-                            variant="contained"
-                            startIcon={<Timer/>}
-                            onClick={handleDelete}
-                            disabled={loading}
-                            sx={{minWidth: 140}}
-                        >
-                            Delete {selectedImages.length === 0 ? "" : `${selectedImages.length}`} images
-                        </Button>
-                    </Tooltip>
-
-                    <Tooltip title={"Remove untagged images"}>
-                        <Button
-                            variant="contained"
-                            startIcon={<Delete/>}
-                            onClick={handlePruneUntagged}
-                            disabled={loading}
-                            sx={{minWidth: 140}}
-                        >
-                            Prune Untagged ({untagged})
-                        </Button>
-                    </Tooltip>
-
-                    <Tooltip title={"Remove unused images"}>
-                        <Button
-                            variant="contained"
-                            startIcon={<Timer/>}
-                            onClick={handlePruneUnused}
-                            disabled={loading}
-                            sx={{minWidth: 140}}
-                        >
-                            Prune Unused ({unusedContainerCount})
-                        </Button>
-                    </Tooltip>
+                    {actions.map((action) => (
+                        <Tooltip title={action.tooltip}>
+                            <Button
+                                variant="contained"
+                                onClick={() => buttonAction(action.handler, action.action)}
+                                disabled={action.disabled}
+                                sx={{minWidth: 140}}
+                                startIcon={activeAction === action.action ?
+                                    <CircularProgress size={20} color="inherit"/> : action.icon}
+                            >
+                                {action.buttonText}
+                            </Button>
+                        </Tooltip>
+                    ))}
 
                 </Stack>
             </Card>
@@ -133,22 +184,30 @@ const ImagesPage = () => {
             {/* Table Container */}
             <Box sx={{
                 flexGrow: 1,
-                border: '2px dashed',
+                border: '3px ridge',
                 borderColor: 'rgba(255, 255, 255, 0.23)',
                 borderRadius: 3,
                 display: 'flex',
                 overflow: 'hidden',
-                minHeight: 0 // Add this to ensure flex child can shrink
+                minHeight: 0
             }}>
-                {loading ?
-                    <ImagesLoading/> :
-                    images.length === 0 ?
-                        <ImagesEmpty searchTerm={''}/> :
-                        <ImageTable
-                            selectedImages={selectedImages}
-                            onSelectionChange={setSelectedImages}
-                        />
-                }
+                {loading ? (
+                    <ImagesLoading/>
+                ) : (
+                    <Fade in={!loading} timeout={300}>
+                        <div style={{width: '100%'}}>
+                            {images.length === 0 ? (
+                                <ImagesEmpty searchTerm={''}/>
+                            ) : (
+                                <ImageTable
+                                    images={filteredImages}
+                                    selectedImages={selectedImages}
+                                    onSelectionChange={setSelectedImages}
+                                />
+                            )}
+                        </div>
+                    </Fade>
+                )}
             </Box>
         </Box>
     )

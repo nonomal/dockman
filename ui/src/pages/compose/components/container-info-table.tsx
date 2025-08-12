@@ -12,16 +12,17 @@ import {
     TableContainer,
     TableHead,
     TableRow,
+    TableSortLabel,
     Tooltip,
     Typography
 } from '@mui/material'
 import {DocumentScannerOutlined} from '@mui/icons-material'
 import {ContainerInfoPort} from './container-info-port.tsx'
-import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts";
-import {getImageHomePageUrl} from "../../../hooks/docker-images.ts";
-import scrollbarStyles from "../../../components/scrollbar-style.tsx";
-import type {Message} from "@bufbuild/protobuf";
-import {useNavigate} from "react-router-dom";
+import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts"
+import {getImageHomePageUrl} from "../../../hooks/docker-images.ts"
+import scrollbarStyles from "../../../components/scrollbar-style.tsx"
+import type {Message} from "@bufbuild/protobuf"
+import {useNavigate} from "react-router-dom"
 
 interface ContainerTableProps {
     containers: ContainerList[]
@@ -31,6 +32,9 @@ interface ContainerTableProps {
     setSelectedServices: (services: string[]) => void,
     useContainerId?: boolean,
 }
+
+type SortField = 'name' | 'status' | 'image' | 'stack'
+type SortOrder = 'asc' | 'desc'
 
 export function ContainerTable(
     {
@@ -42,8 +46,57 @@ export function ContainerTable(
         useContainerId = false,
     }: ContainerTableProps
 ) {
-    const navigate = useNavigate();
+    const navigate = useNavigate()
     const [isLoaded, setIsLoaded] = useState(false)
+
+    const [sortField, setSortField] = useState<SortField>('status')
+    const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+
+    // Handle sorting
+    const handleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+        } else {
+            setSortField(field)
+            setSortOrder('asc')
+        }
+    }
+
+    const sortedContainers = [...containers].sort((a, b) => {
+        let aValue: unknown, bValue: unknown
+        let comparison = 0;
+
+        switch (sortField) {
+            case 'name': {
+                aValue = a.serviceName
+                bValue = b.serviceName
+                comparison = (aValue as string).localeCompare(bValue as string)
+                break
+            }
+            case "status": {
+                aValue = a.status
+                bValue = b.status
+                comparison = (aValue as string).localeCompare(bValue as string)
+                break
+            }
+            case "image": {
+                aValue = a.imageName
+                bValue = b.imageName
+                comparison = (aValue as string).localeCompare(bValue as string)
+                break
+            }
+            case "stack": {
+                aValue = a.stackName
+                bValue = b.stackName
+                comparison = (aValue as string).localeCompare(bValue as string)
+                break
+            }
+            default:
+                return 0
+        }
+
+        return sortOrder === 'asc' ? comparison : -comparison
+    })
 
     // This effect sets `isLoaded` to true only once after the first data fetch.
     useEffect(() => {
@@ -63,33 +116,32 @@ export function ContainerTable(
 
     const handleRowClick = (id: string) => {
         console.log("row", id)
-        const selectedIndex = selectedServices.indexOf(id);
-        let newSelected: string[];
+        const selectedIndex = selectedServices.indexOf(id)
+        let newSelected: string[]
 
         if (selectedIndex === -1) {
             // select id
-            newSelected = [...selectedServices, id];
+            newSelected = [...selectedServices, id]
         } else {
             // deselect id
-            newSelected = selectedServices.filter((serviceId) => serviceId !== id);
+            newSelected = selectedServices.filter((serviceId) => serviceId !== id)
         }
 
-        setSelectedServices(newSelected);
+        setSelectedServices(newSelected)
     }
 
     const isEmpty = !loading && containers.length === 0
 
     const getContName = (container: Message<"docker.v1.ContainerList"> & {
-        id: string;
-        imageID: string;
-        imageName: string;
-        status: string;
-        name: string;
-        created: string;
-        ports: Port[];
+        id: string
+        imageID: string
+        imageName: string
+        status: string
+        name: string
+        created: string
+        ports: Port[]
         serviceName: string
-    }) => useContainerId ? container.id : container.serviceName;
-
+    }) => useContainerId ? container.id : container.serviceName
 
     return (
         <TableContainer
@@ -114,10 +166,42 @@ export function ContainerTable(
                                 }}
                             />
                         </TableCell>
-                        <TableCell sx={tableHeaderStyles}>Name</TableCell>
-                        <TableCell sx={tableHeaderStyles}>Status</TableCell>
-                        <TableCell sx={tableHeaderStyles}>Image</TableCell>
-                        <TableCell sx={tableHeaderStyles}>Stack</TableCell>
+                        <TableCell sx={tableHeaderStyles}>
+                            <TableSortLabel
+                                active={sortField === 'name'}
+                                direction={sortField === 'name' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('name')}
+                            >
+                                Containers
+                            </TableSortLabel>
+                        </TableCell>
+                        <TableCell sx={tableHeaderStyles}>
+                            <TableSortLabel
+                                active={sortField === 'status'}
+                                direction={sortField === 'status' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('status')}
+                            >
+                                Status
+                            </TableSortLabel>
+                        </TableCell>
+                        <TableCell sx={tableHeaderStyles}>
+                            <TableSortLabel
+                                active={sortField === 'image'}
+                                direction={sortField === 'image' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('image')}
+                            >
+                                Image
+                            </TableSortLabel>
+                        </TableCell>
+                        <TableCell sx={tableHeaderStyles}>
+                            <TableSortLabel
+                                active={sortField === 'stack'}
+                                direction={sortField === 'stack' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('stack')}
+                            >
+                                Stack
+                            </TableSortLabel>
+                        </TableCell>
                         <TableCell sx={tableHeaderStyles}>Ports</TableCell>
                         <TableCell sx={tableHeaderStyles}>Actions</TableCell>
                     </TableRow>
@@ -131,7 +215,6 @@ export function ContainerTable(
                 >
                     {isEmpty ? (
                         <TableRow>
-                            {/* Updated colSpan to account for the new checkbox column */}
                             <TableCell colSpan={6} sx={{border: 0, height: 200}}>
                                 <Box
                                     sx={{
@@ -147,7 +230,7 @@ export function ContainerTable(
                                 </Box>
                             </TableCell>
                         </TableRow>
-                    ) : containers.map((container) => {
+                    ) : sortedContainers.map((container) => {
                         const isItemSelected = selectedServices.includes(getContName(container))
                         const labelId = `container-table-checkbox-${container.id}`
 
@@ -208,8 +291,8 @@ export function ContainerTable(
                                             '&:hover': {textDecoration: 'underline'}
                                         }}
                                         onClick={(event) => {
-                                            event.stopPropagation(); // Prevent row click
-                                            navigate(`/stacks/${container.servicePath}?tab=0`);
+                                            event.stopPropagation() // Prevent row click
+                                            navigate(`/stacks/${container.servicePath}?tab=0`)
                                         }}
                                     >
                                         {container.stackName}

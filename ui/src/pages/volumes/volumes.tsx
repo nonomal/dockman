@@ -1,8 +1,9 @@
 import {useState} from 'react';
-import {Box, Button, Card, CircularProgress, Stack, Tooltip, Typography} from '@mui/material';
-import {Delete, Refresh, Timer} from '@mui/icons-material';
+import {Box, Button, Card, CircularProgress, Stack, Typography} from '@mui/material';
+import {Refresh} from '@mui/icons-material';
 import {useDockerVolumes} from "../../hooks/docker-volumes.ts";
 import {VolumeTable} from './volumes-table.tsx';
+import scrollbarStyles from "../../components/scrollbar-style.tsx";
 
 const VolumesPage = () => {
     const {loadVolumes, volumes, loading} = useDockerVolumes();
@@ -12,16 +13,16 @@ const VolumesPage = () => {
         loadVolumes();
     };
 
-    const handleDelete = async () => {
-        // Implement delete functionality
-        console.log('Deleting volumes:', selectedVolumes);
-        setSelectedVolumes([]);
-    };
-
-    const handlePruneUnused = async () => {
-        // Implement prune unused volumes functionality
-        console.log('Pruning unused volumes');
-    };
+    // const handleDelete = async () => {
+    //     // Implement delete functionality
+    //     console.log('Deleting volumes:', selectedVolumes);
+    //     setSelectedVolumes([]);
+    // };
+    //
+    // const handlePruneUnused = async () => {
+    //     // Implement prune unused volumes functionality
+    //     console.log('Pruning unused volumes');
+    // };
 
     return (
         <Box sx={{
@@ -30,28 +31,7 @@ const VolumesPage = () => {
             height: '100vh',
             p: 3,
             overflow: 'hidden',
-            '& *::-webkit-scrollbar': {
-                width: '8px',
-                height: '8px',
-            },
-            '& *::-webkit-scrollbar-track': {
-                background: 'rgba(0,0,0,0.05)',
-                borderRadius: '4px',
-            },
-            '& *::-webkit-scrollbar-thumb': {
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '4px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                '&:hover': {
-                    background: 'rgba(0,0,0,0.4)',
-                },
-                '&:active': {
-                    background: 'rgba(0,0,0,0.6)',
-                },
-            },
-            '& *::-webkit-scrollbar-corner': {
-                background: 'rgba(0,0,0,0.05)',
-            },
+            ...scrollbarStyles
         }}>
             <Card
                 sx={{
@@ -95,36 +75,37 @@ const VolumesPage = () => {
 
                 {/* Actions */}
                 <Stack direction="row" spacing={2}>
-                    <Tooltip title="Remove selected volumes">
-                        <Button
-                            variant="contained"
-                            startIcon={<Delete/>}
-                            onClick={handleDelete}
-                            disabled={loading || selectedVolumes.length === 0}
-                            sx={{minWidth: 140}}
-                        >
-                            Delete {selectedVolumes.length === 0 ? "" : `${selectedVolumes.length}`} volumes
-                        </Button>
-                    </Tooltip>
+                    {/*todo*/}
+                    {/*<Tooltip title="Remove selected volumes">*/}
+                    {/*    <Button*/}
+                    {/*        variant="contained"*/}
+                    {/*        startIcon={<Delete/>}*/}
+                    {/*        onClick={handleDelete}*/}
+                    {/*        disabled={loading || selectedVolumes.length === 0}*/}
+                    {/*        sx={{minWidth: 140}}*/}
+                    {/*    >*/}
+                    {/*        Delete {selectedVolumes.length === 0 ? "" : `${selectedVolumes.length}`} volumes*/}
+                    {/*    </Button>*/}
+                    {/*</Tooltip>*/}
 
-                    <Tooltip title="Remove unused volumes">
-                        <Button
-                            variant="contained"
-                            startIcon={<Timer/>}
-                            onClick={handlePruneUnused}
-                            disabled={loading}
-                            sx={{minWidth: 140}}
-                        >
-                            Prune Unused
-                        </Button>
-                    </Tooltip>
+                    {/*<Tooltip title="Remove unused volumes">*/}
+                    {/*    <Button*/}
+                    {/*        variant="contained"*/}
+                    {/*        startIcon={<Timer/>}*/}
+                    {/*        onClick={handlePruneUnused}*/}
+                    {/*        disabled={loading}*/}
+                    {/*        sx={{minWidth: 140}}*/}
+                    {/*    >*/}
+                    {/*        Prune Unused*/}
+                    {/*    </Button>*/}
+                    {/*</Tooltip>*/}
                 </Stack>
             </Card>
 
             {/* Table Container */}
             <Box sx={{
                 flexGrow: 1,
-                border: '2px dashed',
+                border: '3px ridge',
                 borderColor: 'rgba(255, 255, 255, 0.23)',
                 borderRadius: 3,
                 display: 'flex',

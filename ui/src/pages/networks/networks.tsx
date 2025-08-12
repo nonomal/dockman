@@ -2,6 +2,7 @@ import {
     Box,
     Button,
     Card,
+    Checkbox,
     CircularProgress,
     Link,
     Paper,
@@ -15,9 +16,11 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
-import {Delete, Refresh as RefreshIcon, Storage as StorageIcon, Timer} from '@mui/icons-material';
+import {Refresh as RefreshIcon, Storage as StorageIcon} from '@mui/icons-material';
 import {useDockerNetwork} from "../../hooks/docker-networks.ts";
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
+import type {Network} from "../../gen/docker/v1/docker_pb.ts";
+import {useState} from "react";
 
 const NetworksPage = () => {
     const {loading, networks, loadNetworks} = useDockerNetwork();
@@ -26,13 +29,16 @@ const NetworksPage = () => {
         loadNetworks();
     };
 
-    const handlePruneUnused = async () => {
-        // await pruneUnused(true)
-    };
+    // const handlePruneUnused = async () => {
+    //     // await pruneUnused(true)
+    // };
+    //
+    // const handlePruneUntagged = async () => {
+    //     // await pruneUnused()
+    // };
 
-    const handlePruneUntagged = async () => {
-        // await pruneUnused()
-    };
+    const [selectedNetworks, setSelectedNetworks] = useState<string[]>([])
+
 
     const searchTerm = '';
 
@@ -43,32 +49,8 @@ const NetworksPage = () => {
             height: '100vh',
             p: 3,
             overflow: 'hidden',
-            // Global scrollbar styles for any nested scrollable elements
-            '& *::-webkit-scrollbar': {
-                width: '8px',
-                height: '8px',
-            },
-            '& *::-webkit-scrollbar-track': {
-                background: 'rgba(0,0,0,0.05)',
-                borderRadius: '4px',
-            },
-            '& *::-webkit-scrollbar-thumb': {
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '4px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                '&:hover': {
-                    background: 'rgba(0,0,0,0.4)',
-                },
-                '&:active': {
-                    background: 'rgba(0,0,0,0.6)',
-                },
-            },
-            '& *::-webkit-scrollbar-corner': {
-                background: 'rgba(0,0,0,0.05)',
-            },
+            ...scrollbarStyles
         }}>
-            {/* Header */}
-            {/* Header */}
             <Card
                 sx={{
                     mb: 3,
@@ -86,13 +68,13 @@ const NetworksPage = () => {
                 {/* Title and Stats */}
                 <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
                     <Typography variant="h6" sx={{fontWeight: 'bold'}}>
-                        Docker Images
+                        Docker Networks
                     </Typography>
                 </Box>
 
                 <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
                     <Typography variant="h6">
-                        {networks.length} images • {}
+                        {networks.length} Networks
                     </Typography>
                 </Box>
 
@@ -111,37 +93,37 @@ const NetworksPage = () => {
 
                 {/* Actions */}
                 <Stack direction="row" spacing={2}>
-                    <Button
-                        variant="contained"
-                        startIcon={<Delete/>}
-                        onClick={handlePruneUntagged}
-                        disabled={loading}
-                        sx={{minWidth: 140}}
-                    >
-                        Prune Untagged
-                    </Button>
+                    {/*<Button*/}
+                    {/*    variant="contained"*/}
+                    {/*    startIcon={<Delete/>}*/}
+                    {/*    onClick={handlePruneUntagged}*/}
+                    {/*    disabled={loading}*/}
+                    {/*    sx={{minWidth: 140}}*/}
+                    {/*>*/}
+                    {/*    Prune Untagged*/}
+                    {/*</Button>*/}
 
-                    <Button
-                        variant="contained"
-                        startIcon={<Timer/>}
-                        onClick={handlePruneUnused}
-                        disabled={loading}
-                        sx={{minWidth: 140}}
-                    >
-                        Prune Unused
-                    </Button>
+                    {/*<Button*/}
+                    {/*    variant="contained"*/}
+                    {/*    startIcon={<Timer/>}*/}
+                    {/*    onClick={handlePruneUnused}*/}
+                    {/*    disabled={loading}*/}
+                    {/*    sx={{minWidth: 140}}*/}
+                    {/*>*/}
+                    {/*    Prune Unused*/}
+                    {/*</Button>*/}
                 </Stack>
             </Card>
 
             {/* Table Container */}
             <Box sx={{
                 flexGrow: 1,
-                border: '2px dashed',
+                border: '3px ridge',
                 borderColor: 'rgba(255, 255, 255, 0.23)',
                 borderRadius: 3,
                 display: 'flex',
                 overflow: 'hidden',
-                minHeight: 0 // Add this to ensure flex child can shrink
+                minHeight: 0
             }}>
                 {loading ? (
                     <Box sx={{
@@ -149,94 +131,143 @@ const NetworksPage = () => {
                         justifyContent: 'center',
                         alignItems: 'center',
                         width: '100%',
-                        flex: 1 // Use flex: 1 instead of height: '100%'
+                        flex: 1
                     }}>
                         <CircularProgress sx={{mr: 2}}/>
                         <Typography variant="body1" color="text.secondary">
-                            Loading images...
+                            Loading Networks...
                         </Typography>
                     </Box>
                 ) : networks.length === 0 ? (
-                    <Paper sx={{
-                        p: 6,
-                        textAlign: 'center',
-                        height: '100%',
-                        width: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                    }}>
-                        <StorageIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2, mx: 'auto'}}/>
-                        <Typography variant="h6" sx={{mb: 1}}>
-                            {searchTerm ? 'No images found' : 'No images available'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            {searchTerm ? (
-                                'Try adjusting your search criteria.'
-                            ) : (
-                                <>
-                                    Run some apps, treat yourself, {' '}
-                                    <Link
-                                        href="https://selfh.st/apps/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        https://selfh.st/apps/
-                                    </Link>
-                                </>
-                            )}
-                        </Typography>
-                    </Paper>
-                ) : (
-                    <TableContainer
-                        component={Paper}
-                        sx={{
+                        <Paper sx={{
+                            p: 6,
+                            textAlign: 'center',
                             height: '100%',
-                            overflow: 'auto',
-                            ...scrollbarStyles,
-                        }}
-                    >
-                        <Table stickyHeader sx={{minWidth: 650}}>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={{fontWeight: 'bold', minWidth: 150}}>
-                                        Name
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {networks.map((image) => (
-                                    <TableRow
-                                        key={image.id}
-                                        hover
-                                        sx={{'&:last-child td, &:last-child th': {border: 0}}}
-                                    >
-                                        <TableCell>
-                                            <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                                {
-                                                    <Tooltip title="Open image website" arrow>
-                                                        <Typography variant="body2" component="span" sx={{
-                                                            wordBreak: 'break-all',
-                                                            '&:hover': {textDecoration: 'underline'}
-                                                        }}>
-                                                            {image.name}
-                                                        </Typography>
-                                                    </Tooltip>
-                                                }
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                )}
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center'
+                        }}>
+                            <StorageIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2, mx: 'auto'}}/>
+                            <Typography variant="h6" sx={{mb: 1}}>
+                                {searchTerm ? 'No images found' : 'No images available'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {searchTerm ? (
+                                    'Try adjusting your search criteria.'
+                                ) : (
+                                    <>
+                                        Run some apps, treat yourself, {' '}
+                                        <Link
+                                            href="https://selfh.st/apps/"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            https://selfh.st/apps/
+                                        </Link>
+                                    </>
+                                )}
+                            </Typography>
+                        </Paper>
+                    ) :
+                    <NetworkTable
+                        networks={networks}
+                        onSelectionChange={setSelectedNetworks}
+                        selectedNetworks={selectedNetworks}
+                    />
+                }
             </Box>
         </Box>
     );
 };
 
-/**
- * @ts-expect-error some random duplicate export error no idea why
- */
+interface NetworkTableProps {
+    networks: Network[];
+    selectedNetworks: string[];
+    onSelectionChange: (selectedIds: string[]) => void;
+}
+
+const NetworkTable = ({networks, onSelectionChange, selectedNetworks}: NetworkTableProps) => {
+    const isAllSelected = selectedNetworks.length === networks.length && networks.length > 0;
+    const isIndeterminate = selectedNetworks.length > 0 && selectedNetworks.length < networks.length;
+
+    const handleSelectAll = () => {
+        if (!onSelectionChange) return;
+
+        const allSelected = selectedNetworks.length === networks.length;
+        const newSelection = allSelected ? [] : networks.map(img => img.id);
+        onSelectionChange(newSelection);
+    };
+
+    const handleRowSelection = (imageId: string) => {
+        if (!onSelectionChange) return;
+
+        const newSelection = selectedNetworks.includes(imageId)
+            ? selectedNetworks.filter(id => id !== imageId)
+            : [...selectedNetworks, imageId];
+
+        onSelectionChange(newSelection);
+    };
+
+    return (
+        <TableContainer
+            component={Paper}
+            sx={{
+                height: '100%',
+                overflow: 'auto',
+                ...scrollbarStyles,
+            }}
+        >
+            <Table stickyHeader sx={{minWidth: 650}}>
+                <TableHead>
+                    <TableRow>
+                        <TableCell padding="checkbox">
+                            <Checkbox
+                                indeterminate={isIndeterminate}
+                                checked={isAllSelected}
+                                onChange={handleSelectAll}
+                            />
+                        </TableCell>
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 150}}>
+                            Name
+                        </TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {networks.map((net) => (
+                        <TableRow
+                            key={net.id}
+                            hover
+                            sx={{'&:last-child td, &:last-child th': {border: 0}}}
+                        >
+                            <TableCell padding="checkbox">
+                                <Checkbox
+                                    checked={selectedNetworks.includes(net.id)}
+                                    onChange={() => handleRowSelection(net.id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </TableCell>
+
+                            <TableCell>
+                                <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                    {
+                                        <Tooltip title="Open image website" arrow>
+                                            <Typography variant="body2" component="span" sx={{
+                                                wordBreak: 'break-all',
+                                                '&:hover': {textDecoration: 'underline'}
+                                            }}>
+                                                {net.name}
+                                            </Typography>
+                                        </Tooltip>
+                                    }
+                                </Box>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </TableContainer>
+    );
+};
+
 export default NetworksPage;

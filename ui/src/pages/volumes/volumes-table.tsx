@@ -46,8 +46,8 @@ interface VolumeTableProps {
 }
 
 export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }: VolumeTableProps) => {
-    const [sortField, setSortField] = useState<SortField>('createdAt');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+    const [sortField, setSortField] = useState<SortField>('name');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
     // Handle sorting
     const handleSort = (field: SortField) => {

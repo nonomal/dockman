@@ -172,7 +172,7 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
                 </Box>
 
                 <Box sx={{
-                    height: '78vh', overflow: 'hidden', border: '2px dashed',
+                    height: '78vh', overflow: 'hidden', border: '3px ridge',
                     borderColor: 'rgba(255, 255, 255, 0.23)', borderRadius: 3, display: 'flex',
                     flexDirection: 'column', backgroundColor: 'rgb(41,41,41)'
                 }}>
