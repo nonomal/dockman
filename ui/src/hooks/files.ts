@@ -37,7 +37,7 @@ export function useFiles() {
             setFiles(res)
         }
         setIsLoading(false)
-    }, [client, selectedHost, showError])
+    }, [client, selectedHost])
 
     const addFile = useCallback(async (filename: string, parent: string) => {
         if (parent) {

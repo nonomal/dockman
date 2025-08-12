@@ -36,7 +36,7 @@ func NewComposeService(composeRoot string, client *ContainerService, syncer Sync
 	}
 }
 
-func (s *ComposeService) Up(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+func (s *ComposeService) ComposeUp(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
 	if err := s.syncer.Sync(ctx, project); err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (s *ComposeService) Up(ctx context.Context, project *types.Project, compose
 	return nil
 }
 
-func (s *ComposeService) Down(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+func (s *ComposeService) ComposeDown(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
 	downOpts := api.DownOptions{
 		Services: services,
 	}
@@ -77,7 +77,7 @@ func (s *ComposeService) Down(ctx context.Context, project *types.Project, compo
 	return nil
 }
 
-func (s *ComposeService) Stop(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+func (s *ComposeService) ComposeStop(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
 	stopOpts := api.StopOptions{
 		Services: services,
 	}
@@ -87,7 +87,7 @@ func (s *ComposeService) Stop(ctx context.Context, project *types.Project, compo
 	return nil
 }
 
-func (s *ComposeService) Restart(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+func (s *ComposeService) ComposeRestart(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
 	// A restart might involve changes to the compose file, so we sync first.
 	if err := s.syncer.Sync(ctx, project); err != nil {
 		return err
@@ -102,7 +102,7 @@ func (s *ComposeService) Restart(ctx context.Context, project *types.Project, co
 	return nil
 }
 
-func (s *ComposeService) Pull(ctx context.Context, project *types.Project, composeClient api.Service) error {
+func (s *ComposeService) ComposePull(ctx context.Context, project *types.Project, composeClient api.Service) error {
 	pullOpts := api.PullOptions{}
 	if err := composeClient.Pull(ctx, project, pullOpts); err != nil {
 		return fmt.Errorf("compose pull operation failed: %w", err)
@@ -110,13 +110,13 @@ func (s *ComposeService) Pull(ctx context.Context, project *types.Project, compo
 	return nil
 }
 
-func (s *ComposeService) Update(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
+func (s *ComposeService) ComposeUpdate(ctx context.Context, project *types.Project, composeClient api.Service, services ...string) error {
 	beforeImages, err := s.getProjectImageDigests(ctx, project)
 	if err != nil {
 		return fmt.Errorf("failed to get image info before pull: %w", err)
 	}
 
-	if err = s.Pull(ctx, project, composeClient); err != nil {
+	if err = s.ComposePull(ctx, project, composeClient); err != nil {
 		return err
 	}
 
@@ -132,16 +132,16 @@ func (s *ComposeService) Update(ctx context.Context, project *types.Project, com
 	}
 
 	log.Info().Str("stack", project.Name).Msg("New images were downloaded, updating stack...")
-	// If images changed, run Up to recreate the containers with the new images.
-	if err = s.Up(ctx, project, composeClient, services...); err != nil {
+	// If images changed, run ComposeUp to recreate the containers with the new images.
+	if err = s.ComposeUp(ctx, project, composeClient, services...); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// ListStack The `all` parameter controls whether to show stopped containers.
-func (s *ComposeService) ListStack(ctx context.Context, project *types.Project, all bool) ([]container.Summary, error) {
+// ComposeList The `all` parameter controls whether to show stopped containers.
+func (s *ComposeService) ComposeList(ctx context.Context, project *types.Project, all bool) ([]container.Summary, error) {
 	containerFilters := filters.NewArgs()
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
@@ -157,9 +157,9 @@ func (s *ComposeService) ListStack(ctx context.Context, project *types.Project, 
 	return result, nil
 }
 
-func (s *ComposeService) StatStack(ctx context.Context, project *types.Project) ([]ContainerStats, error) {
+func (s *ComposeService) ComposeStats(ctx context.Context, project *types.Project) ([]ContainerStats, error) {
 	// Get the list of running containers for the stack.
-	stackList, err := s.ListStack(ctx, project, false) // `false` for only running
+	stackList, err := s.ComposeList(ctx, project, false) // `false` for only running
 	if err != nil {
 		return nil, err
 	}
@@ -212,15 +212,15 @@ func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream i
 	return compose.NewComposeService(dockerCli), nil
 }
 
-func (s *ComposeService) LoadProject(ctx context.Context, filename string) (*types.Project, error) {
-	filename = filepath.Join(s.composeRoot, filename)
+func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*types.Project, error) {
+	fullPath := filepath.Join(s.composeRoot, shortName)
 	// will be the parent dir of the compose file else equal to compose root
-	workingDir := filepath.Dir(filename)
+	workingDir := filepath.Dir(fullPath)
 
 	options, err := cli.NewProjectOptions(
-		[]string{filename},
+		[]string{fullPath},
 		// important maintain this order to load .env properly
-		// workingdir -> env -> os -> dot env -> sub dir .envs
+		// working-dir -> env -> os -> dot env -> sub dir .envs
 		cli.WithWorkingDirectory(s.composeRoot),
 		cli.WithEnvFiles(),
 		cli.WithOsEnv,
@@ -239,7 +239,7 @@ func (s *ComposeService) LoadProject(ctx context.Context, filename string) (*typ
 		return nil, fmt.Errorf("failed to load project: %w", err)
 	}
 
-	addServiceLabels(project)
+	addServiceLabels(project, shortName)
 	// Ensure service environment variables
 	project, err = project.WithServicesEnvironmentResolved(true)
 	if err != nil {
@@ -294,15 +294,17 @@ func (s *ComposeService) withoutDockman(project *types.Project, services ...stri
 	})
 }
 
-func addServiceLabels(project *types.Project) {
+const DockmanShortNameLabel = "dockman-shortName"
+
+func addServiceLabels(project *types.Project, shortName string) {
 	for i, s := range project.Services {
 		s.CustomLabels = map[string]string{
-			api.ProjectLabel:     project.Name,
-			api.ServiceLabel:     s.Name,
-			api.VersionLabel:     api.ComposeVersion,
-			api.WorkingDirLabel:  "/",
-			api.ConfigFilesLabel: strings.Join(project.ComposeFiles, ","),
-			api.OneoffLabel:      "False", // default, will be overridden by `run` command
+			api.ServiceLabel:      s.Name,
+			api.ProjectLabel:      project.Name,
+			api.VersionLabel:      api.ComposeVersion,
+			api.ConfigFilesLabel:  strings.Join(project.ComposeFiles, ","),
+			api.OneoffLabel:       "False",
+			DockmanShortNameLabel: shortName,
 		}
 
 		project.Services[i] = s

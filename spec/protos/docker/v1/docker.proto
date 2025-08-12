@@ -201,6 +201,8 @@ message ContainerList {
   repeated Port ports = 7;
   // name to use in selecting service in docker compose
   string serviceName = 8;
+  string servicePath = 9;
+  string stackName = 10;
 }
 
 // ContainerInfo holds metrics for a single Docker container.

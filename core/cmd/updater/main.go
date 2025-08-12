@@ -92,7 +92,7 @@ func Update(path string) {
 		return
 	}
 
-	if err = composeClient.Update(ctx, project, cli); err != nil {
+	if err = composeClient.ComposeUpdate(ctx, project, cli); err != nil {
 		log.Error().Err(err).Msg("Failed to update project")
 		return
 	}

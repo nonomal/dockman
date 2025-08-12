@@ -1594,6 +1594,8 @@ type ContainerList struct {
 	Ports     []*Port                `protobuf:"bytes,7,rep,name=ports,proto3" json:"ports,omitempty"`
 	// name to use in selecting service in docker compose
 	ServiceName   string `protobuf:"bytes,8,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
+	ServicePath   string `protobuf:"bytes,9,opt,name=servicePath,proto3" json:"servicePath,omitempty"`
+	StackName     string `protobuf:"bytes,10,opt,name=stackName,proto3" json:"stackName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1680,6 +1682,20 @@ func (x *ContainerList) GetPorts() []*Port {
 func (x *ContainerList) GetServiceName() string {
 	if x != nil {
 		return x.ServiceName
+	}
+	return ""
+}
+
+func (x *ContainerList) GetServicePath() string {
+	if x != nil {
+		return x.ServicePath
+	}
+	return ""
+}
+
+func (x *ContainerList) GetStackName() string {
+	if x != nil {
+		return x.StackName
 	}
 	return ""
 }
@@ -2110,7 +2126,7 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"memInBytes\x18\x02 \x01(\x04R\n" +
 	"memInBytes\"<\n" +
 	"\fListResponse\x12,\n" +
-	"\x04list\x18\x01 \x03(\v2\x18.docker.v1.ContainerListR\x04list\"\xe6\x01\n" +
+	"\x04list\x18\x01 \x03(\v2\x18.docker.v1.ContainerListR\x04list\"\xa6\x02\n" +
 	"\rContainerList\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aimageID\x18\x02 \x01(\tR\aimageID\x12\x1c\n" +
@@ -2119,7 +2135,10 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12\x18\n" +
 	"\acreated\x18\x06 \x01(\tR\acreated\x12%\n" +
 	"\x05ports\x18\a \x03(\v2\x0f.docker.v1.PortR\x05ports\x12 \n" +
-	"\vserviceName\x18\b \x01(\tR\vserviceName\"\x95\x02\n" +
+	"\vserviceName\x18\b \x01(\tR\vserviceName\x12 \n" +
+	"\vservicePath\x18\t \x01(\tR\vservicePath\x12\x1c\n" +
+	"\tstackName\x18\n" +
+	" \x01(\tR\tstackName\"\x95\x02\n" +
 	"\x0eContainerStats\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +

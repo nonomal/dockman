@@ -49,7 +49,7 @@ func (h *Handler) ComposeStart(ctx context.Context, req *connect.Request[v1.Comp
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Up,
+		h.srv().ComposeUp,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -59,7 +59,7 @@ func (h *Handler) ComposeStop(ctx context.Context, req *connect.Request[v1.Compo
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Stop,
+		h.srv().ComposeStop,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -69,7 +69,7 @@ func (h *Handler) ComposeRemove(ctx context.Context, req *connect.Request[v1.Com
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Down,
+		h.srv().ComposeDown,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -79,7 +79,7 @@ func (h *Handler) ComposeRestart(ctx context.Context, req *connect.Request[v1.Co
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Restart,
+		h.srv().ComposeRestart,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -89,7 +89,7 @@ func (h *Handler) ComposeUpdate(ctx context.Context, req *connect.Request[v1.Com
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Update,
+		h.srv().ComposeUpdate,
 		req.Msg.GetSelectedServices()...,
 	)
 	if err != nil {
@@ -107,7 +107,7 @@ func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.Compo
 		return nil, err
 	}
 
-	result, err := h.srv().ListStack(ctx, project, true)
+	result, err := h.srv().ComposeList(ctx, project, true)
 	if err != nil {
 		return nil, err
 	}
@@ -182,11 +182,11 @@ func (h *Handler) ContainerRestart(ctx context.Context, req *connect.Request[v1.
 }
 
 func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
-	//err := h.srv().ContainersUpdate(ctx, req.Msg.ContainerIds...)
-	//if err != nil {
-	//	return nil, err
-	//}
-	return connect.NewResponse(&v1.LogsMessage{}), fmt.Errorf("TODO: unimplemented container update")
+	err := h.srv().ContainersUpdate(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+	return nil, fmt.Errorf("TODO: unimplemented container update")
 }
 
 func (h *Handler) ContainerList(ctx context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
@@ -210,7 +210,7 @@ func (h *Handler) ContainerStats(ctx context.Context, req *connect.Request[v1.St
 		if err != nil {
 			return nil, err
 		}
-		containers, err = h.srv().StatStack(ctx, project)
+		containers, err = h.srv().ComposeStats(ctx, project)
 	} else {
 		containers, err = h.srv().ContainerStats(ctx, container.ListOptions{})
 	}
@@ -593,6 +593,8 @@ func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerL
 		Status:      stack.Status,
 		Ports:       portSlice,
 		ServiceName: stack.Labels[api.ServiceLabel],
+		StackName:   stack.Labels[api.ProjectLabel],
+		ServicePath: stack.Labels[DockmanShortNameLabel],
 		Created:     time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
 	}
 }

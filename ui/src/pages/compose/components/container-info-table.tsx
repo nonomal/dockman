@@ -21,6 +21,7 @@ import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts";
 import {getImageHomePageUrl} from "../../../hooks/docker-images.ts";
 import scrollbarStyles from "../../../components/scrollbar-style.tsx";
 import type {Message} from "@bufbuild/protobuf";
+import {useNavigate} from "react-router-dom";
 
 interface ContainerTableProps {
     containers: ContainerList[]
@@ -41,6 +42,7 @@ export function ContainerTable(
         useContainerId = false,
     }: ContainerTableProps
 ) {
+    const navigate = useNavigate();
     const [isLoaded, setIsLoaded] = useState(false)
 
     // This effect sets `isLoaded` to true only once after the first data fetch.
@@ -115,6 +117,7 @@ export function ContainerTable(
                         <TableCell sx={tableHeaderStyles}>Name</TableCell>
                         <TableCell sx={tableHeaderStyles}>Status</TableCell>
                         <TableCell sx={tableHeaderStyles}>Image</TableCell>
+                        <TableCell sx={tableHeaderStyles}>Stack</TableCell>
                         <TableCell sx={tableHeaderStyles}>Ports</TableCell>
                         <TableCell sx={tableHeaderStyles}>Actions</TableCell>
                     </TableRow>
@@ -192,6 +195,25 @@ export function ContainerTable(
                                             </Typography>
                                         </Link>
                                     </Tooltip>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography
+                                        variant="body2"
+                                        component="span"
+                                        sx={{
+                                            textDecoration: 'none',
+                                            color: 'primary.main',
+                                            wordBreak: 'break-all',
+                                            cursor: 'pointer',
+                                            '&:hover': {textDecoration: 'underline'}
+                                        }}
+                                        onClick={(event) => {
+                                            event.stopPropagation(); // Prevent row click
+                                            navigate(`/stacks/${container.servicePath}?tab=0`);
+                                        }}
+                                    >
+                                        {container.stackName}
+                                    </Typography>
                                 </TableCell>
                                 <TableCell width={360}>
                                     {formatPorts(container.ports)}

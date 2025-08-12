@@ -18,7 +18,7 @@ const deployContainersConfig = [
 function ContainersPage() {
     const dockerService = useClient(DockerService)
     const {showSuccess, showError} = useSnackbar()
-    const {containers, loading} = useDockerContainers();
+    const {containers, loading, fetchContainers} = useDockerContainers();
 
     const [activeAction, setActiveAction] = useState('')
     const [selectedContainers, setSelectedContainers] = useState<string[]>([])
@@ -45,6 +45,7 @@ function ContainersPage() {
             showError(`Failed to ${name} Containers: ${err}`)
         }
 
+        fetchContainers().then()
         showSuccess(`Successfully ${message} containers`)
         setActiveAction('')
         setSelectedContainers([])
