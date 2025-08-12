@@ -58,7 +58,9 @@ func (s *ContainerService) ContainersRestart(ctx context.Context, containerId ..
 
 func (s *ContainerService) ContainersRemove(ctx context.Context, containerId ...string) error {
 	for _, cont := range containerId {
-		err := s.daemon.ContainerRemove(ctx, cont, container.RemoveOptions{})
+		err := s.daemon.ContainerRemove(ctx, cont, container.RemoveOptions{
+			Force: true,
+		})
 		if err != nil {
 			return fmt.Errorf("unable to remove Container: %s => %w", cont, err)
 		}
