@@ -239,7 +239,7 @@ func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*ty
 		return nil, fmt.Errorf("failed to load project: %w", err)
 	}
 
-	addServiceLabels(project, shortName)
+	addServiceLabels(project)
 	// Ensure service environment variables
 	project, err = project.WithServicesEnvironmentResolved(true)
 	if err != nil {
@@ -294,17 +294,14 @@ func (s *ComposeService) withoutDockman(project *types.Project, services ...stri
 	})
 }
 
-const DockmanShortNameLabel = "dockman-shortName"
-
-func addServiceLabels(project *types.Project, shortName string) {
+func addServiceLabels(project *types.Project) {
 	for i, s := range project.Services {
 		s.CustomLabels = map[string]string{
-			api.ServiceLabel:      s.Name,
-			api.ProjectLabel:      project.Name,
-			api.VersionLabel:      api.ComposeVersion,
-			api.ConfigFilesLabel:  strings.Join(project.ComposeFiles, ","),
-			api.OneoffLabel:       "False",
-			DockmanShortNameLabel: shortName,
+			api.ServiceLabel:     s.Name,
+			api.ProjectLabel:     project.Name,
+			api.VersionLabel:     api.ComposeVersion,
+			api.ConfigFilesLabel: strings.Join(project.ComposeFiles, ","),
+			api.OneoffLabel:      "False",
 		}
 
 		project.Services[i] = s

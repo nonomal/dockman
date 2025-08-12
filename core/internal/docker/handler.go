@@ -18,6 +18,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -136,7 +137,7 @@ func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerLis
 			return cmp.Compare(port1.Type, port2.Type)
 		})
 
-		dockerResult = append(dockerResult, toRPContainer(stack, portSlice))
+		dockerResult = append(dockerResult, toRPContainer(stack, h.srv().composeRoot, portSlice))
 	}
 	return dockerResult
 }
@@ -584,7 +585,8 @@ func toRPCPort(p container.Port) *v1.Port {
 	}
 }
 
-func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerList {
+func toRPContainer(stack container.Summary, composeRoot string, portSlice []*v1.Port) *v1.ContainerList {
+	composePath := filepath.ToSlash(strings.TrimPrefix(stack.Labels[api.ConfigFilesLabel], composeRoot))
 	return &v1.ContainerList{
 		Name:        strings.TrimPrefix(stack.Names[0], "/"),
 		Id:          stack.ID,
@@ -594,7 +596,7 @@ func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerL
 		Ports:       portSlice,
 		ServiceName: stack.Labels[api.ServiceLabel],
 		StackName:   stack.Labels[api.ProjectLabel],
-		ServicePath: stack.Labels[DockmanShortNameLabel],
+		ServicePath: strings.TrimPrefix(composePath, "/"),
 		Created:     time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
 	}
 }
