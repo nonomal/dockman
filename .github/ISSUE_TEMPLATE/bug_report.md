@@ -10,15 +10,15 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of what the bug is.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Screenshots/logs**
+If applicable, add relevant logs or screenshots to help explain your problem.
 
 **Additional context**
 Add any other context about the problem here.
 
 **Tracing Info**
 
-Add screenshot/text of Dockman (replace the placeholders)
+Add screenshot/text of Dockman version and config info (replace the placeholders)
 
 * version/commit/build date etc
   ```
