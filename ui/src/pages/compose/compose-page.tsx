@@ -71,7 +71,7 @@ export const ComposePage = () => {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [navigate])
+    }, [navigate, openTabs])
 
     // Close a tab and navigate to an appropriate new tab
     const handleCloseTab = (event: React.MouseEvent, tabToClose: string) => {
@@ -103,8 +103,19 @@ export const ComposePage = () => {
 
     return (
         <TelescopeProvider>
-            <Box sx={{display: 'flex', height: '100vh', width: '100%', overflow: 'hidden'}}>
-                <Box sx={{width: 280, flexShrink: 0, borderRight: 1, borderColor: 'divider', overflowY: 'auto'}}>
+            <Box sx={{
+                display: 'flex',
+                height: '100vh',
+                width: '100%',
+                overflow: 'hidden'
+            }}>
+                <Box sx={{
+                    width: 280,
+                    flexShrink: 0,
+                    borderRight: 1,
+                    borderColor: 'divider',
+                    overflowY: 'auto'
+                }}>
                     <FileList/>
                 </Box>
 
@@ -161,11 +172,6 @@ export const ComposePage = () => {
     );
 };
 
-interface TabDetails {
-    label: string;
-    component: React.ReactElement;
-}
-
 enum TabType {
     EDITOR,
     DEPLOY,
@@ -176,6 +182,12 @@ function parseTabType(input: string | null): TabType {
     const tabValueInt = parseInt(input ?? '0', 10)
     const isValidTab = TabType[tabValueInt] !== undefined
     return isValidTab ? tabValueInt : TabType.EDITOR
+}
+
+interface TabDetails {
+    label: string;
+    component: React.ReactElement;
+    shortcut: React.ReactElement;
 }
 
 function CoreCompose({filename}: { filename: string }) {
@@ -203,6 +215,31 @@ function CoreCompose({filename}: { filename: string }) {
             });
     }, [filename, fileService]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const path = `/stacks/${filename}`
+            if (e.altKey && !e.repeat) {
+                switch (e.code) {
+                    case "KeyZ":
+                        e.preventDefault();
+                        navigate(`${path}?tab=0`);
+                        break;
+                    case "KeyX":
+                        e.preventDefault();
+                        navigate(`${path}?tab=1`);
+                        break;
+                    case "KeyC":
+                        e.preventDefault();
+                        navigate(`${path}?tab=2`);
+                        break;
+                }
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [filename, navigate]);
+
+
     const tabsList: TabDetails[] = useMemo(() => {
         if (!filename) return [];
 
@@ -211,16 +248,20 @@ function CoreCompose({filename}: { filename: string }) {
 
         map.push({
             label: 'Editor',
-            component: <TabEditor key={filename} selectedPage={filename}/>
+            component: <TabEditor key={filename} selectedPage={filename}/>,
+            shortcut: <ShortcutFormatter title={"Editor"} keyCombo={["ALT", "Z"]}/>,
         })
+
         if (isComposeFile) {
             map.push({
                 label: 'Deploy',
-                component: <TabDeploy selectedPage={filename}/>
+                component: <TabDeploy selectedPage={filename}/>,
+                shortcut: <ShortcutFormatter title={"Editor"} keyCombo={["ALT", "X"]}/>,
             });
             map.push({
                 label: 'Stats',
-                component: <TabStat selectedPage={filename}/>
+                component: <TabStat selectedPage={filename}/>,
+                shortcut: <ShortcutFormatter title={"Editor"} keyCombo={["ALT", "C"]}/>,
             });
         }
 
@@ -265,7 +306,9 @@ function CoreCompose({filename}: { filename: string }) {
                     }
                 }}>
                     {tabsList.map((details, key) => (
-                        <Tab key={key} value={key} label={details.label}/>
+                        <Tooltip title={details.shortcut}>
+                            <Tab key={key} value={key} label={details.label}/>
+                        </Tooltip>
                     ))}
                 </Tabs>
             </Box>
