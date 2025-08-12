@@ -26,20 +26,44 @@ func NewContainerService(cli *client.Client) *ContainerService {
 	return &ContainerService{daemon: cli}
 }
 
-func (s *ContainerService) ContainersStart(ctx context.Context, containerId string) error {
-	return s.daemon.ContainerStart(ctx, containerId, container.StartOptions{})
+func (s *ContainerService) ContainersStart(ctx context.Context, containerId ...string) error {
+	for _, cont := range containerId {
+		err := s.daemon.ContainerStart(ctx, cont, container.StartOptions{})
+		if err != nil {
+			return fmt.Errorf("unable to start Container: %s => %w", cont, err)
+		}
+	}
+	return nil
 }
 
-func (s *ContainerService) ContainersStop(ctx context.Context, containerId string) error {
-	return s.daemon.ContainerStop(ctx, containerId, container.StopOptions{})
+func (s *ContainerService) ContainersStop(ctx context.Context, containerId ...string) error {
+	for _, cont := range containerId {
+		err := s.daemon.ContainerStop(ctx, cont, container.StopOptions{})
+		if err != nil {
+			return fmt.Errorf("unable to stop Container: %s => %w", cont, err)
+		}
+	}
+	return nil
 }
 
-func (s *ContainerService) ContainersRestart(ctx context.Context, containerId string) error {
-	return s.daemon.ContainerRestart(ctx, containerId, container.StopOptions{})
+func (s *ContainerService) ContainersRestart(ctx context.Context, containerId ...string) error {
+	for _, cont := range containerId {
+		err := s.daemon.ContainerRestart(ctx, cont, container.StopOptions{})
+		if err != nil {
+			return fmt.Errorf("unable to restart Container: %s => %w", cont, err)
+		}
+	}
+	return nil
 }
 
-func (s *ContainerService) ContainersRemove(ctx context.Context, containerId string) error {
-	return s.daemon.ContainerRemove(ctx, containerId, container.RemoveOptions{})
+func (s *ContainerService) ContainersRemove(ctx context.Context, containerId ...string) error {
+	for _, cont := range containerId {
+		err := s.daemon.ContainerRemove(ctx, cont, container.RemoveOptions{})
+		if err != nil {
+			return fmt.Errorf("unable to remove Container: %s => %w", cont, err)
+		}
+	}
+	return nil
 }
 
 func (s *ContainerService) ContainersList(ctx context.Context) ([]container.Summary, error) {

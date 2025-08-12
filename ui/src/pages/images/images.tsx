@@ -6,6 +6,7 @@ import {ImagesEmpty} from "./images-empty.tsx";
 import {ImageTable} from './images-table.tsx';
 import {formatBytes} from "../../lib/editor.ts";
 import {ImagesLoading} from "./images-loading.tsx";
+import scrollbarStyles from "../../components/scrollbar-style.tsx";
 
 const ImagesPage = () => {
     const {
@@ -45,29 +46,7 @@ const ImagesPage = () => {
             height: '100vh',
             p: 3,
             overflow: 'hidden',
-            // Global scrollbar styles for any nested scrollable elements
-            '& *::-webkit-scrollbar': {
-                width: '8px',
-                height: '8px',
-            },
-            '& *::-webkit-scrollbar-track': {
-                background: 'rgba(0,0,0,0.05)',
-                borderRadius: '4px',
-            },
-            '& *::-webkit-scrollbar-thumb': {
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '4px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                '&:hover': {
-                    background: 'rgba(0,0,0,0.4)',
-                },
-                '&:active': {
-                    background: 'rgba(0,0,0,0.6)',
-                },
-            },
-            '& *::-webkit-scrollbar-corner': {
-                background: 'rgba(0,0,0,0.05)',
-            },
+            ...scrollbarStyles
         }}>
             <Card
                 sx={{

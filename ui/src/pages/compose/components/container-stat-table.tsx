@@ -24,6 +24,7 @@ import {Article, ContentCopy} from "@mui/icons-material"
 import CheckIcon from "@mui/icons-material/Check"
 import {type ContainerStats, ORDER, SORT_FIELD} from "../../../gen/docker/v1/docker_pb"
 import {formatBytes, getUsageColor} from "../../../lib/editor.ts";
+import scrollbarStyles from "../../../components/scrollbar-style.tsx";
 
 
 interface ContainersTableProps {
@@ -84,8 +85,6 @@ export function ContainerStatTable(
         }, 1500)
     }
 
-    const theme = useTheme()
-
     return (
         <TableContainer
             component={Paper}
@@ -98,36 +97,7 @@ export function ContainerStatTable(
                 overflow: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                // Custom scrollbar styling
-                '&::-webkit-scrollbar': {
-                    width: '8px',
-                    height: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                    background: theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.1)'
-                        : 'rgba(0, 0, 0, 0.1)',
-                    borderRadius: '4px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                    background: theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.3)'
-                        : 'rgba(0, 0, 0, 0.3)',
-                    borderRadius: '4px',
-                    '&:hover': {
-                        background: theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.5)'
-                            : 'rgba(0, 0, 0, 0.5)',
-                    }
-                },
-                '&::-webkit-scrollbar-corner': {
-                    background: 'transparent',
-                },
-                // Firefox scrollbar styling
-                scrollbarWidth: 'thin',
-                scrollbarColor: theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)'
-                    : 'rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1)',
+                ...scrollbarStyles,
             }}
         >
             <Table

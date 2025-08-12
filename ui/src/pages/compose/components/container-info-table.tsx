@@ -19,13 +19,16 @@ import {DocumentScannerOutlined} from '@mui/icons-material'
 import {ContainerInfoPort} from './container-info-port.tsx'
 import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts";
 import {getImageHomePageUrl} from "../../../hooks/docker-images.ts";
+import scrollbarStyles from "../../../components/scrollbar-style.tsx";
+import type {Message} from "@bufbuild/protobuf";
 
 interface ContainerTableProps {
     containers: ContainerList[]
-    onShowLogs: (containerId: string, containerName: string) => void
     loading: boolean
     selectedServices: string[]
-    setSelectedServices: (services: string[]) => void
+    onShowLogs: (containerId: string, containerName: string) => void
+    setSelectedServices: (services: string[]) => void,
+    useContainerId?: boolean,
 }
 
 export function ContainerTable(
@@ -34,8 +37,10 @@ export function ContainerTable(
         onShowLogs,
         loading,
         setSelectedServices,
-        selectedServices
-    }: ContainerTableProps) {
+        selectedServices,
+        useContainerId = false,
+    }: ContainerTableProps
+) {
     const [isLoaded, setIsLoaded] = useState(false)
 
     // This effect sets `isLoaded` to true only once after the first data fetch.
@@ -47,7 +52,7 @@ export function ContainerTable(
 
     const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
-            const allSelects = containers.map((n) => n.serviceName)
+            const allSelects = containers.map((n) => getContName(n))
             setSelectedServices(allSelects)
             return
         }
@@ -72,8 +77,27 @@ export function ContainerTable(
 
     const isEmpty = !loading && containers.length === 0
 
+    const getContName = (container: Message<"docker.v1.ContainerList"> & {
+        id: string;
+        imageID: string;
+        imageName: string;
+        status: string;
+        name: string;
+        created: string;
+        ports: Port[];
+        serviceName: string
+    }) => useContainerId ? container.id : container.serviceName;
+
+
     return (
-        <TableContainer component={Paper} sx={{flexGrow: 1, boxShadow: 3, borderRadius: 2}}>
+        <TableContainer
+            component={Paper}
+            sx={{
+                flexGrow: 1,
+                boxShadow: 3,
+                borderRadius: 2,
+                ...scrollbarStyles
+            }}>
             <Table stickyHeader aria-label="docker containers table">
                 <TableHead>
                     <TableRow>
@@ -121,13 +145,13 @@ export function ContainerTable(
                             </TableCell>
                         </TableRow>
                     ) : containers.map((container) => {
-                        const isItemSelected = selectedServices.includes(container.serviceName)
+                        const isItemSelected = selectedServices.includes(getContName(container))
                         const labelId = `container-table-checkbox-${container.id}`
 
                         return (
                             <TableRow
                                 hover
-                                onClick={() => handleRowClick(container.serviceName)}
+                                onClick={() => handleRowClick(getContName(container))}
                                 role="checkbox"
                                 aria-checked={isItemSelected}
                                 tabIndex={-1}

@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import {Delete, Refresh as RefreshIcon, Storage as StorageIcon, Timer} from '@mui/icons-material';
 import {useDockerNetwork} from "../../hooks/docker-networks.ts";
+import scrollbarStyles from "../../components/scrollbar-style.tsx";
 
 const NetworksPage = () => {
     const {loading, networks, loadNetworks} = useDockerNetwork();
@@ -192,28 +193,7 @@ const NetworksPage = () => {
                         sx={{
                             height: '100%',
                             overflow: 'auto',
-                            // Custom scrollbar styles
-                            '&::-webkit-scrollbar': {
-                                width: '8px',
-                                height: '8px',
-                            },
-                            '&::-webkit-scrollbar-track': {
-                                background: 'rgba(0,0,0,0.1)',
-                                borderRadius: '4px',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                                background: 'rgba(0,0,0,0.3)',
-                                borderRadius: '4px',
-                                '&:hover': {
-                                    background: 'rgba(0,0,0,0.5)',
-                                },
-                            },
-                            '&::-webkit-scrollbar-corner': {
-                                background: 'rgba(0,0,0,0.1)',
-                            },
-                            // Firefox scrollbar styles
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: 'rgba(0,0,0,0.3) rgba(0,0,0,0.1)',
+                            ...scrollbarStyles,
                         }}
                     >
                         <Table stickyHeader sx={{minWidth: 650}}>

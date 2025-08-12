@@ -1,5 +1,5 @@
 import {Box, Button, Menu, MenuItem, Typography} from "@mui/material";
-import {useEffect, useRef, useState} from "react";
+import {type MouseEvent, useEffect, useRef, useState} from "react";
 import {KeyChar} from "../../components/keychar.tsx";
 import {ExpandMore} from "@mui/icons-material";
 import {useHost} from "../../hooks/host.ts";
@@ -28,7 +28,7 @@ function HostSelectDropdown() {
         };
     }, [open]);
 
-    const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const handleOpen = (event: MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
     };
 
@@ -87,13 +87,15 @@ function HostSelectDropdown() {
                 anchorEl={anchorEl}
                 open={open}
                 onClose={handleClose}
-                MenuListProps={{
-                    'aria-labelledby': 'host-select-button',
-                }}
-                PaperProps={{
-                    sx: {
-                        minWidth: buttonRef.current?.offsetWidth, // Match the button width
-                        marginTop: 1,
+                slotProps={{
+                    list: {
+                        'aria-labelledby': 'host-select-button',
+                    },
+                    paper: {
+                        sx: {
+                            minWidth: buttonRef.current?.offsetWidth, // Match the button width
+                            marginTop: 1,
+                        }
                     }
                 }}
             >

@@ -145,32 +145,51 @@ func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerLis
 // 			Container Actions 			  //
 ////////////////////////////////////////////
 
-func (h *Handler) ContainerStart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	//TODO implement me
-	return fmt.Errorf("ContainerStart: implement me")
+func (h *Handler) ContainerStart(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersStart(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.LogsMessage{}), nil
 }
 
-func (h *Handler) ContainerStop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	//TODO implement me
-	return fmt.Errorf("ContainerStop: implement me")
+func (h *Handler) ContainerStop(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersStop(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.LogsMessage{}), nil
 }
 
-func (h *Handler) ContainerRemove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	//TODO implement me
-	return fmt.Errorf("ContainerRemove: implement me")
+func (h *Handler) ContainerRemove(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersRemove(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.LogsMessage{}), nil
 }
 
-func (h *Handler) ContainerRestart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	//TODO implement me
-	return fmt.Errorf("ContainerRestart: implement me")
+func (h *Handler) ContainerRestart(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersRestart(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.LogsMessage{}), nil
 }
 
-func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	//TODO implement me
-	return fmt.Errorf("ContainerUpdate: implement me")
+func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	//err := h.srv().ContainersUpdate(ctx, req.Msg.ContainerIds...)
+	//if err != nil {
+	//	return nil, err
+	//}
+	return connect.NewResponse(&v1.LogsMessage{}), fmt.Errorf("TODO: unimplemented container update")
 }
 
-func (h *Handler) ContainerList(ctx context.Context, _ *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+func (h *Handler) ContainerList(ctx context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
 	result, err := h.srv().ContainersList(ctx)
 	if err != nil {
 		return nil, err

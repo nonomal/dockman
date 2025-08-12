@@ -23,6 +23,7 @@ import {
     Label as LabelIcon,
     Storage as StorageIcon
 } from '@mui/icons-material';
+import scrollbarStyles from "../../components/scrollbar-style.tsx";
 
 export type Volume = {
     CreatedAt: string;
@@ -147,26 +148,7 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
             sx={{
                 height: '100%',
                 overflow: 'auto',
-                '&::-webkit-scrollbar': {
-                    width: '8px',
-                    height: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                    background: 'rgba(0,0,0,0.1)',
-                    borderRadius: '4px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                    background: 'rgba(0,0,0,0.3)',
-                    borderRadius: '4px',
-                    '&:hover': {
-                        background: 'rgba(0,0,0,0.5)',
-                    },
-                },
-                '&::-webkit-scrollbar-corner': {
-                    background: 'rgba(0,0,0,0.1)',
-                },
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(0,0,0,0.3) rgba(0,0,0,0.1)',
+                ...scrollbarStyles
             }}
         >
             <Table stickyHeader sx={{ minWidth: 650 }}>

@@ -1906,6 +1906,50 @@ func (*Empty) Descriptor() ([]byte, []int) {
 	return file_docker_v1_docker_proto_rawDescGZIP(), []int{32}
 }
 
+type ContainerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContainerIds  []string               `protobuf:"bytes,1,rep,name=containerIds,proto3" json:"containerIds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerRequest) Reset() {
+	*x = ContainerRequest{}
+	mi := &file_docker_v1_docker_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerRequest) ProtoMessage() {}
+
+func (x *ContainerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_docker_v1_docker_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerRequest.ProtoReflect.Descriptor instead.
+func (*ContainerRequest) Descriptor() ([]byte, []int) {
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ContainerRequest) GetContainerIds() []string {
+	if x != nil {
+		return x.ContainerIds
+	}
+	return nil
+}
+
 type ComposeFile struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Filename         string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
@@ -1916,7 +1960,7 @@ type ComposeFile struct {
 
 func (x *ComposeFile) Reset() {
 	*x = ComposeFile{}
-	mi := &file_docker_v1_docker_proto_msgTypes[33]
+	mi := &file_docker_v1_docker_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1928,7 +1972,7 @@ func (x *ComposeFile) String() string {
 func (*ComposeFile) ProtoMessage() {}
 
 func (x *ComposeFile) ProtoReflect() protoreflect.Message {
-	mi := &file_docker_v1_docker_proto_msgTypes[33]
+	mi := &file_docker_v1_docker_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1941,7 +1985,7 @@ func (x *ComposeFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ComposeFile.ProtoReflect.Descriptor instead.
 func (*ComposeFile) Descriptor() ([]byte, []int) {
-	return file_docker_v1_docker_proto_rawDescGZIP(), []int{33}
+	return file_docker_v1_docker_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ComposeFile) GetFilename() string {
@@ -2095,7 +2139,9 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\aprivate\x18\x02 \x01(\x05R\aprivate\x12\x12\n" +
 	"\x04host\x18\x03 \x01(\tR\x04host\x12\x12\n" +
 	"\x04type\x18\x04 \x01(\tR\x04type\"\a\n" +
-	"\x05Empty\"U\n" +
+	"\x05Empty\"6\n" +
+	"\x10ContainerRequest\x12\"\n" +
+	"\fcontainerIds\x18\x01 \x03(\tR\fcontainerIds\"U\n" +
 	"\vComposeFile\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\x12*\n" +
 	"\x10selectedServices\x18\x02 \x03(\tR\x10selectedServices*`\n" +
@@ -2114,14 +2160,14 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\x06DISK_W\x10\x06*\x19\n" +
 	"\x05ORDER\x12\a\n" +
 	"\x03DSC\x10\x00\x12\a\n" +
-	"\x03ASC\x10\x012\xc4\r\n" +
-	"\rDockerService\x12D\n" +
-	"\x0eContainerStart\x12\x16.docker.v1.ComposeFile\x1a\x16.docker.v1.LogsMessage\"\x000\x01\x12C\n" +
-	"\rContainerStop\x12\x16.docker.v1.ComposeFile\x1a\x16.docker.v1.LogsMessage\"\x000\x01\x12E\n" +
-	"\x0fContainerRemove\x12\x16.docker.v1.ComposeFile\x1a\x16.docker.v1.LogsMessage\"\x000\x01\x12F\n" +
-	"\x10ContainerRestart\x12\x16.docker.v1.ComposeFile\x1a\x16.docker.v1.LogsMessage\"\x000\x01\x12E\n" +
-	"\x0fContainerUpdate\x12\x16.docker.v1.ComposeFile\x1a\x16.docker.v1.LogsMessage\"\x000\x01\x12B\n" +
-	"\rContainerList\x12\x16.docker.v1.ComposeFile\x1a\x17.docker.v1.ListResponse\"\x00\x12E\n" +
+	"\x03ASC\x10\x012\xcd\r\n" +
+	"\rDockerService\x12G\n" +
+	"\x0eContainerStart\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12F\n" +
+	"\rContainerStop\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12H\n" +
+	"\x0fContainerRemove\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12I\n" +
+	"\x10ContainerRestart\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12H\n" +
+	"\x0fContainerUpdate\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12<\n" +
+	"\rContainerList\x12\x10.docker.v1.Empty\x1a\x17.docker.v1.ListResponse\"\x00\x12E\n" +
 	"\x0eContainerStats\x12\x17.docker.v1.StatsRequest\x1a\x18.docker.v1.StatsResponse\"\x00\x12L\n" +
 	"\rContainerLogs\x12\x1f.docker.v1.ContainerLogsRequest\x1a\x16.docker.v1.LogsMessage\"\x000\x01\x12B\n" +
 	"\fComposeStart\x12\x16.docker.v1.ComposeFile\x1a\x16.docker.v1.LogsMessage\"\x000\x01\x12A\n" +
@@ -2156,7 +2202,7 @@ func file_docker_v1_docker_proto_rawDescGZIP() []byte {
 }
 
 var file_docker_v1_docker_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_docker_v1_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_docker_v1_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_docker_v1_docker_proto_goTypes = []any{
 	(SORT_FIELD)(0),               // 0: docker.v1.SORT_FIELD
 	(ORDER)(0),                    // 1: docker.v1.ORDER
@@ -2193,39 +2239,40 @@ var file_docker_v1_docker_proto_goTypes = []any{
 	(*ContainerStats)(nil),        // 32: docker.v1.ContainerStats
 	(*Port)(nil),                  // 33: docker.v1.Port
 	(*Empty)(nil),                 // 34: docker.v1.Empty
-	(*ComposeFile)(nil),           // 35: docker.v1.ComposeFile
-	nil,                           // 36: docker.v1.Image.LabelsEntry
-	nil,                           // 37: docker.v1.Volume.LabelsEntry
+	(*ContainerRequest)(nil),      // 35: docker.v1.ContainerRequest
+	(*ComposeFile)(nil),           // 36: docker.v1.ComposeFile
+	nil,                           // 37: docker.v1.Image.LabelsEntry
+	nil,                           // 38: docker.v1.Volume.LabelsEntry
 }
 var file_docker_v1_docker_proto_depIdxs = []int32{
-	36, // 0: docker.v1.Image.labels:type_name -> docker.v1.Image.LabelsEntry
+	37, // 0: docker.v1.Image.labels:type_name -> docker.v1.Image.LabelsEntry
 	3,  // 1: docker.v1.Image.manifests:type_name -> docker.v1.ManifestSummary
 	2,  // 2: docker.v1.ListImagesResponse.images:type_name -> docker.v1.Image
 	10, // 3: docker.v1.ImagePruneResponse.deleted:type_name -> docker.v1.ImagesDeleted
-	37, // 4: docker.v1.Volume.Labels:type_name -> docker.v1.Volume.LabelsEntry
+	38, // 4: docker.v1.Volume.Labels:type_name -> docker.v1.Volume.LabelsEntry
 	11, // 5: docker.v1.ListVolumesResponse.volumes:type_name -> docker.v1.Volume
 	18, // 6: docker.v1.ListNetworksResponse.networks:type_name -> docker.v1.Network
 	29, // 7: docker.v1.StatsResponse.system:type_name -> docker.v1.SystemInfo
 	32, // 8: docker.v1.StatsResponse.containers:type_name -> docker.v1.ContainerStats
-	35, // 9: docker.v1.StatsRequest.file:type_name -> docker.v1.ComposeFile
+	36, // 9: docker.v1.StatsRequest.file:type_name -> docker.v1.ComposeFile
 	0,  // 10: docker.v1.StatsRequest.sortBy:type_name -> docker.v1.SORT_FIELD
 	1,  // 11: docker.v1.StatsRequest.order:type_name -> docker.v1.ORDER
 	31, // 12: docker.v1.ListResponse.list:type_name -> docker.v1.ContainerList
 	33, // 13: docker.v1.ContainerList.ports:type_name -> docker.v1.Port
-	35, // 14: docker.v1.DockerService.ContainerStart:input_type -> docker.v1.ComposeFile
-	35, // 15: docker.v1.DockerService.ContainerStop:input_type -> docker.v1.ComposeFile
-	35, // 16: docker.v1.DockerService.ContainerRemove:input_type -> docker.v1.ComposeFile
-	35, // 17: docker.v1.DockerService.ContainerRestart:input_type -> docker.v1.ComposeFile
-	35, // 18: docker.v1.DockerService.ContainerUpdate:input_type -> docker.v1.ComposeFile
-	35, // 19: docker.v1.DockerService.ContainerList:input_type -> docker.v1.ComposeFile
+	35, // 14: docker.v1.DockerService.ContainerStart:input_type -> docker.v1.ContainerRequest
+	35, // 15: docker.v1.DockerService.ContainerStop:input_type -> docker.v1.ContainerRequest
+	35, // 16: docker.v1.DockerService.ContainerRemove:input_type -> docker.v1.ContainerRequest
+	35, // 17: docker.v1.DockerService.ContainerRestart:input_type -> docker.v1.ContainerRequest
+	35, // 18: docker.v1.DockerService.ContainerUpdate:input_type -> docker.v1.ContainerRequest
+	34, // 19: docker.v1.DockerService.ContainerList:input_type -> docker.v1.Empty
 	28, // 20: docker.v1.DockerService.ContainerStats:input_type -> docker.v1.StatsRequest
 	25, // 21: docker.v1.DockerService.ContainerLogs:input_type -> docker.v1.ContainerLogsRequest
-	35, // 22: docker.v1.DockerService.ComposeStart:input_type -> docker.v1.ComposeFile
-	35, // 23: docker.v1.DockerService.ComposeStop:input_type -> docker.v1.ComposeFile
-	35, // 24: docker.v1.DockerService.ComposeRemove:input_type -> docker.v1.ComposeFile
-	35, // 25: docker.v1.DockerService.ComposeRestart:input_type -> docker.v1.ComposeFile
-	35, // 26: docker.v1.DockerService.ComposeUpdate:input_type -> docker.v1.ComposeFile
-	35, // 27: docker.v1.DockerService.ComposeList:input_type -> docker.v1.ComposeFile
+	36, // 22: docker.v1.DockerService.ComposeStart:input_type -> docker.v1.ComposeFile
+	36, // 23: docker.v1.DockerService.ComposeStop:input_type -> docker.v1.ComposeFile
+	36, // 24: docker.v1.DockerService.ComposeRemove:input_type -> docker.v1.ComposeFile
+	36, // 25: docker.v1.DockerService.ComposeRestart:input_type -> docker.v1.ComposeFile
+	36, // 26: docker.v1.DockerService.ComposeUpdate:input_type -> docker.v1.ComposeFile
+	36, // 27: docker.v1.DockerService.ComposeList:input_type -> docker.v1.ComposeFile
 	4,  // 28: docker.v1.DockerService.ImageList:input_type -> docker.v1.ListImagesRequest
 	6,  // 29: docker.v1.DockerService.ImageRemove:input_type -> docker.v1.RemoveImageRequest
 	9,  // 30: docker.v1.DockerService.ImagePruneUnused:input_type -> docker.v1.ImagePruneRequest
@@ -2276,7 +2323,7 @@ func file_docker_v1_docker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_docker_v1_docker_proto_rawDesc), len(file_docker_v1_docker_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   36,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
