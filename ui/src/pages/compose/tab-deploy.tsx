@@ -18,8 +18,7 @@ import {
 } from '@mui/icons-material';
 import {ContainerTable} from './components/container-info-table';
 import {LogsPanel} from './components/logs-panel';
-import {Code, ConnectError} from '@connectrpc/connect';
-import {useClient} from "../../lib/api.ts";
+import {transformAsyncIterable, useClient} from "../../lib/api.ts";
 import {DockerService} from '../../gen/docker/v1/docker_pb.ts';
 import {useDockerCompose} from '../../hooks/docker-compose.ts';
 import {useSnackbar} from "../../hooks/snackbar.ts";
@@ -206,49 +205,3 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
     );
 }
 
-
-interface TransformAsyncIterableOptions<T, U> {
-    transform: (item: T) => U | Promise<U>;
-    onComplete?: () => void;
-    onError?: (error: string) => void;
-    onFinally?: () => void;
-}
-
-/**
- * A generic function to transform items from a source async iterable,
- * with callbacks for handling completion, errors, and final cleanup.
- *
- * @param source The source async iterable.
- * @param options An object containing the transform function and optional lifecycle callbacks.
- * @returns A new async iterable with transformed items.
- */
-async function* transformAsyncIterable<T, U>(
-    source: AsyncIterable<T>,
-    options: TransformAsyncIterableOptions<T, U>
-): AsyncIterable<U> {
-    const {transform, onComplete, onError, onFinally} = options;
-
-    try {
-        for await (const item of source) {
-            yield await transform(item);
-        }
-        // The stream completed without any errors.
-        onComplete?.();
-    } catch (error: unknown) {
-        if (error instanceof ConnectError && error.code === Code.Canceled) {
-            console.log("Stream was cancelled:", error.message);
-            return; // Don't show an error dialog for user-cancellation.
-        }
-
-        let errMessage = "An error occurred while streaming.";
-        if (error instanceof ConnectError) {
-            errMessage += `\n${error.code} ${error.name}: ${error.message}`;
-        } else if (error instanceof Error) {
-            errMessage += `\nUnknown Error: ${error.toString()}`;
-        }
-
-        onError?.(errMessage);
-    } finally {
-        onFinally?.();
-    }
-}

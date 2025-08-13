@@ -16,7 +16,7 @@ import NetworksPage from "./pages/networks/networks.tsx";
 import VolumesPage from "./pages/volumes/volumes.tsx";
 import ImagesPage from "./pages/images/images.tsx";
 import ContainersPage from "./pages/containers/containers.tsx";
-import {FilesProvider} from "./context/file-context.tsx";
+import {UserConfigProvider} from "./context/config-context.tsx";
 
 export function App() {
     return (
@@ -32,18 +32,8 @@ export function App() {
                                 <Route path="/" element={<HomePage/>}>
                                     <Route path="/" element={<Navigate to="/stacks" replace/>}/>
                                     <Route path="stacks">
-                                        <Route index element={
-                                            <FilesProvider>
-                                                <ComposePage/>
-                                            </FilesProvider>}
-                                        />
-                                        <Route path=":file/:child?"
-                                               element={
-                                                   <FilesProvider>
-                                                       <ComposePage/>
-                                                   </FilesProvider>
-                                               }
-                                        />
+                                        <Route index element={<ComposePage/>}/>
+                                        <Route path=":file/:child?" element={<ComposePage/>}/>
                                     </Route>
 
                                     <Route path="stats">
@@ -97,12 +87,14 @@ const PrivateRoute = () => {
 
     // Once authenticated, render with providers that need auth
     return (
-        <HostProvider>
-            <ChangelogProvider>
-                <GlobalShortcuts/>
-                <Outlet/>
-            </ChangelogProvider>
-        </HostProvider>
+        <UserConfigProvider>
+            <HostProvider>
+                <ChangelogProvider>
+                    <GlobalShortcuts/>
+                    <Outlet/>
+                </ChangelogProvider>
+            </HostProvider>
+        </UserConfigProvider>
     );
 };
 

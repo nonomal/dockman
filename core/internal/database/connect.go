@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/info"
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
@@ -43,6 +44,7 @@ func connect(basepath string) (*gorm.DB, error) {
 		&ssh.MachineOptions{},
 		&ssh.KeyConfig{},
 		&info.VersionHistory{},
+		&config.UserConfig{},
 	}
 
 	if err = db.AutoMigrate(tables...); err != nil {

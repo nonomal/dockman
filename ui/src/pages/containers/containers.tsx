@@ -6,6 +6,7 @@ import {useDockerContainers} from "../../hooks/docker-containers.ts";
 import {callRPC, useClient} from "../../lib/api.ts";
 import {DockerService} from "../../gen/docker/v1/docker_pb.ts";
 import {useSnackbar} from "../../hooks/snackbar.ts";
+import LogsDialog from "./logs-dialog.tsx";
 
 const deployContainersConfig = [
     {name: 'start', rpcName: 'containerStart', message: "started", icon: <PlayArrow/>},
@@ -39,9 +40,12 @@ function ContainersPage() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [])
 
-    function handleContainerLogs(containerId: string, containerName: string): void {
-        // todo
-        console.log(containerId, containerName)
+    const [containerName, setContainerName] = useState("")
+    const [containerID, setContainerID] = useState("")
+
+    function handleContainerLogs(cid: string, containerName: string): void {
+        setContainerName(containerName)
+        setContainerID(cid)
     }
 
     async function handleContainerAction(
@@ -85,7 +89,7 @@ function ContainersPage() {
 
 
     return (
-        <Box sx={{
+        <><Box sx={{
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
@@ -122,8 +126,7 @@ function ContainersPage() {
                             '& .MuiOutlinedInput-root': {
                                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                             }
-                        }}
-                    />
+                        }}/>
 
                     {deployContainersConfig.map((action) => (
                         <Button
@@ -150,11 +153,21 @@ function ContainersPage() {
                         onShowLogs={handleContainerLogs}
                         setSelectedServices={setSelectedContainers}
                         selectedServices={selectedContainers}
-                        useContainerId={true}
-                    />
+                        useContainerId={true}/>
                 </Box>
             </Box>
         </Box>
+
+            <LogsDialog
+                hide={() => {
+                    setContainerID("")
+                    setContainerName("")
+                }}
+                show={containerID !== ""}
+                containerID={containerID}
+                name={containerName}
+            />
+        </>
     );
 }
 

@@ -7,9 +7,10 @@ import (
 )
 
 type Service struct {
-	SshKeyDB  ssh.KeyManager
-	MachineDB ssh.MachineManager
-	InfoDB    *impl.VersionDB
+	SshKeyDB     ssh.KeyManager
+	MachineDB    ssh.MachineManager
+	InfoDB       *impl.VersionDB
+	UserConfigDB *impl.UserConfigDB
 }
 
 func NewService(basepath string) *Service {
@@ -19,15 +20,17 @@ func NewService(basepath string) *Service {
 		return nil
 	}
 
+	userMan := impl.NewUserConfigDB(gormDB)
 	keyman := impl.NewKeyManagerDB(gormDB)
 	macMan := impl.NewMachineManagerDB(gormDB)
 	verMan := impl.NewVersionHistoryManager(gormDB)
 
 	log.Debug().Msg("DB service loaded successfully")
 	return &Service{
-		SshKeyDB:  keyman,
-		MachineDB: macMan,
-		InfoDB:    verMan,
+		SshKeyDB:     keyman,
+		MachineDB:    macMan,
+		InfoDB:       verMan,
+		UserConfigDB: userMan,
 	}
 }
 

@@ -84,7 +84,17 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>(({logStr
             processStream().then();
         }, [logStream]);
 
-        return <div ref={terminalRef} style={{width: '100%', height: '100%'}}/>;
+        return <div
+            ref={terminalRef}
+            style={{
+                width: '100%',
+                height: '100%',
+                overflow: 'auto',
+                // Firefox
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#555 #2a2a2a',
+            }}
+        />;
     })
 ;
 

@@ -49,7 +49,7 @@ export function ContainerTable(
     const navigate = useNavigate()
     const [isLoaded, setIsLoaded] = useState(false)
 
-    const [sortField, setSortField] = useState<SortField>('status')
+    const [sortField, setSortField] = useState<SortField>('name')
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
 
     // Handle sorting
@@ -115,7 +115,6 @@ export function ContainerTable(
     }
 
     const handleRowClick = (id: string) => {
-        console.log("row", id)
         const selectedIndex = selectedServices.indexOf(id)
         let newSelected: string[]
 

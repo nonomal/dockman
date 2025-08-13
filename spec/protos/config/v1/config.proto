@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package config.v1;
+
+option go_package = "github.com/RA341/dockman/generated/config/v1";
+
+service ConfigService {
+  rpc GetUserConfig(Empty) returns (UserConfig) {}
+  rpc SetUserConfig(UserConfig) returns (Empty) {}
+
+}
+
+message UserConfig {
+  bool useComposeFolders = 1;
+}
+
+message Empty{}
