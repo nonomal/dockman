@@ -1,7 +1,7 @@
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 import {Box, Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Tooltip} from '@mui/material';
 import {Add, Analytics, Delete, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material';
-import {type FileGroup, useFiles} from "../../../hooks/files.ts";
+import {type FileGroup} from "../../../hooks/files.ts";
 import React from "react";
 import FileIcon, {DockerFolderIcon} from "./file-icon.tsx";
 import {amber} from "@mui/material/colors";
@@ -11,8 +11,9 @@ interface FileItemProps {
     isOpen: boolean,
     onToggle: (name: string) => void,
     onAdd: (name: string) => void,
-    isSelected?: boolean;
-    level?: number;
+    isSelected?: boolean,
+    level?: number,
+    onDelete: (file: string) => void
 }
 
 const COMPOSE_EXTENSIONS = ['compose.yaml', 'compose.yml'];
@@ -76,13 +77,8 @@ function normalizeFileGroup(group: FileGroup): NormalizedFileGroup {
     };
 }
 
-const FileItem = React.memo(({group, onAdd, isOpen, onToggle}: FileItemProps) => {
-    const {deleteFile} = useFiles();
+const FileItem = React.memo(({group, onAdd, isOpen, onToggle, onDelete}: FileItemProps) => {
     const normalized = normalizeFileGroup(group);
-
-    const onDelete = (filename: string) => {
-        deleteFile(filename).then();
-    };
 
     const handleToggle = () => {
         onToggle(group.name);
