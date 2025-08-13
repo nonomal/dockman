@@ -1,5 +1,23 @@
-import {useCallback, useEffect, useState} from 'react'
-import {Box, CircularProgress, Divider, IconButton, List, styled, Toolbar, Tooltip, Typography} from '@mui/material'
+import {type ChangeEvent, useCallback, useEffect, useState} from 'react'
+import {
+    Box,
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Divider,
+    FormControlLabel,
+    IconButton,
+    List,
+    styled,
+    Switch,
+    Toolbar,
+    Tooltip,
+    Typography
+} from '@mui/material'
 import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
 import {useParams} from 'react-router-dom'
 import FileItem from './file-item.tsx'
@@ -9,6 +27,7 @@ import {useFiles} from "../../../hooks/files.ts";
 import {useHost} from "../../../hooks/host.ts";
 import {useTelescope} from "../context/telescope-hook.ts";
 import {ShortcutFormatter} from "./shortcut-formatter.tsx";
+import {useConfig} from "../../../hooks/config.ts";
 
 interface FileListProps {
     closeTab: (tabToClose: string) => void
@@ -99,6 +118,8 @@ export function FileList({closeTab}: FileListProps) {
         console.log("Import process has finished. Refreshing data...");
     };
 
+    const [fileConfigDialogOpen, setFileConfigDialogOpen] = useState(false);
+
     return (
         <Box
             sx={{
@@ -109,9 +130,39 @@ export function FileList({closeTab}: FileListProps) {
             }}
         >
             <Toolbar>
-                <Typography variant="h6" noWrap sx={{flexGrow: 1}}>
-                    Files
-                </Typography>
+                <Tooltip title={"Configure how files are displayed"}>
+                    <Button
+                        variant="text"
+                        onClick={() => setFileConfigDialogOpen(true)}
+                        sx={{
+                            justifyContent: 'flex-start',
+                            textTransform: 'none',
+                            fontSize: '1.25rem', // h6 font size
+                            fontWeight: 500, // h6 font weight
+                            color: 'text.primary',
+                            padding: '8px 12px',
+                            minWidth: 'auto',
+                            width: 'fit-content',
+                            border: '1px solid transparent',
+                            borderRadius: '6px',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                borderColor: 'rgba(255, 255, 255, 0.12)',
+                                color: 'text.primary',
+                            },
+                            '&:focus': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                color: 'text.primary',
+                            }
+                        }}
+                        aria-label="Open File Config"
+                    >
+                        Files
+                    </Button>
+                </Tooltip>
+
+                <Box sx={{flexGrow: 1}}/>
 
                 <Tooltip arrow title={
                     <ShortcutFormatter
@@ -200,10 +251,97 @@ export function FileList({closeTab}: FileListProps) {
                 onConfirm={handleAddConfirm}
                 parentName={dialogState.parent}
             />
-        </Box> // Close the main container Box
+            <FileConfigDialog open={fileConfigDialogOpen} onClose={() => setFileConfigDialogOpen(false)}/>
+        </Box>
     )
 }
 
+function FileConfigDialog({open, onClose}: { open: boolean, onClose: () => void }) {
+    const {config, updateSettings} = useConfig()
+    const [localConfig, setLocalConfig] = useState(config)
+
+    // uses the name attribute from the Switch component to determine which key in the localConfig object to update.
+    const handleSwitchChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const {name, checked} = event.target;
+        setLocalConfig(prevConfig => ({
+            ...prevConfig,
+            [name]: checked
+        }));
+    };
+
+    const handleSave = () => {
+        console.log('Saving config:');
+        updateSettings(localConfig).then();
+        onClose();
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onClose={onClose}
+            maxWidth="md"
+            fullWidth
+            aria-labelledby="file-config-dialog-title"
+            slotProps={{
+                paper: {
+                    // sx: {
+                    //     backgroundColor: '#2d2d2d', // Darker background color
+                    //     color: '#f5f5f5',         // Light text color for contrast
+                    // }
+                },
+            }}
+        >
+            <DialogTitle
+                id="file-config-dialog-title"
+                sx={{borderBottom: 1, borderColor: 'grey.700'}}
+            >
+                File Display Config
+            </DialogTitle>
+            <DialogContent
+                sx={{
+                    borderBottom: 1,
+                    borderColor: 'grey.700',
+                    paddingY: '24px'
+                }}
+            >
+                <DialogContentText sx={{color: 'grey.400', marginBottom: 3}}>
+                    Configure your file settings here.
+                </DialogContentText>
+
+                <Box>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={localConfig.useComposeFolders}
+                                onChange={handleSwitchChange}
+                                name="useComposeFolders"
+                            />
+                        }
+                        label="Use compose folders"
+                    />
+                    <Typography variant="caption" display="block" sx={{color: 'grey.500', mt: 0.5, ml: 4}}>
+                        Convert all folders with a single compose file into a top-level compose file. The folder remains
+                        under the hood; only how the folder is displayed is changed.
+                    </Typography>
+                </Box>
+            </DialogContent>
+            <DialogActions
+                // Add padding to the button section
+                sx={{padding: '16px 24px'}}
+            >
+                <Button onClick={onClose} sx={{color: 'white'}}>
+                    Cancel
+                </Button>
+                <Button
+                    onClick={handleSave}
+                    variant="contained"
+                >
+                    Save
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
 
 const StyledScrollbarBox = styled(Box)(({theme}) => ({
     overflowY: 'auto',

@@ -4,6 +4,7 @@ import (
 	"connectrpc.com/connect"
 	"fmt"
 	authrpc "github.com/RA341/dockman/generated/auth/v1/v1connect"
+	configrpc "github.com/RA341/dockman/generated/config/v1/v1connect"
 	dockerpc "github.com/RA341/dockman/generated/docker/v1/v1connect"
 	dockermanagerrpc "github.com/RA341/dockman/generated/docker_manager/v1/v1connect"
 	filesrpc "github.com/RA341/dockman/generated/files/v1/v1connect"
@@ -90,6 +91,10 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		// info
 		func() (string, http.Handler) {
 			return inforpc.NewInfoServiceHandler(info.NewConnectHandler(a.Info), authInterceptor)
+		},
+		// user config
+		func() (string, http.Handler) {
+			return configrpc.NewConfigServiceHandler(config.NewConnectHandler(a.DB.UserConfigDB), authInterceptor)
 		},
 		// files
 		func() (string, http.Handler) {
