@@ -37,10 +37,14 @@ type App struct {
 
 func NewApp(conf *config.AppConfig) (*App, error) {
 	cr := conf.ComposeRoot
+	limit, err := conf.Auth.GetCookieExpiryLimit()
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse cookie expiry: %w", err)
+	}
 
 	// initialize services
+	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password, limit)
 	dbSrv := database.NewService(conf.ConfigDir)
-	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password)
 	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
 	fileSrv := files.NewService(cr)
 	gitSrv := git.NewService(cr)
@@ -91,6 +95,11 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		func() (string, http.Handler) {
 			return filesrpc.NewFileServiceHandler(files.NewConnectHandler(a.File), authInterceptor)
 		},
+		// fuzzy file searcher
+		func() (string, http.Handler) {
+			wsFunc := files.NewWebSocketHandler(a.File, lsp.DefaultUpgrader)
+			return a.registerHttpHandler("/ws/fuzz", wsFunc)
+		},
 		func() (string, http.Handler) {
 			return a.registerHttpHandler("/api/file", files.NewFileHandler(a.File))
 		},
@@ -127,7 +136,7 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		// lsp
 		func() (string, http.Handler) {
 			wsFunc := lsp.WebSocketHandler(lsp.DefaultUpgrader)
-			return a.registerHttpHandler("/api/lsp", wsFunc)
+			return a.registerHttpHandler("/ws/lsp", wsFunc)
 		},
 	}
 

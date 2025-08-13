@@ -3,21 +3,33 @@ package files
 import (
 	"fmt"
 	"github.com/RA341/dockman/pkg/fileutil"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"sync"
 )
 
+var ignoredFiles = []string{".git"}
+
 type Service struct {
 	composeRoot string
+
+	files     map[string][][]string
+	fileMutex sync.RWMutex
 }
 
 func NewService(composeRoot string) *Service {
 	if !filepath.IsAbs(composeRoot) {
-		log.Fatal().Str("path", composeRoot).Msg("composeRoot must be an absolute path")
+		var err error
+		composeRoot, err = filepath.Abs(composeRoot)
+		if err != nil {
+			log.Fatal().Str("path", composeRoot).Msg("Err getting abs path for composeRoot")
+		}
 	}
 
 	if err := os.MkdirAll(composeRoot, 0755); err != nil {
@@ -34,16 +46,54 @@ func (s *Service) Close() error {
 	return nil
 }
 
+type dirResult struct {
+	fileList []string
+	dirname  string
+}
+
+// todo
+//func (s *Service) WatchFiles() (map[string][]string, error) {
+//	watcher, err := fsnotify.NewWatcher()
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer fileutil.Close(watcher)
+//
+//	err = watcher.SetRecursive()
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to set recursive watcher: %v", err)
+//	}
+//
+//	err = watcher.Add(s.composeRoot)
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to add watcher for dir: %s: %v", s.composeRoot, err)
+//	}
+//
+//	select {
+//	case ev := <-watcher.Events:
+//		s.fileMutex.Lock()
+//		defer s.fileMutex.Unlock()
+//		list, err := s.List()
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//	}
+//}
+//func (s *Service) ListCached() (map[string][]string, error) {
+//
+//}
+
 func (s *Service) List() (map[string][]string, error) {
 	topLevelEntries, err := os.ReadDir(s.composeRoot)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list files in compose root: %v", err)
 	}
 	result := make(map[string][]string, len(topLevelEntries))
 
-	wg := &sync.WaitGroup{}
-	subDirChan := make(chan dirResult, len(topLevelEntries))
+	eg := errgroup.Group{}
 
+	subDirChan := make(chan dirResult, len(topLevelEntries))
 	for _, entry := range topLevelEntries {
 		entryName := entry.Name()
 		if slices.Contains(ignoredFiles, entryName) {
@@ -55,34 +105,34 @@ func (s *Service) List() (map[string][]string, error) {
 			continue
 		}
 
-		wg.Add(1)
-		go func(entryName string) {
-			defer wg.Done()
-			fullPath := s.WithPath(entryName)
+		eg.Go(func() error {
+			fullPath := s.WithRoot(entryName)
 			files, err := listFiles(fullPath)
+			if err != nil {
+				log.Warn().Err(err).Str("path", fullPath).Msg("error listing subdir")
+				return nil
+			}
 
 			subDirChan <- dirResult{
 				fileList: files,
 				dirname:  entryName,
-				err:      err,
 			}
-		}(entryName)
+			return nil
+		})
 	}
 
 	go func() {
-		wg.Wait()
+		_ = eg.Wait()
 		close(subDirChan)
 	}()
 
 	for item := range subDirChan {
-		if item.err != nil {
-			return nil, item.err
+		if len(item.fileList) == 0 {
+			// do not send empty dirs
+			continue
 		}
 
-		if len(item.fileList) != 0 {
-			// do not send empty dirs
-			result[item.dirname] = item.fileList
-		}
+		result[item.dirname] = item.fileList
 	}
 
 	return result, nil
@@ -95,8 +145,42 @@ func (s *Service) Create(fileName string) error {
 	return nil
 }
 
+type SearchResults struct {
+}
+
+type File struct {
+	path string
+	// a list of
+	// line and column matches
+	// 0,1 will be match start,
+	// 2,3 will be match end
+	contentMatch [][4]int
+}
+
+// FuzzySearch searches the compose root, and returns a list of files
+// that matches that search, inspired by https://github.com/nvim-telescope/telescope.nvim
+func (s *Service) FuzzySearch(query string) (fuzzy.Ranks, error) {
+	list, err := s.List()
+	if err != nil {
+		return nil, fmt.Errorf("failed listing files: %v", err)
+	}
+
+	// flatten into a list
+	var allPaths []string
+	for parent, subFolder := range list {
+		for _, sub := range subFolder {
+			allPaths = append(allPaths, fmt.Sprintf("%s/%s", parent, sub))
+		}
+	}
+
+	ranks := fuzzy.RankFind(query, allPaths) // [{whl cartwheel 6 0} {whl wheel 2 2}]
+	sort.Sort(ranks)
+
+	return ranks, nil
+}
+
 func (s *Service) Exists(filename string) error {
-	stat, err := os.Stat(s.WithPath(filename))
+	stat, err := os.Stat(s.WithRoot(filename))
 	if err != nil {
 		return err
 	}
@@ -108,7 +192,7 @@ func (s *Service) Exists(filename string) error {
 }
 
 func (s *Service) Delete(fileName string) error {
-	fullpath := s.WithPath(fileName)
+	fullpath := s.WithRoot(fileName)
 	if err := os.RemoveAll(fullpath); err != nil {
 		return err
 	}
@@ -117,7 +201,7 @@ func (s *Service) Delete(fileName string) error {
 }
 
 func (s *Service) Save(filename string, destWriter io.Reader) error {
-	filename = s.WithPath(filename)
+	filename = s.WithRoot(filename)
 	read, err := io.ReadAll(destWriter)
 	if err != nil {
 		return err
@@ -130,17 +214,17 @@ func (s *Service) Save(filename string, destWriter io.Reader) error {
 }
 
 func (s *Service) LoadFilePath(filename string) (string, error) {
-	return s.WithPath(filename), nil
+	return s.WithRoot(filename), nil
 }
 
 func (s *Service) createFile(filename string) error {
-	filename = s.WithPath(filename)
+	filename = s.WithRoot(filename)
 	baseDir := filepath.Dir(filename)
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
 		return err
 	}
 
-	f, err := fileutil.OpenFile(filename)
+	f, err := openFile(filename)
 	if err != nil {
 		return err
 	}
@@ -149,17 +233,14 @@ func (s *Service) createFile(filename string) error {
 	return nil
 }
 
-func (s *Service) WithPath(filename string) string {
+// WithRoot joins s.composeRoot with filename
+func (s *Service) WithRoot(filename string) string {
 	return filepath.Join(s.composeRoot, filename)
 }
 
-type dirResult struct {
-	fileList []string
-	dirname  string
-	err      error
+func openFile(filename string) (*os.File, error) {
+	return os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 }
-
-var ignoredFiles = []string{".git"}
 
 func listFiles(path string) ([]string, error) {
 	subEntries, err := os.ReadDir(path)

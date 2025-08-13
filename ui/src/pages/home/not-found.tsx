@@ -1,5 +1,5 @@
-import {Link as RouterLink} from 'react-router-dom';
-import {Box, Button, Stack, Typography} from '@mui/material'; // 👈 1. Import Stack
+import {Link as RouterLink} from 'react-router-dom'
+import {Box, Button, Stack, Typography} from '@mui/material'
 
 const NotFoundPage = () => {
     return (
@@ -11,7 +11,6 @@ const NotFoundPage = () => {
                 minHeight: '100vh',
             }}
         >
-            {/* 👇 2. Wrap the content in a Stack */}
             <Stack spacing={8} sx={{alignItems: 'center', textAlign: 'center', maxWidth: 'md', px: 2}}>
                 <Typography variant="h3" component="h1">
                     Page Not Found
@@ -30,7 +29,7 @@ const NotFoundPage = () => {
                 </Button>
             </Stack>
         </Box>
-    );
-};
+    )
+}
 
-export default NotFoundPage;
+export default NotFoundPage

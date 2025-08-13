@@ -3,7 +3,7 @@ import {callRPC, useClient} from '../lib/api'
 import {useSnackbar} from '../hooks/snackbar'
 import {InfoService} from "../gen/info/v1/info_pb.ts";
 import {ChangelogContext} from '../hooks/changelog.ts';
-import GithubMarkdownPopup from "../components/change-log-modal.tsx";
+import ChangelogModal from "../components/change-log-modal.tsx";
 
 interface ChangelogProviderProps {
     children: ReactNode
@@ -70,7 +70,7 @@ export function ChangelogProvider({children}: ChangelogProviderProps) {
     return (
         <ChangelogContext.Provider value={value}>
             {children}
-            <GithubMarkdownPopup
+            <ChangelogModal
                 githubUrl={releaseUrl}
                 isVisible={isChangelogVisible}
                 changelog={changelog}

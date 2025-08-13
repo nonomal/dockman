@@ -36,7 +36,7 @@ func NewService(infoDB VersionHistoryManager) *Service {
 		log.Fatal().Err(err).Msg("version check failed")
 	}
 
-	log.Info().Any("result", result).Msg("checking version")
+	log.Info().Str("last checked", result.CurrentVersion.Version).Str("current", Version).Msg("checking version")
 
 	log.Debug().Msg("Info service loaded successfully")
 	return s
@@ -65,7 +65,7 @@ func (cm *Service) VerifyVersion(currentAppVersion string) (*VersionCheckResult,
 func (cm *Service) CheckVersionStatus(currentAppVersion string) (*VersionCheckResult, error) {
 	ok := isValidSemver(currentAppVersion)
 	if !ok {
-		log.Info().
+		log.Debug().
 			Str("version", currentAppVersion).
 			Msg("invalid semver, changelog will not be checked")
 

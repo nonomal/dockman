@@ -27,3 +27,8 @@ func TestService_Create(t *testing.T) {
 	//err = srv.Create(parent)
 	//require.Error(t, err, "")
 }
+
+func TestService_FuzzySearch(t *testing.T) {
+	sd := NewService("./test")
+
+}

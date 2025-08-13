@@ -39,10 +39,18 @@ tasks:
   ui:
     desc: "Build the latest web ui in {{.UI_DIR}}"
     dir: "{{.UI_DIR}}"
-#    sources:
-#      - "**/*.tsx"
+    #    sources:
+    #      - "**/*.tsx"
     cmds:
       - npm run build
+
+  ui:page:*:
+    vars:
+      NATIVE_DIR: "{{.UI_DIR}}src/pages"
+      CMD_NAME: "{{index .MATCH 0}}"
+    cmds:
+      - coreutils mkdir -p {{ .NATIVE_DIR }}/{{ .CMD_NAME }}
+      - coreutils touch {{ .NATIVE_DIR }}/{{ .CMD_NAME }}/{{ .CMD_NAME }}.tsx
 
   ui:r:
     desc: "Build the latest web ui in {{.UI_DIR}}"
@@ -109,6 +117,13 @@ tasks:
       - task: go:b:{{.CMD_NAME}}
       - ../{{.BUILD_DIR}}/{{.CMD_NAME}}{{.EXE_EXT}}{{.ARGS}}
 
+  go:
+    desc: "Builds and runs the default Go target of develop. Usage: task go"
+    vars:
+      CMD_NAME: "develop"
+    cmds:
+      - task: go:{{.CMD_NAME}}
+
   dk:b:*:
     desc: "Builds the main dockman image for a specific target. Usage: task dk:<target>"
     vars:
@@ -125,10 +140,23 @@ tasks:
       TARGET: "{{index .MATCH 0}}"
     cmds:
       - task dk:b:{{.TARGET}}
-      - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -p 8221:8866 {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
+      - docker run --rm
+          -e DOCKMAN_AUTH_ENABLE=false
+          -e DOCKMAN_AUTH_USERNAME=wow
+          -e DOCKMAN_AUTH_PASSWORD=wow
+          -v /var/run/docker.sock:/var/run/docker.sock 
+          -p 8221:8866 
+        {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
     preconditions:
       - sh: 'test -n "{{.TARGET}}"'
         msg: "The 'target' variable must be provided. Usage: task dk:r.<target-name>"
+
+  dk:
+    desc: "Builds and runs the main dockman image. Usage: task dk"
+    vars:
+      TARGET: "alpine"
+    cmds:
+      - task dk:{{.TARGET}}
 
   dk:up:
     desc: "Builds the updater image. Usage: task dk:<target>"

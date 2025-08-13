@@ -9,9 +9,9 @@ func TestService(t *testing.T) {
 	//stackName := "controller-docker-compose.yml"
 	//ctx := context.Background()
 	//
-	//err := dock.Up(ctx, stackName)
+	//err := dock.ComposeUp(ctx, stackName)
 	//require.NoError(t, err)
 	//
-	//err = dock.Down(ctx, stackName)
+	//err = dock.ComposeDown(ctx, stackName)
 	//require.NoError(t, err)
 }

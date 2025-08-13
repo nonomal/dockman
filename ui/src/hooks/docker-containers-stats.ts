@@ -35,7 +35,7 @@ export function useDockerStats(selectedPage?: string) {
         let isCancelled = false;
 
         const fetchData = async () => {
-            const {val, err} = await callRPC(() => dockerService.stats({
+            const {val, err} = await callRPC(() => dockerService.containerStats({
                 sortBy: sortField,
                 order: sortOrder,
                 file: selectedPage ? {filename: selectedPage} : undefined

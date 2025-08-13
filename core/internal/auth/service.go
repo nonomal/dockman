@@ -7,10 +7,11 @@ import (
 )
 
 type Service struct {
-	authDb DB
+	authDb       DB
+	cookieExpiry time.Duration
 }
 
-func NewService(user, pass string) *Service {
+func NewService(user, pass string, cookieExpiry time.Duration) *Service {
 	adb := &MemAuthDB{make(map[string]*User)}
 
 	if _, err := adb.NewUser(user, pass); err != nil {
@@ -18,7 +19,10 @@ func NewService(user, pass string) *Service {
 	}
 
 	log.Debug().Msg("Auth service loaded successfully")
-	return &Service{adb}
+	return &Service{
+		authDb:       adb,
+		cookieExpiry: cookieExpiry,
+	}
 }
 
 func (auth *Service) Login(username, inputPassword string) (*User, string, error) {
@@ -29,7 +33,7 @@ func (auth *Service) Login(username, inputPassword string) (*User, string, error
 
 	unHashedToken := CreateAuthToken(32)
 	user.Token = hashString(unHashedToken)
-	user.Expires = time.Now().Add(time.Hour * 4)
+	user.Expires = time.Now().Add(auth.cookieExpiry)
 
 	if err = auth.authDb.UpdateUser(user); err != nil {
 		return nil, "", fmt.Errorf("error updating user, %w", err)

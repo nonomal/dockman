@@ -5,14 +5,147 @@ package docker.v1;
 option go_package = "github.com/RA341/dockman/generated/docker/v1";
 
 service DockerService {
-  rpc Start(ComposeFile) returns (stream LogsMessage) {}
-  rpc Stop(ComposeFile) returns (stream LogsMessage) {}
-  rpc Remove(ComposeFile) returns (stream LogsMessage) {}
-  rpc Restart(ComposeFile) returns (stream LogsMessage) {}
-  rpc Update(ComposeFile) returns (stream LogsMessage) {}
-  rpc List(ComposeFile) returns (ListResponse) {}
-  rpc Stats(StatsRequest) returns (StatsResponse) {}
-  rpc Logs(ContainerLogsRequest) returns (stream LogsMessage) {}
+  // container
+  rpc ContainerStart(ContainerRequest) returns (LogsMessage) {}
+  rpc ContainerStop(ContainerRequest) returns (LogsMessage) {}
+  rpc ContainerRemove(ContainerRequest) returns (LogsMessage) {}
+  rpc ContainerRestart(ContainerRequest) returns (LogsMessage) {}
+  rpc ContainerUpdate(ContainerRequest) returns (LogsMessage) {}
+  rpc ContainerList(Empty) returns (ListResponse) {}
+  rpc ContainerStats(StatsRequest) returns (StatsResponse) {}
+  rpc ContainerLogs(ContainerLogsRequest) returns (stream LogsMessage) {}
+
+  // compose
+  rpc ComposeStart(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeStop(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeRemove(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeRestart(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeUpdate(ComposeFile) returns (stream LogsMessage) {}
+  rpc ComposeList(ComposeFile) returns (ListResponse) {}
+
+  // images
+  rpc ImageList(ListImagesRequest) returns (ListImagesResponse) {}
+  rpc ImageRemove(RemoveImageRequest) returns (RemoveImageResponse) {}
+  rpc ImagePruneUnused(ImagePruneRequest) returns (ImagePruneResponse) {}
+
+  // volumes
+  rpc VolumeList(ListVolumesRequest) returns (ListVolumesResponse) {}
+  rpc VolumeCreate(CreateVolumeRequest) returns (CreateVolumeResponse) {}
+  rpc VolumeDelete(DeleteVolumeRequest) returns (DeleteVolumeResponse) {}
+
+  // networks
+  rpc NetworkList(ListNetworksRequest) returns (ListNetworksResponse) {}
+  rpc NetworkCreate(CreateNetworkRequest) returns (CreateNetworkResponse) {}
+  rpc NetworkDelete(DeleteNetworkRequest) returns (DeleteNetworkResponse) {}
+}
+
+// Image-related messages
+message Image {
+  int64 containers = 1;
+  int64 created = 2;
+  string id = 3;
+  map<string, string> labels = 4;
+  string parent_id = 5;
+  repeated ManifestSummary manifests = 7;
+  repeated string repo_digests = 8;
+  repeated string repo_tags = 9;
+  int64 shared_size = 10;
+  int64 size = 11;
+}
+
+message ManifestSummary {
+  string digest = 1;
+  string media_type = 2;
+  int64 size = 3;
+}
+
+message ListImagesRequest {}
+
+message ListImagesResponse {
+  int64 totalDiskUsage = 1;
+  int64 unusedImageCount = 2;
+  int64 untaggedImageCount = 3;
+  repeated Image images = 4;
+}
+
+message RemoveImageRequest {
+  repeated string imageIds = 1;
+}
+
+message RemoveImageResponse {}
+
+message ImagePruneResponse {
+  uint64 SpaceReclaimed = 1;
+  repeated ImagesDeleted deleted = 2;
+}
+
+message ImagePruneRequest {
+  bool pruneAll = 1;
+}
+
+message ImagesDeleted {
+  string Deleted = 1;
+  string Untagged = 2;
+}
+
+// Volume-related messages
+message Volume {
+  string CreatedAt = 1;
+  string Driver = 2;
+  map<string, string> Labels = 3;
+  string MountPoint = 4;
+  string Name = 5;
+  string Scope = 6;
+}
+
+message ListVolumesRequest {}
+
+message ListVolumesResponse {
+  repeated Volume volumes = 1;
+}
+
+message CreateVolumeRequest {
+}
+
+message CreateVolumeResponse {
+}
+
+message DeleteVolumeRequest {
+}
+
+message DeleteVolumeResponse {
+}
+
+// Network-related messages
+message Network {
+  string name = 1;
+  string id = 2;
+  string scope = 4;
+  string driver = 5;
+  bool enable_ipv4 = 6;
+  bool enable_ipv6 = 7;
+  bool internal = 9;
+  bool attachable = 10;
+  bool ingress = 11;
+  bool config_only = 13;
+}
+
+message ListNetworksRequest {}
+
+message ListNetworksResponse {
+  repeated Network networks = 1;
+}
+
+message CreateNetworkRequest {
+}
+
+message CreateNetworkResponse {
+}
+
+message DeleteNetworkRequest {
+}
+
+message DeleteNetworkResponse {
 }
 
 message ContainerLogsRequest {
@@ -68,6 +201,8 @@ message ContainerList {
   repeated Port ports = 7;
   // name to use in selecting service in docker compose
   string serviceName = 8;
+  string servicePath = 9;
+  string stackName = 10;
 }
 
 // ContainerInfo holds metrics for a single Docker container.
@@ -101,6 +236,10 @@ message Port {
 }
 
 message Empty{}
+
+message ContainerRequest {
+  repeated string containerIds = 1;
+}
 
 message ComposeFile {
   string filename = 1;

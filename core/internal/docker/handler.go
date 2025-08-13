@@ -11,12 +11,14 @@ import (
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -39,52 +41,56 @@ func NewConnectHandler(srv GetService, host, pass string) *Handler {
 	}
 }
 
-func (h *Handler) Start(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+////////////////////////////////////////////
+// 			Compose Actions 			  //
+////////////////////////////////////////////
+
+func (h *Handler) ComposeStart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	return h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Up,
+		h.srv().ComposeUp,
 		req.Msg.GetSelectedServices()...,
 	)
 }
 
-func (h *Handler) Stop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+func (h *Handler) ComposeStop(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	return h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Stop,
+		h.srv().ComposeStop,
 		req.Msg.GetSelectedServices()...,
 	)
 }
 
-func (h *Handler) Remove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+func (h *Handler) ComposeRemove(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	return h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Down,
+		h.srv().ComposeDown,
 		req.Msg.GetSelectedServices()...,
 	)
 }
 
-func (h *Handler) Restart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+func (h *Handler) ComposeRestart(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	return h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Restart,
+		h.srv().ComposeRestart,
 		req.Msg.GetSelectedServices()...,
 	)
 }
 
-func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+func (h *Handler) ComposeUpdate(ctx context.Context, req *connect.Request[v1.ComposeFile], responseStream *connect.ServerStream[v1.LogsMessage]) error {
 	err := h.executeComposeStreamCommand(
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().Update,
+		h.srv().ComposeUpdate,
 		req.Msg.GetSelectedServices()...,
 	)
 	if err != nil {
@@ -96,36 +102,22 @@ func (h *Handler) Update(ctx context.Context, req *connect.Request[v1.ComposeFil
 	return nil
 }
 
-func (h *Handler) Logs(ctx context.Context, req *connect.Request[v1.ContainerLogsRequest], responseStream *connect.ServerStream[v1.LogsMessage]) error {
-	if req.Msg.GetContainerID() == "" {
-		return fmt.Errorf("container id is required")
-	}
-
-	logsReader, err := h.srv().ContainerLogs(ctx, req.Msg.GetContainerID())
-	if err != nil {
-		return err
-	}
-	defer fileutil.Close(logsReader)
-
-	writer := &ContainerLogWriter{responseStream: responseStream}
-	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
+func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
 	project, err := h.srv().LoadProject(ctx, req.Msg.GetFilename())
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := h.srv().ListStack(ctx, project, true)
+	result, err := h.srv().ComposeList(ctx, project, true)
 	if err != nil {
 		return nil, err
 	}
 
+	rpcResult := h.containersToRpc(result)
+	return connect.NewResponse(&v1.ListResponse{List: rpcResult}), err
+}
+
+func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerList {
 	var dockerResult []*v1.ContainerList
 	for _, stack := range result {
 		var portSlice []*v1.Port
@@ -145,13 +137,70 @@ func (h *Handler) List(ctx context.Context, req *connect.Request[v1.ComposeFile]
 			return cmp.Compare(port1.Type, port2.Type)
 		})
 
-		dockerResult = append(dockerResult, toRPContainer(stack, portSlice))
+		dockerResult = append(dockerResult, toRPContainer(stack, h.srv().composeRoot, portSlice))
 	}
-
-	return connect.NewResponse(&v1.ListResponse{List: dockerResult}), err
+	return dockerResult
 }
 
-func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
+////////////////////////////////////////////
+// 			Container Actions 			  //
+////////////////////////////////////////////
+
+func (h *Handler) ContainerStart(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersStart(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.LogsMessage{}), nil
+}
+
+func (h *Handler) ContainerStop(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersStop(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.LogsMessage{}), nil
+}
+
+func (h *Handler) ContainerRemove(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersRemove(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.LogsMessage{}), nil
+}
+
+func (h *Handler) ContainerRestart(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersRestart(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.LogsMessage{}), nil
+}
+
+func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
+	err := h.srv().ContainersUpdate(ctx, req.Msg.ContainerIds...)
+	if err != nil {
+		return nil, err
+	}
+	return nil, fmt.Errorf("TODO: unimplemented container update")
+}
+
+func (h *Handler) ContainerList(ctx context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
+	result, err := h.srv().ContainersList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rpcResult := h.containersToRpc(result)
+	return connect.NewResponse(&v1.ListResponse{List: rpcResult}), err
+}
+
+func (h *Handler) ContainerStats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
 	file := req.Msg.GetFile()
 
 	var containers []ContainerStats
@@ -162,9 +211,9 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 		if err != nil {
 			return nil, err
 		}
-		containers, err = h.srv().StatStack(ctx, project)
+		containers, err = h.srv().ComposeStats(ctx, project)
 	} else {
-		containers, err = h.srv().GetStats(ctx, container.ListOptions{})
+		containers, err = h.srv().ContainerStats(ctx, container.ListOptions{})
 	}
 	if err != nil {
 		return nil, err
@@ -195,6 +244,189 @@ func (h *Handler) Stats(ctx context.Context, req *connect.Request[v1.StatsReques
 		Containers: stats,
 	}), nil
 }
+
+func (h *Handler) ContainerLogs(ctx context.Context, req *connect.Request[v1.ContainerLogsRequest], responseStream *connect.ServerStream[v1.LogsMessage]) error {
+	if req.Msg.GetContainerID() == "" {
+		return fmt.Errorf("container id is required")
+	}
+
+	logsReader, err := h.srv().ContainerLogs(ctx, req.Msg.GetContainerID())
+	if err != nil {
+		return err
+	}
+	defer fileutil.Close(logsReader)
+
+	writer := &ContainerLogWriter{responseStream: responseStream}
+	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+////////////////////////////////////////////
+// 				Image Actions 			  //
+////////////////////////////////////////////
+
+func (h *Handler) ImageList(ctx context.Context, req *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
+	images, err := h.srv().ListImages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var unusedContainers int64
+	var totalDisk int64
+	var untagged int64
+	var rpcImages []*v1.Image
+
+	for _, img := range images {
+		totalDisk += img.Size
+
+		if img.Containers == 0 {
+			unusedContainers++
+		}
+
+		if len(img.RepoTags) == 0 {
+			untagged++
+		}
+
+		rpcImages = append(rpcImages, &v1.Image{
+			Containers:  img.Containers,
+			Created:     img.Created,
+			Id:          img.ID,
+			Labels:      img.Labels,
+			ParentId:    img.ParentID,
+			RepoDigests: img.RepoDigests,
+			RepoTags:    img.RepoTags,
+			SharedSize:  img.SharedSize,
+			Size:        img.Size,
+			Manifests:   []*v1.ManifestSummary{}, // todo
+		})
+	}
+
+	return connect.NewResponse(&v1.ListImagesResponse{
+		TotalDiskUsage:   totalDisk,
+		Images:           rpcImages,
+		UnusedImageCount: unusedContainers,
+	}), err
+}
+
+func (h *Handler) ImageRemove(ctx context.Context, req *connect.Request[v1.RemoveImageRequest]) (*connect.Response[v1.RemoveImageResponse], error) {
+	for _, img := range req.Msg.ImageIds {
+		_, err := h.srv().ImageDelete(ctx, img)
+		if err != nil {
+			return nil, fmt.Errorf("unable to remove image %s: %w", img, err)
+		}
+	}
+
+	return connect.NewResponse(&v1.RemoveImageResponse{}), nil
+}
+
+func (h *Handler) ImagePruneUnused(ctx context.Context, req *connect.Request[v1.ImagePruneRequest]) (*connect.Response[v1.ImagePruneResponse], error) {
+	var result image.PruneReport
+	var err error
+	if req.Msg.GetPruneAll() {
+		result, err = h.srv().PruneUnusedImages(ctx)
+	} else {
+		result, err = h.srv().PruneUntaggedImages(ctx)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	response := v1.ImagePruneResponse{
+		SpaceReclaimed: result.SpaceReclaimed,
+	}
+
+	var deleted []*v1.ImagesDeleted
+	for _, res := range result.ImagesDeleted {
+		deleted = append(deleted, &v1.ImagesDeleted{
+			Deleted:  res.Deleted,
+			Untagged: res.Untagged,
+		})
+	}
+	response.Deleted = deleted
+
+	return connect.NewResponse(&response), nil
+}
+
+////////////////////////////////////////////
+// 				Volume Actions 			  //
+////////////////////////////////////////////
+
+func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
+	volumes, err := h.srv().VolumesList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var rpcVolumes []*v1.Volume
+	for _, vol := range volumes.Volumes {
+		rpcVolumes = append(rpcVolumes, &v1.Volume{
+			CreatedAt:  vol.CreatedAt,
+			Driver:     vol.Driver,
+			Labels:     vol.Labels,
+			MountPoint: vol.Mountpoint,
+			Name:       vol.Name,
+			Scope:      vol.Scope,
+		})
+	}
+
+	return connect.NewResponse(&v1.ListVolumesResponse{Volumes: rpcVolumes}), nil
+}
+
+func (h *Handler) VolumeCreate(_ context.Context, req *connect.Request[v1.CreateVolumeRequest]) (*connect.Response[v1.CreateVolumeResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me VolumeCreate")
+}
+
+func (h *Handler) VolumeDelete(_ context.Context, req *connect.Request[v1.DeleteVolumeRequest]) (*connect.Response[v1.DeleteVolumeResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me VolumeDelete")
+}
+
+////////////////////////////////////////////
+// 				Network Actions 		  //
+////////////////////////////////////////////
+
+func (h *Handler) NetworkList(ctx context.Context, _ *connect.Request[v1.ListNetworksRequest]) (*connect.Response[v1.ListNetworksResponse], error) {
+	networks, err := h.srv().NetworksList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var rpcNetworks []*v1.Network
+	for _, netI := range networks {
+		rpcNetworks = append(rpcNetworks, &v1.Network{
+			Name:       netI.Name,
+			Id:         netI.ID,
+			Scope:      netI.Scope,
+			Driver:     netI.Driver,
+			EnableIpv4: netI.EnableIPv4,
+			EnableIpv6: netI.EnableIPv6,
+			Internal:   netI.Internal,
+			Attachable: netI.Attachable,
+			Ingress:    netI.Ingress,
+			ConfigOnly: netI.ConfigOnly,
+		})
+	}
+
+	return connect.NewResponse(&v1.ListNetworksResponse{Networks: rpcNetworks}), nil
+}
+
+func (h *Handler) NetworkCreate(_ context.Context, req *connect.Request[v1.CreateNetworkRequest]) (*connect.Response[v1.CreateNetworkResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me NetworkCreate")
+}
+
+func (h *Handler) NetworkDelete(_ context.Context, req *connect.Request[v1.DeleteNetworkRequest]) (*connect.Response[v1.DeleteNetworkResponse], error) {
+	//TODO implement me
+	return nil, fmt.Errorf(" implement me NetworkDelete")
+}
+
+////////////////////////////////////////////
+// 				Utils 			  		  //
+////////////////////////////////////////////
 
 // executeComposeStreamCommand handles the boilerplate for running a Docker Compose command that streams logs.
 func (h *Handler) executeComposeStreamCommand(
@@ -353,7 +585,8 @@ func toRPCPort(p container.Port) *v1.Port {
 	}
 }
 
-func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerList {
+func toRPContainer(stack container.Summary, composeRoot string, portSlice []*v1.Port) *v1.ContainerList {
+	composePath := filepath.ToSlash(strings.TrimPrefix(stack.Labels[api.ConfigFilesLabel], composeRoot))
 	return &v1.ContainerList{
 		Name:        strings.TrimPrefix(stack.Names[0], "/"),
 		Id:          stack.ID,
@@ -362,6 +595,8 @@ func toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerL
 		Status:      stack.Status,
 		Ports:       portSlice,
 		ServiceName: stack.Labels[api.ServiceLabel],
+		StackName:   stack.Labels[api.ProjectLabel],
+		ServicePath: strings.TrimPrefix(composePath, "/"),
 		Created:     time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
 	}
 }

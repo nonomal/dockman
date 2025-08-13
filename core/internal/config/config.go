@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const EnvPrefix = "DOCKMAN"
@@ -29,9 +30,14 @@ type AppConfig struct {
 }
 
 type AuthConfig struct {
-	Enable   bool   `config:"flag=auth,env=AUTH_ENABLE,default=false,usage=Enable authentication"`
-	Username string `config:"flag=au,env=AUTH_USERNAME,default=admin,usage=authentication username"`
-	Password string `config:"flag=ap,env=AUTH_PASSWORD,default=admin99988,usage=authentication password,hide=true"`
+	Enable       bool   `config:"flag=auth,env=AUTH_ENABLE,default=false,usage=Enable authentication"`
+	Username     string `config:"flag=au,env=AUTH_USERNAME,default=admin,usage=authentication username"`
+	Password     string `config:"flag=ap,env=AUTH_PASSWORD,default=admin99988,usage=authentication password,hide=true"`
+	CookieExpiry string `config:"flag=ae,env=AUTH_EXPIRY,default=6h,usage=Set cookie expiry-300ms/1.5h/2h45m [ns|us|ms|s|m|h]"`
+}
+
+func (d AuthConfig) GetCookieExpiryLimit() (time.Duration, error) {
+	return time.ParseDuration(d.CookieExpiry)
 }
 
 type UpdaterConfig struct {

@@ -12,7 +12,7 @@ interface ChangelogPopupProps {
     isLoading: boolean;
 }
 
-const GithubMarkdownPopup: React.FC<ChangelogPopupProps> = (
+const ChangelogModal: React.FC<ChangelogPopupProps> = (
     {
         isVisible,
         changelog,
@@ -185,4 +185,4 @@ const GithubMarkdownPopup: React.FC<ChangelogPopupProps> = (
     );
 };
 
-export default GithubMarkdownPopup;
+export default ChangelogModal;

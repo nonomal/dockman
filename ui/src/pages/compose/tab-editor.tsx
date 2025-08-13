@@ -13,7 +13,7 @@ import {
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error';
 import {Commit,} from '@mui/icons-material';
-import {useCallback, useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import {callRPC, downloadFile, uploadFile, useClient} from "../../lib/api";
 import {GitService} from "../../gen/git/v1/git_pb";
 import {DiffViewer} from "./components/diff.tsx";
@@ -31,7 +31,6 @@ export function TabEditor({selectedPage}: EditorProps) {
     const gitClient = useClient(GitService);
     const {showSuccess, showError} = useSnackbar();
 
-    // const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>(null);
     const [fileContent, setFileContent] = useState("")
 
     const [loading, setLoading] = useState(false)
@@ -91,28 +90,23 @@ export function TabEditor({selectedPage}: EditorProps) {
     }
 
     function handleEditorChange(value: string | undefined): void {
-        // When typing starts, clear any existing debounce timer
         if (debounceTimeout.current) {
             clearTimeout(debounceTimeout.current);
         }
 
-        // Set the status to 'typing' immediately
         setStatus('typing');
         setFileContent(value!);
 
-        // Set a new timer. If the user keeps typing, this timer will be cleared and reset.
-        // If they stop, the timer will fire, triggering the save.
         debounceTimeout.current = setTimeout(() => {
             saveFile(value!);
-        }, 500); // delay before save
+        }, 500);
     }
 
-    // When the status becomes 'success' or 'error', revert to 'idle' after a delay
     useEffect(() => {
         if (status === 'success' || status === 'error') {
             const timer = setTimeout(() => {
                 setStatus('idle');
-            }, 2000); // Show the checkmark or error for 3 seconds
+            }, 2000);
             return () => clearTimeout(timer);
         }
     }, [status]);
@@ -129,19 +123,9 @@ export function TabEditor({selectedPage}: EditorProps) {
                 return <><ErrorIcon color="error" sx={{mr: 1.5}}/> Save Failed</>;
             case 'idle':
             default:
-                return <></>; // no status icon for idle
+                return <></>;
         }
     };
-
-    // function handleEditorDidMount(
-    //     editor: monacoEditor.editor.IStandaloneCodeEditor
-    // ): void {
-    //     editorRef.current = editor
-    //     // editor.onDidChangeModelContent(() => {
-    //     //     const currentValue = editor.getValue();
-    //     //     setFileContent(currentValue);
-    //     // });
-    // }
 
     const handleCommitConfirm = () => {
         if (commitMessage.trim()) {
@@ -175,8 +159,10 @@ export function TabEditor({selectedPage}: EditorProps) {
                     <Typography variant="body1" noWrap component="div">
                         {selectedPage}
                     </Typography>
+
                     <Box sx={{height: '32px', display: 'flex', alignItems: 'center'}}>
-                        <Typography variant="body2" color="text.secondary" sx={{display: 'flex', alignItems: 'center'}}>
+                        <Typography variant="body2" color="text.secondary"
+                                    sx={{display: 'flex', alignItems: 'center'}}>
                             <StatusIndicator/>
                         </Typography>
                     </Box>
@@ -190,8 +176,8 @@ export function TabEditor({selectedPage}: EditorProps) {
                     <Box
                         sx={{
                             flexGrow: 1,
-                            position: 'relative', // This contains the absolutely positioned child.
-                            display: 'flex',      // Use flex to make the inner content fill this box.
+                            position: 'relative',
+                            display: 'flex',
                             border: '1px dashed',
                             borderColor: 'rgba(255, 255, 255, 0.23)',
                             borderRadius: 1,
@@ -206,7 +192,7 @@ export function TabEditor({selectedPage}: EditorProps) {
                                     left: 0,
                                     right: 0,
                                     bottom: 0,
-                                    p: 0.2, // Padding is applied here, inside the border.
+                                    p: 0.2,
                                     display: 'flex'
                                 }}
                             >
@@ -221,7 +207,6 @@ export function TabEditor({selectedPage}: EditorProps) {
                                         selectedPage={selectedPage}
                                         fileContent={fileContent}
                                         handleEditorChange={handleEditorChange}
-                                        // handleEditorDidMount={handleEditorDidMount}
                                     />
                                 )}
                             </Box>
@@ -246,42 +231,73 @@ export function TabEditor({selectedPage}: EditorProps) {
                 </Box>
             </Box>
 
-            <Dialog open={openCommitDialog} onClose={handleCommitCancel}>
-                <DialogTitle>Commit {selectedPage}</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Commit"
-                        variant="outlined"
-                        multiline
-                        rows={4}
-                        value={commitMessage}
-                        onChange={(e) => setCommitMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && e.ctrlKey) {
-                                handleCommitConfirm();
-                            }
-                        }}
-                        sx={{
-                            width: '400px',
-                            height: '120px',
-                            '& .MuiInputBase-root': {
-                                height: '100%',
-                            },
-                            '& .MuiInputBase-input': {
-                                height: '100% !important',
-                                overflow: 'auto !important',
-                            }
-                        }}
-                    /> </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCommitCancel}>Cancel</Button>
-                    <Button onClick={handleCommitConfirm} variant="contained">
-                        Commit
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <CommitDialog
+                open={openCommitDialog}
+                onClose={handleCommitCancel}
+                onConfirm={handleCommitConfirm}
+                selectedPage={selectedPage}
+                commitMessage={commitMessage}
+                setCommitMessage={setCommitMessage}
+            />
         </>
     );
 }
+
+interface CommitDialogProps {
+    open: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    commitMessage: string;
+    setCommitMessage: (message: string) => void;
+    selectedPage: string;
+}
+
+const CommitDialog: React.FC<CommitDialogProps> = (
+    {
+        open,
+        onClose,
+        onConfirm,
+        commitMessage,
+        setCommitMessage,
+        selectedPage,
+    }) => {
+    return (
+        <Dialog open={open} onClose={onClose}>
+            <DialogTitle>Commit {selectedPage}</DialogTitle>
+            <DialogContent>
+                <TextField
+                    autoFocus
+                    margin="dense"
+                    label="Commit"
+                    variant="outlined"
+                    multiline
+                    rows={4}
+                    value={commitMessage}
+                    onChange={(e) => setCommitMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.ctrlKey) {
+                            onConfirm();
+                        }
+                    }}
+                    sx={{
+                        width: '400px',
+                        height: '120px',
+                        '& .MuiInputBase-root': {
+                            height: '100%',
+                        },
+                        '& .MuiInputBase-input': {
+                            height: '100% !important',
+                            overflow: 'auto !important',
+                        }
+                    }}
+                />
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose}>Cancel</Button>
+                <Button onClick={onConfirm} variant="contained">
+                    Commit
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};

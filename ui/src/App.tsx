@@ -1,18 +1,21 @@
-import {Box, createTheme, CssBaseline, Stack, ThemeProvider, Typography} from '@mui/material';
+import {Box, createTheme, CssBaseline, ThemeProvider} from '@mui/material';
 import {SnackbarProvider} from "./context/snackbar-context.tsx";
 import {BrowserRouter, Navigate, Outlet, Route, Routes} from "react-router-dom";
-import {RootNavbar} from "./components/navbar.tsx";
 import {AuthProvider} from "./context/auth-context.tsx";
-import NotFoundPage from "./components/not-found.tsx";
 import React from 'react';
 import {useAuth} from "./hooks/auth.ts";
 import {HostProvider} from "./context/host-context.tsx";
-import {DescriptionOutlined} from '@mui/icons-material';
 import {AuthPage} from './pages/auth/auth-page.tsx';
 import {DashboardPage} from './pages/dashboard/dashboard-page.tsx';
 import {ComposePage} from './pages/compose/compose-page.tsx';
 import {SettingsPage} from "./pages/settings/settings-page.tsx";
 import {ChangelogProvider} from "./context/changelog-context.tsx";
+import NotFoundPage from "./pages/home/not-found.tsx";
+import {RootLayout, TOP_BAR_HEIGHT} from "./pages/home/home.tsx";
+import NetworksPage from "./pages/networks/networks.tsx";
+import VolumesPage from "./pages/volumes/volumes.tsx";
+import ImagesPage from "./pages/images/images.tsx";
+import ContainersPage from "./pages/containers/containers.tsx";
 
 export function App() {
     return (
@@ -26,12 +29,32 @@ export function App() {
                             {/*IMPORTANT: providers that need auth need to be injected inside private route not here */}
                             <Route element={<PrivateRoute/>}>
                                 <Route path="/" element={<HomePage/>}>
-                                    <Route index element={<DashboardPage/>}/>
-                                    <Route path="files">
-                                        <Route index element={<EmptyFilePage/>}/>
-                                        <Route path=":file" element={<ComposePage/>}/>
-                                        <Route path=":file/:child" element={<ComposePage/>}/>
+                                    <Route path="/" element={<Navigate to="/stacks" replace/>}/>
+                                    <Route path="stacks">
+                                        <Route index element={<ComposePage/>}/>
+                                        <Route path=":file/:child?" element={<ComposePage/>}/>
                                     </Route>
+
+                                    <Route path="stats">
+                                        <Route index element={<DashboardPage/>}/>
+                                    </Route>
+
+                                    <Route path="containers">
+                                        <Route index element={<ContainersPage/>}/>
+                                    </Route>
+
+                                    <Route path="images">
+                                        <Route index element={<ImagesPage/>}/>
+                                    </Route>
+
+                                    <Route path="volumes">
+                                        <Route index element={<VolumesPage/>}/>
+                                    </Route>
+
+                                    <Route path="networks">
+                                        <Route index element={<NetworksPage/>}/>
+                                    </Route>
+
                                     <Route path="settings" element={<SettingsPage/>}/>
                                 </Route>
                             </Route>
@@ -65,18 +88,48 @@ const PrivateRoute = () => {
     return (
         <HostProvider>
             <ChangelogProvider>
+                <GlobalShortcuts/>
                 <Outlet/>
             </ChangelogProvider>
         </HostProvider>
     );
 };
 
-function HomePage() {
-    const [filesPanelOpen, setFilesPanelOpen] = React.useState(false);
+function GlobalShortcuts() {
+    // const navigate = useNavigate();
+    //
+    // useEffect(() => {
+    //     const handleKeyDown = (e: KeyboardEvent) => {
+    //         if (e.altKey && !e.repeat) {
+    //             switch (e.code) {
+    //                 case "Digit1":
+    //                     e.preventDefault();
+    //                     navigate("/");
+    //                     break;
+    //                 case "Digit2":
+    //                     e.preventDefault();
+    //                     navigate('/stacks');
+    //                     break;
+    //             }
+    //         }
+    //     };
+    //
+    //     window.addEventListener("keydown", handleKeyDown);
+    //
+    //     return () => {
+    //         window.removeEventListener("keydown", handleKeyDown);
+    //     };
+    // }, [navigate]);
 
+    // this component doesn't render anything
+    return null;
+}
+
+
+function HomePage() {
     return (
         <>
-            <RootNavbar filesPanelOpen={filesPanelOpen} setFilesPanelOpen={setFilesPanelOpen}/>
+            <RootLayout/>
             <Box
                 component="main"
                 sx={() => ({
@@ -84,46 +137,18 @@ function HomePage() {
                     display: 'flex',
                     flexDirection: 'column',
                     minWidth: 0,
-                    ml: `${80 + (filesPanelOpen ? 280 : 0)}px`,
-                    width: `calc(100% - ${80 + (filesPanelOpen ? 280 : 0)}px)`,
-                    mt: `64px`, // Account for the top bar height
-                    height: `calc(100vh - 64px)`, // Subtract top bar height
+                    ml: `80px`,
+                    width: `calc(100% - 80px)`,
+                    mt: `${TOP_BAR_HEIGHT}px`, // Account for the top bar height
+                    height: `calc(100vh - ${TOP_BAR_HEIGHT}px)`, // Subtract top bar height
                     overflow: 'auto',
-                    pt: 2,
+                    pt: 0.3,
                 })}
             >
                 <Outlet/>
             </Box>
         </>
     );
-}
-
-function EmptyFilePage() {
-    return (
-        <Box
-            component="main"
-            sx={{
-                display: 'flex',
-                flexGrow: 1, // Ensures it takes up available space in a flex layout
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%', // Use 100% if inside another container, or 100vh for full page
-            }}
-        >
-            {/* Stack component is ideal for arranging a few items vertically or horizontally with spacing. */}
-            <Stack spacing={2} alignItems="center" sx={{textAlign: 'center'}}>
-                <DescriptionOutlined
-                    sx={{fontSize: '5rem', color: 'grey.400'}}
-                />
-                <Typography variant="h5" component="h1" color="text.secondary">
-                    No File Selected
-                </Typography>
-                <Typography variant="body1" color="text.disabled">
-                    Select a file from the sidebar.
-                </Typography>
-            </Stack>
-        </Box>
-    )
 }
 
 const darkTheme = createTheme({

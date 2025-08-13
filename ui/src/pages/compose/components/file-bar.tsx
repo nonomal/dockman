@@ -1,47 +1,43 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import {
-    Box,
-    Button,
-    CircularProgress,
-    Divider,
-    InputAdornment,
-    List,
-    styled,
-    TextField,
-    Toolbar,
-    Typography
-} from '@mui/material'
+import {useCallback, useEffect, useState} from 'react'
+import {Box, CircularProgress, Divider, IconButton, List, styled, Toolbar, Tooltip, Typography} from '@mui/material'
 import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
-import {useLocation, useParams} from 'react-router-dom'
-import type {FileGroup} from '../hooks/files.ts'
-import {useFiles} from "../hooks/files.ts"
+import {useParams} from 'react-router-dom'
 import FileItem from './file-item.tsx'
-import {AddFileDialog} from "./file-dialog.tsx"
-import {useHost} from "../hooks/host.ts";
-import {ImportFilesDialog} from "./file-import.tsx";
+import {FileDialogCreate} from "./file-dialog-create.tsx"
+import {FilesDialogImport} from "./file-dialog-import.tsx";
+import {useFiles} from "../../../hooks/files.ts";
+import {useHost} from "../../../hooks/host.ts";
+import {useTelescope} from "../context/telescope-hook.ts";
+import {ShortcutFormatter} from "./shortcut-formatter.tsx";
 
 export function FileList() {
-    const location = useLocation()
     const {file: currentDir} = useParams<{ file: string }>()
-    const {files, isLoading, addFile, deleteFile} = useFiles()
+    const {files, isLoading, addFile} = useFiles()
     const {selectedHost} = useHost()
+    const {showTelescope} = useTelescope()
 
     // holds the names of all open directories.
     const [openDirs, setOpenDirs] = useState(new Set<string>())
 
-    const [searchQuery, setSearchQuery] = useState('')
     const [dialogState, setDialogState] = useState<{ open: boolean; parent: string }>({open: false, parent: ''})
-
-    const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            // Check for Ctrl+k on Windows/Linux or Cmd+F on macOS
-            if ((event.ctrlKey) && event.key === 'k') {
+            // alt+k to open search
+            if ((event.altKey) && event.key === 's') {
                 event.preventDefault() // Prevent the browser's default find action
-                if (searchInputRef.current) {
-                    searchInputRef.current.focus() // Focus the search input field
-                }
+                showTelescope()
+            }
+            // alt + a for creating files
+            if ((event.altKey) && event.key === 'a') {
+                event.preventDefault()
+                openAddDialog("")
+            }
+
+            // alt + s for importing files
+            if ((event.altKey) && event.key === 'i') {
+                event.preventDefault()
+                setImportDialogOpen(() => true)
             }
         }
         // Add the event listener to the window
@@ -50,7 +46,7 @@ export function FileList() {
         return () => {
             window.removeEventListener('keydown', handleKeyDown)
         }
-    }, [selectedHost])
+    }, [selectedHost, showTelescope])
 
     // if you navigate to a file, its parent directory opens automatically.
     useEffect(() => {
@@ -72,24 +68,8 @@ export function FileList() {
         })
     }, [])
 
-    const filteredFiles = useMemo(() => {
-        if (!searchQuery) return files
-        const lowerCaseQuery = searchQuery.toLowerCase()
-
-        return files.map(group => {
-            const isParentMatch = group.name.toLowerCase().includes(lowerCaseQuery)
-            const matchingChildren = group.children.filter(child => child.toLowerCase().includes(lowerCaseQuery))
-
-            if (isParentMatch || matchingChildren.length > 0) {
-                // If parent matches, show all children. Otherwise, show only matching children.
-                return {...group, children: isParentMatch ? group.children : matchingChildren}
-            }
-            return null
-        }).filter((group): group is FileGroup => group !== null)
-    }, [files, searchQuery, selectedHost])
-
     const openAddDialog = (parentName: string) => {
-        setDialogState({open: true, parent: parentName})
+        setDialogState(() => ({open: true, parent: parentName}))
     }
 
     const closeAddDialog = () => {
@@ -103,18 +83,10 @@ export function FileList() {
         })
     }
 
-    const handleDelete = (filename: string) => {
-        deleteFile(filename, location.pathname).then()
-    }
-
-
-    // State for the new "Import" dialog
     const [importDialogOpen, setImportDialogOpen] = useState(false);
 
-    // A function to be called after import is done, e.g., to refresh a file list
     const handleImportFinished = () => {
         console.log("Import process has finished. Refreshing data...");
-        // Add your logic here to re-fetch the main file list for your page
     };
 
     return (
@@ -131,42 +103,57 @@ export function FileList() {
                     Files
                 </Typography>
 
-                <Button
-                    startIcon={<AddIcon/>}
-                    onClick={() => openAddDialog('')}
-                >
-                    Add
-                </Button>
+                <Tooltip arrow title={
+                    <ShortcutFormatter
+                        title="Search"
+                        keyCombo={["ALT", "S"]}
+                    />
+                }>
+                    <IconButton
+                        size="small"
+                        onClick={() => showTelescope()}
+                        color="primary"
+                        aria-label="Search"
+                    >
+                        <SearchIcon fontSize="small"/>
+                    </IconButton>
+                </Tooltip>
 
-                <Button
-                    startIcon={<Sync/>}
-                    onClick={() => setImportDialogOpen(true)}
-                    sx={{ml: 1}} // Adds a little space between the buttons
-                >
-                    Import
-                </Button>
+                <Tooltip arrow title={
+                    <ShortcutFormatter
+                        title="Add"
+                        keyCombo={["ALT", "A"]}
+                    />
+                }>
+                    <IconButton
+                        size="small"
+                        onClick={() => openAddDialog('')}
+                        color="success"
+                        sx={{ml: 1}} // Add left margin for spacing between buttons
+                        aria-label="Add"
+                    >
+                        <AddIcon fontSize="small"/>
+                    </IconButton>
+                </Tooltip>
+
+                <Tooltip arrow title={
+                    <ShortcutFormatter
+                        title="Import"
+                        keyCombo={["ALT", "I"]}
+                    />
+                }>
+                    <IconButton
+                        size="small"
+                        onClick={() => setImportDialogOpen(true)}
+                        color="info"
+                        sx={{ml: 1}} // Add left margin for spacing
+                        aria-label="Import"
+                    >
+                        <Sync fontSize="small"/>
+                    </IconButton>
+                </Tooltip>
             </Toolbar>
 
-            <Divider/>
-
-            <Box sx={{px: 2, py: 1}}>
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    placeholder="Search files...     CTRL + K"
-                    inputRef={searchInputRef}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    slotProps={{
-                        input: {
-                            startAdornment: (
-                                <InputAdornment position="start"><SearchIcon/></InputAdornment>
-                            ),
-                        }
-                    }}
-                />
-            </Box>
             <Divider/>
 
             <StyledScrollbarBox sx={{flexGrow: 1}}>
@@ -176,12 +163,11 @@ export function FileList() {
                     </Box>
                 ) : (
                     <List>
-                        {filteredFiles.map((group) => (
+                        {files.map((group) => (
                             <FileItem
                                 key={group.name}
                                 group={group}
                                 onAdd={openAddDialog}
-                                onDelete={handleDelete}
                                 isOpen={openDirs.has(group.name)}
                                 onToggle={handleToggle}
                             />
@@ -190,14 +176,14 @@ export function FileList() {
                 )}
             </StyledScrollbarBox>
 
-            <ImportFilesDialog
+            <FilesDialogImport
                 open={importDialogOpen}
                 onClose={() => setImportDialogOpen(false)}
                 onImportComplete={handleImportFinished}
                 currentBranch={selectedHost ?? ""}
             />
 
-            <AddFileDialog
+            <FileDialogCreate
                 open={dialogState.open}
                 onClose={closeAddDialog}
                 onConfirm={handleAddConfirm}
@@ -206,6 +192,7 @@ export function FileList() {
         </Box> // Close the main container Box
     )
 }
+
 
 const StyledScrollbarBox = styled(Box)(({theme}) => ({
     overflowY: 'auto',

@@ -16,7 +16,7 @@ import {
     Typography,
     useTheme
 } from "@mui/material"
-import React, {useState} from "react"
+import React from "react"
 import GetAppIcon from '@mui/icons-material/GetApp'
 import PublishIcon from '@mui/icons-material/Publish'
 import EditIcon from '@mui/icons-material/Edit'
@@ -24,6 +24,8 @@ import {Article, ContentCopy} from "@mui/icons-material"
 import CheckIcon from "@mui/icons-material/Check"
 import {type ContainerStats, ORDER, SORT_FIELD} from "../../../gen/docker/v1/docker_pb"
 import {formatBytes, getUsageColor} from "../../../lib/editor.ts";
+import scrollbarStyles from "../../../components/scrollbar-style.tsx";
+import {useCopyButton} from "../../../hooks/copy.ts";
 
 
 interface ContainersTableProps {
@@ -74,17 +76,7 @@ export function ContainerStatTable(
         </TableSortLabel>
     )
 
-    const [copiedId, setCopiedId] = useState<string | null>(null)
-    const handleCopy = (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
-        event.stopPropagation()
-        navigator.clipboard.writeText(id).then()
-        setCopiedId(id)
-        setTimeout(() => {
-            setCopiedId(null)
-        }, 1500)
-    }
-
-    const theme = useTheme()
+    const {copiedId, handleCopy} = useCopyButton()
 
     return (
         <TableContainer
@@ -98,36 +90,7 @@ export function ContainerStatTable(
                 overflow: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                // Custom scrollbar styling
-                '&::-webkit-scrollbar': {
-                    width: '8px',
-                    height: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                    background: theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.1)'
-                        : 'rgba(0, 0, 0, 0.1)',
-                    borderRadius: '4px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                    background: theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.3)'
-                        : 'rgba(0, 0, 0, 0.3)',
-                    borderRadius: '4px',
-                    '&:hover': {
-                        background: theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.5)'
-                            : 'rgba(0, 0, 0, 0.5)',
-                    }
-                },
-                '&::-webkit-scrollbar-corner': {
-                    background: 'transparent',
-                },
-                // Firefox scrollbar styling
-                scrollbarWidth: 'thin',
-                scrollbarColor: theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)'
-                    : 'rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1)',
+                ...scrollbarStyles,
             }}
         >
             <Table
@@ -262,26 +225,26 @@ export function ContainerStatTable(
                                             </Tooltip>
                                         </Box>
                                     </TableCell>
-                                    <TableCell sx={{ minWidth: 80, maxWidth: 100, textAlign: 'center' }}>
+                                    <TableCell sx={{minWidth: 80, maxWidth: 100, textAlign: 'center'}}>
                                         <CPUStat
                                             value={container.cpuUsage}
                                             size={48}
                                             thickness={1}
                                         />
                                     </TableCell>
-                                    <TableCell sx={{ minWidth: 120, maxWidth: 160 }}>
+                                    <TableCell sx={{minWidth: 120, maxWidth: 160}}>
                                         <UsageBar
                                             usage={(Number(container.memoryUsage))}
                                             limit={(Number(container.memoryLimit))}
                                         />
                                     </TableCell>
-                                    <TableCell sx={{ minWidth: 180, maxWidth: 240 }}>
+                                    <TableCell sx={{minWidth: 180, maxWidth: 240}}>
                                         <RWData
                                             download={Number(container.networkRx)}
                                             upload={Number(container.networkTx)}
                                         />
                                     </TableCell>
-                                    <TableCell sx={{ minWidth: 180, maxWidth: 240 }}>
+                                    <TableCell sx={{minWidth: 180, maxWidth: 240}}>
                                         <RWData
                                             download={Number(container.blockWrite)}
                                             upload={Number(container.blockRead)}
