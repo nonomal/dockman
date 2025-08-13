@@ -115,7 +115,6 @@ export function ContainerTable(
     }
 
     const handleRowClick = (id: string) => {
-        console.log("row", id)
         const selectedIndex = selectedServices.indexOf(id)
         let newSelected: string[]
 
