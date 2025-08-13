@@ -3,7 +3,6 @@ import {useEffect, useRef, useState} from "react";
 import {transformAsyncIterable, useClient} from "../../lib/api.ts";
 import {Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton} from '@mui/material'; // Or your preferred UI library
 import {DockerService, type LogsMessage} from "../../gen/docker/v1/docker_pb.ts";
-import {useSnackbar} from "../../hooks/snackbar.ts";
 import CloseIcon from "@mui/icons-material/Close";
 
 
@@ -16,7 +15,6 @@ interface LogsDialogProps {
 
 export const LogsDialog = ({show, hide, name, containerID}: LogsDialogProps) => {
     const dockerService = useClient(DockerService);
-    const {showError} = useSnackbar();
 
     const [panelTitle, setPanelTitle] = useState('');
     const [logStream, setLogStream] = useState<AsyncIterable<string> | null>(null);
@@ -55,7 +53,9 @@ export const LogsDialog = ({show, hide, name, containerID}: LogsDialogProps) => 
             onComplete: () => {
                 console.log("Stream completed successfully.");
             },
-            onError: error => showError(error),
+            onError: error => {
+                console.log(`Stream error: ${error}`);
+            },
             onFinally: () => {
                 if (abortControllerRef.current === newController) {
                     abortControllerRef.current = null;
