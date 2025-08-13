@@ -16,6 +16,7 @@ import NetworksPage from "./pages/networks/networks.tsx";
 import VolumesPage from "./pages/volumes/volumes.tsx";
 import ImagesPage from "./pages/images/images.tsx";
 import ContainersPage from "./pages/containers/containers.tsx";
+import {FilesProvider} from "./context/file-context.tsx";
 
 export function App() {
     return (
@@ -31,8 +32,18 @@ export function App() {
                                 <Route path="/" element={<HomePage/>}>
                                     <Route path="/" element={<Navigate to="/stacks" replace/>}/>
                                     <Route path="stacks">
-                                        <Route index element={<ComposePage/>}/>
-                                        <Route path=":file/:child?" element={<ComposePage/>}/>
+                                        <Route index element={
+                                            <FilesProvider>
+                                                <ComposePage/>
+                                            </FilesProvider>}
+                                        />
+                                        <Route path=":file/:child?"
+                                               element={
+                                                   <FilesProvider>
+                                                       <ComposePage/>
+                                                   </FilesProvider>
+                                               }
+                                        />
                                     </Route>
 
                                     <Route path="stats">
@@ -154,52 +165,84 @@ function HomePage() {
 const darkTheme = createTheme({
     palette: {
         mode: 'dark',
-        primary: {
-            main: '#90caf9',
-        },
+        primary:
+            {
+                main: '#90caf9',
+            }
+        ,
         secondary: {
             main: '#f48fb1',
-        },
+        }
+        ,
         background: {
-            default: '#121212',
-            paper: '#1e1e1e',
-        },
-    },
+            default:
+                '#121212',
+            paper:
+                '#1e1e1e',
+        }
+        ,
+    }
+    ,
     typography: {
         fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    },
+    }
+    ,
     components: {
         MuiDrawer: {
             styleOverrides: {
                 paper: {
                     backgroundColor: '#1a1a1a',
-                },
-            },
-        },
-    },
+                }
+                ,
+            }
+            ,
+        }
+        ,
+    }
+    ,
 });
 
 
-const styles: { [key: string]: React.CSSProperties } = {
+const styles: {
+    [key
+    :
+    string
+        ]:
+        React.CSSProperties
+} = {
     loadingWrapper: {
         display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontFamily: 'sans-serif',
-    },
+        flexDirection:
+            'column',
+        justifyContent:
+            'center',
+        alignItems:
+            'center',
+        height:
+            '100vh',
+        fontFamily:
+            'sans-serif',
+    }
+    ,
     spinner: {
         border: '4px solid rgba(0, 0, 0, 0.1)',
-        width: '36px',
-        height: '36px',
-        borderRadius: '50%',
-        borderLeftColor: '#09f', // Or your brand color
-        animation: 'spin 1s ease infinite',
-        marginBottom: '20px',
-    },
+        width:
+            '36px',
+        height:
+            '36px',
+        borderRadius:
+            '50%',
+        borderLeftColor:
+            '#09f', // Or your brand color
+        animation:
+            'spin 1s ease infinite',
+        marginBottom:
+            '20px',
+    }
+    ,
     loadingText: {
         fontSize: '1.1rem',
-        color: '#555',
+        color:
+            '#555',
     }
 };

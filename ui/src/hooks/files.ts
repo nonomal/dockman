@@ -1,83 +1,24 @@
-import {useCallback, useEffect, useState} from 'react'
-import {callRPC, useClient} from '../lib/api'
-import {FileService} from '../gen/files/v1/files_pb'
-import {useSnackbar} from './snackbar.ts'
-import {useLocation, useNavigate} from 'react-router-dom'
-import {useHost} from "./host.ts"
+import {createContext, useContext} from "react";
 
 export interface FileGroup {
     name: string
     children: string[]
 }
 
+export interface FilesContextType {
+    files: FileGroup[]
+    isLoading: boolean
+    addFile: (filename: string, parent: string) => Promise<void>
+    deleteFile: (filename: string) => Promise<void>
+    refetch: () => Promise<void>
+}
+
+export const FilesContext = createContext<FilesContextType | undefined>(undefined)
+
 export function useFiles() {
-    const navigate = useNavigate()
-    const client = useClient(FileService)
-    const {showError, showSuccess} = useSnackbar()
-    const {selectedHost} = useHost()
-    const location = useLocation()
-
-    const [files, setFiles] = useState<FileGroup[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-
-    const fetchFiles = useCallback(async () => {
-        console.log("Fetching files...")
-
-        setIsLoading(true)
-        const {val, err} = await callRPC(() => client.list({}))
-        console.log("Calling api...")
-        if (err) {
-            showError(err)
-            setFiles([])
-        } else if (val) {
-            const res = val.groups.map<FileGroup>(group => ({
-                name: group.root,
-                children: [...group.subFiles]
-            }))
-            setFiles(res)
-        }
-        setIsLoading(false)
-    }, [client, selectedHost])
-
-    const addFile = useCallback(async (filename: string, parent: string) => {
-        if (parent) {
-            filename = `${parent}/${filename}`
-        }
-        console.log("Creating new file...", filename)
-
-        const {err} = await callRPC(() => client.create({filename}))
-        if (err) {
-            showError(`Error saving file: ${err}`)
-            return
-        }
-
-        showSuccess(`${filename} created.`)
-        await fetchFiles()
-        navigate(`/stacks/${filename}`)
-
-    }, [client, fetchFiles, navigate])
-
-    const deleteFile = useCallback(async (filename: string) => {
-        const currentPath = location.pathname
-
-        const {err} = await callRPC(() => client.delete({filename}))
-        if (err) {
-            showError(`Error deleting file: ${err}`)
-            return
-        }
-
-        showSuccess(`${filename} deleted.`)
-        await fetchFiles() // Refetch after successful deletion
-        if (currentPath == `/stacks/${filename}`) {
-            // If the user is currently viewing the deleted file, navigate away
-            navigate('/stacks')
-        }
-
-    }, [client, fetchFiles, location.pathname, navigate])
-
-    useEffect(() => {
-        fetchFiles().then()
-    }, [fetchFiles])
-
-    return {files, isLoading, addFile, deleteFile, refetch: fetchFiles}
+    const context = useContext(FilesContext)
+    if (context === undefined) {
+        throw new Error('useFiles must be used within a FilesProvider')
+    }
+    return context
 }

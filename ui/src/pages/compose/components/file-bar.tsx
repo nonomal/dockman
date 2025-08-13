@@ -10,11 +10,16 @@ import {useHost} from "../../../hooks/host.ts";
 import {useTelescope} from "../context/telescope-hook.ts";
 import {ShortcutFormatter} from "./shortcut-formatter.tsx";
 
-export function FileList() {
+interface FileListProps {
+    closeTab: (tabToClose: string) => void
+}
+
+export function FileList({closeTab}: FileListProps) {
     const {file: currentDir} = useParams<{ file: string }>()
     const {files, isLoading, addFile} = useFiles()
     const {selectedHost} = useHost()
     const {showTelescope} = useTelescope()
+    const {deleteFile} = useFiles()
 
     // holds the names of all open directories.
     const [openDirs, setOpenDirs] = useState(new Set<string>())
@@ -47,6 +52,11 @@ export function FileList() {
             window.removeEventListener('keydown', handleKeyDown)
         }
     }, [selectedHost, showTelescope])
+
+    const onDelete = (file: string) => {
+        deleteFile(file).then()
+        closeTab(file)
+    };
 
     // if you navigate to a file, its parent directory opens automatically.
     useEffect(() => {
@@ -168,6 +178,7 @@ export function FileList() {
                                 key={group.name}
                                 group={group}
                                 onAdd={openAddDialog}
+                                onDelete={onDelete}
                                 isOpen={openDirs.has(group.name)}
                                 onToggle={handleToggle}
                             />
