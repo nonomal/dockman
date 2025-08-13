@@ -10,7 +10,7 @@ COPY ui .
 
 RUN npm run build
 
-FROM golang:1.24-alpine AS back
+FROM golang:1-alpine AS back
 
 WORKDIR /core
 
