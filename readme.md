@@ -2,7 +2,7 @@
   <img src=".github/img/drawing.svg" alt="Logo" width="200" height="200">
   <h1>Dockman</h1>
   <p>
-    A Docker management tool for users who want unfiltered access to their Docker Compose files, like having a specialized editor for your homelab that helps you manage, track, and back up your Docker setup.
+    A Docker management tool for users who want unfiltered access to their Docker Compose files, like having a specialized editor for your homelab that helps you manage and track your Docker setup.
   </p>
   <img src="https://github.com/user-attachments/assets/e1d17951-3b40-4833-b01c-c9c6d3f52d5a" alt="Dockman Demo" width="800">
 </div>
