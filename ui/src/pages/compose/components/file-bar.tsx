@@ -1,33 +1,16 @@
-import {type ChangeEvent, useCallback, useEffect, useState} from 'react'
-import {
-    Box,
-    Button,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Divider,
-    FormControlLabel,
-    IconButton,
-    List,
-    styled,
-    Switch,
-    Toolbar,
-    Tooltip,
-    Typography
-} from '@mui/material'
+import {useCallback, useEffect, useState} from 'react'
+import {Box, Button, CircularProgress, Divider, IconButton, List, styled, Toolbar, Tooltip} from '@mui/material'
 import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
 import {useParams} from 'react-router-dom'
-import FileItem from './file-item.tsx'
+import FileBarItem from './file-bar-item.tsx'
 import {FileDialogCreate} from "./file-dialog-create.tsx"
-import {FilesDialogImport} from "./file-dialog-import.tsx";
-import {useFiles} from "../../../hooks/files.ts";
-import {useHost} from "../../../hooks/host.ts";
-import {useTelescope} from "../context/telescope-hook.ts";
-import {ShortcutFormatter} from "./shortcut-formatter.tsx";
-import {useConfig} from "../../../hooks/config.ts";
+import {FilesDialogImport} from "./file-dialog-import.tsx"
+import {useFiles} from "../../../hooks/files.ts"
+import {useHost} from "../../../hooks/host.ts"
+import {useTelescope} from "../context/telescope-hook.ts"
+import {ShortcutFormatter} from "./shortcut-formatter.tsx"
+import FileDialogDelete from "./file-dialog-delete.tsx"
+import {FileConfigDialog} from "./file-dialog-config.tsx";
 
 interface FileListProps {
     closeTab: (tabToClose: string) => void
@@ -42,8 +25,6 @@ export function FileList({closeTab}: FileListProps) {
 
     // holds the names of all open directories.
     const [openDirs, setOpenDirs] = useState(new Set<string>())
-
-    const [dialogState, setDialogState] = useState<{ open: boolean; parent: string }>({open: false, parent: ''})
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -72,10 +53,52 @@ export function FileList({closeTab}: FileListProps) {
         }
     }, [selectedHost, showTelescope])
 
-    const onDelete = (file: string) => {
-        deleteFile(file).then()
+    ////////////////////////////////////////////////////////////////////////////////////
+    // delete file
+    const [fileToDelete, setFileToDelete] = useState("")
+    const openDeleteDialog = (file: string) => {
+        setFileToDelete(file)
+    }
+
+    const closeDeleteDialog = () => {
+        setFileToDelete("")
+    }
+
+    const handleDelete = (file: string) => {
         closeTab(file)
-    };
+        deleteFile(file).then()
+    }
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    // add file
+
+    const [dialogState, setDialogState] = useState<{ open: boolean; parent: string }>({open: false, parent: ''})
+    const openAddDialog = (parentName: string) => {
+        setDialogState(() => ({open: true, parent: parentName}))
+    }
+
+    const closeAddDialog = () => {
+        // use a function to prevent modifying state before closing the dialog
+        setDialogState(() => ({open: false, parent: ''}))
+    }
+
+    const handleAddConfirm = (filename: string) => {
+        addFile(filename, dialogState.parent).then(() => {
+            closeAddDialog()
+        })
+    }
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    // import
+    const [importDialogOpen, setImportDialogOpen] = useState(false)
+    // config
+    const [fileConfigDialogOpen, setFileConfigDialogOpen] = useState(false)
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    // file list toggles
 
     // if you navigate to a file, its parent directory opens automatically.
     useEffect(() => {
@@ -96,29 +119,7 @@ export function FileList({closeTab}: FileListProps) {
             return newOpenDirs
         })
     }, [])
-
-    const openAddDialog = (parentName: string) => {
-        setDialogState(() => ({open: true, parent: parentName}))
-    }
-
-    const closeAddDialog = () => {
-        // use a function to prevent modifying state before closing the dialog
-        setDialogState(() => ({open: false, parent: ''}))
-    }
-
-    const handleAddConfirm = (filename: string) => {
-        addFile(filename, dialogState.parent).then(() => {
-            closeAddDialog()
-        })
-    }
-
-    const [importDialogOpen, setImportDialogOpen] = useState(false);
-
-    const handleImportFinished = () => {
-        console.log("Import process has finished. Refreshing data...");
-    };
-
-    const [fileConfigDialogOpen, setFileConfigDialogOpen] = useState(false);
+    ////////////////////////////////////////////////////////////////////////////////////
 
     return (
         <Box
@@ -225,11 +226,11 @@ export function FileList({closeTab}: FileListProps) {
                 ) : (
                     <List>
                         {files.map((group) => (
-                            <FileItem
+                            <FileBarItem
                                 key={group.name}
                                 group={group}
                                 onAdd={openAddDialog}
-                                onDelete={onDelete}
+                                onDelete={openDeleteDialog}
                                 isOpen={openDirs.has(group.name)}
                                 onToggle={handleToggle}
                             />
@@ -241,7 +242,8 @@ export function FileList({closeTab}: FileListProps) {
             <FilesDialogImport
                 open={importDialogOpen}
                 onClose={() => setImportDialogOpen(false)}
-                onImportComplete={handleImportFinished}
+                onImportComplete={() => {
+                }}
                 currentBranch={selectedHost ?? ""}
             />
 
@@ -251,96 +253,19 @@ export function FileList({closeTab}: FileListProps) {
                 onConfirm={handleAddConfirm}
                 parentName={dialogState.parent}
             />
-            <FileConfigDialog open={fileConfigDialogOpen} onClose={() => setFileConfigDialogOpen(false)}/>
+
+            <FileConfigDialog
+                open={fileConfigDialogOpen}
+                onClose={() => setFileConfigDialogOpen(false)}
+            />
+
+            <FileDialogDelete
+                fileToDelete={fileToDelete}
+                onClose={closeDeleteDialog}
+                handleDelete={handleDelete}
+            />
         </Box>
     )
-}
-
-function FileConfigDialog({open, onClose}: { open: boolean, onClose: () => void }) {
-    const {config, updateSettings} = useConfig()
-    const [localConfig, setLocalConfig] = useState(config)
-
-    // uses the name attribute from the Switch component to determine which key in the localConfig object to update.
-    const handleSwitchChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const {name, checked} = event.target;
-        setLocalConfig(prevConfig => ({
-            ...prevConfig,
-            [name]: checked
-        }));
-    };
-
-    const handleSave = () => {
-        console.log('Saving config:');
-        updateSettings(localConfig).then();
-        onClose();
-    };
-
-    return (
-        <Dialog
-            open={open}
-            onClose={onClose}
-            maxWidth="md"
-            fullWidth
-            aria-labelledby="file-config-dialog-title"
-            slotProps={{
-                paper: {
-                    // sx: {
-                    //     backgroundColor: '#2d2d2d', // Darker background color
-                    //     color: '#f5f5f5',         // Light text color for contrast
-                    // }
-                },
-            }}
-        >
-            <DialogTitle
-                id="file-config-dialog-title"
-                sx={{borderBottom: 1, borderColor: 'grey.700'}}
-            >
-                File Display Config
-            </DialogTitle>
-            <DialogContent
-                sx={{
-                    borderBottom: 1,
-                    borderColor: 'grey.700',
-                    paddingY: '24px'
-                }}
-            >
-                <DialogContentText sx={{color: 'grey.400', marginBottom: 3}}>
-                    Configure your file settings here.
-                </DialogContentText>
-
-                <Box>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={localConfig.useComposeFolders}
-                                onChange={handleSwitchChange}
-                                name="useComposeFolders"
-                            />
-                        }
-                        label="Use compose folders"
-                    />
-                    <Typography variant="caption" display="block" sx={{color: 'grey.500', mt: 0.5, ml: 4}}>
-                        Convert all folders with a single compose file into a top-level compose file. The folder remains
-                        under the hood; only how the folder is displayed is changed.
-                    </Typography>
-                </Box>
-            </DialogContent>
-            <DialogActions
-                // Add padding to the button section
-                sx={{padding: '16px 24px'}}
-            >
-                <Button onClick={onClose} sx={{color: 'white'}}>
-                    Cancel
-                </Button>
-                <Button
-                    onClick={handleSave}
-                    variant="contained"
-                >
-                    Save
-                </Button>
-            </DialogActions>
-        </Dialog>
-    );
 }
 
 const StyledScrollbarBox = styled(Box)(({theme}) => ({

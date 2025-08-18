@@ -15,7 +15,7 @@ import {
     Typography
 } from "@mui/material"
 import {Add, AddCircleOutline, ArrowBack, Cancel, ErrorOutline, InsertDriveFile} from "@mui/icons-material"
-import {DockerFolderIcon} from "./file-icon.tsx";
+import {DockerFolderIcon} from "./file-bar-icon.tsx";
 
 interface AddFileDialogProps {
     open: boolean

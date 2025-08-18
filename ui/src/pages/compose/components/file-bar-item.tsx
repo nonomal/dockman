@@ -3,7 +3,7 @@ import {Box, Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemT
 import {Add, Analytics, Delete, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material'
 import {type FileGroup} from "../../../hooks/files.ts"
 import React, {useMemo} from "react"
-import FileIcon, {DockerFolderIcon} from "./file-icon.tsx"
+import FileBarIcon, {DockerFolderIcon} from "./file-bar-icon.tsx"
 import {amber} from "@mui/material/colors"
 import {useConfig} from "../../../hooks/config.ts"
 import type {Config} from "../../../context/config-context.tsx";
@@ -79,7 +79,7 @@ function normalizeFileGroup({group, config}: { group: FileGroup, config: Config 
     }
 }
 
-const FileItem = React.memo(({group, onAdd, isOpen, onToggle, onDelete}: FileItemProps) => {
+const FileBarItem = React.memo(({group, onAdd, isOpen, onToggle, onDelete}: FileItemProps) => {
     const {config} = useConfig()
     const normalized = useMemo(
         () => normalizeFileGroup({group, config}),
@@ -167,7 +167,7 @@ const FileListItem = React.memo(({filename, displayName, isCompose, onDelete}: F
             sx={{py: isCompose ? 1.25 : 1}}
         >
             <ListItemIcon sx={{minWidth: 32}}>
-                <FileIcon filename={displayName}/>
+                <FileBarIcon filename={displayName}/>
             </ListItemIcon>
 
             <Box sx={{flex: 1, mr: 1}}>
@@ -332,8 +332,8 @@ const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     action()
 }
 
-FileItem.displayName = 'FileItem'
+FileBarItem.displayName = 'FileItem'
 FileListItem.displayName = 'FileListItem'
 FolderListItem.displayName = 'FolderListItem'
 
-export default FileItem
+export default FileBarItem
