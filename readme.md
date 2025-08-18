@@ -15,6 +15,7 @@
 - [Why](#why-dockman)
 - [Common Errors](#common-errors)
 - [File Layout](#file-layout)
+- [Env loading](#env-loading)
 - [Multihost support](#multihost-support)
 - [Feedback](#feedback)
 - [Security Considerations](#security-considerations)
@@ -288,7 +289,8 @@ Dockman will only see top level directories but Git will attempt to load all fil
     * **Keep stack root clean:** Only include Docker Compose files and relevant configuration files in your stack
       directory.
     * **Avoid .gitignore as a workaround**: While you can use .gitignore to exclude files, this is not recommended for
-      Dockman. The better cleaner practice is to keep only relevant configuration files in your compose root and separate your
+      Dockman. The better cleaner practice is to keep only relevant configuration files in your compose root and
+      separate your
       stack definitions from your data directories entirely.
     * **See also:** [Recommended file layout](#file-layout) for best practices.
 
@@ -331,12 +333,93 @@ stacks/
 
 Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/issues) and we can argue about it.
 
-## Multihost Support
+## Env Loading
 
-> [!IMPORTANT]
+Dockman can automatically discover and load environment files when running your compose setup.
+
+> [!NOTE]
+> **Only files named `.env` are supported.**
+
+If the same variable is defined in multiple places, the value from the **higher-precedence** source will overwrite the
+lower one. This makes it easy to override global defaults with project-specific settings.
+
+Precedence (highest → lowest):
+
+1. **Subfolder `.env`** - scoped to a specific compose folder
+2. **Root `.env`** - global defaults for everything under the compose root
+3. **OS env vars** - values already defined in your shell/OS environment
+
+```text
+compose-root/
+ ├─ .env        (global)
+ └─ subfolder/
+     └─ .env    (overrides global)
+```
+
+> [!Note]
+> These `.env` files are **only for Docker Compose interpolation**.
 >
-> From [v2+](https://github.com/RA341/dockman/releases/tag/v2.0.0) onwards, hosts.yaml method is removed,
-> in favour of a easier UI method
+> They are not automatically transferred into the container.
+>
+> Only variables referenced with `${VAR}` in the compose file are substituted.
+
+Example (interpolation only):
+
+```yaml
+services:
+  database:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ${TEST}:/var/somepath
+      - ${ENVIRONMENT}:/anotherpath/
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  db_data:
+```
+
+In this example, `${TEST}` and `${ENVIRONMENT}` are resolved from `.env`
+but are not injected into the container environment automatically.
+
+### Adding Environment Variables to the Container
+
+To actually pass environment variables into the container, you can:
+
+**1. Pass them via `environment`:**
+
+```yaml
+services:
+  app:
+    image: myapp:latest
+    environment:
+      APP_ENV: ${ENVIRONMENT} # <- docker compose will replace these before parsing the compose file
+      DEBUG: ${DEBUG} 
+```
+
+**2. Or use the `env_file`:**
+
+```yaml
+services:
+  app:
+    image: myapp:latest
+    env_file:
+      - ./.env # load sub dir env file
+```
+
+Where `.env` might look like:
+
+```dotenv
+ENVIRONMENT=production
+DEBUG=false
+```
+
+## Multihost Support
 
 Dockman's multihost feature lets you manage remote Docker hosts from one centralized interface.
 Jump between servers, keep your configurations perfectly organized, and deploy across your entire infrastructure

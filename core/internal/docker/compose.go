@@ -3,6 +3,14 @@ package docker
 import (
 	"context"
 	"fmt"
+	"io"
+	"maps"
+	"path/filepath"
+	"reflect"
+	"slices"
+	"strings"
+
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/compose-spec/compose-go/v2/cli"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
@@ -12,12 +20,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rs/zerolog/log"
-	"io"
-	"maps"
-	"path/filepath"
-	"reflect"
-	"slices"
-	"strings"
 )
 
 // reference: https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
@@ -217,17 +219,28 @@ func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*ty
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(fullPath)
 
+	sampleFile := []string{
+		// Global .env
+		filepath.Join(s.composeRoot, ".env"),
+		// Subdirectory .env (will override global)
+		filepath.Join(workingDir, ".env"),
+	}
+	slices.DeleteFunc(sampleFile, func(s string) bool {
+		return !fileutil.FileExists(s)
+	})
+
 	options, err := cli.NewProjectOptions(
 		[]string{fullPath},
 		// important maintain this order to load .env properly
-		// working-dir -> env -> os -> dot env -> sub dir .envs
-		cli.WithWorkingDirectory(s.composeRoot),
+		// highest 										lowest
+		// working-dir .env <- compose root .env <- os envs
 		cli.WithEnvFiles(),
+		cli.WithDotEnv,
 		cli.WithOsEnv,
-		cli.WithDotEnv,
-		cli.WithDefaultProfiles(),
+		// compose operations will take place in working dir
 		cli.WithWorkingDirectory(workingDir),
-		cli.WithDotEnv,
+		// other shit
+		cli.WithDefaultProfiles(),
 		cli.WithResolvedPaths(true),
 	)
 	if err != nil {
