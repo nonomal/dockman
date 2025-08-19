@@ -219,22 +219,24 @@ func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*ty
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(fullPath)
 
-	sampleFile := []string{
+	var finalEnv []string
+	for _, file := range []string{
 		// Global .env
 		filepath.Join(s.composeRoot, ".env"),
 		// Subdirectory .env (will override global)
 		filepath.Join(workingDir, ".env"),
+	} {
+		if fileutil.FileExists(file) {
+			finalEnv = append(finalEnv, file)
+		}
 	}
-	sampleFile = slices.DeleteFunc(sampleFile, func(s string) bool {
-		return !fileutil.FileExists(s)
-	})
 
 	options, err := cli.NewProjectOptions(
 		[]string{fullPath},
 		// important maintain this order to load .env properly
 		// highest 										lowest
 		// working-dir .env <- compose root .env <- os envs
-		cli.WithEnvFiles(),
+		cli.WithEnvFiles(finalEnv...),
 		cli.WithDotEnv,
 		cli.WithOsEnv,
 		// compose operations will take place in working dir
