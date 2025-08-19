@@ -87,13 +87,13 @@ const PrivateRoute = () => {
 
     // Once authenticated, render with providers that need auth
     return (
-        <UserConfigProvider>
-            <HostProvider>
+        <HostProvider>
+            <UserConfigProvider>
                 <ChangelogProvider>
                     <Outlet/>
                 </ChangelogProvider>
-            </HostProvider>
-        </UserConfigProvider>
+            </UserConfigProvider>
+        </HostProvider>
     );
 };
 

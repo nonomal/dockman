@@ -42,7 +42,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
         }
     };
 
-    const sortedNetworks = [...networks].sort((a, b) => {
+    const sortedNetworks = [...networks].sort(() => {
         let aValue: string | Date, bValue: string | Date;
 
         switch (sortField) {
