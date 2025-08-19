@@ -90,12 +90,12 @@ message ImagesDeleted {
 
 // Volume-related messages
 message Volume {
-  string CreatedAt = 1;
-  string Driver = 2;
-  map<string, string> Labels = 3;
+  string Name = 1;
+  string containerID = 2;
+  string CreatedAt = 3;
   string MountPoint = 4;
-  string Name = 5;
-  string Scope = 6;
+  int64 size = 5;
+  string Labels = 6;
 }
 
 message ListVolumesRequest {}
@@ -111,6 +111,9 @@ message CreateVolumeResponse {
 }
 
 message DeleteVolumeRequest {
+  repeated string volumeIds = 1;
+  bool anon = 2;
+  bool unused = 3;
 }
 
 message DeleteVolumeResponse {

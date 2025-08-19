@@ -1,8 +1,14 @@
 package cmd
 
 import (
-	connectcors "connectrpc.com/cors"
 	"fmt"
+	"io/fs"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+
+	connectcors "connectrpc.com/cors"
 	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/info"
 	"github.com/RA341/dockman/pkg/fileutil"
@@ -11,11 +17,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"io/fs"
-	"net/http"
-	"os"
-	"path"
-	"strings"
 )
 
 func init() {
@@ -40,14 +41,14 @@ func StartServer(opt ...config.ServerOpt) {
 	app.registerApiRoutes(router)
 	registerFrontend(conf, router)
 
-	middleware := cors.New(cors.Options{
+	corsConfig := cors.New(cors.Options{
 		AllowedOrigins:      conf.GetAllowedOrigins(),
 		AllowPrivateNetwork: true,
 		AllowedMethods:      connectcors.AllowedMethods(),
 		AllowedHeaders:      append(connectcors.AllowedHeaders(), "Authorization"),
 		ExposedHeaders:      connectcors.ExposedHeaders(),
 	})
-	finalMux := middleware.Handler(router)
+	finalMux := corsConfig.Handler(router)
 
 	log.Info().
 		Int("port", conf.Port).
@@ -66,15 +67,19 @@ func registerFrontend(conf *config.AppConfig, router *http.ServeMux) {
 	if conf.UIFS == nil {
 		log.Warn().Msg("no ui files found, setting default page")
 
-		router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(noUIContent))
-		})
+		router.Handle("/", GzipMiddleware(
+			http.HandlerFunc(
+				func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte(noUIContent))
+				},
+			),
+		))
 		return
 	}
 
-	router.Handle("/", newSpaHandler(conf.UIFS))
+	router.Handle("/", GzipMiddleware(newSpaHandler(conf.UIFS)))
 }
 
 // SpaHandler implements the http.Handler interface and serves a single-page

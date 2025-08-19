@@ -22,8 +22,9 @@ const ImagesPage = () => {
 
     const [selectedImages, setSelectedImages] = useState<string[]>([])
     const [activeAction, setActiveAction] = useState('')
-    const searchInputRef = useRef<HTMLInputElement>(null)
 
+    const [search, setSearch] = useState("")
+    const searchInputRef = useRef<HTMLInputElement>(null)
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.altKey && event.key === 'q') {
@@ -31,15 +32,10 @@ const ImagesPage = () => {
                 searchInputRef.current?.focus()
             }
         }
-
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [])
 
-    const handleRefresh = () => {
-        refreshImages();
-    };
-    const [search, setSearch] = useState("")
 
     const buttonAction = async (callback: () => Promise<void>, actionName: string) => {
         setActiveAction(actionName)
@@ -150,7 +146,7 @@ const ImagesPage = () => {
                     <Button
                         variant="contained"
                         size="small"
-                        onClick={handleRefresh}
+                        onClick={refreshImages}
                         disabled={loading}
                         sx={{minWidth: 'auto', px: 1.5}}
                     >

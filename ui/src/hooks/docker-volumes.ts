@@ -30,9 +30,29 @@ export function useDockerVolumes() {
         fetchVolumes().finally(() => setLoading(false))
     }, [fetchVolumes])
 
+    const deleteSelected = async (ids: string[]) => {
+        const {err} = await callRPC(() => dockerService.volumeDelete({
+            volumeIds: ids
+        }))
+        if (err) showWarning(`Error occurred while deleting volumes: ${err}`)
+        loadVolumes()
+    }
+
+    const deleteUnunsed = async () => {
+        const {err} = await callRPC(() => dockerService.volumeDelete({unused: true}))
+        if (err) showWarning(`Error occurred while deleting volumes: ${err}`)
+        loadVolumes()
+    }
+
+    const deleteAnonynomous = async () => {
+        const {err} = await callRPC(() => dockerService.volumeDelete({anon: true}))
+        if (err) showWarning(`Error occurred while deleting volumes: ${err}`)
+        loadVolumes()
+    }
+
     useEffect(() => {
         loadVolumes()
     }, [loadVolumes])
 
-    return {volumes, loadVolumes, loading}
+    return {volumes, loadVolumes, loading, deleteUnunsed, deleteSelected, deleteAnonynomous}
 }

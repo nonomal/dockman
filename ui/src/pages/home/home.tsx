@@ -24,7 +24,7 @@ import {
     NetworkIcon,
     StatsIcon,
     VolumeIcon
-} from "../compose/components/file-icon.tsx";
+} from "../compose/components/file-bar-icon.tsx";
 
 export const TOP_BAR_HEIGHT = 69;
 const MAIN_SIDEBAR_WIDTH = 80;
