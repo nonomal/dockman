@@ -24,8 +24,9 @@ import type {Volume} from "../../gen/docker/v1/docker_pb.ts";
 import {formatBytes} from "../../lib/editor.ts";
 import {useCopyButton} from "../../hooks/copy.ts";
 import CopyButton from "../../components/copy-button.tsx";
+import ComposeLink from "../../components/compose-link.tsx";
 
-type SortField = 'project' | 'size' | 'inuse' | 'name' | 'mountPoint' | 'createdAt';
+type SortField = 'project' | 'label' | 'size' | 'inuse' | 'name' | 'mountPoint' | 'createdAt';
 type SortOrder = 'asc' | 'desc';
 
 interface VolumeTableProps {
@@ -35,7 +36,7 @@ interface VolumeTableProps {
 }
 
 export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: VolumeTableProps) => {
-    const [sortField, setSortField] = useState<SortField>('project');
+    const [sortField, setSortField] = useState<SortField>('label');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
     // Handle sorting
@@ -60,21 +61,26 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                 const data = a.containerID > b.containerID ? 1 : -1;
                 return sortOrder === 'asc' ? data : -data;
             }
-            case "project":
-                aValue = a.Labels;
-                bValue = b.Labels;
+            case "project": {
+                aValue = a.composeProjectName;
+                bValue = b.composeProjectName;
+                break;
+            }
+            case "label":
+                aValue = a.labels;
+                bValue = b.labels;
                 break;
             case 'name':
-                aValue = a.Name;
-                bValue = b.Name;
+                aValue = a.name;
+                bValue = b.name;
                 break;
             case 'mountPoint':
-                aValue = a.MountPoint;
-                bValue = b.MountPoint;
+                aValue = a.mountPoint;
+                bValue = b.mountPoint;
                 break;
             case 'createdAt':
-                aValue = new Date(a.CreatedAt);
-                bValue = new Date(b.CreatedAt);
+                aValue = new Date(a.createdAt);
+                bValue = new Date(b.createdAt);
                 break;
             default:
                 return 0;
@@ -108,7 +114,7 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
         if (!onSelectionChange) return;
 
         const allSelected = selectedVolumes.length === volumes.length;
-        const newSelection = allSelected ? [] : volumes.map(vol => vol.Name);
+        const newSelection = allSelected ? [] : volumes.map(vol => vol.name);
         onSelectionChange(newSelection);
     };
 
@@ -147,11 +153,11 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
 
                         <TableCell sx={{fontWeight: 'bold', minWidth: 100}}>
                             <TableSortLabel
-                                active={sortField === 'project'}
-                                direction={sortField === 'project' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('project')}
+                                active={sortField === 'label'}
+                                direction={sortField === 'label' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('label')}
                             >
-                                Project
+                                Label
                             </TableSortLabel>
                         </TableCell>
 
@@ -162,6 +168,16 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                                 onClick={() => handleSort('name')}
                             >
                                 Volume Name
+                            </TableSortLabel>
+                        </TableCell>
+
+                        <TableCell sx={{fontWeight: 'bold'}}>
+                            <TableSortLabel
+                                active={sortField === 'project'}
+                                direction={sortField === 'project' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('project')}
+                            >
+                                Compose Project
                             </TableSortLabel>
                         </TableCell>
 
@@ -209,29 +225,29 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                 <TableBody>
                     {sortedVolumes.map((volume) => (
                         <TableRow
-                            key={volume.Name}
+                            key={volume.name}
                             hover
                             sx={{
                                 '&:last-child td, &:last-child th': {border: 0},
                                 cursor: 'pointer',
-                                backgroundColor: selectedVolumes.includes(volume.Name)
+                                backgroundColor: selectedVolumes.includes(volume.name)
                                     ? 'rgba(25, 118, 210, 0.08)'
                                     : 'transparent'
                             }}
-                            onClick={() => handleRowSelection(volume.Name)}
+                            onClick={() => handleRowSelection(volume.name)}
                         >
                             <TableCell padding="checkbox">
                                 <Checkbox
-                                    checked={selectedVolumes.includes(volume.Name)}
-                                    onChange={() => handleRowSelection(volume.Name)}
+                                    checked={selectedVolumes.includes(volume.name)}
+                                    onChange={() => handleRowSelection(volume.name)}
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             </TableCell>
 
                             <TableCell>
-                                {volume.Labels ? (
+                                {volume.labels ? (
                                     <Chip
-                                        label={`${volume.Labels}`}
+                                        label={`${volume.labels}`}
                                         size="small"
                                         variant="outlined"
                                         color="secondary"
@@ -252,16 +268,23 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                                             wordBreak: 'break-all',
                                             fontWeight: 'medium'
                                         }}>
-                                            {volume.Name}
+                                            {volume.name}
                                         </Typography>
                                     </Box>
                                     <CopyButton
                                         handleCopy={handleCopy}
-                                        thisID={volume.Name}
+                                        thisID={volume.name}
                                         activeID={copiedId ?? ""}
                                         tooltip={"Copy Volume name"}
                                     />
                                 </Box>
+                            </TableCell>
+
+                            <TableCell>
+                                <ComposeLink
+                                    servicePath={volume.composePath}
+                                    stackName={volume.composeProjectName}
+                                />
                             </TableCell>
 
                             <TableCell>
@@ -303,11 +326,11 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                                         fontFamily: 'monospace',
                                         fontSize: '0.85rem'
                                     }}>
-                                        {volume.MountPoint}
+                                        {volume.mountPoint}
                                     </Typography>
                                     <CopyButton
                                         handleCopy={handleCopy}
-                                        thisID={volume.MountPoint}
+                                        thisID={volume.mountPoint}
                                         activeID={copiedId ?? ""}
                                         tooltip={"Copy Mount point"}
                                     />
@@ -319,7 +342,7 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                                     <CalendarIcon sx={{fontSize: 14, mr: 0.5, color: 'text.secondary'}}/>
                                     <Typography variant="body2">
-                                        {formatDate(volume.CreatedAt)}
+                                        {formatDate(volume.createdAt)}
                                     </Typography>
                                 </Box>
                             </TableCell>

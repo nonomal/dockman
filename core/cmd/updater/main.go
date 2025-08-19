@@ -3,6 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/docker_manager"
 	"github.com/RA341/dockman/pkg/fileutil"
@@ -13,10 +18,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"io"
-	"net/http"
-	"os"
-	"strings"
 )
 
 var composeClient *docker.ComposeService
@@ -35,10 +36,10 @@ func init() {
 		return
 	}
 
+	cc := ""
 	syncer := &docker.NoopSyncer{}
 	composeClient = docker.NewComposeService(
-		conf.ComposeRoot,
-		docker.NewContainerService(cli),
+		docker.NewContainerService(cli, &cc),
 		syncer,
 	)
 }

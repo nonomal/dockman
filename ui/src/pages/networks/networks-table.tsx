@@ -13,13 +13,23 @@ import {
     TableSortLabel,
     Typography
 } from '@mui/material';
-import {FolderOpen as FolderIcon, Label as LabelIcon, Storage as StorageIcon} from '@mui/icons-material';
+import {CalendarMonth, Label as LabelIcon} from '@mui/icons-material';
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
 import type {Network} from "../../gen/docker/v1/docker_pb.ts";
 import {useCopyButton} from "../../hooks/copy.ts";
 import CopyButton from "../../components/copy-button.tsx";
+import {formatDate} from "../../lib/api.ts";
 
-type SortField = 'project' | 'size' | 'inuse' | 'name' | 'mountPoint' | 'createdAt';
+type SortField =
+    'name'
+    | 'project'
+    | 'inuse'
+    | 'subnet'
+    | 'scope'
+    | 'driver'
+    | 'internal'
+    | 'attachable'
+    | 'createdAt';
 type SortOrder = 'asc' | 'desc';
 
 interface NetworkTableProps {
@@ -29,10 +39,9 @@ interface NetworkTableProps {
 }
 
 export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange}: NetworkTableProps) => {
-    const [sortField, setSortField] = useState<SortField>('project');
+    const [sortField, setSortField] = useState<SortField>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
-    // Handle sorting
     const handleSort = (field: SortField) => {
         if (sortField === field) {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -42,17 +51,56 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
         }
     };
 
-    const sortedNetworks = [...networks].sort(() => {
-        let aValue: string | Date, bValue: string | Date;
+    const sortedNetworks = [...networks].sort((a, b) => {
+        let aValue: string | Date | number, bValue: string | Date | number;
 
         switch (sortField) {
+            case "name":
+                aValue = a.name
+                bValue = b.name
+                break;
+            case "project":
+                aValue = a.composeProject
+                bValue = b.composeProject
+                break;
+            case "inuse":
+                aValue = a.containerIds.length
+                bValue = b.containerIds.length
+                break;
+            case "subnet":
+                aValue = a.subnet
+                bValue = b.subnet
+                break;
+            case "scope":
+                aValue = a.scope
+                bValue = b.scope
+                break;
+            case "driver":
+                aValue = a.driver
+                bValue = b.driver
+                break;
+            case "internal":
+                // Fixed: should probably be a.internal, not a.name
+                aValue = a.internal ? 1 : 0  // boolean to number conversion
+                bValue = b.internal ? 1 : 0
+                break;
+            case "attachable":
+                aValue = a.attachable ? 1 : 0  // Fixed: changed order (true = 1, false = 0)
+                bValue = b.attachable ? 1 : 0
+                break;
+            case "createdAt":
+                aValue = new Date(a.createdAt)
+                bValue = new Date(b.createdAt)
+                break;
             default:
                 return 0;
         }
 
         let result: number;
         if (aValue instanceof Date && bValue instanceof Date) {
-            // result = aValue.getTime() - bValue.getTime();
+            result = aValue.getTime() - bValue.getTime();
+        } else if (typeof aValue === 'number' && typeof bValue === 'number') {  // Fixed: proper number type check
+            result = aValue - bValue;
         } else {
             result = String(aValue).localeCompare(String(bValue));
         }
@@ -105,16 +153,6 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                             />
                         </TableCell>
 
-                        <TableCell sx={{fontWeight: 'bold', minWidth: 100}}>
-                            <TableSortLabel
-                                active={sortField === 'project'}
-                                direction={sortField === 'project' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('project')}
-                            >
-                                Project
-                            </TableSortLabel>
-                        </TableCell>
-
                         <TableCell sx={{fontWeight: 'bold'}}>
                             <TableSortLabel
                                 active={sortField === 'name'}
@@ -125,13 +163,13 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                             </TableSortLabel>
                         </TableCell>
 
-                        <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 100}}>
                             <TableSortLabel
-                                active={sortField === 'size'}
-                                direction={sortField === 'size' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('size')}
+                                active={sortField === 'project'}
+                                direction={sortField === 'project' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('project')}
                             >
-                                Size
+                                Project
                             </TableSortLabel>
                         </TableCell>
 
@@ -145,13 +183,53 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                             </TableSortLabel>
                         </TableCell>
 
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
+                            <TableSortLabel
+                                active={sortField === 'subnet'}
+                                direction={sortField === 'subnet' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('subnet')}
+                            >
+                                Subnet
+                            </TableSortLabel>
+                        </TableCell>
+
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
+                            <TableSortLabel
+                                active={sortField === 'scope'}
+                                direction={sortField === 'scope' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('scope')}
+                            >
+                                Scope
+                            </TableSortLabel>
+                        </TableCell>
+
                         <TableCell sx={{fontWeight: 'bold', minWidth: 200}}>
                             <TableSortLabel
-                                active={sortField === 'mountPoint'}
-                                direction={sortField === 'mountPoint' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('mountPoint')}
+                                active={sortField === 'driver'}
+                                direction={sortField === 'driver' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('driver')}
                             >
-                                Mount Point
+                                driver
+                            </TableSortLabel>
+                        </TableCell>
+
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 150}}>
+                            <TableSortLabel
+                                active={sortField === 'internal'}
+                                direction={sortField === 'internal' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('internal')}
+                            >
+                                Internal
+                            </TableSortLabel>
+                        </TableCell>
+
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 150}}>
+                            <TableSortLabel
+                                active={sortField === 'attachable'}
+                                direction={sortField === 'attachable' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('attachable')}
+                            >
+                                Attachable
                             </TableSortLabel>
                         </TableCell>
 
@@ -189,7 +267,26 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                             </TableCell>
 
                             <TableCell>
-                                {network.name ? (
+                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                    <Box sx={{flex: 1}}>
+                                        <Typography variant="body2" sx={{
+                                            wordBreak: 'break-all',
+                                            fontWeight: 'medium'
+                                        }}>
+                                            {network.name}
+                                        </Typography>
+                                    </Box>
+                                    <CopyButton
+                                        handleCopy={handleCopy}
+                                        thisID={network.id}
+                                        activeID={copiedId ?? ""}
+                                        tooltip={"Copy Network name"}
+                                    />
+                                </Box>
+                            </TableCell>
+
+                            <TableCell>
+                                {network.composeProject ? (
                                     <Chip
                                         label={`${network.name}`}
                                         size="small"
@@ -206,75 +303,53 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                             </TableCell>
 
                             <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                    <Box sx={{flex: 1}}>
-                                        <Typography variant="body2" sx={{
-                                            wordBreak: 'break-all',
-                                            fontWeight: 'medium'
-                                        }}>
-                                            {network.name}
-                                        </Typography>
-                                    </Box>
-                                    <CopyButton
-                                        handleCopy={handleCopy}
-                                        thisID={network.name}
-                                        activeID={copiedId ?? ""}
-                                        tooltip={"Copy Network name"}
-                                    />
-                                </Box>
+                                <Chip
+                                    label={`${network.containerIds.length} using`}
+                                    size="small"
+                                    variant="outlined"
+                                    color={network.containerIds.length === 0 ? "secondary" : "info"}
+                                    // icon={<SensorOccupied/>}
+                                    sx={{fontSize: '0.75rem'}}
+                                />
                             </TableCell>
 
                             <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                    <StorageIcon sx={{fontSize: 18, color: 'text.secondary'}}/>
-                                    <Box sx={{flex: 1}}>
-                                        <Typography variant="body2" sx={{
-                                            wordBreak: 'break-all',
-                                            fontWeight: 'medium'
-                                        }}>
-                                        </Typography>
-                                    </Box>
-                                </Box>
+                                <Typography variant="body2" color="text.primary">
+                                    {network.subnet}
+                                </Typography>
                             </TableCell>
 
                             <TableCell>
-                                {network.id ? (
-                                    <Chip
-                                        label={`in use`}
-                                        size="small"
-                                        color="success"
-                                        variant="outlined"
-                                    />
-                                ) : (
-                                    <Chip
-                                        label={`unused`}
-                                        size="small"
-                                        color="info"
-                                        variant="outlined"
-                                    />)}
+                                <Typography variant="body2" color="text.primary">
+                                    {network.scope}
+                                </Typography>
                             </TableCell>
 
                             <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                    <FolderIcon sx={{fontSize: 16, color: 'text.secondary'}}/>
-                                    <Typography variant="body2" sx={{
-                                        wordBreak: 'break-all',
-                                        fontFamily: 'monospace',
-                                        fontSize: '0.85rem'
-                                    }}>
-                                        {network.scope}
+                                <Typography variant="body2" color="text.primary">
+                                    {network.driver === "null" ? "-----" : network.driver}
+                                </Typography>
+                            </TableCell>
+
+                            <TableCell>
+                                <Typography variant="body2" color="text.primary">
+                                    {network.internal.toString()}
+                                </Typography>
+                            </TableCell>
+
+                            <TableCell>
+                                <Typography variant="body2" color="text.primary">
+                                    {network.attachable.toString()}
+                                </Typography>
+                            </TableCell>
+
+                            <TableCell>
+                                <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                    <CalendarMonth sx={{fontSize: 14, mr: 0.5, color: 'text.secondary'}}/>
+                                    <Typography variant="body2">
+                                        {formatDate(network.createdAt)}
                                     </Typography>
                                 </Box>
-                            </TableCell>
-
-
-                            <TableCell>
-                                {/*<Box sx={{display: 'flex', alignItems: 'center'}}>*/}
-                                {/*    <CalendarIcon sx={{fontSize: 14, mr: 0.5, color: 'text.secondary'}}/>*/}
-                                {/*    <Typography variant="body2">*/}
-                                {/*        {formatDate(network.CreatedAt)}*/}
-                                {/*    </Typography>*/}
-                                {/*</Box>*/}
                             </TableCell>
                         </TableRow>
                     ))}

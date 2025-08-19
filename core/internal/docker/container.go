@@ -22,11 +22,12 @@ import (
 )
 
 type ContainerService struct {
-	daemon *client.Client
+	daemon      *client.Client
+	composeRoot *string
 }
 
-func NewContainerService(cli *client.Client) *ContainerService {
-	return &ContainerService{daemon: cli}
+func NewContainerService(cli *client.Client, composeRoot *string) *ContainerService {
+	return &ContainerService{daemon: cli, composeRoot: composeRoot}
 }
 
 func (s *ContainerService) ContainersStart(ctx context.Context, containerId ...string) error {
@@ -246,8 +247,28 @@ func (s *ContainerService) PruneUnusedImages(ctx context.Context) (image.PruneRe
 	return s.daemon.ImagesPrune(ctx, filter)
 }
 
-func (s *ContainerService) NetworksList(ctx context.Context) ([]network.Summary, error) {
-	return s.daemon.NetworkList(ctx, network.ListOptions{})
+func (s *ContainerService) NetworksList(ctx context.Context) ([]network.Inspect, error) {
+	list, err := s.daemon.NetworkList(ctx, network.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var errs []error
+	var result []network.Inspect
+	for _, ref := range list {
+		networkInspect, err2 := s.daemon.NetworkInspect(ctx, ref.ID, network.InspectOptions{})
+		if err2 != nil {
+			errs = append(errs, err2)
+			continue
+		}
+		result = append(result, networkInspect)
+	}
+
+	if errs != nil {
+		return nil, fmt.Errorf("could not list networks: %v", errs)
+	}
+
+	return result, nil
 }
 
 func (s *ContainerService) NetworksCreate(ctx context.Context, name string) (network.CreateResponse, error) {
@@ -279,14 +300,18 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 		return nil, fmt.Errorf("failed to list containers: %w", err)
 	}
 
-	containersUsingVolumesMap := make(map[string]string)
+	containersUsingVolumesMap := make(map[string][3]string)
 	for _, c := range containers {
 		// We inspect the container's Mounts to find volume information.
 		for _, mn := range c.Mounts {
 			if mn.Type == mount.TypeVolume {
 				// Append the container's first known name to the list for this volume.
 				if len(c.Names) > 0 {
-					containersUsingVolumesMap[mn.Name] = c.ID
+					containersUsingVolumesMap[mn.Name] = [3]string{
+						c.ID,
+						getComposeFilePath(c, *s.composeRoot),
+						c.Labels[api.ProjectLabel],
+					}
 				}
 			}
 		}
@@ -296,7 +321,9 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 	for _, vol := range diskUsage.Volumes {
 		inf := VolumeInfo{Volume: vol}
 		if contID, found := containersUsingVolumesMap[vol.Name]; found {
-			inf.ContainerID = contID
+			inf.ContainerID = contID[0]
+			inf.ComposePath = contID[1]
+			inf.ComposeProjectName = contID[2]
 		}
 
 		volumes = append(volumes, inf)
@@ -307,7 +334,9 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 
 type VolumeInfo struct {
 	*volume.Volume
-	ContainerID string
+	ContainerID        string
+	ComposePath        string
+	ComposeProjectName string
 }
 
 func (s *ContainerService) VolumesCreate(ctx context.Context, name string) (volume.Volume, error) {
@@ -319,6 +348,7 @@ func (s *ContainerService) VolumesCreate(ctx context.Context, name string) (volu
 func (s *ContainerService) VolumesDelete(ctx context.Context, volumeName string, force bool) error {
 	return s.daemon.VolumeRemove(ctx, volumeName, force)
 }
+
 func (s *ContainerService) VolumesPruneUnunsed(ctx context.Context) error {
 	volResponse, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
 	if err != nil {

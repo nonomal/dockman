@@ -22,9 +22,9 @@ import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts"
 import {getImageHomePageUrl} from "../../../hooks/docker-images.ts"
 import scrollbarStyles from "../../../components/scrollbar-style.tsx"
 import type {Message} from "@bufbuild/protobuf"
-import {useNavigate} from "react-router-dom"
 import CopyButton from "../../../components/copy-button.tsx";
 import {useCopyButton} from "../../../hooks/copy.ts";
+import ComposeLink from "../../../components/compose-link.tsx";
 
 interface ContainerTableProps {
     containers: ContainerList[]
@@ -48,7 +48,6 @@ export function ContainerTable(
         useContainerId = false,
     }: ContainerTableProps
 ) {
-    const navigate = useNavigate()
     const [isLoaded, setIsLoaded] = useState(false)
 
     const [sortField, setSortField] = useState<SortField>('name')
@@ -298,23 +297,10 @@ export function ContainerTable(
                                     </Tooltip>
                                 </TableCell>
                                 <TableCell>
-                                    <Typography
-                                        variant="body2"
-                                        component="span"
-                                        sx={{
-                                            textDecoration: 'none',
-                                            color: 'primary.main',
-                                            wordBreak: 'break-all',
-                                            cursor: 'pointer',
-                                            '&:hover': {textDecoration: 'underline'}
-                                        }}
-                                        onClick={(event) => {
-                                            event.stopPropagation() // Prevent row click
-                                            navigate(`/stacks/${container.servicePath}?tab=0`)
-                                        }}
-                                    >
-                                        {container.stackName}
-                                    </Typography>
+                                    <ComposeLink
+                                        stackName={container.stackName}
+                                        servicePath={container.servicePath}
+                                    />
                                 </TableCell>
                                 <TableCell width={360}>
                                     {formatPorts(container.ports)}

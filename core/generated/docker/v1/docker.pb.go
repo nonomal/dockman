@@ -639,15 +639,17 @@ func (x *ImagesDeleted) GetUntagged() string {
 
 // Volume-related messages
 type Volume struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=Name,proto3" json:"Name,omitempty"`
-	ContainerID   string                 `protobuf:"bytes,2,opt,name=containerID,proto3" json:"containerID,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,3,opt,name=CreatedAt,proto3" json:"CreatedAt,omitempty"`
-	MountPoint    string                 `protobuf:"bytes,4,opt,name=MountPoint,proto3" json:"MountPoint,omitempty"`
-	Size          int64                  `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
-	Labels        string                 `protobuf:"bytes,6,opt,name=Labels,proto3" json:"Labels,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Name               string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ContainerID        string                 `protobuf:"bytes,2,opt,name=containerID,proto3" json:"containerID,omitempty"`
+	CreatedAt          string                 `protobuf:"bytes,3,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	MountPoint         string                 `protobuf:"bytes,4,opt,name=mountPoint,proto3" json:"mountPoint,omitempty"`
+	Size               int64                  `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
+	Labels             string                 `protobuf:"bytes,6,opt,name=labels,proto3" json:"labels,omitempty"`
+	ComposePath        string                 `protobuf:"bytes,7,opt,name=composePath,proto3" json:"composePath,omitempty"`
+	ComposeProjectName string                 `protobuf:"bytes,8,opt,name=composeProjectName,proto3" json:"composeProjectName,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Volume) Reset() {
@@ -718,6 +720,20 @@ func (x *Volume) GetSize() int64 {
 func (x *Volume) GetLabels() string {
 	if x != nil {
 		return x.Labels
+	}
+	return ""
+}
+
+func (x *Volume) GetComposePath() string {
+	if x != nil {
+		return x.ComposePath
+	}
+	return ""
+}
+
+func (x *Volume) GetComposeProjectName() string {
+	if x != nil {
+		return x.ComposeProjectName
 	}
 	return ""
 }
@@ -972,20 +988,21 @@ func (*DeleteVolumeResponse) Descriptor() ([]byte, []int) {
 
 // Network-related messages
 type Network struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Scope         string                 `protobuf:"bytes,4,opt,name=scope,proto3" json:"scope,omitempty"`
-	Driver        string                 `protobuf:"bytes,5,opt,name=driver,proto3" json:"driver,omitempty"`
-	EnableIpv4    bool                   `protobuf:"varint,6,opt,name=enable_ipv4,json=enableIpv4,proto3" json:"enable_ipv4,omitempty"`
-	EnableIpv6    bool                   `protobuf:"varint,7,opt,name=enable_ipv6,json=enableIpv6,proto3" json:"enable_ipv6,omitempty"`
-	Internal      bool                   `protobuf:"varint,9,opt,name=internal,proto3" json:"internal,omitempty"`
-	Attachable    bool                   `protobuf:"varint,10,opt,name=attachable,proto3" json:"attachable,omitempty"`
-	Ingress       bool                   `protobuf:"varint,11,opt,name=ingress,proto3" json:"ingress,omitempty"`
-	ConfigOnly    bool                   `protobuf:"varint,13,opt,name=config_only,json=configOnly,proto3" json:"config_only,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,14,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Id             string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Subnet         string                 `protobuf:"bytes,3,opt,name=subnet,proto3" json:"subnet,omitempty"`
+	Scope          string                 `protobuf:"bytes,4,opt,name=scope,proto3" json:"scope,omitempty"`
+	Driver         string                 `protobuf:"bytes,5,opt,name=driver,proto3" json:"driver,omitempty"`
+	EnableIpv4     bool                   `protobuf:"varint,6,opt,name=enable_ipv4,json=enableIpv4,proto3" json:"enable_ipv4,omitempty"`
+	EnableIpv6     bool                   `protobuf:"varint,7,opt,name=enable_ipv6,json=enableIpv6,proto3" json:"enable_ipv6,omitempty"`
+	Internal       bool                   `protobuf:"varint,9,opt,name=internal,proto3" json:"internal,omitempty"`
+	Attachable     bool                   `protobuf:"varint,10,opt,name=attachable,proto3" json:"attachable,omitempty"`
+	CreatedAt      string                 `protobuf:"bytes,11,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	ComposeProject string                 `protobuf:"bytes,12,opt,name=composeProject,proto3" json:"composeProject,omitempty"`
+	ContainerIds   []string               `protobuf:"bytes,13,rep,name=containerIds,proto3" json:"containerIds,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Network) Reset() {
@@ -1032,6 +1049,13 @@ func (x *Network) GetId() string {
 	return ""
 }
 
+func (x *Network) GetSubnet() string {
+	if x != nil {
+		return x.Subnet
+	}
+	return ""
+}
+
 func (x *Network) GetScope() string {
 	if x != nil {
 		return x.Scope
@@ -1074,25 +1098,25 @@ func (x *Network) GetAttachable() bool {
 	return false
 }
 
-func (x *Network) GetIngress() bool {
-	if x != nil {
-		return x.Ingress
-	}
-	return false
-}
-
-func (x *Network) GetConfigOnly() bool {
-	if x != nil {
-		return x.ConfigOnly
-	}
-	return false
-}
-
 func (x *Network) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return ""
+}
+
+func (x *Network) GetComposeProject() string {
+	if x != nil {
+		return x.ComposeProject
+	}
+	return ""
+}
+
+func (x *Network) GetContainerIds() []string {
+	if x != nil {
+		return x.ContainerIds
+	}
+	return nil
 }
 
 type ListNetworksRequest struct {
@@ -2094,16 +2118,18 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\bpruneAll\x18\x01 \x01(\bR\bpruneAll\"E\n" +
 	"\rImagesDeleted\x12\x18\n" +
 	"\aDeleted\x18\x01 \x01(\tR\aDeleted\x12\x1a\n" +
-	"\bUntagged\x18\x02 \x01(\tR\bUntagged\"\xa8\x01\n" +
+	"\bUntagged\x18\x02 \x01(\tR\bUntagged\"\xfa\x01\n" +
 	"\x06Volume\x12\x12\n" +
-	"\x04Name\x18\x01 \x01(\tR\x04Name\x12 \n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vcontainerID\x18\x02 \x01(\tR\vcontainerID\x12\x1c\n" +
-	"\tCreatedAt\x18\x03 \x01(\tR\tCreatedAt\x12\x1e\n" +
+	"\tcreatedAt\x18\x03 \x01(\tR\tcreatedAt\x12\x1e\n" +
 	"\n" +
-	"MountPoint\x18\x04 \x01(\tR\n" +
-	"MountPoint\x12\x12\n" +
+	"mountPoint\x18\x04 \x01(\tR\n" +
+	"mountPoint\x12\x12\n" +
 	"\x04size\x18\x05 \x01(\x03R\x04size\x12\x16\n" +
-	"\x06Labels\x18\x06 \x01(\tR\x06Labels\"\x14\n" +
+	"\x06labels\x18\x06 \x01(\tR\x06labels\x12 \n" +
+	"\vcomposePath\x18\a \x01(\tR\vcomposePath\x12.\n" +
+	"\x12composeProjectName\x18\b \x01(\tR\x12composeProjectName\"\x14\n" +
 	"\x12ListVolumesRequest\"B\n" +
 	"\x13ListVolumesResponse\x12+\n" +
 	"\avolumes\x18\x01 \x03(\v2\x11.docker.v1.VolumeR\avolumes\"\x15\n" +
@@ -2113,10 +2139,11 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\tvolumeIds\x18\x01 \x03(\tR\tvolumeIds\x12\x12\n" +
 	"\x04anon\x18\x02 \x01(\bR\x04anon\x12\x16\n" +
 	"\x06unused\x18\x03 \x01(\bR\x06unused\"\x16\n" +
-	"\x14DeleteVolumeResponse\"\xb2\x02\n" +
+	"\x14DeleteVolumeResponse\"\xdb\x02\n" +
 	"\aNetwork\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x16\n" +
+	"\x06subnet\x18\x03 \x01(\tR\x06subnet\x12\x14\n" +
 	"\x05scope\x18\x04 \x01(\tR\x05scope\x12\x16\n" +
 	"\x06driver\x18\x05 \x01(\tR\x06driver\x12\x1f\n" +
 	"\venable_ipv4\x18\x06 \x01(\bR\n" +
@@ -2127,11 +2154,10 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\n" +
 	"attachable\x18\n" +
 	" \x01(\bR\n" +
-	"attachable\x12\x18\n" +
-	"\aingress\x18\v \x01(\bR\aingress\x12\x1f\n" +
-	"\vconfig_only\x18\r \x01(\bR\n" +
-	"configOnly\x12\x1c\n" +
-	"\tcreatedAt\x18\x0e \x01(\tR\tcreatedAt\"\x15\n" +
+	"attachable\x12\x1c\n" +
+	"\tcreatedAt\x18\v \x01(\tR\tcreatedAt\x12&\n" +
+	"\x0ecomposeProject\x18\f \x01(\tR\x0ecomposeProject\x12\"\n" +
+	"\fcontainerIds\x18\r \x03(\tR\fcontainerIds\"\x15\n" +
 	"\x13ListNetworksRequest\"F\n" +
 	"\x14ListNetworksResponse\x12.\n" +
 	"\bnetworks\x18\x01 \x03(\v2\x12.docker.v1.NetworkR\bnetworks\"\x16\n" +

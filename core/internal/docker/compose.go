@@ -25,14 +25,12 @@ import (
 // reference: https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
 
 type ComposeService struct {
-	composeRoot      string
 	containerService *ContainerService
 	syncer           Syncer
 }
 
-func NewComposeService(composeRoot string, client *ContainerService, syncer Syncer) *ComposeService {
+func NewComposeService(client *ContainerService, syncer Syncer) *ComposeService {
 	return &ComposeService{
-		composeRoot:      composeRoot,
 		containerService: client,
 		syncer:           syncer,
 	}
@@ -215,14 +213,14 @@ func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream i
 }
 
 func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*types.Project, error) {
-	fullPath := filepath.Join(s.composeRoot, shortName)
+	fullPath := filepath.Join(*s.containerService.composeRoot, shortName)
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(fullPath)
 
 	var finalEnv []string
 	for _, file := range []string{
 		// Global .env
-		filepath.Join(s.composeRoot, ".env"),
+		filepath.Join(*s.containerService.composeRoot, ".env"),
 		// Subdirectory .env (will override global)
 		filepath.Join(workingDir, ".env"),
 	} {

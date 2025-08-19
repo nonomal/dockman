@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -22,6 +23,7 @@ import (
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/rs/zerolog/log"
 )
@@ -138,7 +140,11 @@ func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerLis
 			return cmp.Compare(port1.Type, port2.Type)
 		})
 
-		dockerResult = append(dockerResult, toRPContainer(stack, h.srv().composeRoot, portSlice))
+		dockerResult = append(dockerResult, toRPContainer(
+			stack,
+			*h.srv().composeRoot,
+			portSlice,
+		))
 	}
 	return dockerResult
 }
@@ -365,12 +371,14 @@ func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVo
 	for _, vol := range volumes {
 
 		rpcVolumes = append(rpcVolumes, &v1.Volume{
-			Name:        vol.Name,
-			ContainerID: vol.ContainerID,
-			Size:        vol.UsageData.Size,
-			CreatedAt:   vol.CreatedAt,
-			Labels:      getVolumeProjectNameFromLabel(vol.Labels),
-			MountPoint:  vol.Mountpoint,
+			Name:               vol.Name,
+			ContainerID:        vol.ContainerID,
+			Size:               vol.UsageData.Size,
+			CreatedAt:          vol.CreatedAt,
+			Labels:             getVolumeProjectNameFromLabel(vol.Labels),
+			MountPoint:         vol.Mountpoint,
+			ComposePath:        vol.ComposePath,
+			ComposeProjectName: vol.ComposeProjectName,
 		})
 	}
 
@@ -423,21 +431,29 @@ func (h *Handler) NetworkList(ctx context.Context, _ *connect.Request[v1.ListNet
 	var rpcNetworks []*v1.Network
 	for _, netI := range networks {
 		rpcNetworks = append(rpcNetworks, &v1.Network{
-			Name:       netI.Name,
-			Id:         netI.ID,
-			Scope:      netI.Scope,
-			Driver:     netI.Driver,
-			EnableIpv4: netI.EnableIPv4,
-			EnableIpv6: netI.EnableIPv6,
-			Internal:   netI.Internal,
-			Attachable: netI.Attachable,
-			Ingress:    netI.Ingress,
-			ConfigOnly: netI.ConfigOnly,
-			CreatedAt:  netI.Created.Format(time.RFC3339),
+			Id:             netI.ID,
+			Name:           netI.Name,
+			CreatedAt:      netI.Created.Format(time.RFC3339),
+			Subnet:         getSubnet(netI),
+			Scope:          netI.Scope,
+			Driver:         netI.Driver,
+			EnableIpv4:     netI.EnableIPv4,
+			EnableIpv6:     netI.EnableIPv6,
+			Internal:       netI.Internal,
+			Attachable:     netI.Attachable,
+			ComposeProject: netI.Labels[api.ProjectLabel],
+			ContainerIds:   slices.Collect(maps.Keys(netI.Containers)),
 		})
 	}
 
 	return connect.NewResponse(&v1.ListNetworksResponse{Networks: rpcNetworks}), nil
+}
+
+func getSubnet(netI network.Inspect) string {
+	if len(netI.IPAM.Config) == 0 {
+		return "-----"
+	}
+	return netI.IPAM.Config[0].Subnet
 }
 
 func (h *Handler) NetworkCreate(_ context.Context, req *connect.Request[v1.CreateNetworkRequest]) (*connect.Response[v1.CreateNetworkResponse], error) {
@@ -612,7 +628,6 @@ func toRPCPort(p container.Port) *v1.Port {
 }
 
 func toRPContainer(stack container.Summary, composeRoot string, portSlice []*v1.Port) *v1.ContainerList {
-	composePath := filepath.ToSlash(strings.TrimPrefix(stack.Labels[api.ConfigFilesLabel], composeRoot))
 	return &v1.ContainerList{
 		Name:        strings.TrimPrefix(stack.Names[0], "/"),
 		Id:          stack.ID,
@@ -622,9 +637,18 @@ func toRPContainer(stack container.Summary, composeRoot string, portSlice []*v1.
 		Ports:       portSlice,
 		ServiceName: stack.Labels[api.ServiceLabel],
 		StackName:   stack.Labels[api.ProjectLabel],
-		ServicePath: strings.TrimPrefix(composePath, "/"),
+		ServicePath: getComposeFilePath(stack, composeRoot),
 		Created:     time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
 	}
+}
+
+func getComposeFilePath(cont container.Summary, composeRoot string) string {
+	composePath := filepath.ToSlash(
+		strings.TrimPrefix(
+			cont.Labels[api.ConfigFilesLabel], composeRoot,
+		),
+	)
+	return strings.TrimPrefix(composePath, "/")
 }
 
 type ContainerLogWriter struct {

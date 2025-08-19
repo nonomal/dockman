@@ -7,7 +7,7 @@ import NetworksEmpty from "./networks-empty.tsx";
 import {useDockerNetwork} from "../../hooks/docker-networks.ts";
 import {NetworkTable} from "./networks-table.tsx";
 
-const VolumesPage = () => {
+const NetworksPage = () => {
     const {loading, networks, loadNetworks} = useDockerNetwork();
 
     const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
@@ -104,13 +104,13 @@ const VolumesPage = () => {
                 {/* Title and Stats */}
                 <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
                     <Typography variant="h6" sx={{fontWeight: 'bold'}}>
-                        Docker Volumes
+                        Docker Networks
                     </Typography>
                 </Box>
 
                 <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
                     <Typography variant="h6">
-                        {networks.length} volumes
+                        {networks.length} Networks
                     </Typography>
                 </Box>
 
@@ -133,7 +133,7 @@ const VolumesPage = () => {
                     }}
                 />
 
-                <Tooltip title={loading ? 'Refreshing...' : 'Refresh volumes'}>
+                <Tooltip title={loading ? 'Refreshing...' : 'Refresh Networks'}>
                     <Button
                         variant="contained"
                         size="small"
@@ -199,4 +199,4 @@ const VolumesPage = () => {
     );
 };
 
-export default VolumesPage;
+export default NetworksPage;

@@ -23,6 +23,7 @@ import scrollbarStyles from "../../components/scrollbar-style.tsx";
 import {useCopyButton} from "../../hooks/copy.ts";
 import type {Image} from "../../gen/docker/v1/docker_pb.ts";
 import CopyButton from "../../components/copy-button.tsx";
+import {formatDate} from "../../lib/api.ts";
 
 
 type SortField = 'name' | 'size' | 'sharedSize' | 'containers' | 'created';
@@ -341,14 +342,3 @@ export const ImageTable = (
         </TableContainer>
     );
 };
-
-function formatDate(timestamp: bigint | number) {
-    const bigIntTimestamp = typeof timestamp === 'bigint' ? Number(timestamp) : timestamp;
-    return new Date(bigIntTimestamp).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
