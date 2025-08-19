@@ -17,7 +17,6 @@ import VolumesPage from "./pages/volumes/volumes.tsx";
 import ImagesPage from "./pages/images/images.tsx";
 import ContainersPage from "./pages/containers/containers.tsx";
 import {UserConfigProvider} from "./context/config-context.tsx";
-import {multiprovider} from "./components/multi-provider.tsx";
 
 export function App() {
     return (
@@ -86,17 +85,15 @@ const PrivateRoute = () => {
         return <Navigate to="/auth"/>
     }
 
-    const DependencyProvider = multiprovider(
-        UserConfigProvider,
-        HostProvider,
-        ChangelogProvider,
-    )
-
     // Once authenticated, render with providers that need auth
     return (
-        <DependencyProvider>
-            <Outlet/>
-        </DependencyProvider>
+        <UserConfigProvider>
+            <HostProvider>
+                <ChangelogProvider>
+                    <Outlet/>
+                </ChangelogProvider>
+            </HostProvider>
+        </UserConfigProvider>
     );
 };
 
