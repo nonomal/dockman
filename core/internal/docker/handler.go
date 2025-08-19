@@ -3,17 +3,8 @@ package docker
 import (
 	"bufio"
 	"cmp"
-	"connectrpc.com/connect"
 	"context"
 	"fmt"
-	v1 "github.com/RA341/dockman/generated/docker/v1"
-	"github.com/RA341/dockman/pkg/fileutil"
-	"github.com/compose-spec/compose-go/v2/types"
-	"github.com/docker/compose/v2/pkg/api"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/rs/zerolog/log"
 	"io"
 	"net"
 	"net/http"
@@ -23,6 +14,16 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"connectrpc.com/connect"
+	v1 "github.com/RA341/dockman/generated/docker/v1"
+	"github.com/RA341/dockman/pkg/fileutil"
+	"github.com/compose-spec/compose-go/v2/types"
+	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/rs/zerolog/log"
 )
 
 type GetService func() *Service
@@ -361,18 +362,32 @@ func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVo
 	}
 
 	var rpcVolumes []*v1.Volume
-	for _, vol := range volumes.Volumes {
+	for _, vol := range volumes {
+
 		rpcVolumes = append(rpcVolumes, &v1.Volume{
-			CreatedAt:  vol.CreatedAt,
-			Driver:     vol.Driver,
-			Labels:     vol.Labels,
-			MountPoint: vol.Mountpoint,
-			Name:       vol.Name,
-			Scope:      vol.Scope,
+			Name:        vol.Name,
+			ContainerID: vol.ContainerID,
+			Size:        vol.UsageData.Size,
+			CreatedAt:   vol.CreatedAt,
+			Labels:      getVolumeProjectNameFromLabel(vol.Labels),
+			MountPoint:  vol.Mountpoint,
 		})
 	}
 
 	return connect.NewResponse(&v1.ListVolumesResponse{Volumes: rpcVolumes}), nil
+}
+
+func getVolumeProjectNameFromLabel(labels map[string]string) string {
+	const LabelVolumeAnonymous = "com.docker.volume.anonymous"
+	if _, ok := labels[LabelVolumeAnonymous]; ok {
+		return "anonymous"
+	}
+
+	if val, ok := labels[api.ProjectLabel]; ok {
+		return val
+	}
+
+	return ""
 }
 
 func (h *Handler) VolumeCreate(_ context.Context, req *connect.Request[v1.CreateVolumeRequest]) (*connect.Response[v1.CreateVolumeResponse], error) {
@@ -380,9 +395,19 @@ func (h *Handler) VolumeCreate(_ context.Context, req *connect.Request[v1.Create
 	return nil, fmt.Errorf(" implement me VolumeCreate")
 }
 
-func (h *Handler) VolumeDelete(_ context.Context, req *connect.Request[v1.DeleteVolumeRequest]) (*connect.Response[v1.DeleteVolumeResponse], error) {
-	//TODO implement me
-	return nil, fmt.Errorf(" implement me VolumeDelete")
+func (h *Handler) VolumeDelete(ctx context.Context, req *connect.Request[v1.DeleteVolumeRequest]) (*connect.Response[v1.DeleteVolumeResponse], error) {
+	var err error
+	if req.Msg.Anon {
+		err = h.srv().VolumesPrune(ctx)
+	} else if req.Msg.Unused {
+		err = h.srv().VolumesPruneUnunsed(ctx)
+	} else {
+		for _, vols := range req.Msg.VolumeIds {
+			err = h.srv().VolumesDelete(ctx, vols, false)
+		}
+	}
+
+	return connect.NewResponse(&v1.DeleteVolumeResponse{}), err
 }
 
 ////////////////////////////////////////////

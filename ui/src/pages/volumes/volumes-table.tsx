@@ -1,11 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, {useCallback, useState} from 'react';
 import {
     Box,
     Checkbox,
     Chip,
     IconButton,
     Paper,
-    Stack,
     Table,
     TableBody,
     TableCell,
@@ -24,19 +23,10 @@ import {
     Storage as StorageIcon
 } from '@mui/icons-material';
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
+import type {Volume} from "../../gen/docker/v1/docker_pb.ts";
+import {formatBytes} from "../../lib/editor.ts";
 
-export type Volume = {
-    CreatedAt: string;
-    Driver: string;
-    Labels: {
-        [p: string]: string;
-    };
-    MountPoint: string;
-    Name: string;
-    Scope: string;
-};
-
-type SortField = 'name' | 'driver' | 'mountPoint' | 'scope' | 'createdAt';
+type SortField = 'project' | 'size' | 'inuse' | 'name' | 'mountPoint' | 'createdAt';
 type SortOrder = 'asc' | 'desc';
 
 interface VolumeTableProps {
@@ -45,9 +35,9 @@ interface VolumeTableProps {
     onSelectionChange?: (selectedIds: string[]) => void;
 }
 
-export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }: VolumeTableProps) => {
-    const [sortField, setSortField] = useState<SortField>('name');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: VolumeTableProps) => {
+    const [sortField, setSortField] = useState<SortField>('project');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
     // Handle sorting
     const handleSort = (field: SortField) => {
@@ -59,26 +49,29 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
         }
     };
 
-    // Sort volumes based on current sort field and order
     const sortedVolumes = [...volumes].sort((a, b) => {
         let aValue: string | Date, bValue: string | Date;
 
         switch (sortField) {
+            case "size": {
+                const data = a.size > b.size ? 1 : -1;
+                return sortOrder === 'asc' ? data : -data;
+            }
+            case "inuse": {
+                const data = a.containerID > b.containerID ? 1 : -1;
+                return sortOrder === 'asc' ? data : -data;
+            }
+            case "project":
+                aValue = a.Labels;
+                bValue = b.Labels;
+                break;
             case 'name':
                 aValue = a.Name;
                 bValue = b.Name;
                 break;
-            case 'driver':
-                aValue = a.Driver;
-                bValue = b.Driver;
-                break;
             case 'mountPoint':
                 aValue = a.MountPoint;
                 bValue = b.MountPoint;
-                break;
-            case 'scope':
-                aValue = a.Scope;
-                bValue = b.Scope;
                 break;
             case 'createdAt':
                 aValue = new Date(a.CreatedAt);
@@ -151,7 +144,7 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
                 ...scrollbarStyles
             }}
         >
-            <Table stickyHeader sx={{ minWidth: 650 }}>
+            <Table stickyHeader sx={{minWidth: 650}}>
                 <TableHead>
                     <TableRow>
                         <TableCell padding="checkbox">
@@ -162,7 +155,17 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
                             />
                         </TableCell>
 
-                        <TableCell sx={{ fontWeight: 'bold' }}>
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 100}}>
+                            <TableSortLabel
+                                active={sortField === 'project'}
+                                direction={sortField === 'project' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('project')}
+                            >
+                                Project
+                            </TableSortLabel>
+                        </TableCell>
+
+                        <TableCell sx={{fontWeight: 'bold'}}>
                             <TableSortLabel
                                 active={sortField === 'name'}
                                 direction={sortField === 'name' ? sortOrder : 'asc'}
@@ -172,27 +175,27 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
                             </TableSortLabel>
                         </TableCell>
 
-                        <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
                             <TableSortLabel
-                                active={sortField === 'driver'}
-                                direction={sortField === 'driver' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('driver')}
+                                active={sortField === 'size'}
+                                direction={sortField === 'size' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('size')}
                             >
-                                Driver
+                                Size
                             </TableSortLabel>
                         </TableCell>
 
-                        <TableCell sx={{ fontWeight: 'bold', minWidth: 100 }}>
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
                             <TableSortLabel
-                                active={sortField === 'scope'}
-                                direction={sortField === 'scope' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('scope')}
+                                active={sortField === 'inuse'}
+                                direction={sortField === 'inuse' ? sortOrder : 'asc'}
+                                onClick={() => handleSort('inuse')}
                             >
-                                Scope
+                                In Use
                             </TableSortLabel>
                         </TableCell>
 
-                        <TableCell sx={{ fontWeight: 'bold', minWidth: 200 }}>
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 200}}>
                             <TableSortLabel
                                 active={sortField === 'mountPoint'}
                                 direction={sortField === 'mountPoint' ? sortOrder : 'asc'}
@@ -202,11 +205,7 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
                             </TableSortLabel>
                         </TableCell>
 
-                        <TableCell sx={{ fontWeight: 'bold', minWidth: 100 }}>
-                            Labels
-                        </TableCell>
-
-                        <TableCell sx={{ fontWeight: 'bold', minWidth: 150 }}>
+                        <TableCell sx={{fontWeight: 'bold', minWidth: 150}}>
                             <TableSortLabel
                                 active={sortField === 'createdAt'}
                                 direction={sortField === 'createdAt' ? sortOrder : 'asc'}
@@ -223,7 +222,7 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
                             key={volume.Name}
                             hover
                             sx={{
-                                '&:last-child td, &:last-child th': { border: 0 },
+                                '&:last-child td, &:last-child th': {border: 0},
                                 cursor: 'pointer',
                                 backgroundColor: selectedVolumes.includes(volume.Name)
                                     ? 'rgba(25, 118, 210, 0.08)'
@@ -240,9 +239,25 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
                             </TableCell>
 
                             <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <StorageIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                                    <Box sx={{ flex: 1 }}>
+                                {volume.Labels ? (
+                                    <Chip
+                                        label={`${volume.Labels}`}
+                                        size="small"
+                                        variant="outlined"
+                                        color="secondary"
+                                        icon={<LabelIcon/>}
+                                        sx={{fontSize: '0.75rem'}}
+                                    />
+                                ) : (
+                                    <Typography variant="body2" color="text.secondary">
+                                        —
+                                    </Typography>
+                                )}
+                            </TableCell>
+
+                            <TableCell>
+                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                    <Box sx={{flex: 1}}>
                                         <Typography variant="body2" sx={{
                                             wordBreak: 'break-all',
                                             fontWeight: 'medium'
@@ -256,36 +271,49 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
                                             onClick={(e) => handleCopyText(volume.Name, e)}
                                             sx={{
                                                 opacity: 0.7,
-                                                '&:hover': { opacity: 1 }
+                                                '&:hover': {opacity: 1}
                                             }}
                                         >
-                                            <CopyAll fontSize="small" />
+                                            <CopyAll fontSize="small"/>
                                         </IconButton>
                                     </Tooltip>
                                 </Box>
                             </TableCell>
 
                             <TableCell>
-                                <Chip
-                                    label={volume.Driver}
-                                    size="small"
-                                    color="primary"
-                                    variant="outlined"
-                                />
+                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                    <StorageIcon sx={{fontSize: 18, color: 'text.secondary'}}/>
+                                    <Box sx={{flex: 1}}>
+                                        <Typography variant="body2" sx={{
+                                            wordBreak: 'break-all',
+                                            fontWeight: 'medium'
+                                        }}>
+                                            {formatBytes(volume.size)}
+                                        </Typography>
+                                    </Box>
+                                </Box>
                             </TableCell>
 
                             <TableCell>
-                                <Chip
-                                    label={volume.Scope}
-                                    size="small"
-                                    color={volume.Scope === 'local' ? 'success' : 'default'}
-                                    variant="outlined"
-                                />
+                                {volume.containerID ? (
+                                    <Chip
+                                        label={`in use`}
+                                        size="small"
+                                        color="success"
+                                        variant="outlined"
+                                    />
+                                ) : (
+                                    <Chip
+                                        label={`unused`}
+                                        size="small"
+                                        color="info"
+                                        variant="outlined"
+                                    />)}
                             </TableCell>
 
                             <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <FolderIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                    <FolderIcon sx={{fontSize: 16, color: 'text.secondary'}}/>
                                     <Typography variant="body2" sx={{
                                         wordBreak: 'break-all',
                                         fontFamily: 'monospace',
@@ -299,51 +327,19 @@ export const VolumeTable = ({ volumes, selectedVolumes = [], onSelectionChange }
                                             onClick={(e) => handleCopyText(volume.MountPoint, e)}
                                             sx={{
                                                 opacity: 0.7,
-                                                '&:hover': { opacity: 1 }
+                                                '&:hover': {opacity: 1}
                                             }}
                                         >
-                                            <CopyAll fontSize="small" />
+                                            <CopyAll fontSize="small"/>
                                         </IconButton>
                                     </Tooltip>
                                 </Box>
                             </TableCell>
 
-                            <TableCell>
-                                <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
-                                    {Object.keys(volume.Labels).length > 0 ? (
-                                        <>
-                                            {Object.entries(volume.Labels).slice(0, 2).map(([key, value]) => (
-                                                <Tooltip key={key} title={`${key}: ${value}`} arrow>
-                                                    <Chip
-                                                        label={`${key}: ${value.length > 10 ? value.substring(0, 10) + '...' : value}`}
-                                                        size="small"
-                                                        variant="outlined"
-                                                        color="secondary"
-                                                        icon={<LabelIcon />}
-                                                        sx={{ fontSize: '0.75rem' }}
-                                                    />
-                                                </Tooltip>
-                                            ))}
-                                            {Object.keys(volume.Labels).length > 2 && (
-                                                <Chip
-                                                    label={`+${Object.keys(volume.Labels).length - 2} more`}
-                                                    size="small"
-                                                    variant="outlined"
-                                                    sx={{ fontSize: '0.75rem' }}
-                                                />
-                                            )}
-                                        </>
-                                    ) : (
-                                        <Typography variant="body2" color="text.secondary">
-                                            —
-                                        </Typography>
-                                    )}
-                                </Stack>
-                            </TableCell>
 
                             <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <CalendarIcon sx={{ fontSize: 14, mr: 0.5, color: 'text.secondary' }} />
+                                <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                    <CalendarIcon sx={{fontSize: 14, mr: 0.5, color: 'text.secondary'}}/>
                                     <Typography variant="body2">
                                         {formatDate(volume.CreatedAt)}
                                     </Typography>

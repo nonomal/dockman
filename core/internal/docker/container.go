@@ -5,17 +5,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"sync"
+
 	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
-	"io"
-	"sync"
 )
 
 type ContainerService struct {
@@ -255,8 +258,56 @@ func (s *ContainerService) NetworksDelete(ctx context.Context, networkID string)
 	return s.daemon.NetworkRemove(ctx, networkID)
 }
 
-func (s *ContainerService) VolumesList(ctx context.Context) (volume.ListResponse, error) {
-	return s.daemon.VolumeList(ctx, volume.ListOptions{})
+func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error) {
+	diskUsage, err := s.daemon.DiskUsage(ctx, types.DiskUsageOptions{
+		Types: []types.DiskUsageObject{types.VolumeObject}, // fetch volumes only
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get disk usage data: %w", err)
+	}
+
+	var volumeFilters []filters.KeyValuePair
+	for _, vol := range diskUsage.Volumes {
+		volumeFilters = append(volumeFilters, filters.Arg("volume", vol.Name))
+	}
+
+	containers, err := s.daemon.ContainerList(ctx, container.ListOptions{
+		All:     true,
+		Filters: filters.NewArgs(volumeFilters...),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list containers: %w", err)
+	}
+
+	containersUsingVolumesMap := make(map[string]string)
+	for _, c := range containers {
+		// We inspect the container's Mounts to find volume information.
+		for _, mn := range c.Mounts {
+			if mn.Type == mount.TypeVolume {
+				// Append the container's first known name to the list for this volume.
+				if len(c.Names) > 0 {
+					containersUsingVolumesMap[mn.Name] = c.ID
+				}
+			}
+		}
+	}
+
+	var volumes []VolumeInfo
+	for _, vol := range diskUsage.Volumes {
+		inf := VolumeInfo{Volume: vol}
+		if contID, found := containersUsingVolumesMap[vol.Name]; found {
+			inf.ContainerID = contID
+		}
+
+		volumes = append(volumes, inf)
+	}
+
+	return volumes, nil
+}
+
+type VolumeInfo struct {
+	*volume.Volume
+	ContainerID string
 }
 
 func (s *ContainerService) VolumesCreate(ctx context.Context, name string) (volume.Volume, error) {
@@ -267,6 +318,60 @@ func (s *ContainerService) VolumesCreate(ctx context.Context, name string) (volu
 
 func (s *ContainerService) VolumesDelete(ctx context.Context, volumeName string, force bool) error {
 	return s.daemon.VolumeRemove(ctx, volumeName, force)
+}
+func (s *ContainerService) VolumesPruneUnunsed(ctx context.Context) error {
+	volResponse, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get disk usage data: %w", err)
+	}
+
+	var volumeFilters []filters.KeyValuePair
+	for _, vol := range volResponse.Volumes {
+		volumeFilters = append(volumeFilters, filters.Arg("volume", vol.Name))
+	}
+
+	containers, err := s.daemon.ContainerList(ctx, container.ListOptions{
+		All:     true,
+		Filters: filters.NewArgs(volumeFilters...),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list containers: %w", err)
+	}
+
+	containersUsingVolumesMap := make(map[string]string)
+	for _, c := range containers {
+		// We inspect the container's Mounts to find volume information.
+		for _, mn := range c.Mounts {
+			if mn.Type == mount.TypeVolume {
+				// Append the container's first known name to the list for this volume.
+				if len(c.Names) > 0 {
+					containersUsingVolumesMap[mn.Name] = c.ID
+				}
+			}
+		}
+	}
+
+	var delErr error
+	for _, vol := range volResponse.Volumes {
+		if _, found := containersUsingVolumesMap[vol.Name]; found {
+			continue
+		}
+
+		err = s.daemon.VolumeRemove(ctx, vol.Name, false)
+		if err != nil {
+			delErr = fmt.Errorf("%w\n%w", delErr, err)
+		}
+	}
+
+	return delErr
+}
+
+func (s *ContainerService) VolumesPrune(ctx context.Context) error {
+	prune, err := s.daemon.VolumesPrune(ctx, filters.NewArgs())
+	if err != nil {
+		log.Debug().Any("report", prune).Msg("VolumesPrune result")
+	}
+	return err
 }
 
 func (s *ContainerService) getStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
