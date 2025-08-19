@@ -23,6 +23,8 @@ import {getImageHomePageUrl} from "../../../hooks/docker-images.ts"
 import scrollbarStyles from "../../../components/scrollbar-style.tsx"
 import type {Message} from "@bufbuild/protobuf"
 import {useNavigate} from "react-router-dom"
+import CopyButton from "../../../components/copy-button.tsx";
+import {useCopyButton} from "../../../hooks/copy.ts";
 
 interface ContainerTableProps {
     containers: ContainerList[]
@@ -142,6 +144,8 @@ export function ContainerTable(
         serviceName: string
     }) => useContainerId ? container.id : container.serviceName
 
+    const {handleCopy, copiedId} = useCopyButton()
+
     return (
         <TableContainer
             component={Paper}
@@ -254,7 +258,22 @@ export function ContainerTable(
                                     />
                                 </TableCell>
                                 <TableCell component="th" id={labelId} scope="row">
-                                    <Typography variant="body1" fontWeight="500">{container.name}</Typography>
+                                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                        <Typography
+                                            variant="body1"
+                                            fontWeight="500"
+                                        >
+                                            {container.name}
+                                        </Typography>
+                                        <CopyButton
+                                            handleCopy={handleCopy}
+                                            thisID={container.id}
+                                            activeID={copiedId ?? ""}
+                                            tooltip={"Copy Container ID"}
+                                        />
+                                    </Box>
+
+
                                 </TableCell>
                                 <TableCell>
                                     <Chip label={container.status} color={getStatusChipColor(container.status)}

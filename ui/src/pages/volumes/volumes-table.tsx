@@ -1,9 +1,8 @@
-import React, {useCallback, useState} from 'react';
+import {useState} from 'react';
 import {
     Box,
     Checkbox,
     Chip,
-    IconButton,
     Paper,
     Table,
     TableBody,
@@ -12,12 +11,10 @@ import {
     TableHead,
     TableRow,
     TableSortLabel,
-    Tooltip,
     Typography
 } from '@mui/material';
 import {
     CalendarToday as CalendarIcon,
-    CopyAll,
     FolderOpen as FolderIcon,
     Label as LabelIcon,
     Storage as StorageIcon
@@ -25,6 +22,8 @@ import {
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
 import type {Volume} from "../../gen/docker/v1/docker_pb.ts";
 import {formatBytes} from "../../lib/editor.ts";
+import {useCopyButton} from "../../hooks/copy.ts";
+import CopyButton from "../../components/copy-button.tsx";
 
 type SortField = 'project' | 'size' | 'inuse' | 'name' | 'mountPoint' | 'createdAt';
 type SortOrder = 'asc' | 'desc';
@@ -91,16 +90,7 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
         return sortOrder === 'asc' ? result : -result;
     });
 
-    // Handle copy volume name or mount point
-    const handleCopyText = useCallback(async (text: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        try {
-            await navigator.clipboard.writeText(text);
-            console.log('Text copied to clipboard');
-        } catch (err) {
-            console.error('Failed to copy text:', err);
-        }
-    }, []);
+    const {handleCopy, copiedId} = useCopyButton()
 
     // Handle individual row selection
     const handleRowSelection = (volumeName: string) => {
@@ -265,18 +255,12 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                                             {volume.Name}
                                         </Typography>
                                     </Box>
-                                    <Tooltip title="Copy Volume Name" arrow>
-                                        <IconButton
-                                            size="small"
-                                            onClick={(e) => handleCopyText(volume.Name, e)}
-                                            sx={{
-                                                opacity: 0.7,
-                                                '&:hover': {opacity: 1}
-                                            }}
-                                        >
-                                            <CopyAll fontSize="small"/>
-                                        </IconButton>
-                                    </Tooltip>
+                                    <CopyButton
+                                        handleCopy={handleCopy}
+                                        thisID={volume.Name}
+                                        activeID={copiedId ?? ""}
+                                        tooltip={"Copy Volume name"}
+                                    />
                                 </Box>
                             </TableCell>
 
@@ -321,18 +305,12 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                                     }}>
                                         {volume.MountPoint}
                                     </Typography>
-                                    <Tooltip title="Copy Mount Point" arrow>
-                                        <IconButton
-                                            size="small"
-                                            onClick={(e) => handleCopyText(volume.MountPoint, e)}
-                                            sx={{
-                                                opacity: 0.7,
-                                                '&:hover': {opacity: 1}
-                                            }}
-                                        >
-                                            <CopyAll fontSize="small"/>
-                                        </IconButton>
-                                    </Tooltip>
+                                    <CopyButton
+                                        handleCopy={handleCopy}
+                                        thisID={volume.MountPoint}
+                                        activeID={copiedId ?? ""}
+                                        tooltip={"Copy Mount point"}
+                                    />
                                 </Box>
                             </TableCell>
 

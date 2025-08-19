@@ -1,9 +1,8 @@
-import {type MouseEvent, useState} from "react";
+import {useState} from "react";
 
 export function useCopyButton() {
     const [copiedId, setCopiedId] = useState<string | null>(null)
-    const handleCopy = (event: MouseEvent<HTMLButtonElement>, id: string) => {
-        event.stopPropagation()
+    const handleCopy = (id: string) => {
         navigator.clipboard.writeText(id).then()
         setCopiedId(id)
         setTimeout(() => {
