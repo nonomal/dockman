@@ -131,6 +131,7 @@ message Network {
   bool attachable = 10;
   bool ingress = 11;
   bool config_only = 13;
+  string createdAt = 14;
 }
 
 message ListNetworksRequest {}

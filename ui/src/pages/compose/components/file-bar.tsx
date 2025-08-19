@@ -56,7 +56,7 @@ export function FileList({closeTab}: FileListProps) {
         return () => {
             window.removeEventListener('keydown', handleKeyDown)
         }
-    }, [selectedHost, showAddFile, showGitImport, showTelescope])
+    }, [selectedHost])
 
     const handleDelete = (file: string) => {
         closeTab(file)

@@ -983,6 +983,7 @@ type Network struct {
 	Attachable    bool                   `protobuf:"varint,10,opt,name=attachable,proto3" json:"attachable,omitempty"`
 	Ingress       bool                   `protobuf:"varint,11,opt,name=ingress,proto3" json:"ingress,omitempty"`
 	ConfigOnly    bool                   `protobuf:"varint,13,opt,name=config_only,json=configOnly,proto3" json:"config_only,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,14,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1085,6 +1086,13 @@ func (x *Network) GetConfigOnly() bool {
 		return x.ConfigOnly
 	}
 	return false
+}
+
+func (x *Network) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
 }
 
 type ListNetworksRequest struct {
@@ -2105,7 +2113,7 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\tvolumeIds\x18\x01 \x03(\tR\tvolumeIds\x12\x12\n" +
 	"\x04anon\x18\x02 \x01(\bR\x04anon\x12\x16\n" +
 	"\x06unused\x18\x03 \x01(\bR\x06unused\"\x16\n" +
-	"\x14DeleteVolumeResponse\"\x94\x02\n" +
+	"\x14DeleteVolumeResponse\"\xb2\x02\n" +
 	"\aNetwork\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n" +
@@ -2122,7 +2130,8 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"attachable\x12\x18\n" +
 	"\aingress\x18\v \x01(\bR\aingress\x12\x1f\n" +
 	"\vconfig_only\x18\r \x01(\bR\n" +
-	"configOnly\"\x15\n" +
+	"configOnly\x12\x1c\n" +
+	"\tcreatedAt\x18\x0e \x01(\tR\tcreatedAt\"\x15\n" +
 	"\x13ListNetworksRequest\"F\n" +
 	"\x14ListNetworksResponse\x12.\n" +
 	"\bnetworks\x18\x01 \x03(\v2\x12.docker.v1.NetworkR\bnetworks\"\x16\n" +

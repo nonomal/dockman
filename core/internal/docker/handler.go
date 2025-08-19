@@ -433,6 +433,7 @@ func (h *Handler) NetworkList(ctx context.Context, _ *connect.Request[v1.ListNet
 			Attachable: netI.Attachable,
 			Ingress:    netI.Ingress,
 			ConfigOnly: netI.ConfigOnly,
+			CreatedAt:  netI.Created.Format(time.RFC3339),
 		})
 	}
 
