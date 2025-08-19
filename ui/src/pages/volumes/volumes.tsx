@@ -34,10 +34,10 @@ const VolumesPage = () => {
     const filteredVolumes = useMemo(() => {
         if (search) {
             return volumes.filter(vol =>
-                vol.Name.toLowerCase().includes(search) ||
+                vol.name.toLowerCase().includes(search) ||
                 vol.containerID.toLowerCase().includes(search) ||
-                vol.Labels.toLowerCase().includes(search) ||
-                vol.MountPoint.toLowerCase().includes(search)
+                vol.labels.toLowerCase().includes(search) ||
+                vol.mountPoint.toLowerCase().includes(search)
             )
         }
         return volumes;
