@@ -225,7 +225,7 @@ func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*ty
 		// Subdirectory .env (will override global)
 		filepath.Join(workingDir, ".env"),
 	}
-	slices.DeleteFunc(sampleFile, func(s string) bool {
+	sampleFile = slices.DeleteFunc(sampleFile, func(s string) bool {
 		return !fileutil.FileExists(s)
 	})
 
