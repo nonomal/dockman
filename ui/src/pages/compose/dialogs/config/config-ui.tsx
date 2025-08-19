@@ -1,18 +1,19 @@
-import {useConfig} from "../../../hooks/config.ts";
 import {type ChangeEvent, useState} from "react";
 import {
     Box,
     Button,
     Dialog,
-    DialogActions, DialogContent,
+    DialogActions,
+    DialogContent,
     DialogContentText,
     DialogTitle,
     FormControlLabel,
     Switch,
     Typography
 } from "@mui/material";
+import {useConfig} from "../../../../hooks/config.ts";
 
-export function FileConfigDialog({open, onClose}: { open: boolean, onClose: () => void }) {
+function FileConfigDialog({open, onClose}: { open: boolean, onClose: () => void }) {
     const {config, updateSettings} = useConfig()
     const [localConfig, setLocalConfig] = useState(config)
 
@@ -98,3 +99,5 @@ export function FileConfigDialog({open, onClose}: { open: boolean, onClose: () =
         </Dialog>
     )
 }
+
+export default FileConfigDialog

@@ -11,9 +11,9 @@ import {
     TextField,
     Typography
 } from '@mui/material'
-import {useFiles} from "../../../hooks/files.ts"
 import {Search} from '@mui/icons-material'
 import {useNavigate} from "react-router-dom";
+import {useFiles} from "../../../../hooks/files.ts";
 
 interface TelescopeProps {
     isVisible: boolean
@@ -24,7 +24,7 @@ const highlightMatch = (text: string, query: string) => {
     if (!query) {
         return text
     }
-    const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+    const escapedQuery = query.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
     const parts = text.split(new RegExp(`(${escapedQuery})`, 'gi'))
 
     return (
@@ -42,7 +42,7 @@ const highlightMatch = (text: string, query: string) => {
     )
 }
 
-function Telescope({isVisible, onDismiss}: TelescopeProps) {
+function SearchUi({isVisible, onDismiss}: TelescopeProps) {
     const {files} = useFiles()
     const navigate = useNavigate()
 
@@ -242,5 +242,5 @@ function Telescope({isVisible, onDismiss}: TelescopeProps) {
     )
 }
 
-export default Telescope
+export default SearchUi
 

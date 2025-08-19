@@ -17,6 +17,7 @@ import VolumesPage from "./pages/volumes/volumes.tsx";
 import ImagesPage from "./pages/images/images.tsx";
 import ContainersPage from "./pages/containers/containers.tsx";
 import {UserConfigProvider} from "./context/config-context.tsx";
+import {multiprovider} from "./components/multi-provider.tsx";
 
 export function App() {
     return (
@@ -85,49 +86,19 @@ const PrivateRoute = () => {
         return <Navigate to="/auth"/>
     }
 
+    const DependencyProvider = multiprovider(
+        UserConfigProvider,
+        HostProvider,
+        ChangelogProvider,
+    )
+
     // Once authenticated, render with providers that need auth
     return (
-        <UserConfigProvider>
-            <HostProvider>
-                <ChangelogProvider>
-                    <GlobalShortcuts/>
-                    <Outlet/>
-                </ChangelogProvider>
-            </HostProvider>
-        </UserConfigProvider>
+        <DependencyProvider>
+            <Outlet/>
+        </DependencyProvider>
     );
 };
-
-function GlobalShortcuts() {
-    // const navigate = useNavigate();
-    //
-    // useEffect(() => {
-    //     const handleKeyDown = (e: KeyboardEvent) => {
-    //         if (e.altKey && !e.repeat) {
-    //             switch (e.code) {
-    //                 case "Digit1":
-    //                     e.preventDefault();
-    //                     navigate("/");
-    //                     break;
-    //                 case "Digit2":
-    //                     e.preventDefault();
-    //                     navigate('/stacks');
-    //                     break;
-    //             }
-    //         }
-    //     };
-    //
-    //     window.addEventListener("keydown", handleKeyDown);
-    //
-    //     return () => {
-    //         window.removeEventListener("keydown", handleKeyDown);
-    //     };
-    // }, [navigate]);
-
-    // this component doesn't render anything
-    return null;
-}
-
 
 function HomePage() {
     return (

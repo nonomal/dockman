@@ -3,14 +3,14 @@ import {Box, Button, CircularProgress, Divider, IconButton, List, styled, Toolba
 import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
 import {useParams} from 'react-router-dom'
 import FileBarItem from './file-bar-item.tsx'
-import {FileDialogCreate} from "./file-dialog-create.tsx"
-import {FilesDialogImport} from "./file-dialog-import.tsx"
 import {useFiles} from "../../../hooks/files.ts"
 import {useHost} from "../../../hooks/host.ts"
-import {useTelescope} from "../context/telescope-hook.ts"
 import {ShortcutFormatter} from "./shortcut-formatter.tsx"
-import FileDialogDelete from "./file-dialog-delete.tsx"
-import {FileConfigDialog} from "./file-dialog-config.tsx";
+import {useTelescope} from "../dialogs/search/search-hook.ts";
+import {useGitImport} from "../dialogs/import/import-hook.ts";
+import {useAddFile} from "../dialogs/add/add-hook.ts";
+import {useFileDelete} from "../dialogs/delete/delete-hook.ts";
+import {useFileDisplayConfig} from "../dialogs/config/config-hook.ts";
 
 interface FileListProps {
     closeTab: (tabToClose: string) => void
@@ -18,10 +18,15 @@ interface FileListProps {
 
 export function FileList({closeTab}: FileListProps) {
     const {file: currentDir} = useParams<{ file: string }>()
-    const {files, isLoading, addFile} = useFiles()
+
     const {selectedHost} = useHost()
+    const {files, isLoading} = useFiles()
+
     const {showTelescope} = useTelescope()
-    const {deleteFile} = useFiles()
+    const {showDialog: showGitImport} = useGitImport()
+    const {showDialog: showAddFile} = useAddFile()
+    const {showDialog: showDeleteFile} = useFileDelete()
+    const {showDialog: showFileConfig} = useFileDisplayConfig()
 
     // holds the names of all open directories.
     const [openDirs, setOpenDirs] = useState(new Set<string>())
@@ -36,13 +41,13 @@ export function FileList({closeTab}: FileListProps) {
             // alt + a for creating files
             if ((event.altKey) && event.key === 'a') {
                 event.preventDefault()
-                openAddDialog("")
+                showAddFile("")
             }
 
             // alt + s for importing files
             if ((event.altKey) && event.key === 'i') {
                 event.preventDefault()
-                setImportDialogOpen(() => true)
+                showGitImport()
             }
         }
         // Add the event listener to the window
@@ -51,55 +56,14 @@ export function FileList({closeTab}: FileListProps) {
         return () => {
             window.removeEventListener('keydown', handleKeyDown)
         }
-    }, [selectedHost, showTelescope])
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    // delete file
-    const [fileToDelete, setFileToDelete] = useState("")
-    const openDeleteDialog = (file: string) => {
-        setFileToDelete(file)
-    }
-
-    const closeDeleteDialog = () => {
-        setFileToDelete("")
-    }
+    }, [selectedHost, showAddFile, showGitImport, showTelescope])
 
     const handleDelete = (file: string) => {
         closeTab(file)
-        deleteFile(file).then()
-    }
-    ////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    // add file
-
-    const [dialogState, setDialogState] = useState<{ open: boolean; parent: string }>({open: false, parent: ''})
-    const openAddDialog = (parentName: string) => {
-        setDialogState(() => ({open: true, parent: parentName}))
+        showDeleteFile(file)
     }
 
-    const closeAddDialog = () => {
-        // use a function to prevent modifying state before closing the dialog
-        setDialogState(() => ({open: false, parent: ''}))
-    }
-
-    const handleAddConfirm = (filename: string) => {
-        addFile(filename, dialogState.parent).then(() => {
-            closeAddDialog()
-        })
-    }
-    ////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    // import
-    const [importDialogOpen, setImportDialogOpen] = useState(false)
-    // config
-    const [fileConfigDialogOpen, setFileConfigDialogOpen] = useState(false)
-    ////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////////////////
     // file list toggles
-
     // if you navigate to a file, its parent directory opens automatically.
     useEffect(() => {
         if (currentDir) {
@@ -134,7 +98,7 @@ export function FileList({closeTab}: FileListProps) {
                 <Tooltip title={"Configure how files are displayed"}>
                     <Button
                         variant="text"
-                        onClick={() => setFileConfigDialogOpen(true)}
+                        onClick={showFileConfig}
                         sx={{
                             justifyContent: 'flex-start',
                             textTransform: 'none',
@@ -189,7 +153,7 @@ export function FileList({closeTab}: FileListProps) {
                 }>
                     <IconButton
                         size="small"
-                        onClick={() => openAddDialog('')}
+                        onClick={() => showAddFile('')}
                         color="success"
                         sx={{ml: 1}} // Add left margin for spacing between buttons
                         aria-label="Add"
@@ -206,7 +170,7 @@ export function FileList({closeTab}: FileListProps) {
                 }>
                     <IconButton
                         size="small"
-                        onClick={() => setImportDialogOpen(true)}
+                        onClick={() => showAddFile('')}
                         color="info"
                         sx={{ml: 1}} // Add left margin for spacing
                         aria-label="Import"
@@ -229,8 +193,8 @@ export function FileList({closeTab}: FileListProps) {
                             <FileBarItem
                                 key={group.name}
                                 group={group}
-                                onAdd={openAddDialog}
-                                onDelete={openDeleteDialog}
+                                onAdd={showAddFile}
+                                onDelete={handleDelete}
                                 isOpen={openDirs.has(group.name)}
                                 onToggle={handleToggle}
                             />
@@ -238,32 +202,6 @@ export function FileList({closeTab}: FileListProps) {
                     </List>
                 )}
             </StyledScrollbarBox>
-
-            <FilesDialogImport
-                open={importDialogOpen}
-                onClose={() => setImportDialogOpen(false)}
-                onImportComplete={() => {
-                }}
-                currentBranch={selectedHost ?? ""}
-            />
-
-            <FileDialogCreate
-                open={dialogState.open}
-                onClose={closeAddDialog}
-                onConfirm={handleAddConfirm}
-                parentName={dialogState.parent}
-            />
-
-            <FileConfigDialog
-                open={fileConfigDialogOpen}
-                onClose={() => setFileConfigDialogOpen(false)}
-            />
-
-            <FileDialogDelete
-                fileToDelete={fileToDelete}
-                onClose={closeDeleteDialog}
-                handleDelete={handleDelete}
-            />
         </Box>
     )
 }

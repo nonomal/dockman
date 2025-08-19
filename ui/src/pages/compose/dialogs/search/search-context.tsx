@@ -1,6 +1,6 @@
 import {type ReactNode, useCallback, useState} from 'react'
-import Telescope from "../components/telescope.tsx";
-import {TelescopeContext} from "./telescope-hook.ts";
+import {TelescopeContext} from "./search-hook.ts";
+import TelescopeUI from "./search-ui.tsx";
 
 interface TelescopeProviderProps {
     children: ReactNode
@@ -26,7 +26,7 @@ export function TelescopeProvider({children}: TelescopeProviderProps) {
     return (
         <TelescopeContext.Provider value={value}>
             {children}
-            <Telescope
+            <TelescopeUI
                 isVisible={isVisible}
                 onDismiss={dismissChangelog}
             />
