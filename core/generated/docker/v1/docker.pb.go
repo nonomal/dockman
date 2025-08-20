@@ -1273,6 +1273,8 @@ func (*CreateNetworkResponse) Descriptor() ([]byte, []int) {
 
 type DeleteNetworkRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	NetworkIds    []string               `protobuf:"bytes,1,rep,name=networkIds,proto3" json:"networkIds,omitempty"`
+	Prune         bool                   `protobuf:"varint,2,opt,name=prune,proto3" json:"prune,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1305,6 +1307,20 @@ func (x *DeleteNetworkRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DeleteNetworkRequest.ProtoReflect.Descriptor instead.
 func (*DeleteNetworkRequest) Descriptor() ([]byte, []int) {
 	return file_docker_v1_docker_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *DeleteNetworkRequest) GetNetworkIds() []string {
+	if x != nil {
+		return x.NetworkIds
+	}
+	return nil
+}
+
+func (x *DeleteNetworkRequest) GetPrune() bool {
+	if x != nil {
+		return x.Prune
+	}
+	return false
 }
 
 type DeleteNetworkResponse struct {
@@ -2162,8 +2178,12 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\x14ListNetworksResponse\x12.\n" +
 	"\bnetworks\x18\x01 \x03(\v2\x12.docker.v1.NetworkR\bnetworks\"\x16\n" +
 	"\x14CreateNetworkRequest\"\x17\n" +
-	"\x15CreateNetworkResponse\"\x16\n" +
-	"\x14DeleteNetworkRequest\"\x17\n" +
+	"\x15CreateNetworkResponse\"L\n" +
+	"\x14DeleteNetworkRequest\x12\x1e\n" +
+	"\n" +
+	"networkIds\x18\x01 \x03(\tR\n" +
+	"networkIds\x12\x14\n" +
+	"\x05prune\x18\x02 \x01(\bR\x05prune\"\x17\n" +
 	"\x15DeleteNetworkResponse\"8\n" +
 	"\x14ContainerLogsRequest\x12 \n" +
 	"\vcontainerID\x18\x01 \x01(\tR\vcontainerID\"'\n" +

@@ -267,20 +267,28 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                             </TableCell>
 
                             <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                    <Box sx={{flex: 1}}>
+                                <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
+                                    <Box sx={{flex: 1, display: 'flex', alignItems: 'center', gap: 1}}>
                                         <Typography variant="body2" sx={{
                                             wordBreak: 'break-all',
                                             fontWeight: 'medium'
                                         }}>
                                             {network.name}
                                         </Typography>
+                                        {(network.name === "host" || network.name === "bridge" || network.name === "none") &&
+                                            <Chip
+                                                label={`System`}
+                                                size="small"
+                                                color="warning"
+                                                variant="outlined"
+                                            />
+                                        }
                                     </Box>
                                     <CopyButton
                                         handleCopy={handleCopy}
                                         thisID={network.id}
                                         activeID={copiedId ?? ""}
-                                        tooltip={"Copy Network name"}
+                                        tooltip={"Copy Network ID"}
                                     />
                                 </Box>
                             </TableCell>

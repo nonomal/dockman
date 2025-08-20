@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {Box, Button, Card, CircularProgress, Fade, Stack, TextField, Tooltip, Typography} from '@mui/material';
-import {CleaningServices, Delete, DryCleaning, Refresh, Search} from '@mui/icons-material';
+import {Delete, DryCleaning, Refresh, Search} from '@mui/icons-material';
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
 import NetworksLoading from "./networks-loading.tsx";
 import NetworksEmpty from "./networks-empty.tsx";
@@ -8,7 +8,7 @@ import {useDockerNetwork} from "../../hooks/docker-networks.ts";
 import {NetworkTable} from "./networks-table.tsx";
 
 const NetworksPage = () => {
-    const {loading, networks, loadNetworks} = useDockerNetwork();
+    const {loading, networks, loadNetworks, networkPrune, deleteSelected} = useDockerNetwork();
 
     const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
     const [activeAction, setActiveAction] = useState('')
@@ -47,33 +47,25 @@ const NetworksPage = () => {
     const actions = [
         {
             action: 'deleteNetworks',
-            buttonText: `Delete ${selectedNetworks.length === 0 ? "" : `${selectedNetworks.length}`} volumes`,
+            buttonText: `Delete ${selectedNetworks.length === 0 ? "" : `${selectedNetworks.length}`} networks`,
             icon: <Delete/>,
             disabled: selectedNetworks.length === 0 || loading || !!activeAction,
             handler: async () => {
-                setSelectedNetworks([])
+                deleteSelected(selectedNetworks).then(() => {
+                    setSelectedNetworks([])
+                })
             },
             tooltip: 'Delete selected networks',
         },
         {
             action: 'deleteUnused',
-            buttonText: `Prune Unused`,
+            buttonText: `Network Prune`,
             icon: <DryCleaning/>,
             disabled: loading || !!activeAction,
             handler: async () => {
-
+                await networkPrune()
             },
-            tooltip: 'Delete unused images',
-        },
-        {
-            action: 'deleteAnon',
-            buttonText: `Prune Anonymous`,
-            icon: <CleaningServices/>,
-            disabled: loading || !!activeAction,
-            handler: async () => {
-
-            },
-            tooltip: 'Delete anonymous images',
+            tooltip: 'Equivalent of `docker network prune`',
         },
     ]
 

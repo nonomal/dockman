@@ -75,7 +75,7 @@ func (s *ContainerService) ContainersRemove(ctx context.Context, containerId ...
 // ContainersUpdate finds all containers using the specified image,
 // pulls the latest version of the image, and recreates the containers
 // with the new image while preserving their configuration.
-func (s *ContainerService) ContainersUpdate(ctx context.Context, containerId ...string) error {
+func (s *ContainerService) ContainersUpdate(_ context.Context, _ ...string) error {
 	//for _, cont := range containerId {
 	//
 	//}
@@ -277,6 +277,10 @@ func (s *ContainerService) NetworksCreate(ctx context.Context, name string) (net
 
 func (s *ContainerService) NetworksDelete(ctx context.Context, networkID string) error {
 	return s.daemon.NetworkRemove(ctx, networkID)
+}
+
+func (s *ContainerService) NetworksPrune(ctx context.Context) (network.PruneReport, error) {
+	return s.daemon.NetworksPrune(ctx, filters.NewArgs())
 }
 
 func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error) {
@@ -487,12 +491,6 @@ func formatCPU(statsJSON container.StatsResponse) float64 {
 	}
 
 	return cpuPercent
-}
-
-func filterByLabels(projectname string) {
-	containerFilters := filters.NewArgs()
-	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, projectname)
-	containerFilters.Add("label", projectLabel)
 }
 
 func parallelLoop[T any, R any](input []R, mapper func(R) (T, bool)) []T {

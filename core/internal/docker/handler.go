@@ -461,9 +461,20 @@ func (h *Handler) NetworkCreate(_ context.Context, req *connect.Request[v1.Creat
 	return nil, fmt.Errorf(" implement me NetworkCreate")
 }
 
-func (h *Handler) NetworkDelete(_ context.Context, req *connect.Request[v1.DeleteNetworkRequest]) (*connect.Response[v1.DeleteNetworkResponse], error) {
-	//TODO implement me
-	return nil, fmt.Errorf(" implement me NetworkDelete")
+func (h *Handler) NetworkDelete(ctx context.Context, req *connect.Request[v1.DeleteNetworkRequest]) (*connect.Response[v1.DeleteNetworkResponse], error) {
+	var err error
+	if req.Msg.Prune {
+		_, err = h.srv().NetworksPrune(ctx)
+	} else {
+		for _, nid := range req.Msg.NetworkIds {
+			err = h.srv().NetworksDelete(ctx, nid)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.DeleteNetworkResponse{}), nil
 }
 
 ////////////////////////////////////////////

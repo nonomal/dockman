@@ -18,21 +18,44 @@ export function useDockerNetwork() {
 
         const {val, err} = await callRPC(() => dockerService.networkList({}))
         if (err) {
-            showWarning(`Failed to refresh containers: ${err}`)
+            showWarning(`Failed to refresh networks: ${err}`)
             setNetworks([])
             return
         }
 
         setNetworks(val?.networks || [])
     }, [dockerService, selectedHost])
-    
+
+    const deleteSelected = async (networkIDs: string[]) => {
+        const {err} = await callRPC(
+            () => dockerService.networkDelete(
+                {networkIds: networkIDs}
+            )
+        )
+        if (err) {
+            showWarning(`Failed to delete networks: ${err}`)
+        }
+
+        loadNetworks()
+    }
+
+    const networkPrune = async () => {
+        const {err} = await callRPC(() => dockerService.networkDelete(
+            {prune: true}))
+        if (err) {
+            showWarning(`Failed to delete networks: ${err}`)
+        }
+
+        loadNetworks()
+    }
+
     const loadNetworks = useCallback(() => {
         fetchNetworks().finally(() => setLoading(false))
     }, [fetchNetworks])
-    
+
     useEffect(() => {
         loadNetworks()
     }, [loadNetworks])
 
-    return {networks, loading, loadNetworks}
+    return {networks, loading, loadNetworks, networkPrune, deleteSelected}
 }

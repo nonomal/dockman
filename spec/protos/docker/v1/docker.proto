@@ -150,6 +150,8 @@ message CreateNetworkResponse {
 }
 
 message DeleteNetworkRequest {
+  repeated string networkIds = 1;
+  bool prune = 2;
 }
 
 message DeleteNetworkResponse {
