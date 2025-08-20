@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -283,13 +284,24 @@ func (s *ContainerService) NetworksPrune(ctx context.Context) (network.PruneRepo
 	return s.daemon.NetworksPrune(ctx, filters.NewArgs())
 }
 
+const ContainerVolumeListLevel = zerolog.Level(10)
+
 func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error) {
+	list, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
 	diskUsage, err := s.daemon.DiskUsage(ctx, types.DiskUsageOptions{
 		Types: []types.DiskUsageObject{types.VolumeObject}, // fetch volumes only
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get disk usage data: %w", err)
 	}
+
+	log.WithLevel(ContainerVolumeListLevel).
+		Any("volumes-from-list", list.Volumes).Any("volume-from-sys", diskUsage.Volumes).
+		Msg("volumes from list API vs system DF api")
 
 	var volumeFilters []filters.KeyValuePair
 	for _, vol := range diskUsage.Volumes {
