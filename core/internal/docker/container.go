@@ -18,7 +18,6 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -284,8 +283,6 @@ func (s *ContainerService) NetworksPrune(ctx context.Context) (network.PruneRepo
 	return s.daemon.NetworksPrune(ctx, filters.NewArgs())
 }
 
-const ContainerVolumeListLevel = zerolog.Level(10)
-
 func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error) {
 	list, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
 	if err != nil {
@@ -299,12 +296,21 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 		return nil, fmt.Errorf("failed to get disk usage data: %w", err)
 	}
 
-	log.WithLevel(ContainerVolumeListLevel).
-		Any("volumes-from-list", list.Volumes).Any("volume-from-sys", diskUsage.Volumes).
-		Msg("volumes from list API vs system DF api")
+	// potential perf issue lots of looping
+	tmpMap := make(map[string]*volume.Volume, len(list.Volumes))
+	for _, l := range list.Volumes {
+		tmpMap[l.Name] = l
+	}
 
 	var volumeFilters []filters.KeyValuePair
 	for _, vol := range diskUsage.Volumes {
+		val, ok := tmpMap[vol.Name]
+		if !ok {
+			diskUsage.Volumes = append(diskUsage.Volumes, val)
+			volumeFilters = append(volumeFilters, filters.Arg("volume", val.Name))
+			continue
+		}
+
 		volumeFilters = append(volumeFilters, filters.Arg("volume", vol.Name))
 	}
 
@@ -463,6 +469,41 @@ func (s *ContainerService) getAndFormatStats(ctx context.Context, info container
 		BlockRead:   blkRead,
 		BlockWrite:  blkWrite,
 	}, nil
+}
+
+func (s *ContainerService) ExecContainer(ctx context.Context, containerID string, cmd []string) (*types.HijackedResponse, error) {
+	execConfig := container.ExecOptions{
+		Cmd:          cmd,
+		AttachStdout: true,
+		AttachStderr: true,
+		AttachStdin:  true,
+		Tty:          true,
+	}
+
+	execCreateResp, err := s.daemon.ContainerExecCreate(ctx, containerID, execConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exec instance: %w", err)
+	}
+
+	execAttachOptions := container.ExecAttachOptions{
+		Detach: false,
+		Tty:    true,
+	}
+
+	hijackedResp, err := s.daemon.ContainerExecAttach(ctx, execCreateResp.ID, execAttachOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach to exec instance: %w", err)
+	}
+
+	err = s.daemon.ContainerExecStart(ctx, execCreateResp.ID, container.ExecStartOptions{
+		Detach: false,
+		Tty:    true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to start exec instance: %w", err)
+	}
+
+	return &hijackedResp, nil
 }
 
 func formatDiskIO(statsJSON container.StatsResponse) (uint64, uint64) {
