@@ -373,7 +373,7 @@ func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVo
 		rpcVolumes = append(rpcVolumes, &v1.Volume{
 			Name:               vol.Name,
 			ContainerID:        vol.ContainerID,
-			Size:               vol.UsageData.Size,
+			Size:               safeGetSize(vol),
 			CreatedAt:          vol.CreatedAt,
 			Labels:             getVolumeProjectNameFromLabel(vol.Labels),
 			MountPoint:         vol.Mountpoint,
@@ -385,7 +385,17 @@ func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVo
 	return connect.NewResponse(&v1.ListVolumesResponse{Volumes: rpcVolumes}), nil
 }
 
+func safeGetSize(vol VolumeInfo) int64 {
+	if vol.UsageData == nil {
+		return 0
+	}
+	return vol.UsageData.Size
+}
+
 func getVolumeProjectNameFromLabel(labels map[string]string) string {
+	if labels == nil {
+		return ""
+	}
 	const LabelVolumeAnonymous = "com.docker.volume.anonymous"
 	if _, ok := labels[LabelVolumeAnonymous]; ok {
 		return "anonymous"
