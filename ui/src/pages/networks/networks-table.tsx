@@ -169,7 +169,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                                 direction={sortField === 'project' ? sortOrder : 'asc'}
                                 onClick={() => handleSort('project')}
                             >
-                                Project
+                                Stack
                             </TableSortLabel>
                         </TableCell>
 

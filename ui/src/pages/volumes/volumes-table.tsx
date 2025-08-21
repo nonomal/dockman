@@ -177,7 +177,7 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                                 direction={sortField === 'project' ? sortOrder : 'asc'}
                                 onClick={() => handleSort('project')}
                             >
-                                Compose Project
+                                Stack
                             </TableSortLabel>
                         </TableCell>
 
