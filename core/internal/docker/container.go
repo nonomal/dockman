@@ -297,16 +297,17 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 	}
 
 	// potential perf issue lots of looping
-	tmpMap := make(map[string]*volume.Volume, len(list.Volumes))
-	for _, l := range list.Volumes {
+	tmpMap := make(map[string]*volume.Volume, len(diskUsage.Volumes))
+	for _, l := range diskUsage.Volumes {
 		tmpMap[l.Name] = l
 	}
 
 	var volumeFilters []filters.KeyValuePair
-	for _, vol := range diskUsage.Volumes {
+	for i, vol := range list.Volumes {
 		val, ok := tmpMap[vol.Name]
-		if !ok {
-			diskUsage.Volumes = append(diskUsage.Volumes, val)
+		if ok {
+			// overwrite with more metadata from diskusage
+			list.Volumes[i] = val
 			volumeFilters = append(volumeFilters, filters.Arg("volume", val.Name))
 			continue
 		}
@@ -340,7 +341,7 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 	}
 
 	var volumes []VolumeInfo
-	for _, vol := range diskUsage.Volumes {
+	for _, vol := range list.Volumes {
 		inf := VolumeInfo{Volume: vol}
 		if contID, found := containersUsingVolumesMap[vol.Name]; found {
 			inf.ContainerID = contID[0]
