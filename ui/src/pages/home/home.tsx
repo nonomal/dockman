@@ -10,7 +10,7 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
-import {Logout, Settings} from '@mui/icons-material';
+import {AddOutlined, Logout, Settings} from '@mui/icons-material';
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom';
 
 import HostSelectDropdown from "./host-selector.tsx";
@@ -164,6 +164,16 @@ export function RootLayout() {
                                 Host:
                             </Typography>
                             <HostSelectDropdown/>
+                            <Tooltip title="Add host">
+                                <IconButton
+                                    component={RouterLink}
+                                    to="/settings"
+                                    color={location.pathname === '/settings' ? 'primary' : 'default'}
+                                >
+                                    <AddOutlined/>
+                                </IconButton>
+                            </Tooltip>
+
                         </Box>
                     </Box>
 
