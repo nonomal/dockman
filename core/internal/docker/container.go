@@ -284,10 +284,30 @@ func (s *ContainerService) NetworksPrune(ctx context.Context) (network.PruneRepo
 }
 
 func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error) {
-	list, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
+	// Add nil check for daemon with zerolog debug logging
+	if s.daemon == nil {
+		log.Debug().Msg("Docker daemon client is nil")
+		return nil, fmt.Errorf("docker daemon client not initialized")
+	}
+
+	log.Debug().Msg("Starting VolumesList operation")
+
+	listResp, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
+
+	if listResp.Volumes == nil {
+		log.Debug().
+			Int("warnings_count", len(listResp.Warnings)).
+			Strs("warnings", listResp.Warnings).
+			Msg("VolumeList returned nil volumes slice")
+		return []VolumeInfo{}, nil // Return empty slice instead of nil
+	}
+
+	log.Debug().
+		Int("volumes_count", len(listResp.Volumes)).
+		Msg("Successfully retrieved volumes listResp")
 
 	diskUsage, err := s.daemon.DiskUsage(ctx, types.DiskUsageOptions{
 		Types: []types.DiskUsageObject{types.VolumeObject}, // fetch volumes only
@@ -296,18 +316,32 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 		return nil, fmt.Errorf("failed to get disk usage data: %w", err)
 	}
 
-	// potential perf issue lots of looping
-	tmpMap := make(map[string]*volume.Volume, len(diskUsage.Volumes))
-	for _, l := range diskUsage.Volumes {
-		tmpMap[l.Name] = l
+	// Add nil check for diskUsage.Volumes with zerolog debug logging
+	tmpMap := make(map[string]*volume.Volume)
+	if diskUsage.Volumes == nil {
+		log.Debug().Msg("DiskUsage returned nil volumes slice")
+	} else {
+		log.Debug().
+			Int("disk_usage_volumes_count", len(diskUsage.Volumes)).
+			Msg("Retrieved disk usage for volumes")
+		tmpMap = make(map[string]*volume.Volume, len(diskUsage.Volumes))
+		for _, l := range diskUsage.Volumes {
+			tmpMap[l.Name] = l
+		}
 	}
 
 	var volumeFilters []filters.KeyValuePair
-	for i, vol := range list.Volumes {
+	for i, vol := range listResp.Volumes {
+		// Add nil check for vol with debug logging
+		if vol == nil {
+			log.Debug().Int("volume_index", i).Msg("Skipping nil volume in listResp")
+			continue
+		}
+
 		val, ok := tmpMap[vol.Name]
 		if ok {
 			// overwrite with more metadata from diskusage
-			list.Volumes[i] = val
+			listResp.Volumes[i] = val
 			volumeFilters = append(volumeFilters, filters.Arg("volume", val.Name))
 			continue
 		}
@@ -341,7 +375,13 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 	}
 
 	var volumes []VolumeInfo
-	for _, vol := range list.Volumes {
+	for _, vol := range listResp.Volumes {
+		// Add nil check for vol with debug logging
+		if vol == nil {
+			log.Debug().Msg("Skipping nil volume in final processing")
+			continue
+		}
+
 		inf := VolumeInfo{Volume: vol}
 		if contID, found := containersUsingVolumesMap[vol.Name]; found {
 			inf.ContainerID = contID[0]
@@ -351,6 +391,10 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 
 		volumes = append(volumes, inf)
 	}
+
+	log.Debug().
+		Int("final_volumes_count", len(volumes)).
+		Msg("VolumesList operation completed successfully")
 
 	return volumes, nil
 }
