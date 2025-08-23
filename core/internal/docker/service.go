@@ -11,8 +11,8 @@ type Service struct {
 }
 
 func NewService(daemonAddr, composeRoot string, dockerClient *client.Client, syncer Syncer) *Service {
-	containerClient := NewContainerService(dockerClient)
-	composeClient := NewComposeService(composeRoot, containerClient, syncer)
+	containerClient := NewContainerService(dockerClient, &composeRoot)
+	composeClient := NewComposeService(containerClient, syncer)
 
 	return &Service{
 		ContainerService: containerClient,

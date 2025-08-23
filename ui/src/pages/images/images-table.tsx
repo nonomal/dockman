@@ -3,7 +3,6 @@ import {
     Box,
     Checkbox,
     Chip,
-    IconButton,
     Link,
     Paper,
     Stack,
@@ -17,13 +16,14 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
-import {CalendarToday as CalendarIcon, ContentCopy, Tag as TagIcon} from '@mui/icons-material';
+import {CalendarToday as CalendarIcon, Tag as TagIcon} from '@mui/icons-material';
 import {getImageHomePageUrl} from "../../hooks/docker-images.ts";
 import {formatBytes} from "../../lib/editor.ts";
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
 import {useCopyButton} from "../../hooks/copy.ts";
-import CheckIcon from "@mui/icons-material/Check";
 import type {Image} from "../../gen/docker/v1/docker_pb.ts";
+import CopyButton from "../../components/copy-button.tsx";
+import {formatDate} from "../../lib/api.ts";
 
 
 type SortField = 'name' | 'size' | 'sharedSize' | 'containers' | 'created';
@@ -257,32 +257,12 @@ export const ImageTable = (
                                             </Typography>
                                         )}
                                     </Box>
-                                    <Tooltip
-                                        title={copiedId === image.id ? "Copied!" : "Copy Image ID"}
-                                        placement="top">
-                                        <IconButton
-                                            onClick={(e) => handleCopy(e, image.id)}
-                                            size="small"
-                                            sx={{position: 'relative', flexShrink: 0}}
-                                        >
-                                            <CheckIcon
-                                                fontSize="inherit"
-                                                sx={{
-                                                    position: 'absolute',
-                                                    opacity: copiedId === image.id ? 1 : 0,
-                                                    transition: 'opacity 0.2s',
-                                                    color: 'success.main'
-                                                }}
-                                            />
-                                            <ContentCopy
-                                                fontSize="inherit"
-                                                sx={{
-                                                    opacity: copiedId === image.id ? 0 : 1,
-                                                    transition: 'opacity 0.2s',
-                                                }}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
+                                    <CopyButton
+                                        tooltip={"Copy image ID"}
+                                        handleCopy={handleCopy}
+                                        thisID={image.id}
+                                        activeID={copiedId ?? ""}
+                                    />
                                 </Box>
                             </TableCell>
 
@@ -362,14 +342,3 @@ export const ImageTable = (
         </TableContainer>
     );
 };
-
-function formatDate(timestamp: bigint | number) {
-    const bigIntTimestamp = typeof timestamp === 'bigint' ? Number(timestamp) : timestamp;
-    return new Date(bigIntTimestamp).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}

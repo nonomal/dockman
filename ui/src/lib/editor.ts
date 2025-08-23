@@ -1,8 +1,8 @@
 export const formatBytes = (bytes: number | bigint, decimals = 2) => {
-    if (bytes === 0 || bytes === 0n) return '0 Bytes'
+    if (bytes === 0 || bytes === 0n) return '0 B'
     const k = 1024
     const dm = decimals < 0 ? 0 : decimals
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
     const i = Math.floor(Math.log(Number(bytes)) / Math.log(k))
     return parseFloat((Number(bytes) / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }

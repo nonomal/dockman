@@ -3,6 +3,14 @@ package docker
 import (
 	"context"
 	"fmt"
+	"io"
+	"maps"
+	"path/filepath"
+	"reflect"
+	"slices"
+	"strings"
+
+	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/compose-spec/compose-go/v2/cli"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
@@ -12,25 +20,17 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rs/zerolog/log"
-	"io"
-	"maps"
-	"path/filepath"
-	"reflect"
-	"slices"
-	"strings"
 )
 
 // reference: https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
 
 type ComposeService struct {
-	composeRoot      string
 	containerService *ContainerService
 	syncer           Syncer
 }
 
-func NewComposeService(composeRoot string, client *ContainerService, syncer Syncer) *ComposeService {
+func NewComposeService(client *ContainerService, syncer Syncer) *ComposeService {
 	return &ComposeService{
-		composeRoot:      composeRoot,
 		containerService: client,
 		syncer:           syncer,
 	}
@@ -213,21 +213,34 @@ func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream i
 }
 
 func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*types.Project, error) {
-	fullPath := filepath.Join(s.composeRoot, shortName)
+	fullPath := filepath.Join(*s.containerService.composeRoot, shortName)
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(fullPath)
+
+	var finalEnv []string
+	for _, file := range []string{
+		// Global .env
+		filepath.Join(*s.containerService.composeRoot, ".env"),
+		// Subdirectory .env (will override global)
+		filepath.Join(workingDir, ".env"),
+	} {
+		if fileutil.FileExists(file) {
+			finalEnv = append(finalEnv, file)
+		}
+	}
 
 	options, err := cli.NewProjectOptions(
 		[]string{fullPath},
 		// important maintain this order to load .env properly
-		// working-dir -> env -> os -> dot env -> sub dir .envs
-		cli.WithWorkingDirectory(s.composeRoot),
-		cli.WithEnvFiles(),
+		// highest 										lowest
+		// working-dir .env <- compose root .env <- os envs
+		cli.WithEnvFiles(finalEnv...),
+		cli.WithDotEnv,
 		cli.WithOsEnv,
-		cli.WithDotEnv,
-		cli.WithDefaultProfiles(),
+		// compose operations will take place in working dir
 		cli.WithWorkingDirectory(workingDir),
-		cli.WithDotEnv,
+		// other shit
+		cli.WithDefaultProfiles(),
 		cli.WithResolvedPaths(true),
 	)
 	if err != nil {

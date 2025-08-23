@@ -77,7 +77,7 @@ interface FileIconProps {
     filename: string;
 }
 
-const FileIcon: React.FC<FileIconProps> = ({filename}) => {
+const FileBarIcon: React.FC<FileIconProps> = ({filename}) => {
     if (filename.endsWith('compose.yaml') || filename.endsWith('compose.yml')) {
         return <DockerComposeIcon/>;
     }
@@ -93,4 +93,4 @@ const FileIcon: React.FC<FileIconProps> = ({filename}) => {
     return <DefaultFileIcon/>;
 };
 
-export default FileIcon;
+export default FileBarIcon;

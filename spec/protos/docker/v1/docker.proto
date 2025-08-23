@@ -90,12 +90,14 @@ message ImagesDeleted {
 
 // Volume-related messages
 message Volume {
-  string CreatedAt = 1;
-  string Driver = 2;
-  map<string, string> Labels = 3;
-  string MountPoint = 4;
-  string Name = 5;
-  string Scope = 6;
+  string name = 1;
+  string containerID = 2;
+  string createdAt = 3;
+  string mountPoint = 4;
+  int64 size = 5;
+  string labels = 6;
+  string composePath = 7;
+  string composeProjectName = 8;
 }
 
 message ListVolumesRequest {}
@@ -111,6 +113,9 @@ message CreateVolumeResponse {
 }
 
 message DeleteVolumeRequest {
+  repeated string volumeIds = 1;
+  bool anon = 2;
+  bool unused = 3;
 }
 
 message DeleteVolumeResponse {
@@ -120,14 +125,16 @@ message DeleteVolumeResponse {
 message Network {
   string name = 1;
   string id = 2;
+  string subnet = 3;
   string scope = 4;
   string driver = 5;
   bool enable_ipv4 = 6;
   bool enable_ipv6 = 7;
   bool internal = 9;
   bool attachable = 10;
-  bool ingress = 11;
-  bool config_only = 13;
+  string createdAt = 11;
+  string composeProject = 12;
+  repeated string containerIds = 13;
 }
 
 message ListNetworksRequest {}
@@ -143,6 +150,8 @@ message CreateNetworkResponse {
 }
 
 message DeleteNetworkRequest {
+  repeated string networkIds = 1;
+  bool prune = 2;
 }
 
 message DeleteNetworkResponse {

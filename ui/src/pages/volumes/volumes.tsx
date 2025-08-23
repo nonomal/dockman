@@ -1,29 +1,79 @@
-import {useState} from 'react';
-import {Box, Button, Card, CircularProgress, Stack, Typography} from '@mui/material';
-import {Refresh} from '@mui/icons-material';
+import {useEffect, useMemo, useRef, useState} from 'react';
+import {Box, Button, Card, CircularProgress, Fade, Stack, TextField, Tooltip, Typography} from '@mui/material';
+import {CleaningServices, Delete, DryCleaning, Refresh, Search} from '@mui/icons-material';
 import {useDockerVolumes} from "../../hooks/docker-volumes.ts";
 import {VolumeTable} from './volumes-table.tsx';
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
+import VolumesLoading from "./volumes-loading.tsx";
+import VolumesEmpty from "./volumes-empty.tsx";
 
 const VolumesPage = () => {
-    const {loadVolumes, volumes, loading} = useDockerVolumes();
+    const {loadVolumes, volumes, loading, deleteAnonynomous, deleteSelected, deleteUnunsed} = useDockerVolumes();
     const [selectedVolumes, setSelectedVolumes] = useState<string[]>([]);
+    const [activeAction, setActiveAction] = useState('')
 
-    const handleRefresh = () => {
-        loadVolumes();
-    };
+    const [search, setSearch] = useState("")
+    const searchInputRef = useRef<HTMLInputElement>(null)
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.altKey && event.key === 'q') {
+                event.preventDefault()
+                searchInputRef.current?.focus()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [])
 
-    // const handleDelete = async () => {
-    //     // Implement delete functionality
-    //     console.log('Deleting volumes:', selectedVolumes);
-    //     setSelectedVolumes([]);
-    // };
-    //
-    // const handlePruneUnused = async () => {
-    //     // Implement prune unused volumes functionality
-    //     console.log('Pruning unused volumes');
-    // };
+    const buttonAction = async (callback: () => Promise<void>, actionName: string) => {
+        setActiveAction(actionName)
+        await callback()
+        setActiveAction('')
+    }
 
+    const filteredVolumes = useMemo(() => {
+        if (search) {
+            return volumes.filter(vol =>
+                vol.name.toLowerCase().includes(search) ||
+                vol.containerID.toLowerCase().includes(search) ||
+                vol.labels.toLowerCase().includes(search) ||
+                vol.mountPoint.toLowerCase().includes(search)
+            )
+        }
+        return volumes;
+    }, [search, volumes]);
+
+    const actions = [
+        {
+            action: 'deleteSelected',
+            buttonText: `Delete ${selectedVolumes.length === 0 ? "" : `${selectedVolumes.length}`} volumes`,
+            icon: <Delete/>,
+            disabled: selectedVolumes.length === 0 || loading || !!activeAction,
+            handler: async () => {
+                await deleteSelected(selectedVolumes)
+                setSelectedVolumes([])
+            },
+            tooltip: 'Delete selected volumes',
+        },
+        {
+            action: 'deleteUnused',
+            buttonText: `Prune Unused`,
+            icon: <DryCleaning/>,
+            disabled: loading || !!activeAction,
+            handler: deleteUnunsed,
+            tooltip: 'Delete unused images',
+        },
+        {
+            action: 'deleteAnon',
+            buttonText: `Prune Anonymous`,
+            icon: <CleaningServices/>,
+            disabled: loading || !!activeAction,
+            handler: deleteAnonynomous,
+            tooltip: 'Delete anonymous images',
+        },
+    ]
+
+    const isEmpty = volumes.length === 0;
     return (
         <Box sx={{
             display: 'flex',
@@ -60,45 +110,58 @@ const VolumesPage = () => {
                     </Typography>
                 </Box>
 
-                <Button
-                    variant="contained"
-                    startIcon={loading ? <CircularProgress size={16} color="inherit"/> : <Refresh/>}
-                    onClick={handleRefresh}
-                    disabled={loading}
-                    sx={{minWidth: 100}}
-                >
-                    {loading ? 'Refreshing...' : 'Refresh'}
-                </Button>
+                <TextField
+                    inputRef={searchInputRef}
+                    size="small"
+                    placeholder={`Search... ALT+Q`}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    slotProps={{
+                        input: {
+                            startAdornment: <Search sx={{mr: 1, color: 'action.active'}}/>,
+                        }
+                    }}
+                    sx={{
+                        minWidth: 250,
+                        '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        }
+                    }}
+                />
+
+                <Tooltip title={loading ? 'Refreshing...' : 'Refresh volumes'}>
+                    <Button
+                        variant="contained"
+                        size="small"
+                        onClick={loadVolumes}
+                        disabled={loading}
+                        sx={{minWidth: 'auto', px: 1.5}}
+                    >
+                        {loading ? <CircularProgress size={16} color="inherit"/> : <Refresh/>}
+                    </Button>
+                </Tooltip>
 
                 {/* Spacer */}
                 <Box sx={{flexGrow: 0.95}}/>
 
                 {/* Actions */}
                 <Stack direction="row" spacing={2}>
-                    {/*todo*/}
-                    {/*<Tooltip title="Remove selected volumes">*/}
-                    {/*    <Button*/}
-                    {/*        variant="contained"*/}
-                    {/*        startIcon={<Delete/>}*/}
-                    {/*        onClick={handleDelete}*/}
-                    {/*        disabled={loading || selectedVolumes.length === 0}*/}
-                    {/*        sx={{minWidth: 140}}*/}
-                    {/*    >*/}
-                    {/*        Delete {selectedVolumes.length === 0 ? "" : `${selectedVolumes.length}`} volumes*/}
-                    {/*    </Button>*/}
-                    {/*</Tooltip>*/}
-
-                    {/*<Tooltip title="Remove unused volumes">*/}
-                    {/*    <Button*/}
-                    {/*        variant="contained"*/}
-                    {/*        startIcon={<Timer/>}*/}
-                    {/*        onClick={handlePruneUnused}*/}
-                    {/*        disabled={loading}*/}
-                    {/*        sx={{minWidth: 140}}*/}
-                    {/*    >*/}
-                    {/*        Prune Unused*/}
-                    {/*    </Button>*/}
-                    {/*</Tooltip>*/}
+                    {actions.map((action) => (
+                        <Tooltip title={action.tooltip}>
+                            <Button
+                                variant="contained"
+                                onClick={() => buttonAction(action.handler, action.action)}
+                                disabled={action.disabled}
+                                sx={{minWidth: 140}}
+                                startIcon={activeAction === action.action ?
+                                    <CircularProgress size={20} color="inherit"/> :
+                                    action.icon
+                                }
+                            >
+                                {action.buttonText}
+                            </Button>
+                        </Tooltip>
+                    ))}
                 </Stack>
             </Card>
 
@@ -112,41 +175,21 @@ const VolumesPage = () => {
                 overflow: 'hidden',
                 minHeight: 0
             }}>
-                {loading ? (
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        width: '100%',
-                        height: '100%'
-                    }}>
-                        <CircularProgress/>
-                    </Box>
-                ) : volumes.length === 0 ? (
-                    <Box sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        width: '100%',
-                        height: '100%',
-                        textAlign: 'center',
-                        gap: 2
-                    }}>
-                        <Typography variant="h6" color="text.secondary">
-                            No volumes found
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Create some Docker volumes to see them here
-                        </Typography>
-                    </Box>
-                ) : (
-                    <VolumeTable
-                        volumes={volumes}
-                        selectedVolumes={selectedVolumes}
-                        onSelectionChange={setSelectedVolumes}
-                    />
-                )}
+                {loading ?
+                    <VolumesLoading/> :
+                    <Fade in={!loading} timeout={300}>
+                        <div style={{width: '100%'}}>
+                            {isEmpty ?
+                                <VolumesEmpty/> :
+                                <VolumeTable
+                                    volumes={filteredVolumes}
+                                    selectedVolumes={selectedVolumes}
+                                    onSelectionChange={setSelectedVolumes}
+                                />
+                            }
+                        </div>
+                    </Fade>
+                }
             </Box>
         </Box>
     );

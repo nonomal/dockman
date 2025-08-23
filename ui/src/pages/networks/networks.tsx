@@ -1,47 +1,75 @@
-import {
-    Box,
-    Button,
-    Card,
-    Checkbox,
-    CircularProgress,
-    Link,
-    Paper,
-    Stack,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Tooltip,
-    Typography
-} from '@mui/material';
-import {Refresh as RefreshIcon, Storage as StorageIcon} from '@mui/icons-material';
-import {useDockerNetwork} from "../../hooks/docker-networks.ts";
+import {useEffect, useMemo, useRef, useState} from 'react';
+import {Box, Button, Card, CircularProgress, Fade, Stack, TextField, Tooltip, Typography} from '@mui/material';
+import {Delete, DryCleaning, Refresh, Search} from '@mui/icons-material';
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
-import type {Network} from "../../gen/docker/v1/docker_pb.ts";
-import {useState} from "react";
+import NetworksLoading from "./networks-loading.tsx";
+import NetworksEmpty from "./networks-empty.tsx";
+import {useDockerNetwork} from "../../hooks/docker-networks.ts";
+import {NetworkTable} from "./networks-table.tsx";
 
 const NetworksPage = () => {
-    const {loading, networks, loadNetworks} = useDockerNetwork();
+    const {loading, networks, loadNetworks, networkPrune, deleteSelected} = useDockerNetwork();
 
-    const handleRefresh = () => {
-        loadNetworks();
-    };
+    const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
+    const [activeAction, setActiveAction] = useState('')
 
-    // const handlePruneUnused = async () => {
-    //     // await pruneUnused(true)
-    // };
-    //
-    // const handlePruneUntagged = async () => {
-    //     // await pruneUnused()
-    // };
+    const [search, setSearch] = useState("")
+    const searchInputRef = useRef<HTMLInputElement>(null)
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.altKey && event.key === 'q') {
+                event.preventDefault()
+                searchInputRef.current?.focus()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [])
 
-    const [selectedNetworks, setSelectedNetworks] = useState<string[]>([])
+    const buttonAction = async (callback: () => Promise<void>, actionName: string) => {
+        setActiveAction(actionName)
+        await callback()
+        setActiveAction('')
+    }
 
+    const filteredNetworks = useMemo(() => {
+        if (search) {
+            return networks.filter(vol =>
+                vol.id.toLowerCase().includes(search) ||
+                vol.name.toLowerCase().includes(search) ||
+                vol.driver.toLowerCase().includes(search) ||
+                vol.scope.toLowerCase().includes(search)
+            )
+        }
+        return networks;
+    }, [search, networks]);
 
-    const searchTerm = '';
+    const actions = [
+        {
+            action: 'deleteNetworks',
+            buttonText: `Delete ${selectedNetworks.length === 0 ? "" : `${selectedNetworks.length}`} networks`,
+            icon: <Delete/>,
+            disabled: selectedNetworks.length === 0 || loading || !!activeAction,
+            handler: async () => {
+                deleteSelected(selectedNetworks).then(() => {
+                    setSelectedNetworks([])
+                })
+            },
+            tooltip: 'Delete selected networks',
+        },
+        {
+            action: 'deleteUnused',
+            buttonText: `Network Prune`,
+            icon: <DryCleaning/>,
+            disabled: loading || !!activeAction,
+            handler: async () => {
+                await networkPrune()
+            },
+            tooltip: 'Equivalent of `docker network prune`',
+        },
+    ]
 
+    const isEmpty = networks.length === 0;
     return (
         <Box sx={{
             display: 'flex',
@@ -78,40 +106,58 @@ const NetworksPage = () => {
                     </Typography>
                 </Box>
 
-                <Button
-                    variant="contained"
-                    startIcon={loading ? <CircularProgress size={16} color="inherit"/> : <RefreshIcon/>}
-                    onClick={handleRefresh}
-                    disabled={loading}
-                    sx={{minWidth: 100}}
-                >
-                    {loading ? 'Refreshing...' : 'Refresh'}
-                </Button>
+                <TextField
+                    inputRef={searchInputRef}
+                    size="small"
+                    placeholder={`Search... ALT+Q`}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    slotProps={{
+                        input: {
+                            startAdornment: <Search sx={{mr: 1, color: 'action.active'}}/>,
+                        }
+                    }}
+                    sx={{
+                        minWidth: 250,
+                        '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        }
+                    }}
+                />
+
+                <Tooltip title={loading ? 'Refreshing...' : 'Refresh Networks'}>
+                    <Button
+                        variant="contained"
+                        size="small"
+                        onClick={loadNetworks}
+                        disabled={loading}
+                        sx={{minWidth: 'auto', px: 1.5}}
+                    >
+                        {loading ? <CircularProgress size={16} color="inherit"/> : <Refresh/>}
+                    </Button>
+                </Tooltip>
 
                 {/* Spacer */}
                 <Box sx={{flexGrow: 0.95}}/>
 
                 {/* Actions */}
                 <Stack direction="row" spacing={2}>
-                    {/*<Button*/}
-                    {/*    variant="contained"*/}
-                    {/*    startIcon={<Delete/>}*/}
-                    {/*    onClick={handlePruneUntagged}*/}
-                    {/*    disabled={loading}*/}
-                    {/*    sx={{minWidth: 140}}*/}
-                    {/*>*/}
-                    {/*    Prune Untagged*/}
-                    {/*</Button>*/}
-
-                    {/*<Button*/}
-                    {/*    variant="contained"*/}
-                    {/*    startIcon={<Timer/>}*/}
-                    {/*    onClick={handlePruneUnused}*/}
-                    {/*    disabled={loading}*/}
-                    {/*    sx={{minWidth: 140}}*/}
-                    {/*>*/}
-                    {/*    Prune Unused*/}
-                    {/*</Button>*/}
+                    {actions.map((action) => (
+                        <Tooltip title={action.tooltip}>
+                            <Button
+                                variant="contained"
+                                onClick={() => buttonAction(action.handler, action.action)}
+                                disabled={action.disabled}
+                                sx={{minWidth: 140}}
+                                startIcon={activeAction === action.action ?
+                                    <CircularProgress size={20} color="inherit"/> :
+                                    action.icon
+                                }
+                            >
+                                {action.buttonText}
+                            </Button>
+                        </Tooltip>
+                    ))}
                 </Stack>
             </Card>
 
@@ -125,148 +171,23 @@ const NetworksPage = () => {
                 overflow: 'hidden',
                 minHeight: 0
             }}>
-                {loading ? (
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        width: '100%',
-                        flex: 1
-                    }}>
-                        <CircularProgress sx={{mr: 2}}/>
-                        <Typography variant="body1" color="text.secondary">
-                            Loading Networks...
-                        </Typography>
-                    </Box>
-                ) : networks.length === 0 ? (
-                        <Paper sx={{
-                            p: 6,
-                            textAlign: 'center',
-                            height: '100%',
-                            width: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center'
-                        }}>
-                            <StorageIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2, mx: 'auto'}}/>
-                            <Typography variant="h6" sx={{mb: 1}}>
-                                {searchTerm ? 'No images found' : 'No images available'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                {searchTerm ? (
-                                    'Try adjusting your search criteria.'
-                                ) : (
-                                    <>
-                                        Run some apps, treat yourself, {' '}
-                                        <Link
-                                            href="https://selfh.st/apps/"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            https://selfh.st/apps/
-                                        </Link>
-                                    </>
-                                )}
-                            </Typography>
-                        </Paper>
-                    ) :
-                    <NetworkTable
-                        networks={networks}
-                        onSelectionChange={setSelectedNetworks}
-                        selectedNetworks={selectedNetworks}
-                    />
+                {loading ?
+                    <NetworksLoading/> :
+                    <Fade in={!loading} timeout={300}>
+                        <div style={{width: '100%'}}>
+                            {isEmpty ?
+                                <NetworksEmpty/> :
+                                <NetworkTable
+                                    networks={filteredNetworks}
+                                    selectedNetworks={selectedNetworks}
+                                    onSelectionChange={setSelectedNetworks}
+                                />
+                            }
+                        </div>
+                    </Fade>
                 }
             </Box>
         </Box>
-    );
-};
-
-interface NetworkTableProps {
-    networks: Network[];
-    selectedNetworks: string[];
-    onSelectionChange: (selectedIds: string[]) => void;
-}
-
-const NetworkTable = ({networks, onSelectionChange, selectedNetworks}: NetworkTableProps) => {
-    const isAllSelected = selectedNetworks.length === networks.length && networks.length > 0;
-    const isIndeterminate = selectedNetworks.length > 0 && selectedNetworks.length < networks.length;
-
-    const handleSelectAll = () => {
-        if (!onSelectionChange) return;
-
-        const allSelected = selectedNetworks.length === networks.length;
-        const newSelection = allSelected ? [] : networks.map(img => img.id);
-        onSelectionChange(newSelection);
-    };
-
-    const handleRowSelection = (imageId: string) => {
-        if (!onSelectionChange) return;
-
-        const newSelection = selectedNetworks.includes(imageId)
-            ? selectedNetworks.filter(id => id !== imageId)
-            : [...selectedNetworks, imageId];
-
-        onSelectionChange(newSelection);
-    };
-
-    return (
-        <TableContainer
-            component={Paper}
-            sx={{
-                height: '100%',
-                overflow: 'auto',
-                ...scrollbarStyles,
-            }}
-        >
-            <Table stickyHeader sx={{minWidth: 650}}>
-                <TableHead>
-                    <TableRow>
-                        <TableCell padding="checkbox">
-                            <Checkbox
-                                indeterminate={isIndeterminate}
-                                checked={isAllSelected}
-                                onChange={handleSelectAll}
-                            />
-                        </TableCell>
-                        <TableCell sx={{fontWeight: 'bold', minWidth: 150}}>
-                            Name
-                        </TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {networks.map((net) => (
-                        <TableRow
-                            key={net.id}
-                            hover
-                            sx={{'&:last-child td, &:last-child th': {border: 0}}}
-                        >
-                            <TableCell padding="checkbox">
-                                <Checkbox
-                                    checked={selectedNetworks.includes(net.id)}
-                                    onChange={() => handleRowSelection(net.id)}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            </TableCell>
-
-                            <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                    {
-                                        <Tooltip title="Open image website" arrow>
-                                            <Typography variant="body2" component="span" sx={{
-                                                wordBreak: 'break-all',
-                                                '&:hover': {textDecoration: 'underline'}
-                                            }}>
-                                                {net.name}
-                                            </Typography>
-                                        </Tooltip>
-                                    }
-                                </Box>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </TableContainer>
     );
 };
 

@@ -1,11 +1,13 @@
 package logger
 
 import (
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"io"
 	"os"
+	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type LogConfig struct {
@@ -22,6 +24,13 @@ func parseLevel(levelStr string) zerolog.Level {
 	level, err := zerolog.ParseLevel(strings.ToLower(strings.TrimSpace(levelStr)))
 	if err != nil {
 		log.Warn().Str("invalid_level", levelStr).Msg("Invalid log level, using info")
+
+		customLevel, err := strconv.Atoi(levelStr)
+		if err == nil {
+			log.Info().Int("level", customLevel).Msg("Setting custom log level")
+			return zerolog.Level(customLevel)
+		}
+
 		return zerolog.InfoLevel
 	}
 	return level

@@ -17,8 +17,8 @@ import {
     Typography,
 } from "@mui/material"
 import {Cancel, CloudDownloadOutlined, Sync} from "@mui/icons-material"
-import {callRPC, useClient} from "../../../lib/api.ts";
-import {GitService} from "../../../gen/git/v1/git_pb.ts";
+import {GitService} from "../../../../gen/git/v1/git_pb.ts";
+import {callRPC, useClient} from "../../../../lib/api.ts";
 
 interface ImportFilesDialogProps {
     open: boolean
@@ -27,7 +27,7 @@ interface ImportFilesDialogProps {
     currentBranch: string
 }
 
-export function FilesDialogImport({open, onClose, onImportComplete, currentBranch}: ImportFilesDialogProps) {
+export function FilesImportDialog({open, onClose, onImportComplete, currentBranch}: ImportFilesDialogProps) {
     const gitClient = useClient(GitService)
 
     // Input states

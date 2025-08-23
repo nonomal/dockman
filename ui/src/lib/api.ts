@@ -137,3 +137,16 @@ export async function* transformAsyncIterable<T, U>(
         onFinally?.();
     }
 }
+
+
+export function formatDate(timestamp: bigint | number | string) {
+    const bigIntTimestamp = typeof timestamp === 'bigint' ? Number(timestamp) : timestamp;
+    return new Date(bigIntTimestamp).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+

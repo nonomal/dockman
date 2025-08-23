@@ -15,7 +15,7 @@ import {
     Typography
 } from "@mui/material"
 import {Add, AddCircleOutline, ArrowBack, Cancel, ErrorOutline, InsertDriveFile} from "@mui/icons-material"
-import {DockerFolderIcon} from "./file-icon.tsx";
+import {DockerFolderIcon} from "../../components/file-bar-icon.tsx";
 
 interface AddFileDialogProps {
     open: boolean
@@ -41,7 +41,7 @@ const FILE_PRESETS: FilePreset[] = [
         title: 'File or Directory',
         description: 'Create files: somefile.txt, docs/readme.md',
         icon: <InsertDriveFile color="primary" sx={{fontSize: '2rem'}}/>,
-        extensions: ['.js', '.json', '.yaml', '.yml', '.env', '.txt', '.md', '.dockerfile', '.gitignore', '-compose.yaml', '-compose.yml']
+        extensions: ['.env', '-compose.yaml', '-compose.yml', '.yaml', '.yml', '.txt', '.md', '.json', '.js']
     },
     {
         type: 'compose-directory',

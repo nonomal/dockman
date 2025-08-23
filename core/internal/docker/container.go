@@ -5,25 +5,29 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"sync"
+
 	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
-	"io"
-	"sync"
 )
 
 type ContainerService struct {
-	daemon *client.Client
+	daemon      *client.Client
+	composeRoot *string
 }
 
-func NewContainerService(cli *client.Client) *ContainerService {
-	return &ContainerService{daemon: cli}
+func NewContainerService(cli *client.Client, composeRoot *string) *ContainerService {
+	return &ContainerService{daemon: cli, composeRoot: composeRoot}
 }
 
 func (s *ContainerService) ContainersStart(ctx context.Context, containerId ...string) error {
@@ -71,7 +75,7 @@ func (s *ContainerService) ContainersRemove(ctx context.Context, containerId ...
 // ContainersUpdate finds all containers using the specified image,
 // pulls the latest version of the image, and recreates the containers
 // with the new image while preserving their configuration.
-func (s *ContainerService) ContainersUpdate(ctx context.Context, containerId ...string) error {
+func (s *ContainerService) ContainersUpdate(_ context.Context, _ ...string) error {
 	//for _, cont := range containerId {
 	//
 	//}
@@ -243,8 +247,28 @@ func (s *ContainerService) PruneUnusedImages(ctx context.Context) (image.PruneRe
 	return s.daemon.ImagesPrune(ctx, filter)
 }
 
-func (s *ContainerService) NetworksList(ctx context.Context) ([]network.Summary, error) {
-	return s.daemon.NetworkList(ctx, network.ListOptions{})
+func (s *ContainerService) NetworksList(ctx context.Context) ([]network.Inspect, error) {
+	list, err := s.daemon.NetworkList(ctx, network.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var errs []error
+	var result []network.Inspect
+	for _, ref := range list {
+		networkInspect, err2 := s.daemon.NetworkInspect(ctx, ref.ID, network.InspectOptions{})
+		if err2 != nil {
+			errs = append(errs, err2)
+			continue
+		}
+		result = append(result, networkInspect)
+	}
+
+	if errs != nil {
+		return nil, fmt.Errorf("could not list networks: %v", errs)
+	}
+
+	return result, nil
 }
 
 func (s *ContainerService) NetworksCreate(ctx context.Context, name string) (network.CreateResponse, error) {
@@ -255,8 +279,131 @@ func (s *ContainerService) NetworksDelete(ctx context.Context, networkID string)
 	return s.daemon.NetworkRemove(ctx, networkID)
 }
 
-func (s *ContainerService) VolumesList(ctx context.Context) (volume.ListResponse, error) {
-	return s.daemon.VolumeList(ctx, volume.ListOptions{})
+func (s *ContainerService) NetworksPrune(ctx context.Context) (network.PruneReport, error) {
+	return s.daemon.NetworksPrune(ctx, filters.NewArgs())
+}
+
+func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error) {
+	// Add nil check for daemon with zerolog debug logging
+	if s.daemon == nil {
+		log.Debug().Msg("Docker daemon client is nil")
+		return nil, fmt.Errorf("docker daemon client not initialized")
+	}
+
+	log.Debug().Msg("Starting VolumesList operation")
+
+	listResp, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if listResp.Volumes == nil {
+		log.Debug().
+			Int("warnings_count", len(listResp.Warnings)).
+			Strs("warnings", listResp.Warnings).
+			Msg("VolumeList returned nil volumes slice")
+		return []VolumeInfo{}, nil // Return empty slice instead of nil
+	}
+
+	log.Debug().
+		Int("volumes_count", len(listResp.Volumes)).
+		Msg("Successfully retrieved volumes listResp")
+
+	diskUsage, err := s.daemon.DiskUsage(ctx, types.DiskUsageOptions{
+		Types: []types.DiskUsageObject{types.VolumeObject}, // fetch volumes only
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get disk usage data: %w", err)
+	}
+
+	// Add nil check for diskUsage.Volumes with zerolog debug logging
+	tmpMap := make(map[string]*volume.Volume)
+	if diskUsage.Volumes == nil {
+		log.Debug().Msg("DiskUsage returned nil volumes slice")
+	} else {
+		log.Debug().
+			Int("disk_usage_volumes_count", len(diskUsage.Volumes)).
+			Msg("Retrieved disk usage for volumes")
+		tmpMap = make(map[string]*volume.Volume, len(diskUsage.Volumes))
+		for _, l := range diskUsage.Volumes {
+			tmpMap[l.Name] = l
+		}
+	}
+
+	var volumeFilters []filters.KeyValuePair
+	for i, vol := range listResp.Volumes {
+		// Add nil check for vol with debug logging
+		if vol == nil {
+			log.Debug().Int("volume_index", i).Msg("Skipping nil volume in listResp")
+			continue
+		}
+
+		val, ok := tmpMap[vol.Name]
+		if ok {
+			// overwrite with more metadata from diskusage
+			listResp.Volumes[i] = val
+			volumeFilters = append(volumeFilters, filters.Arg("volume", val.Name))
+			continue
+		}
+
+		volumeFilters = append(volumeFilters, filters.Arg("volume", vol.Name))
+	}
+
+	containers, err := s.daemon.ContainerList(ctx, container.ListOptions{
+		All:     true,
+		Filters: filters.NewArgs(volumeFilters...),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list containers: %w", err)
+	}
+
+	containersUsingVolumesMap := make(map[string][3]string)
+	for _, c := range containers {
+		// We inspect the container's Mounts to find volume information.
+		for _, mn := range c.Mounts {
+			if mn.Type == mount.TypeVolume {
+				// Append the container's first known name to the list for this volume.
+				if len(c.Names) > 0 {
+					containersUsingVolumesMap[mn.Name] = [3]string{
+						c.ID,
+						getComposeFilePath(c, *s.composeRoot),
+						c.Labels[api.ProjectLabel],
+					}
+				}
+			}
+		}
+	}
+
+	var volumes []VolumeInfo
+	for _, vol := range listResp.Volumes {
+		// Add nil check for vol with debug logging
+		if vol == nil {
+			log.Debug().Msg("Skipping nil volume in final processing")
+			continue
+		}
+
+		inf := VolumeInfo{Volume: vol}
+		if contID, found := containersUsingVolumesMap[vol.Name]; found {
+			inf.ContainerID = contID[0]
+			inf.ComposePath = contID[1]
+			inf.ComposeProjectName = contID[2]
+		}
+
+		volumes = append(volumes, inf)
+	}
+
+	log.Debug().
+		Int("final_volumes_count", len(volumes)).
+		Msg("VolumesList operation completed successfully")
+
+	return volumes, nil
+}
+
+type VolumeInfo struct {
+	*volume.Volume
+	ContainerID        string
+	ComposePath        string
+	ComposeProjectName string
 }
 
 func (s *ContainerService) VolumesCreate(ctx context.Context, name string) (volume.Volume, error) {
@@ -267,6 +414,61 @@ func (s *ContainerService) VolumesCreate(ctx context.Context, name string) (volu
 
 func (s *ContainerService) VolumesDelete(ctx context.Context, volumeName string, force bool) error {
 	return s.daemon.VolumeRemove(ctx, volumeName, force)
+}
+
+func (s *ContainerService) VolumesPruneUnunsed(ctx context.Context) error {
+	volResponse, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get disk usage data: %w", err)
+	}
+
+	var volumeFilters []filters.KeyValuePair
+	for _, vol := range volResponse.Volumes {
+		volumeFilters = append(volumeFilters, filters.Arg("volume", vol.Name))
+	}
+
+	containers, err := s.daemon.ContainerList(ctx, container.ListOptions{
+		All:     true,
+		Filters: filters.NewArgs(volumeFilters...),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list containers: %w", err)
+	}
+
+	containersUsingVolumesMap := make(map[string]string)
+	for _, c := range containers {
+		// We inspect the container's Mounts to find volume information.
+		for _, mn := range c.Mounts {
+			if mn.Type == mount.TypeVolume {
+				// Append the container's first known name to the list for this volume.
+				if len(c.Names) > 0 {
+					containersUsingVolumesMap[mn.Name] = c.ID
+				}
+			}
+		}
+	}
+
+	var delErr error
+	for _, vol := range volResponse.Volumes {
+		if _, found := containersUsingVolumesMap[vol.Name]; found {
+			continue
+		}
+
+		err = s.daemon.VolumeRemove(ctx, vol.Name, false)
+		if err != nil {
+			delErr = fmt.Errorf("%w\n%w", delErr, err)
+		}
+	}
+
+	return delErr
+}
+
+func (s *ContainerService) VolumesPrune(ctx context.Context) error {
+	prune, err := s.daemon.VolumesPrune(ctx, filters.NewArgs())
+	if err != nil {
+		log.Debug().Any("report", prune).Msg("VolumesPrune result")
+	}
+	return err
 }
 
 func (s *ContainerService) getStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
@@ -314,6 +516,41 @@ func (s *ContainerService) getAndFormatStats(ctx context.Context, info container
 	}, nil
 }
 
+func (s *ContainerService) ExecContainer(ctx context.Context, containerID string, cmd []string) (*types.HijackedResponse, error) {
+	execConfig := container.ExecOptions{
+		Cmd:          cmd,
+		AttachStdout: true,
+		AttachStderr: true,
+		AttachStdin:  true,
+		Tty:          true,
+	}
+
+	execCreateResp, err := s.daemon.ContainerExecCreate(ctx, containerID, execConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exec instance: %w", err)
+	}
+
+	execAttachOptions := container.ExecAttachOptions{
+		Detach: false,
+		Tty:    true,
+	}
+
+	hijackedResp, err := s.daemon.ContainerExecAttach(ctx, execCreateResp.ID, execAttachOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach to exec instance: %w", err)
+	}
+
+	err = s.daemon.ContainerExecStart(ctx, execCreateResp.ID, container.ExecStartOptions{
+		Detach: false,
+		Tty:    true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to start exec instance: %w", err)
+	}
+
+	return &hijackedResp, nil
+}
+
 func formatDiskIO(statsJSON container.StatsResponse) (uint64, uint64) {
 	var blkRead, blkWrite uint64
 	for _, bioEntry := range statsJSON.BlkioStats.IoServiceBytesRecursive {
@@ -352,12 +589,6 @@ func formatCPU(statsJSON container.StatsResponse) float64 {
 	}
 
 	return cpuPercent
-}
-
-func filterByLabels(projectname string) {
-	containerFilters := filters.NewArgs()
-	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, projectname)
-	containerFilters.Add("label", projectLabel)
 }
 
 func parallelLoop[T any, R any](input []R, mapper func(R) (T, bool)) []T {

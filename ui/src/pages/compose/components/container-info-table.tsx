@@ -22,7 +22,9 @@ import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts"
 import {getImageHomePageUrl} from "../../../hooks/docker-images.ts"
 import scrollbarStyles from "../../../components/scrollbar-style.tsx"
 import type {Message} from "@bufbuild/protobuf"
-import {useNavigate} from "react-router-dom"
+import CopyButton from "../../../components/copy-button.tsx";
+import {useCopyButton} from "../../../hooks/copy.ts";
+import ComposeLink from "../../../components/compose-link.tsx";
 
 interface ContainerTableProps {
     containers: ContainerList[]
@@ -46,7 +48,6 @@ export function ContainerTable(
         useContainerId = false,
     }: ContainerTableProps
 ) {
-    const navigate = useNavigate()
     const [isLoaded, setIsLoaded] = useState(false)
 
     const [sortField, setSortField] = useState<SortField>('name')
@@ -141,6 +142,8 @@ export function ContainerTable(
         ports: Port[]
         serviceName: string
     }) => useContainerId ? container.id : container.serviceName
+
+    const {handleCopy, copiedId} = useCopyButton()
 
     return (
         <TableContainer
@@ -254,7 +257,22 @@ export function ContainerTable(
                                     />
                                 </TableCell>
                                 <TableCell component="th" id={labelId} scope="row">
-                                    <Typography variant="body1" fontWeight="500">{container.name}</Typography>
+                                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                        <Typography
+                                            variant="body1"
+                                            fontWeight="500"
+                                        >
+                                            {container.name}
+                                        </Typography>
+                                        <CopyButton
+                                            handleCopy={handleCopy}
+                                            thisID={container.id}
+                                            activeID={copiedId ?? ""}
+                                            tooltip={"Copy Container ID"}
+                                        />
+                                    </Box>
+
+
                                 </TableCell>
                                 <TableCell>
                                     <Chip label={container.status} color={getStatusChipColor(container.status)}
@@ -279,23 +297,10 @@ export function ContainerTable(
                                     </Tooltip>
                                 </TableCell>
                                 <TableCell>
-                                    <Typography
-                                        variant="body2"
-                                        component="span"
-                                        sx={{
-                                            textDecoration: 'none',
-                                            color: 'primary.main',
-                                            wordBreak: 'break-all',
-                                            cursor: 'pointer',
-                                            '&:hover': {textDecoration: 'underline'}
-                                        }}
-                                        onClick={(event) => {
-                                            event.stopPropagation() // Prevent row click
-                                            navigate(`/stacks/${container.servicePath}?tab=0`)
-                                        }}
-                                    >
-                                        {container.stackName}
-                                    </Typography>
+                                    <ComposeLink
+                                        stackName={container.stackName}
+                                        servicePath={container.servicePath}
+                                    />
                                 </TableCell>
                                 <TableCell width={360}>
                                     {formatPorts(container.ports)}

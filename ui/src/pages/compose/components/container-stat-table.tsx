@@ -201,7 +201,7 @@ export function ContainerStatTable(
                                                 title={copiedId === container.id ? "Copied!" : "Copy container ID"}
                                                 placement="top">
                                                 <IconButton
-                                                    onClick={(e) => handleCopy(e, container.id)}
+                                                    onClick={() => handleCopy(container.id)}
                                                     size="small"
                                                     sx={{position: 'relative', flexShrink: 0}}
                                                 >

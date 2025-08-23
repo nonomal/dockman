@@ -1,10 +1,11 @@
 package docker
 
 import (
+	"testing"
+
 	"github.com/RA341/dockman/pkg/logger"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func init() {
@@ -12,7 +13,7 @@ func init() {
 }
 
 func TestTrimDockman(t *testing.T) {
-	comp := NewComposeService("", nil, nil)
+	comp := NewComposeService(nil, nil)
 
 	proj := types.Project{
 		Services: map[string]types.ServiceConfig{

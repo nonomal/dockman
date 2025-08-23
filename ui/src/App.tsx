@@ -87,47 +87,15 @@ const PrivateRoute = () => {
 
     // Once authenticated, render with providers that need auth
     return (
-        <UserConfigProvider>
-            <HostProvider>
+        <HostProvider>
+            <UserConfigProvider>
                 <ChangelogProvider>
-                    <GlobalShortcuts/>
                     <Outlet/>
                 </ChangelogProvider>
-            </HostProvider>
-        </UserConfigProvider>
+            </UserConfigProvider>
+        </HostProvider>
     );
 };
-
-function GlobalShortcuts() {
-    // const navigate = useNavigate();
-    //
-    // useEffect(() => {
-    //     const handleKeyDown = (e: KeyboardEvent) => {
-    //         if (e.altKey && !e.repeat) {
-    //             switch (e.code) {
-    //                 case "Digit1":
-    //                     e.preventDefault();
-    //                     navigate("/");
-    //                     break;
-    //                 case "Digit2":
-    //                     e.preventDefault();
-    //                     navigate('/stacks');
-    //                     break;
-    //             }
-    //         }
-    //     };
-    //
-    //     window.addEventListener("keydown", handleKeyDown);
-    //
-    //     return () => {
-    //         window.removeEventListener("keydown", handleKeyDown);
-    //     };
-    // }, [navigate]);
-
-    // this component doesn't render anything
-    return null;
-}
-
 
 function HomePage() {
     return (
