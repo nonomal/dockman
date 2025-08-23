@@ -1,36 +1,21 @@
-import {useEffect, useMemo, useRef, useState} from 'react';
-import {Box, Button, Card, CircularProgress, Fade, Stack, TextField, Tooltip, Typography} from '@mui/material';
-import {Delete, DryCleaning, Refresh, Search} from '@mui/icons-material';
+import {useMemo, useState} from 'react';
+import {Box, Button, Card, CircularProgress, Fade, Tooltip, Typography} from '@mui/material';
+import {Delete, DryCleaning, Refresh} from '@mui/icons-material';
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
 import NetworksLoading from "./networks-loading.tsx";
 import NetworksEmpty from "./networks-empty.tsx";
 import {useDockerNetwork} from "../../hooks/docker-networks.ts";
 import {NetworkTable} from "./networks-table.tsx";
+import useSearch from "../../hooks/search.ts";
+import ActionButtons from "../../components/action-buttons.tsx";
+import SearchBar from "../../components/search-bar.tsx";
 
 const NetworksPage = () => {
     const {loading, networks, loadNetworks, networkPrune, deleteSelected} = useDockerNetwork();
 
+    const {search, setSearch, searchInputRef} = useSearch();
+
     const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
-    const [activeAction, setActiveAction] = useState('')
-
-    const [search, setSearch] = useState("")
-    const searchInputRef = useRef<HTMLInputElement>(null)
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.altKey && event.key === 'q') {
-                event.preventDefault()
-                searchInputRef.current?.focus()
-            }
-        }
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [])
-
-    const buttonAction = async (callback: () => Promise<void>, actionName: string) => {
-        setActiveAction(actionName)
-        await callback()
-        setActiveAction('')
-    }
 
     const filteredNetworks = useMemo(() => {
         if (search) {
@@ -47,25 +32,23 @@ const NetworksPage = () => {
     const actions = [
         {
             action: 'deleteNetworks',
+            tooltip: 'Delete selected networks',
             buttonText: `Delete ${selectedNetworks.length === 0 ? "" : `${selectedNetworks.length}`} networks`,
             icon: <Delete/>,
-            disabled: selectedNetworks.length === 0 || loading || !!activeAction,
+            disabled: selectedNetworks.length === 0 || loading,
             handler: async () => {
-                deleteSelected(selectedNetworks).then(() => {
+                deleteSelected(selectedNetworks).finally(() => {
                     setSelectedNetworks([])
                 })
             },
-            tooltip: 'Delete selected networks',
         },
         {
             action: 'deleteUnused',
+            tooltip: 'Equivalent of `docker network prune`',
             buttonText: `Network Prune`,
             icon: <DryCleaning/>,
-            disabled: loading || !!activeAction,
-            handler: async () => {
-                await networkPrune()
-            },
-            tooltip: 'Equivalent of `docker network prune`',
+            disabled: loading,
+            handler: networkPrune,
         },
     ]
 
@@ -106,24 +89,7 @@ const NetworksPage = () => {
                     </Typography>
                 </Box>
 
-                <TextField
-                    inputRef={searchInputRef}
-                    size="small"
-                    placeholder={`Search... ALT+Q`}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    slotProps={{
-                        input: {
-                            startAdornment: <Search sx={{mr: 1, color: 'action.active'}}/>,
-                        }
-                    }}
-                    sx={{
-                        minWidth: 250,
-                        '& .MuiOutlinedInput-root': {
-                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        }
-                    }}
-                />
+                <SearchBar search={search} setSearch={setSearch} inputRef={searchInputRef}/>
 
                 <Tooltip title={loading ? 'Refreshing...' : 'Refresh Networks'}>
                     <Button
@@ -140,25 +106,7 @@ const NetworksPage = () => {
                 {/* Spacer */}
                 <Box sx={{flexGrow: 0.95}}/>
 
-                {/* Actions */}
-                <Stack direction="row" spacing={2}>
-                    {actions.map((action) => (
-                        <Tooltip title={action.tooltip}>
-                            <Button
-                                variant="contained"
-                                onClick={() => buttonAction(action.handler, action.action)}
-                                disabled={action.disabled}
-                                sx={{minWidth: 140}}
-                                startIcon={activeAction === action.action ?
-                                    <CircularProgress size={20} color="inherit"/> :
-                                    action.icon
-                                }
-                            >
-                                {action.buttonText}
-                            </Button>
-                        </Tooltip>
-                    ))}
-                </Stack>
+                <ActionButtons actions={actions}/>
             </Card>
 
             {/* Table Container */}

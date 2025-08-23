@@ -1,12 +1,15 @@
-import {useEffect, useMemo, useRef, useState} from 'react';
-import {Box, Button, Card, CircularProgress, Fade, Stack, TextField, Tooltip, Typography} from '@mui/material';
-import {CleaningServices, Delete, Refresh, Sanitizer, Search} from '@mui/icons-material';
+import {useMemo, useState} from 'react';
+import {Box, Button, Card, CircularProgress, Fade, Tooltip, Typography} from '@mui/material';
+import {CleaningServices, Delete, Refresh, Sanitizer} from '@mui/icons-material';
 import {useDockerImages} from "../../hooks/docker-images.ts";
 import {ImagesEmpty} from "./images-empty.tsx";
 import {ImageTable} from './images-table.tsx';
 import {formatBytes} from "../../lib/editor.ts";
 import {ImagesLoading} from "./images-loading.tsx";
 import scrollbarStyles from "../../components/scrollbar-style.tsx";
+import useSearch from "../../hooks/search.ts";
+import ActionButtons from "../../components/action-buttons.tsx";
+import SearchBar from "../../components/search-bar.tsx";
 
 const ImagesPage = () => {
     const {
@@ -20,28 +23,9 @@ const ImagesPage = () => {
         deleteImages
     } = useDockerImages();
 
+    const {search, setSearch, searchInputRef} = useSearch();
     const [selectedImages, setSelectedImages] = useState<string[]>([])
-    const [activeAction, setActiveAction] = useState('')
 
-    const [search, setSearch] = useState("")
-    const searchInputRef = useRef<HTMLInputElement>(null)
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.altKey && event.key === 'q') {
-                event.preventDefault()
-                searchInputRef.current?.focus()
-            }
-        }
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [])
-
-
-    const buttonAction = async (callback: () => Promise<void>, actionName: string) => {
-        setActiveAction(actionName)
-        await callback()
-        setActiveAction('')
-    }
 
     const filteredImages = useMemo(() => {
         if (search) {
@@ -58,7 +42,7 @@ const ImagesPage = () => {
             action: 'deleteSelected',
             buttonText: `Delete ${selectedImages.length === 0 ? "" : `${selectedImages.length}`} images`,
             icon: <Delete/>,
-            disabled: loading || !!activeAction || selectedImages.length === 0,
+            disabled: loading || selectedImages.length === 0,
             handler: async () => {
                 await deleteImages(selectedImages)
                 setSelectedImages([])
@@ -69,7 +53,7 @@ const ImagesPage = () => {
             action: 'deleteUntagged',
             buttonText: `Prune Untagged (${untagged})`,
             icon: <Sanitizer/>,
-            disabled: loading || !!activeAction,
+            disabled: loading,
             handler: async () => {
                 await pruneUnused()
             },
@@ -80,7 +64,7 @@ const ImagesPage = () => {
             buttonText: `Prune Unused (${unusedContainerCount})`,
             tooltip: 'Delete all unused images',
             icon: <CleaningServices/>,
-            disabled: loading || !!activeAction,
+            disabled: loading,
             handler: async () => {
                 await pruneUnused(true)
             },
@@ -123,24 +107,7 @@ const ImagesPage = () => {
                     </Typography>
                 </Box>
 
-                <TextField
-                    inputRef={searchInputRef}
-                    size="small"
-                    placeholder={`Search... ALT+Q`}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    slotProps={{
-                        input: {
-                            startAdornment: <Search sx={{mr: 1, color: 'action.active'}}/>,
-                        }
-                    }}
-                    sx={{
-                        minWidth: 250,
-                        '& .MuiOutlinedInput-root': {
-                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        }
-                    }}
-                />
+                <SearchBar search={search} setSearch={setSearch} inputRef={searchInputRef}/>
 
                 <Tooltip title={loading ? 'Refreshing...' : 'Refresh images'}>
                     <Button
@@ -157,24 +124,7 @@ const ImagesPage = () => {
                 {/* Spacer */}
                 <Box sx={{flexGrow: 0.95}}/>
 
-                {/* Actions */}
-                <Stack direction="row" spacing={2}>
-                    {actions.map((action) => (
-                        <Tooltip title={action.tooltip}>
-                            <Button
-                                variant="contained"
-                                onClick={() => buttonAction(action.handler, action.action)}
-                                disabled={action.disabled}
-                                sx={{minWidth: 140}}
-                                startIcon={activeAction === action.action ?
-                                    <CircularProgress size={20} color="inherit"/> : action.icon}
-                            >
-                                {action.buttonText}
-                            </Button>
-                        </Tooltip>
-                    ))}
-
-                </Stack>
+                <ActionButtons actions={actions}/>
             </Card>
 
             {/* Table Container */}

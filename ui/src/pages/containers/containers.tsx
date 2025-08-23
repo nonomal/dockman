@@ -1,44 +1,34 @@
-import {Box, Button, CircularProgress, TextField} from '@mui/material';
-import {Delete, PlayArrow, RestartAlt, Search, Stop} from '@mui/icons-material';
+import {Box} from '@mui/material';
+import {Delete, PlayArrow, RestartAlt, Stop} from '@mui/icons-material';
 import {ContainerTable} from '../compose/components/container-info-table';
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useMemo, useState} from "react";
 import {useDockerContainers} from "../../hooks/docker-containers.ts";
 import {callRPC, useClient} from "../../lib/api.ts";
 import {DockerService} from "../../gen/docker/v1/docker_pb.ts";
 import {useSnackbar} from "../../hooks/snackbar.ts";
 import LogsDialog from "./logs-dialog.tsx";
-
-const deployContainersConfig = [
-    {name: 'start', rpcName: 'containerStart', message: "started", icon: <PlayArrow/>},
-    {name: 'stop', rpcName: 'containerStop', message: "stopped", icon: <Stop/>},
-    {name: 'remove', rpcName: 'containerRemove', message: "removed", icon: <Delete/>},
-    {name: 'restart', rpcName: 'containerRestart', message: "restarted", icon: <RestartAlt/>},
-    // todo update
-    // {name: 'update', rpcName: 'containerUpdate', message: "updated", icon: <Update/>},
-] as const;
+// import ContainerExecDialog from "./exec-dialog.tsx";
+import SearchBar from "../../components/search-bar.tsx";
+import useSearch from "../../hooks/search.ts";
+import ActionButtons from "../../components/action-buttons.tsx";
 
 function ContainersPage() {
     const dockerService = useClient(DockerService)
     const {showSuccess, showError} = useSnackbar()
     const {containers, loading, fetchContainers} = useDockerContainers();
 
-    const [activeAction, setActiveAction] = useState('')
+    const {search, setSearch, searchInputRef} = useSearch()
+
     const [selectedContainers, setSelectedContainers] = useState<string[]>([])
 
-    const searchInputRef = useRef<HTMLInputElement>(null)
+    // const [execContainerName, setExecContainerName] = useState("")
+    // const [execContainerID, setExecContainerID] = useState("")
 
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.altKey && event.key === 'q') {
-                event.preventDefault()
-                console.log("keyDown", event.key)
-                searchInputRef.current?.focus()
-            }
-        }
+    // function handleExecContainerLogs(cid: string, containerName: string): void {
+    //     setExecContainerName(containerName)
+    //     setExecContainerID(cid)
+    // }
 
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [])
 
     const [containerName, setContainerName] = useState("")
     const [containerID, setContainerID] = useState("")
@@ -48,18 +38,71 @@ function ContainersPage() {
         setContainerID(cid)
     }
 
+    const actions = [
+        {
+            action: 'start',
+            buttonText: "Start",
+            icon: <PlayArrow/>,
+            disabled: selectedContainers.length === 0,
+            handler: async () => {
+
+            },
+            tooltip: "",
+        },
+        {
+            action: 'stop',
+            buttonText: "Stop",
+            icon: <Stop/>,
+            disabled: selectedContainers.length === 0,
+            handler: async () => {
+                await handleContainerAction('stop', 'containerStop', "stopped")
+            },
+            tooltip: "",
+        },
+        {
+            action: 'remove',
+            buttonText: "Remove",
+            icon: <Delete/>,
+            disabled: selectedContainers.length === 0,
+            handler: async () => {
+                await handleContainerAction('remove', 'containerRemove', "removed")
+            },
+            tooltip: "",
+        },
+        {
+            action: 'restart',
+            buttonText: "Restart",
+            icon: <RestartAlt/>,
+            disabled: selectedContainers.length === 0,
+            handler: async () => {
+                await handleContainerAction('restart', 'containerRestart', "restarted")
+            },
+            tooltip: "",
+        },
+        // todo update
+        // {
+        //     action: 'update',
+        //     buttonText: "Update",
+        //     icon: <Update/>,
+        //     disabled: selectedContainers.length === 0,
+        //     handler: async () => {
+        //         await handleContainerAction('update', 'containerUpdate', "updated")
+        //     },
+        //     tooltip: "",
+        // },
+    ];
+
     async function handleContainerAction(
-        name: typeof deployContainersConfig[number]['name'],
-        rpcName: typeof deployContainersConfig[number]['rpcName'],
+        name: string,
+        rpcName: keyof typeof dockerService,
         message: string,
     ) {
-        setActiveAction(name)
-
         const {err} = await callRPC(
-            () => dockerService[rpcName](
-                {containerIds: selectedContainers}
-            )
+            () => dockerService[rpcName]({
+                containerIds: selectedContainers
+            }) as Promise<never> // we dont care about the output only err
         )
+
         if (err) {
             console.error(err)
             showError(`Failed to ${name} Containers: ${err}`)
@@ -67,11 +110,8 @@ function ContainersPage() {
 
         fetchContainers().then()
         showSuccess(`Successfully ${message} containers`)
-        setActiveAction('')
         setSelectedContainers([])
     }
-
-    const [search, setSearch] = useState("")
 
     const filteredContainers = useMemo(() => {
         const lowerSearch = search.toLowerCase()
@@ -88,75 +128,57 @@ function ContainersPage() {
     }, [containers, search]);
 
 
-    return (
-        <><Box sx={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: 'background.default'
-        }}>
+    return (<>
             <Box sx={{
-                flexGrow: 1,
-                p: 3,
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                overflow: 'hidden'
+                backgroundColor: 'background.default'
             }}>
-                {/* Action Buttons */}
                 <Box sx={{
+                    flexGrow: 1,
+                    p: 3,
                     display: 'flex',
-                    gap: 2,
-                    flexWrap: 'wrap',
-                    mb: 3,
-                    flexShrink: 0
+                    flexDirection: 'column',
+                    overflow: 'hidden'
                 }}>
-                    <TextField
-                        inputRef={searchInputRef}
-                        size="small"
-                        placeholder="Search... ALT+Q"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        slotProps={{
-                            input: {
-                                startAdornment: <Search sx={{mr: 1, color: 'action.active'}}/>,
-                            }
-                        }}
-                        sx={{
-                            minWidth: 250,
-                            '& .MuiOutlinedInput-root': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                            }
-                        }}/>
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                        flexWrap: 'wrap',
+                        mb: 3,
+                        flexShrink: 0
+                    }}>
+                        <SearchBar
+                            search={search}
+                            setSearch={setSearch}
+                            inputRef={searchInputRef}
+                        />
 
-                    {deployContainersConfig.map((action) => (
-                        <Button
-                            key={action.name}
-                            variant="outlined"
-                            disabled={!!activeAction || selectedContainers.length === 0}
-                            onClick={() => handleContainerAction(action.name, action.rpcName, action.message)}
-                            startIcon={activeAction === action.name ?
-                                <CircularProgress size={20} color="inherit"/> : action.icon}
-                        >
-                            {action.name.charAt(0).toUpperCase() + action.name.slice(1)}
-                        </Button>
-                    ))}
-                </Box>
+                        <ActionButtons
+                            actions={actions}
+                            variant={"outlined"}
+                        />
+                    </Box>
 
-                <Box sx={{
-                    height: '83vh', overflow: 'hidden', border: '3px ridge',
-                    borderColor: 'rgba(255, 255, 255, 0.23)', borderRadius: 3, display: 'flex',
-                    flexDirection: 'column', backgroundColor: 'rgb(41,41,41)'
-                }}>
-                    <ContainerTable
-                        containers={filteredContainers}
-                        loading={loading}
-                        onShowLogs={handleContainerLogs}
-                        setSelectedServices={setSelectedContainers}
-                        selectedServices={selectedContainers}
-                        useContainerId={true}/>
+                    <Box sx={{
+                        height: '83vh', overflow: 'hidden', border: '3px ridge',
+                        borderColor: 'rgba(255, 255, 255, 0.23)', borderRadius: 3, display: 'flex',
+                        flexDirection: 'column', backgroundColor: 'rgb(41,41,41)'
+                    }}>
+                        <ContainerTable
+                            containers={filteredContainers}
+                            loading={loading}
+                            onShowLogs={handleContainerLogs}
+                            setSelectedServices={setSelectedContainers}
+                            selectedServices={selectedContainers}
+                            useContainerId={true}
+                            // showExec={true}
+                            // onExec={handleExecContainerLogs}
+                        />
+                    </Box>
                 </Box>
             </Box>
-        </Box>
 
             <LogsDialog
                 hide={() => {
@@ -167,6 +189,16 @@ function ContainersPage() {
                 containerID={containerID}
                 name={containerName}
             />
+
+            {/*<ContainerExecDialog*/}
+            {/*    hide={() => {*/}
+            {/*        setExecContainerID("")*/}
+            {/*        setExecContainerName("")*/}
+            {/*    }}*/}
+            {/*    show={execContainerID !== ""}*/}
+            {/*    containerID={execContainerID}*/}
+            {/*    name={execContainerName}*/}
+            {/*/>*/}
         </>
     );
 }

@@ -16,7 +16,7 @@ import {
     Tooltip,
     Typography
 } from '@mui/material'
-import {DocumentScannerOutlined} from '@mui/icons-material'
+import {DocumentScannerOutlined, Terminal} from '@mui/icons-material'
 import {ContainerInfoPort} from './container-info-port.tsx'
 import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts"
 import {getImageHomePageUrl} from "../../../hooks/docker-images.ts"
@@ -33,6 +33,8 @@ interface ContainerTableProps {
     onShowLogs: (containerId: string, containerName: string) => void
     setSelectedServices: (services: string[]) => void,
     useContainerId?: boolean,
+    showExec?: boolean,
+    onExec?: (containerId: string, containerName: string) => void
 }
 
 type SortField = 'name' | 'status' | 'image' | 'stack'
@@ -46,6 +48,8 @@ export function ContainerTable(
         setSelectedServices,
         selectedServices,
         useContainerId = false,
+        showExec = false,
+        onExec,
     }: ContainerTableProps
 ) {
     const [isLoaded, setIsLoaded] = useState(false)
@@ -217,7 +221,7 @@ export function ContainerTable(
                 >
                     {isEmpty ? (
                         <TableRow>
-                            <TableCell colSpan={6} sx={{border: 0, height: 200}}>
+                            <TableCell colSpan={7} sx={{border: 0, height: 550}}>
                                 <Box
                                     sx={{
                                         display: 'flex',
@@ -318,6 +322,19 @@ export function ContainerTable(
                                                 sx={{cursor: 'pointer'}}
                                             />
                                         </Tooltip>
+                                        {showExec && (
+                                            <Tooltip title="Exec into container">
+                                                <Terminal
+                                                    aria-label="Exec into container"
+                                                    color="primary"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation() // Prevent row click
+                                                        onExec?.(container.id, container.name)
+                                                    }}
+                                                    sx={{cursor: 'pointer'}}
+                                                />
+                                            </Tooltip>
+                                        )}
                                     </Stack>
                                 </TableCell>
                             </TableRow>
