@@ -10,7 +10,7 @@ service DockerService {
   rpc ContainerStop(ContainerRequest) returns (LogsMessage) {}
   rpc ContainerRemove(ContainerRequest) returns (LogsMessage) {}
   rpc ContainerRestart(ContainerRequest) returns (LogsMessage) {}
-  rpc ContainerUpdate(ContainerRequest) returns (LogsMessage) {}
+  rpc ContainerUpdate(ContainerRequest) returns (Empty) {}
   rpc ContainerList(Empty) returns (ListResponse) {}
   rpc ContainerStats(StatsRequest) returns (StatsResponse) {}
   rpc ContainerLogs(ContainerLogsRequest) returns (stream LogsMessage) {}
@@ -51,6 +51,7 @@ message Image {
   repeated string repo_tags = 9;
   int64 shared_size = 10;
   int64 size = 11;
+  string updateRef = 12;
 }
 
 message ManifestSummary {

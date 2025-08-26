@@ -141,6 +141,7 @@ type Image struct {
 	RepoTags      []string               `protobuf:"bytes,9,rep,name=repo_tags,json=repoTags,proto3" json:"repo_tags,omitempty"`
 	SharedSize    int64                  `protobuf:"varint,10,opt,name=shared_size,json=sharedSize,proto3" json:"shared_size,omitempty"`
 	Size          int64                  `protobuf:"varint,11,opt,name=size,proto3" json:"size,omitempty"`
+	UpdateRef     string                 `protobuf:"bytes,12,opt,name=updateRef,proto3" json:"updateRef,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -243,6 +244,13 @@ func (x *Image) GetSize() int64 {
 		return x.Size
 	}
 	return 0
+}
+
+func (x *Image) GetUpdateRef() string {
+	if x != nil {
+		return x.UpdateRef
+	}
+	return ""
 }
 
 type ManifestSummary struct {
@@ -2094,7 +2102,7 @@ var File_docker_v1_docker_proto protoreflect.FileDescriptor
 
 const file_docker_v1_docker_proto_rawDesc = "" +
 	"\n" +
-	"\x16docker/v1/docker.proto\x12\tdocker.v1\"\x8e\x03\n" +
+	"\x16docker/v1/docker.proto\x12\tdocker.v1\"\xac\x03\n" +
 	"\x05Image\x12\x1e\n" +
 	"\n" +
 	"containers\x18\x01 \x01(\x03R\n" +
@@ -2109,7 +2117,8 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\vshared_size\x18\n" +
 	" \x01(\x03R\n" +
 	"sharedSize\x12\x12\n" +
-	"\x04size\x18\v \x01(\x03R\x04size\x1a9\n" +
+	"\x04size\x18\v \x01(\x03R\x04size\x12\x1c\n" +
+	"\tupdateRef\x18\f \x01(\tR\tupdateRef\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\\\n" +
@@ -2258,13 +2267,13 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\x06DISK_W\x10\x06*\x19\n" +
 	"\x05ORDER\x12\a\n" +
 	"\x03DSC\x10\x00\x12\a\n" +
-	"\x03ASC\x10\x012\xcd\r\n" +
+	"\x03ASC\x10\x012\xc7\r\n" +
 	"\rDockerService\x12G\n" +
 	"\x0eContainerStart\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12F\n" +
 	"\rContainerStop\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12H\n" +
 	"\x0fContainerRemove\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12I\n" +
-	"\x10ContainerRestart\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12H\n" +
-	"\x0fContainerUpdate\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12<\n" +
+	"\x10ContainerRestart\x12\x1b.docker.v1.ContainerRequest\x1a\x16.docker.v1.LogsMessage\"\x00\x12B\n" +
+	"\x0fContainerUpdate\x12\x1b.docker.v1.ContainerRequest\x1a\x10.docker.v1.Empty\"\x00\x12<\n" +
 	"\rContainerList\x12\x10.docker.v1.Empty\x1a\x17.docker.v1.ListResponse\"\x00\x12E\n" +
 	"\x0eContainerStats\x12\x17.docker.v1.StatsRequest\x1a\x18.docker.v1.StatsResponse\"\x00\x12L\n" +
 	"\rContainerLogs\x12\x1f.docker.v1.ContainerLogsRequest\x1a\x16.docker.v1.LogsMessage\"\x000\x01\x12B\n" +
@@ -2382,7 +2391,7 @@ var file_docker_v1_docker_proto_depIdxs = []int32{
 	26, // 37: docker.v1.DockerService.ContainerStop:output_type -> docker.v1.LogsMessage
 	26, // 38: docker.v1.DockerService.ContainerRemove:output_type -> docker.v1.LogsMessage
 	26, // 39: docker.v1.DockerService.ContainerRestart:output_type -> docker.v1.LogsMessage
-	26, // 40: docker.v1.DockerService.ContainerUpdate:output_type -> docker.v1.LogsMessage
+	34, // 40: docker.v1.DockerService.ContainerUpdate:output_type -> docker.v1.Empty
 	30, // 41: docker.v1.DockerService.ContainerList:output_type -> docker.v1.ListResponse
 	27, // 42: docker.v1.DockerService.ContainerStats:output_type -> docker.v1.StatsResponse
 	26, // 43: docker.v1.DockerService.ContainerLogs:output_type -> docker.v1.LogsMessage

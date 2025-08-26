@@ -1,8 +1,11 @@
 package cmd
 
 import (
-	"connectrpc.com/connect"
 	"fmt"
+	"net/http"
+	"strings"
+
+	"connectrpc.com/connect"
 	authrpc "github.com/RA341/dockman/generated/auth/v1/v1connect"
 	configrpc "github.com/RA341/dockman/generated/config/v1/v1connect"
 	dockerpc "github.com/RA341/dockman/generated/docker/v1/v1connect"
@@ -21,8 +24,6 @@ import (
 	"github.com/RA341/dockman/internal/lsp"
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
-	"net/http"
-	"strings"
 )
 
 type App struct {
@@ -49,7 +50,14 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
 	fileSrv := files.NewService(cr)
 	gitSrv := git.NewService(cr)
-	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, &cr, &conf.LocalAddr)
+	dockerManagerSrv := dm.NewService(
+		gitSrv,
+		sshSrv,
+		dbSrv.ImageUpdateDB,
+		&cr,
+		&conf.Updater.Addr,
+		&conf.LocalAddr,
+	)
 	infoSrv := info.NewService(dbSrv.InfoDB)
 
 	log.Info().Msg("Dockman initialized successfully")
@@ -110,11 +118,7 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		},
 		// docker
 		func() (string, http.Handler) {
-			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(
-				a.DockerManager.GetService,
-				a.Config.Updater.Addr,
-				a.Config.Updater.PassKey,
-			),
+			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(a.DockerManager.GetService, a.Config.Updater.Addr),
 				authInterceptor,
 			)
 		},

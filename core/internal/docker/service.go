@@ -10,9 +10,22 @@ type Service struct {
 	*ContainerService
 }
 
-func NewService(daemonAddr, composeRoot string, dockerClient *client.Client, syncer Syncer) *Service {
-	containerClient := NewContainerService(dockerClient, &composeRoot)
-	composeClient := NewComposeService(containerClient, syncer)
+func NewService(
+	daemonAddr string,
+	dockerClient *client.Client,
+	syncer Syncer,
+	imageUpdateStore Store,
+	name string,
+	updaterUrl string,
+	composeRoot string,
+) *Service {
+	containerClient := NewContainerService(
+		dockerClient,
+		imageUpdateStore,
+		name,
+		updaterUrl,
+	)
+	composeClient := NewComposeService(composeRoot, containerClient, syncer)
 
 	return &Service{
 		ContainerService: containerClient,

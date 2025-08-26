@@ -2,10 +2,11 @@ package docker_manager
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/RA341/dockman/pkg/syncmap"
 	"github.com/rs/zerolog/log"
-	"sync"
 )
 
 // LocalClient is the name given to the local docker daemon instance
@@ -77,9 +78,19 @@ func (m *ClientManager) Switch(name string) error {
 	return nil
 }
 
-func (m *ClientManager) List() []string {
+func (m *ClientManager) ListHostNames() []string {
 	var cliList []string
 	m.connectedClients.Range(func(key string, _ *ConnectedDockerClient) bool {
+		cliList = append(cliList, key)
+		return true
+	})
+
+	return cliList
+}
+
+func (m *ClientManager) ListHosts() []*ConnectedDockerClient {
+	var cliList []*ConnectedDockerClient
+	m.connectedClients.Range(func(_ string, key *ConnectedDockerClient) bool {
 		cliList = append(cliList, key)
 		return true
 	})
@@ -116,7 +127,7 @@ func (m *ClientManager) switchIfActive(name string) error {
 		return nil
 	}
 
-	client := m.List()
+	client := m.ListHostNames()
 	var switched bool
 	for _, newClient := range client {
 		if newClient == name {
@@ -151,7 +162,7 @@ func (m *ClientManager) loadAllHosts() (string, error) {
 	go m.loadLocalClient(&wg)
 	wg.Wait()
 
-	conClients := m.List()
+	conClients := m.ListHostNames()
 	if len(conClients) < 1 {
 		// at least a single machine should always be available
 		return "", fmt.Errorf("no docker clients could be connected, check your config")

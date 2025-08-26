@@ -33,14 +33,12 @@ type GetService func() *Service
 type Handler struct {
 	srv  GetService
 	addr string
-	pass string
 }
 
-func NewConnectHandler(srv GetService, host, pass string) *Handler {
+func NewConnectHandler(srv GetService, host string) *Handler {
 	return &Handler{
 		srv:  srv,
 		addr: host,
-		pass: pass,
 	}
 }
 
@@ -100,7 +98,7 @@ func (h *Handler) ComposeUpdate(ctx context.Context, req *connect.Request[v1.Com
 		return err
 	}
 
-	go sendReqToUpdater(h.addr, h.pass, "")
+	//go sendReqToUpdater(h.addr, h.pass, "")
 
 	return nil
 }
@@ -140,9 +138,8 @@ func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerLis
 			return cmp.Compare(port1.Type, port2.Type)
 		})
 
-		dockerResult = append(dockerResult, toRPContainer(
+		dockerResult = append(dockerResult, h.toRPContainer(
 			stack,
-			*h.srv().composeRoot,
 			portSlice,
 		))
 	}
@@ -189,12 +186,12 @@ func (h *Handler) ContainerRestart(ctx context.Context, req *connect.Request[v1.
 	return connect.NewResponse(&v1.LogsMessage{}), nil
 }
 
-func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
-	err := h.srv().ContainersUpdate(ctx, req.Msg.ContainerIds...)
+func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.Empty], error) {
+	err := h.srv().ContainersUpdateByContainerID(ctx, req.Msg.ContainerIds...)
 	if err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("TODO: unimplemented container update")
+	return connect.NewResponse(&v1.Empty{}), nil
 }
 
 func (h *Handler) ContainerList(ctx context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
@@ -275,8 +272,20 @@ func (h *Handler) ContainerLogs(ctx context.Context, req *connect.Request[v1.Con
 // 				Image Actions 			  //
 ////////////////////////////////////////////
 
-func (h *Handler) ImageList(ctx context.Context, req *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
-	images, err := h.srv().ListImages(ctx)
+func ToMap[T any, Q any](input []T, mapper func(T) Q) []Q {
+	result := make([]Q, len(input))
+	for _, t := range input {
+		result = append(result, mapper(t))
+	}
+	return result
+}
+
+func (h *Handler) ImageList(ctx context.Context, _ *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
+	images, err := h.srv().ImageList(ctx)
+
+	imageUpdates, err := h.srv().imageUpdateStore.UpdateAvailable("", ToMap(images, func(t image.Summary) string {
+		return t.ID
+	})...)
 	if err != nil {
 		return nil, err
 	}
@@ -307,6 +316,7 @@ func (h *Handler) ImageList(ctx context.Context, req *connect.Request[v1.ListIma
 			RepoTags:    img.RepoTags,
 			SharedSize:  img.SharedSize,
 			Size:        img.Size,
+			UpdateRef:   imageUpdates[img.ID].UpdateRef,
 			Manifests:   []*v1.ManifestSummary{}, // todo
 		})
 	}
@@ -333,9 +343,9 @@ func (h *Handler) ImagePruneUnused(ctx context.Context, req *connect.Request[v1.
 	var result image.PruneReport
 	var err error
 	if req.Msg.GetPruneAll() {
-		result, err = h.srv().PruneUnusedImages(ctx)
+		result, err = h.srv().ImagePruneUnused(ctx)
 	} else {
-		result, err = h.srv().PruneUntaggedImages(ctx)
+		result, err = h.srv().ImagePruneUntagged(ctx)
 	}
 	if err != nil {
 		return nil, err
@@ -361,7 +371,7 @@ func (h *Handler) ImagePruneUnused(ctx context.Context, req *connect.Request[v1.
 // 				Volume Actions 			  //
 ////////////////////////////////////////////
 
-func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
+func (h *Handler) VolumeList(ctx context.Context, _ *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
 	volumes, err := h.srv().VolumesList(ctx)
 	if err != nil {
 		return nil, err
@@ -377,7 +387,7 @@ func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVo
 			CreatedAt:          vol.CreatedAt,
 			Labels:             getVolumeProjectNameFromLabel(vol.Labels),
 			MountPoint:         vol.Mountpoint,
-			ComposePath:        vol.ComposePath,
+			ComposePath:        h.getComposeFilePath(vol.ComposePath),
 			ComposeProjectName: vol.ComposeProjectName,
 		})
 	}
@@ -408,7 +418,7 @@ func getVolumeProjectNameFromLabel(labels map[string]string) string {
 	return ""
 }
 
-func (h *Handler) VolumeCreate(_ context.Context, req *connect.Request[v1.CreateVolumeRequest]) (*connect.Response[v1.CreateVolumeResponse], error) {
+func (h *Handler) VolumeCreate(_ context.Context, _ *connect.Request[v1.CreateVolumeRequest]) (*connect.Response[v1.CreateVolumeResponse], error) {
 	//TODO implement me
 	return nil, fmt.Errorf(" implement me VolumeCreate")
 }
@@ -466,7 +476,7 @@ func getSubnet(netI network.Inspect) string {
 	return netI.IPAM.Config[0].Subnet
 }
 
-func (h *Handler) NetworkCreate(_ context.Context, req *connect.Request[v1.CreateNetworkRequest]) (*connect.Response[v1.CreateNetworkResponse], error) {
+func (h *Handler) NetworkCreate(_ context.Context, _ *connect.Request[v1.CreateNetworkRequest]) (*connect.Response[v1.CreateNetworkResponse], error) {
 	//TODO implement me
 	return nil, fmt.Errorf(" implement me NetworkCreate")
 }
@@ -648,7 +658,7 @@ func toRPCPort(p container.Port) *v1.Port {
 	}
 }
 
-func toRPContainer(stack container.Summary, composeRoot string, portSlice []*v1.Port) *v1.ContainerList {
+func (h *Handler) toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerList {
 	return &v1.ContainerList{
 		Name:        strings.TrimPrefix(stack.Names[0], "/"),
 		Id:          stack.ID,
@@ -658,15 +668,15 @@ func toRPContainer(stack container.Summary, composeRoot string, portSlice []*v1.
 		Ports:       portSlice,
 		ServiceName: stack.Labels[api.ServiceLabel],
 		StackName:   stack.Labels[api.ProjectLabel],
-		ServicePath: getComposeFilePath(stack, composeRoot),
+		ServicePath: h.getComposeFilePath(stack.Labels[api.ConfigFilesLabel]),
 		Created:     time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
 	}
 }
 
-func getComposeFilePath(cont container.Summary, composeRoot string) string {
+func (h *Handler) getComposeFilePath(fullPath string) string {
 	composePath := filepath.ToSlash(
 		strings.TrimPrefix(
-			cont.Labels[api.ConfigFilesLabel], composeRoot,
+			fullPath, h.srv().composeRoot,
 		),
 	)
 	return strings.TrimPrefix(composePath, "/")

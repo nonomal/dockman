@@ -2,41 +2,53 @@ package docker_manager
 
 import (
 	"fmt"
+	"path/filepath"
+	"sync"
+	"time"
+
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/git"
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
-	"path/filepath"
-	"sync"
 )
 
 type Service struct {
-	manager     *ClientManager
-	git         *git.Service
-	ssh         *ssh.Service
 	composeRoot *string
 	localAddr   *string
 
+	manager *ClientManager
+	git     *git.Service
+	ssh     *ssh.Service
+
 	mu           sync.RWMutex
 	activeClient *docker.Service
+
+	imageUpdateStore docker.Store
+	updaterUrl       string
 }
 
-func NewService(git *git.Service, ssh *ssh.Service, composeRoot, localAddr *string) *Service {
+func NewService(
+	git *git.Service,
+	ssh *ssh.Service,
+	store docker.Store,
+	composeRoot, updaterUrl, localAddr *string,
+) *Service {
 	if !filepath.IsAbs(*composeRoot) {
 		log.Fatal().Str("path", *composeRoot).Msg("composeRoot must be an absolute path")
 	}
 
 	clientManager, defaultHost := NewClientManager(ssh)
 	srv := &Service{
-		composeRoot: composeRoot,
-		localAddr:   localAddr,
-
 		git:     git,
 		manager: clientManager,
 		ssh:     ssh,
 
-		mu: sync.RWMutex{},
+		composeRoot: composeRoot,
+		localAddr:   localAddr,
+
+		imageUpdateStore: store,
+		updaterUrl:       *updaterUrl,
 	}
 	if err := srv.SwitchClient(defaultHost); err != nil {
 		log.Fatal().Err(err).Str("name", defaultHost).Msg("unable to switch client")
@@ -44,6 +56,20 @@ func NewService(git *git.Service, ssh *ssh.Service, composeRoot, localAddr *stri
 
 	log.Debug().Msg("Docker manager service loaded successfully")
 	return srv
+}
+
+// StartImageUpdateMonitor todo
+func (srv *Service) StartImageUpdateMonitor() {
+	tick := time.NewTicker(12 * time.Hour)
+	for {
+		select {
+		case <-tick.C:
+			//for _, dock := range srv.manager.ListHosts() {
+			//	srv.loadDockerService(dock)
+			//}
+		}
+	}
+
 }
 
 func (srv *Service) GetService() *docker.Service {
@@ -188,7 +214,11 @@ func (srv *Service) SwitchClient(name string) error {
 	}
 
 	mach := srv.manager.GetMachine()
+	srv.activeClient = srv.loadDockerService(name, mach)
+	return nil
+}
 
+func (srv *Service) loadDockerService(name string, mach *ConnectedDockerClient) *docker.Service {
 	// to add direct links to services
 	var localAddr string
 	var syncer docker.Syncer
@@ -201,12 +231,15 @@ func (srv *Service) SwitchClient(name string) error {
 		syncer = docker.NewSFTPSyncer(mach.ssh.SftpClient, *srv.composeRoot)
 	}
 
-	srv.activeClient = docker.NewService(
+	service := docker.NewService(
 		localAddr,
-		*srv.composeRoot,
 		mach.dockerClient,
 		syncer,
+		srv.imageUpdateStore,
+		name,
+		srv.updaterUrl,
+		*srv.composeRoot,
 	)
 
-	return nil
+	return service
 }

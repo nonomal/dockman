@@ -25,14 +25,16 @@ import (
 // reference: https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
 
 type ComposeService struct {
+	composeRoot      string
 	containerService *ContainerService
 	syncer           Syncer
 }
 
-func NewComposeService(client *ContainerService, syncer Syncer) *ComposeService {
+func NewComposeService(composeRoot string, client *ContainerService, syncer Syncer) *ComposeService {
 	return &ComposeService{
 		containerService: client,
 		syncer:           syncer,
+		composeRoot:      composeRoot,
 	}
 }
 
@@ -146,7 +148,7 @@ func (s *ComposeService) ComposeList(ctx context.Context, project *types.Project
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
-	result, err := s.containerService.listWithFilter(ctx, container.ListOptions{
+	result, err := s.containerService.containerListWithFilter(ctx, container.ListOptions{
 		All:     all,
 		Filters: containerFilters,
 	})
@@ -213,14 +215,14 @@ func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream i
 }
 
 func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*types.Project, error) {
-	fullPath := filepath.Join(*s.containerService.composeRoot, shortName)
+	fullPath := filepath.Join(s.composeRoot, shortName)
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(fullPath)
 
 	var finalEnv []string
 	for _, file := range []string{
 		// Global .env
-		filepath.Join(*s.containerService.composeRoot, ".env"),
+		filepath.Join(s.composeRoot, ".env"),
 		// Subdirectory .env (will override global)
 		filepath.Join(workingDir, ".env"),
 	} {

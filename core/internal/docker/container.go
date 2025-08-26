@@ -6,6 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/RA341/dockman/pkg/fileutil"
@@ -22,12 +25,20 @@ import (
 )
 
 type ContainerService struct {
-	daemon      *client.Client
-	composeRoot *string
+	daemon           *client.Client
+	imageUpdateStore Store
+	host             string
+	updaterUrl       string
 }
 
-func NewContainerService(cli *client.Client, composeRoot *string) *ContainerService {
-	return &ContainerService{daemon: cli, composeRoot: composeRoot}
+func NewContainerService(cli *client.Client, imageUpdateStore Store, name, updaterUrl string) *ContainerService {
+	c := &ContainerService{
+		daemon:           cli,
+		imageUpdateStore: imageUpdateStore,
+		host:             name,
+		updaterUrl:       updaterUrl,
+	}
+	return c
 }
 
 func (s *ContainerService) ContainersStart(ctx context.Context, containerId ...string) error {
@@ -72,128 +83,267 @@ func (s *ContainerService) ContainersRemove(ctx context.Context, containerId ...
 	return nil
 }
 
-// ContainersUpdate finds all containers using the specified image,
+func (s *ContainerService) ContainersUpdateAll(ctx context.Context) error {
+	containers, err := s.daemon.ContainerList(ctx, container.ListOptions{
+		All: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, cont := range containers {
+		err := s.ContainersUpdateByImage(ctx, cont.Image)
+		if err != nil {
+			return err
+		}
+	}
+
+	return s.containersUpdate(
+		ctx,
+		true,
+		false,
+		containers...,
+	)
+}
+
+func (s *ContainerService) ContainersUpdateDockman(ctx context.Context, contID string) error {
+	list, err := s.containerListByIDs(ctx, contID)
+	if err != nil {
+		return err
+	}
+
+	return s.containersUpdate(
+		ctx,
+		true,
+		false,
+		list...,
+	)
+}
+
+func (s *ContainerService) ContainersUpdateByContainerID(ctx context.Context, containerID ...string) error {
+	list, err := s.containerListByIDs(ctx, containerID...)
+	if err != nil {
+		return err
+	}
+
+	return s.containersUpdate(
+		ctx,
+		false,
+		true,
+		list...,
+	)
+}
+
+func (s *ContainerService) containerListByIDs(ctx context.Context, containerID ...string) ([]container.Summary, error) {
+	filterArgs := filters.NewArgs()
+	for _, id := range containerID {
+		filterArgs.Add("id", id)
+	}
+
+	options := container.ListOptions{
+		All:     true, // Include stopped containers
+		Filters: filterArgs,
+	}
+
+	list, err := s.daemon.ContainerList(ctx, options)
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch container info: %w", err)
+	}
+
+	return list, nil
+}
+
+func (s *ContainerService) ContainersUpdateByImage(ctx context.Context, imageTag string) error {
+	return s.containersUpdateByImage(
+		ctx,
+		false,
+		true,
+		imageTag,
+	)
+}
+
+const DockmanUpdateDisableLabel = "dockman.update.disable"
+
+// containersUpdateByImage finds all containers using the specified image,
 // pulls the latest version of the image, and recreates the containers
 // with the new image while preserving their configuration.
-func (s *ContainerService) ContainersUpdate(_ context.Context, _ ...string) error {
-	//for _, cont := range containerId {
-	//
-	//}
-	//
-	//log.Info().Msg("Pulling latest image to ensure we have the newest version...")
-	//reader, err := cli.ImagePull(ctx, imageName, image.PullOptions{})
-	//if err != nil {
-	//	return fmt.Errorf("failed to pull image %s: %w", imageName, err)
-	//}
-	//defer fileutil.Close(reader)
-	//
-	//// Copy the pull output to stdout to show progress
-	//if _, err := io.Copy(os.Stdout, reader); err != nil {
-	//	return fmt.Errorf("failed to read image pull response: %w", err)
-	//}
-	//log.Info().Msg("Image pull complete.")
-	//
-	//// Find all containers using this image
-	//containerFilters := filters.NewArgs()
-	//containerFilters.Add("ancestor", imageName)
-	//
-	//containers, err := cli.ContainerList(ctx, container.ListOptions{
-	//	All:     true, // Consider both running and stopped containers
-	//	Filters: containerFilters,
-	//})
-	//if err != nil {
-	//	return fmt.Errorf("failed to list containers for image %s: %w", imageName, err)
-	//}
-	//
-	//if len(containers) == 0 {
-	//	log.Info().Msgf("No containers found using image %s. Nothing to do.", imageName)
-	//	return nil
-	//}
-	//
-	//log.Info().Msgf("Found %d container(s) to update.", len(containers))
-	//
-	//// Recreate each container
-	//for _, oldContainer := range containers {
-	//	containerName := "N/A"
-	//	if len(oldContainer.Names) > 0 {
-	//		// Names have a leading '/' which we should trim
-	//		containerName = strings.TrimPrefix(oldContainer.Names[0], "/")
-	//	}
-	//	log.Info().Msgf("Processing container: %s (ID: %s)", containerName, oldContainer.ID[:12])
-	//
-	//	// Inspect the old container to get its configuration
-	//	log.Info().Msgf("Inspecting old container %s...", containerName)
-	//	inspectedData, err := cli.ContainerInspect(ctx, oldContainer.ID)
-	//	if err != nil {
-	//		return fmt.Errorf("failed to inspect container %s: %w", oldContainer.ID, err)
-	//	}
-	//
-	//	// Stop and remove the old container
-	//	log.Info().Msgf("Stopping old container %s...", containerName)
-	//	if err := cli.ContainerStop(ctx, oldContainer.ID, container.StopOptions{}); err != nil {
-	//		return fmt.Errorf("failed to stop container %s: %w", oldContainer.ID, err)
-	//	}
-	//	log.Info().Msgf("Removing old container %s...", containerName)
-	//	if err := cli.ContainerRemove(ctx, oldContainer.ID, container.RemoveOptions{}); err != nil {
-	//		return fmt.Errorf("failed to remove container %s: %w", oldContainer.ID, err)
-	//	}
-	//
-	//	// Create a new container with the same configuration but the new image
-	//	log.Info().Msgf("Creating new container %s with updated image...", containerName)
-	//
-	//	// The inspected config has the old image name, so we update it.
-	//	inspectedData.Config.Image = imageName
-	//
-	//	// Prepare the networking configuration
-	//	networkingConfig := &network.NetworkingConfig{
-	//		EndpointsConfig: inspectedData.NetworkSettings.Networks,
-	//	}
-	//
-	//	newContainer, err := cli.ContainerCreate(ctx,
-	//		inspectedData.Config,     // Container configuration
-	//		inspectedData.HostConfig, // Host configuration (ports, volumes, etc.)
-	//		networkingConfig,         // Networking configuration
-	//		nil,                      // Platform (can be nil)
-	//		containerName,            // The original container name
-	//	)
-	//	if err != nil {
-	//		return fmt.Errorf("failed to create new container for %s: %w", containerName, err)
-	//	}
-	//
-	//	// Start the new container
-	//	log.Info().Msgf("Starting new container %s (ID: %s)...", containerName, newContainer.ID[:12])
-	//	if err := cli.ContainerStart(ctx, newContainer.ID, container.StartOptions{}); err != nil {
-	//		return fmt.Errorf("failed to start new container %s: %w", newContainer.ID, err)
-	//	}
-	//
-	//	log.Info().Msgf("Successfully updated container %s.", containerName)
-	//}
-	//
-	//// Prune old, dangling images
-	//log.Info().Msg("Cleaning up old, dangling images...")
-	//pruneReport, err := cli.ImagesPrune(ctx, filters.Args{})
-	//if err != nil {
-	//	log.Warn().Err(err).Msg("failed to prune images") // Non-fatal
-	//}
-	//if len(pruneReport.ImagesDeleted) > 0 {
-	//	log.Info().Msgf("Pruned %d images, reclaimed %d bytes.", len(pruneReport.ImagesDeleted), pruneReport.SpaceReclaimed)
-	//} else {
-	//	log.Info().Msg("No old images to prune.")
-	//}
-	//
-	//log.Info().Str("image", imageName).Msg("Update process for image %s completed successfully.")
+func (s *ContainerService) containersUpdateByImage(
+	ctx context.Context,
+	allowSelfUpdate bool,
+// if true any containers with DockmanUpdateDisableLabel labels will not be recreated
+	imageUpdateLock bool,
+	imageTag string,
+) error {
+	// Find all containers using this image
+	containerFilters := filters.NewArgs()
+	containerFilters.Add("ancestor", imageTag)
+
+	containers, err := s.daemon.ContainerList(ctx, container.ListOptions{
+		All:     true, // Consider both running and stopped containers
+		Filters: containerFilters,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list containers for image %s: %w", imageTag, err)
+	}
+
+	return s.containersUpdate(ctx, allowSelfUpdate, imageUpdateLock, containers...)
+}
+
+func (s *ContainerService) containersUpdate(
+	ctx context.Context,
+	allowSelfUpdate, imageUpdateLock bool,
+	containers ...container.Summary,
+) error {
+	if len(containers) == 0 {
+		log.Info().Msgf("No containers found. Nothing to do")
+		return nil
+	}
+
+	// Recreate each container
+	for _, cur := range containers {
+		if isDockman(&cur) && !allowSelfUpdate {
+			err := UpdateDockman(cur.ID, s.updaterUrl)
+			if err != nil {
+				log.Warn().Err(err).Msg("Failed to update Dockman container")
+			}
+
+			continue
+		}
+
+		if isUpdateDisable(&cur) && !imageUpdateLock {
+			log.Warn().
+				Str("id", cur.ID).Str("name", cur.Names[0]).
+				Msg("updates are disabled for this container")
+
+			continue
+		}
+
+		imgTag := cur.Image
+
+		err := s.ImagesPull(ctx, imgTag)
+		if err != nil {
+			return err
+		}
+
+		err = s.ContainerRecreate(ctx, imgTag, cur)
+		if err != nil {
+			// todo do not fail notify or save reason
+			return err
+		}
+	}
+
+	// todo check for container health
+	// with either log line
+	// pinging a health endpoint
+	// uptime check > some time
+	// todo rollbacks to previous state if failing health-checks
+
+	// Prune old, dangling images
+	// todo allow option to not prune ??
+	s.cleanupOldImages(ctx)
+
+	return nil
+}
+
+func (s *ContainerService) cleanupOldImages(ctx context.Context) {
+	log.Info().Msg("Cleaning up old, dangling images...")
+	pruneReport, err := s.daemon.ImagesPrune(ctx, filters.Args{})
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to prune images")
+	}
+
+	if len(pruneReport.ImagesDeleted) > 0 {
+		log.Info().Msgf("Pruned %d images, reclaimed %d bytes", len(pruneReport.ImagesDeleted), pruneReport.SpaceReclaimed)
+	} else {
+		log.Info().Msg("No images to prune")
+	}
+}
+
+func (s *ContainerService) ImagesPull(ctx context.Context, imageTag string) error {
+	log.Info().Msg("Pulling latest image")
+	reader, err := s.daemon.ImagePull(ctx, imageTag, image.PullOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to pull image %s: %w", imageTag, err)
+	}
+	defer fileutil.Close(reader)
+
+	// Copy the pull output to stdout to show progress
+	if _, err := io.Copy(os.Stdout, reader); err != nil {
+		return fmt.Errorf("failed to read image pull response: %w", err)
+	}
+
+	log.Info().Msg("Image pull complete")
+	return nil
+}
+
+func isUpdateDisable(c *container.Summary) bool {
+	return c.Labels[DockmanUpdateDisableLabel] == "true"
+}
+
+const dockmanImageName = "ghcr.io/ra341/dockman"
+
+func isDockman(cont *container.Summary) bool {
+	return strings.HasPrefix(cont.Image, dockmanImageName)
+}
+
+func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag string, oldContainer container.Summary) error {
+	containerName := "N/A"
+	if len(oldContainer.Names) > 0 {
+		// Names have a leading '/' which we should trim
+		containerName = strings.TrimPrefix(oldContainer.Names[0], "/")
+	}
+	log.Debug().Msgf("Processing container: %s (ID: %s)", containerName, oldContainer.ID[:12])
+
+	// Inspect the old container to get its configuration
+	log.Debug().Msgf("Inspecting old container %s...", containerName)
+	inspectedData, err := s.daemon.ContainerInspect(ctx, oldContainer.ID)
+	if err != nil {
+		return fmt.Errorf("failed to inspect container %s: %w", oldContainer.ID, err)
+	}
+
+	log.Debug().Msgf("Stopping/Removing old container %s...", containerName)
+	if err = s.daemon.ContainerRemove(ctx, oldContainer.ID, container.RemoveOptions{
+		Force: true,
+	}); err != nil {
+		return fmt.Errorf("failed to remove container %s: %w", oldContainer.ID, err)
+	}
+
+	// Create a new container with the same configuration but the new image
+	// The inspected config has the old image name, so we update it.
+	log.Debug().Msgf("Creating new container %s with updated image...", containerName)
+	inspectedData.Config.Image = imageTag
+
+	newContainer, err := s.daemon.ContainerCreate(ctx,
+		inspectedData.Config,
+		inspectedData.HostConfig,
+		&network.NetworkingConfig{
+			EndpointsConfig: inspectedData.NetworkSettings.Networks,
+		},
+		nil,
+		containerName,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create new container for %s: %w", containerName, err)
+	}
+
+	log.Debug().Msgf("Starting new container %s (ID: %s)...", containerName, newContainer.ID[:12])
+	if err := s.daemon.ContainerStart(ctx, newContainer.ID, container.StartOptions{}); err != nil {
+		return fmt.Errorf("failed to start new container %s: %w", newContainer.ID, err)
+	}
+
+	log.Info().Msgf("Successfully recreated container %s.", containerName)
 	return nil
 }
 
 func (s *ContainerService) ContainersList(ctx context.Context) ([]container.Summary, error) {
-	return s.listWithFilter(ctx, container.ListOptions{
+	return s.containerListWithFilter(ctx, container.ListOptions{
 		All:    true,
 		Size:   false,
 		Latest: false,
 	})
 }
 
-func (s *ContainerService) listWithFilter(ctx context.Context, opts container.ListOptions) ([]container.Summary, error) {
+func (s *ContainerService) containerListWithFilter(ctx context.Context, opts container.ListOptions) ([]container.Summary, error) {
 	return s.daemon.ContainerList(ctx, opts)
 }
 
@@ -220,7 +370,45 @@ func (s *ContainerService) ContainerStats(ctx context.Context, filter container.
 	return statsList, nil
 }
 
-func (s *ContainerService) ListImages(ctx context.Context) ([]image.Summary, error) {
+// UpdateDockman updates a running dockman container containerID is the id of the current dockman container
+func UpdateDockman(containerID, updaterUrl string) error {
+	fullUrl := fmt.Sprintf("%s/%s", updaterUrl, containerID)
+	resp, err := http.Get(fullUrl)
+	if err != nil {
+		return fmt.Errorf("unable to send request updater: %w", err)
+	}
+	defer fileutil.Close(resp.Body)
+	return nil
+}
+
+// ImageUpdateCheck checks for new image manifests and saves to db
+func (s *ContainerService) ImageUpdateCheck(ctx context.Context) error {
+	list, err := s.ImageList(ctx)
+	if err != nil {
+		return err
+	}
+	for _, img := range list {
+		available, newRef, err2 := s.ImageUpdateAvailable(ctx, img.RepoTags[0])
+		if err2 != nil {
+			return err2
+		}
+
+		if available {
+			err = s.imageUpdateStore.Save(ImageUpdate{
+				ImageID:   img.ID,
+				UpdateRef: newRef,
+				Host:      s.host,
+			})
+			if err != nil {
+				log.Warn().Err(err).Str("image", img.RepoTags[0]).Msg("Failed to update image")
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *ContainerService) ImageList(ctx context.Context) ([]image.Summary, error) {
 	return s.daemon.ImageList(ctx, image.ListOptions{
 		All:        true,
 		SharedSize: true,
@@ -228,11 +416,43 @@ func (s *ContainerService) ListImages(ctx context.Context) ([]image.Summary, err
 	})
 }
 
+func (s *ContainerService) ImageUpdateAvailable(ctx context.Context, imageName string) (bool, string, error) {
+	// Get local image info
+	localImages, err := s.daemon.ImageList(ctx, image.ListOptions{
+		Filters: filters.NewArgs(filters.Arg("reference", imageName)),
+	})
+	if err != nil {
+		return false, "", err
+	}
+
+	var localDigest string
+	for _, img := range localImages {
+		for _, tag := range img.RepoTags {
+			if tag == imageName {
+				localDigest = img.ID
+				break
+			}
+		}
+	}
+
+	// Get remote image info
+	distributionInspect, err := s.daemon.DistributionInspect(ctx, imageName, "")
+	if err != nil {
+		return false, "", err
+	}
+	remoteDigest := string(distributionInspect.Descriptor.Digest)
+
+	localDigest = strings.TrimPrefix(localDigest, "sha256:")
+	remoteDigest = strings.TrimPrefix(remoteDigest, "sha256:")
+
+	return localDigest != remoteDigest, remoteDigest, nil
+}
+
 func (s *ContainerService) ImageDelete(ctx context.Context, imageId string) ([]image.DeleteResponse, error) {
 	return s.daemon.ImageRemove(ctx, imageId, image.RemoveOptions{})
 }
 
-func (s *ContainerService) PruneUntaggedImages(ctx context.Context) (image.PruneReport, error) {
+func (s *ContainerService) ImagePruneUntagged(ctx context.Context) (image.PruneReport, error) {
 	filter := filters.NewArgs()
 	filter.Add("dangling", "true")
 
@@ -240,7 +460,7 @@ func (s *ContainerService) PruneUntaggedImages(ctx context.Context) (image.Prune
 	return s.daemon.ImagesPrune(ctx, filter)
 }
 
-func (s *ContainerService) PruneUnusedImages(ctx context.Context) (image.PruneReport, error) {
+func (s *ContainerService) ImagePruneUnused(ctx context.Context) (image.PruneReport, error) {
 	filter := filters.NewArgs()
 	filter.Add("dangling", "false")
 	// force remove all unused
@@ -366,7 +586,7 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 				if len(c.Names) > 0 {
 					containersUsingVolumesMap[mn.Name] = [3]string{
 						c.ID,
-						getComposeFilePath(c, *s.composeRoot),
+						c.Labels[api.ConfigFilesLabel],
 						c.Labels[api.ProjectLabel],
 					}
 				}

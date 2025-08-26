@@ -16,6 +16,7 @@
 - [Common Errors](#common-errors)
 - [File Layout](#file-layout)
 - [Env loading](#env-loading)
+- [Updater](#dockman-updater)
 - [Multihost support](#multihost-support)
 - [Feedback](#feedback)
 - [Security Considerations](#security-considerations)
@@ -418,6 +419,40 @@ Where `.env` might look like:
 ENVIRONMENT=production
 DEBUG=false
 ```
+
+## Dockman Updater
+
+Dockman provides comprehensive Docker container and image updating capabilities, serving as a complete replacement for
+Watchtower.
+
+### Features
+
+- **Automated Updates**: Keep your containers running the latest versions automatically
+- **Flexible Notification System**: Choose to receive notifications about updates or run silently
+- **Smart Rollback**: Automatically rollback containers when updates fail or cause issues
+- **Watchtower Replacement**: Drop-in replacement with enhanced functionality
+
+### Update Options
+
+Dockman offers flexible update handling:
+
+- **Notify Only**: Get alerts about available updates without automatic deployment
+- **Auto-Update**: Automatically pull and deploy new container versions
+- **Rollback Protection**: Revert to previous versions when updates cause problems
+
+### Getting Started
+
+[Add installation and basic usage instructions here]
+
+### Configuration
+
+To disable update completely for containers you can use the label
+
+dockman.update = true
+
+dockman.update = notify
+
+[Add configuration options and examples here]
 
 ## Multihost Support
 

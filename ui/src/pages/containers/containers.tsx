@@ -1,5 +1,5 @@
 import {Box} from '@mui/material';
-import {Delete, PlayArrow, RestartAlt, Stop} from '@mui/icons-material';
+import {Delete, PlayArrow, RestartAlt, Stop, Update} from '@mui/icons-material';
 import {ContainerTable} from '../compose/components/container-info-table';
 import {useMemo, useState} from "react";
 import {useDockerContainers} from "../../hooks/docker-containers.ts";
@@ -45,7 +45,7 @@ function ContainersPage() {
             icon: <PlayArrow/>,
             disabled: selectedContainers.length === 0,
             handler: async () => {
-
+                await handleContainerAction('start', 'containerStart', "started")
             },
             tooltip: "",
         },
@@ -79,17 +79,16 @@ function ContainersPage() {
             },
             tooltip: "",
         },
-        // todo update
-        // {
-        //     action: 'update',
-        //     buttonText: "Update",
-        //     icon: <Update/>,
-        //     disabled: selectedContainers.length === 0,
-        //     handler: async () => {
-        //         await handleContainerAction('update', 'containerUpdate', "updated")
-        //     },
-        //     tooltip: "",
-        // },
+        {
+            action: 'update',
+            buttonText: "Update",
+            icon: <Update/>,
+            disabled: selectedContainers.length === 0,
+            handler: async () => {
+                await handleContainerAction('update', 'containerUpdate', "updated")
+            },
+            tooltip: "",
+        },
     ];
 
     async function handleContainerAction(
@@ -106,10 +105,11 @@ function ContainersPage() {
         if (err) {
             console.error(err)
             showError(`Failed to ${name} Containers: ${err}`)
+        } else {
+            showSuccess(`Successfully ${message} containers`)
         }
 
         fetchContainers().then()
-        showSuccess(`Successfully ${message} containers`)
         setSelectedContainers([])
     }
 
