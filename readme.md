@@ -422,7 +422,12 @@ DEBUG=false
 
 ## Dockman Updater
 
-Dockman provides comprehensive Docker container and image updating capabilities, serving as a complete replacement for
+> [!IMPORTANT]
+> Dockman updater is only available on ```ghcr.io/ra341/dockman:main``` only
+>
+> and is currently in testing expect bugs
+
+Dockman provides a Docker container and image updater, serving as a complete replacement for
 Watchtower.
 
 ### Features
@@ -434,25 +439,48 @@ Watchtower.
 
 ### Update Options
 
-Dockman offers flexible update handling:
+Dockman provides flexible update handling with multiple deployment strategies:
 
-- **Notify Only**: Get alerts about available updates without automatic deployment
-- **Auto-Update**: Automatically pull and deploy new container versions
-- **Rollback Protection**: Revert to previous versions when updates cause problems
+#### Update Modes
 
-### Getting Started
+* **Notify Only**: Receive alerts about available updates without automatic deployment
+* **Auto-Update**: Automatically pull and deploy new container versions on a configurable schedule
+* **Manual Update**: Update containers directly through the web UI
 
-[Add installation and basic usage instructions here]
+#### Rollback Protection
+
+Dockman includes built-in safety mechanisms to protect against failed updates:
+
+**Health Check Monitoring**
+
+* Configure HTTP endpoint monitoring to verify container health after updates
+* Set a custom endpoint that Dockman will ping X seconds after container startup
+* Automatic rollback triggers if the health check fails
+
+**Runtime Stability Checks**
+
+* Define minimum runtime requirements for containers
+* Example: Container must run continuously for 5 minutes post-update
+* Automatic rollback to previous configuration if stability threshold isn't met
+* Notifications sent for all rollback events
+
+These safety features ensure your services remain stable and minimize downtime during updates.
 
 ### Configuration
 
 To disable update completely for containers you can use the label
 
+### Dockman disable
+
 dockman.update = true
 
 dockman.update = notify
 
-[Add configuration options and examples here]
+### Dockman healthcheck
+
+Container stability Check
+
+Set the label on container
 
 ## Multihost Support
 

@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/docker/compose/v2/pkg/api"
@@ -287,32 +288,82 @@ func isDockman(cont *container.Summary) bool {
 }
 
 func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag string, oldContainer container.Summary) error {
-	containerName := "N/A"
+	containerName := "Untagged"
 	if len(oldContainer.Names) > 0 {
-		// Names have a leading '/' which we should trim
 		containerName = strings.TrimPrefix(oldContainer.Names[0], "/")
 	}
+
 	log.Debug().Msgf("Processing container: %s (ID: %s)", containerName, oldContainer.ID[:12])
 
-	// Inspect the old container to get its configuration
-	log.Debug().Msgf("Inspecting old container %s...", containerName)
 	inspectedData, err := s.daemon.ContainerInspect(ctx, oldContainer.ID)
 	if err != nil {
 		return fmt.Errorf("failed to inspect container %s: %w", oldContainer.ID, err)
 	}
 
-	log.Debug().Msgf("Stopping/Removing old container %s...", containerName)
-	if err = s.daemon.ContainerRemove(ctx, oldContainer.ID, container.RemoveOptions{
-		Force: true,
-	}); err != nil {
-		return fmt.Errorf("failed to remove container %s: %w", oldContainer.ID, err)
+	log.Debug().Msgf("Stopping old container %s...", containerName)
+	if err := s.daemon.ContainerStop(ctx, oldContainer.ID, container.StopOptions{}); err != nil {
+		return fmt.Errorf("failed to stop container %s: %w", oldContainer.ID, err)
 	}
 
+	newContainer, err := s.containerCreate(ctx, imageTag, containerName+"_new", inspectedData)
+	if err != nil {
+		return s.rollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
+	}
+
+	log.Debug().Msgf("Starting new container %s...", newContainer.ID[:12])
+	if err = s.daemon.ContainerStart(ctx, newContainer.ID, container.StartOptions{}); err != nil {
+
+		err = s.daemon.ContainerRemove(ctx, newContainer.ID, container.RemoveOptions{Force: true})
+		if err != nil {
+			return err
+		}
+
+		return s.rollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
+	}
+
+	if err = s.ContainerHealthCheck(newContainer.ID, &inspectedData); err != nil {
+
+		err = s.daemon.ContainerRemove(ctx, newContainer.ID, container.RemoveOptions{Force: true})
+		if err != nil {
+			return err
+		}
+
+		return s.rollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
+	}
+
+	// Health check passed - now we can safely remove old container and rename new one
+	log.Debug().Msgf("Health check passed, finalizing update...")
+
+	// Remove old container
+	if err := s.daemon.ContainerRemove(ctx, oldContainer.ID, container.RemoveOptions{Force: true}); err != nil {
+		log.Warn().Msgf("Failed to remove old container: %v", err)
+	}
+
+	// Rename new container to original name
+	if err := s.daemon.ContainerRename(ctx, newContainer.ID, containerName); err != nil {
+		log.Warn().Msgf("Failed to rename container to original name: %v", err)
+	}
+
+	log.Info().Msgf("Successfully updated container %s", containerName)
+	return nil
+}
+
+func (s *ContainerService) rollbackToOldContainer(ctx context.Context, oldContainerID, containerName string, originalErr error) error {
+	log.Warn().Msgf("Rolling back to old container %s", containerName)
+
+	if err := s.daemon.ContainerStart(ctx, oldContainerID, container.StartOptions{}); err != nil {
+		return fmt.Errorf("rollback failed - cannot restart old container: %w (original error: %v)", err, originalErr)
+	}
+
+	log.Info().Msgf("Successfully rolled back to old container %s", containerName)
+	return fmt.Errorf("update failed, rolled back to previous version: %w", originalErr)
+}
+
+func (s *ContainerService) containerCreate(ctx context.Context, imageTag string, containerName string, inspectedData container.InspectResponse) (container.CreateResponse, error) {
 	// Create a new container with the same configuration but the new image
 	// The inspected config has the old image name, so we update it.
 	log.Debug().Msgf("Creating new container %s with updated image...", containerName)
 	inspectedData.Config.Image = imageTag
-
 	newContainer, err := s.daemon.ContainerCreate(ctx,
 		inspectedData.Config,
 		inspectedData.HostConfig,
@@ -323,16 +374,10 @@ func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag strin
 		containerName,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create new container for %s: %w", containerName, err)
+		return container.CreateResponse{}, fmt.Errorf("failed to create new container for %s: %w", containerName, err)
 	}
 
-	log.Debug().Msgf("Starting new container %s (ID: %s)...", containerName, newContainer.ID[:12])
-	if err := s.daemon.ContainerStart(ctx, newContainer.ID, container.StartOptions{}); err != nil {
-		return fmt.Errorf("failed to start new container %s: %w", newContainer.ID, err)
-	}
-
-	log.Info().Msgf("Successfully recreated container %s.", containerName)
-	return nil
+	return newContainer, nil
 }
 
 func (s *ContainerService) ContainersList(ctx context.Context) ([]container.Summary, error) {
@@ -769,6 +814,53 @@ func (s *ContainerService) ExecContainer(ctx context.Context, containerID string
 	}
 
 	return &hijackedResp, nil
+}
+
+func (s *ContainerService) ContainerHealthCheck(containerID string, c *container.InspectResponse) error {
+	log.Info().Msg("Starting healthcheck for container")
+
+	// get health check config
+	err := s.containerHealthCheckUptime(containerID, c)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+const DockmanHealthCheckUptimeLabel = "dockman.update.healthcheck.uptime"
+
+func (s *ContainerService) containerHealthCheckUptime(containerID string, c *container.InspectResponse) error {
+	lab := c.Config.Labels[DockmanHealthCheckUptimeLabel]
+	expectedUptime, err := time.ParseDuration(lab)
+	if err != nil {
+		log.Warn().Msg("invalid time format skipping uptime check")
+	}
+
+	timer := time.NewTimer(expectedUptime)
+	defer timer.Stop()
+	<-timer.C
+
+	inspect, err := s.daemon.ContainerInspect(context.Background(), containerID)
+	if err != nil {
+		return err
+	}
+
+	if !inspect.State.Running {
+		return fmt.Errorf("container is not running")
+	}
+
+	startedAt, err := time.Parse(time.RFC3339Nano, inspect.State.StartedAt)
+	if err != nil {
+		return fmt.Errorf("failed to parse started time: %w", err)
+	}
+
+	uptime := time.Since(startedAt)
+	if uptime > expectedUptime {
+		return fmt.Errorf("container did not reach expected uptime of %s, container uptime: %s",
+			expectedUptime.String(), uptime.String())
+	}
+	return nil
 }
 
 func formatDiskIO(statsJSON container.StatsResponse) (uint64, uint64) {
