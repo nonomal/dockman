@@ -466,21 +466,87 @@ Dockman includes built-in safety mechanisms to protect against failed updates:
 
 These safety features ensure your services remain stable and minimize downtime during updates.
 
-### Configuration
+### Disable updates
 
-To disable update completely for containers you can use the label
+You can disable updates for specific containers by adding the label
 
-### Dockman disable
+```
+dockman.update.disable=true
+```
 
-dockman.update = true
+### Update Healthchecks
 
-dockman.update = notify
+#### Container Uptime Check
 
-### Dockman healthcheck
+The container stability check verifies that a running container has maintained the minimum required uptime after waiting
+for a specified duration.
 
-Container stability Check
+If the container crashes, restarts, or summons eldritch horrors, dockman rolls back to the old container.
 
-Set the label on container
+Basically prevents the classic "it works on my machine... oh wait, it just died" scenario.
+
+> [!CAUTION]
+> Be careful when using longer times here as it will pause
+> the update process until the uptime requirements are met,
+> especially when running via the UI, you dont want to see a loading spinner for 1 hour
+
+- **Success**: If the container meets the minimum uptime requirement, the check passes
+- **Failure**: If the container fails to meet the uptime requirement, it triggers a rollback and sends a notification
+- **Skip**: The check is automatically skipped if no label is set or if an invalid time format is provided
+
+##### Configuration
+
+Add the following label to your container to enable the stability check:
+
+```yaml
+dockman.update.healthcheck.uptime=<minimum-uptime>
+```
+
+##### Time Format
+
+The `minimum-uptime` value uses Go's [time.ParseDuration](https://pkg.go.dev/time#ParseDuration) format, which accepts:
+
+- **Units**: `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`
+- **Format**: Decimal numbers with optional fractions and unit suffixes
+- **Examples**: `300ms`, `1.5h`, `2h45m`, `30s`
+
+##### Examples
+
+```yaml
+# Wait for 5 minutes of uptime
+dockman.update.healthcheck.uptime=5m
+
+  # Wait for 2 hours and 30 minutes
+dockman.update.healthcheck.uptime=2h30m
+
+  # Wait for 30 seconds
+dockman.update.healthcheck.uptime=30s
+
+  # Complex duration with milliseconds
+dockman.update.healthcheck.uptime=1h10m500ms
+```
+
+##### Valid Duration Examples
+
+| Duration String | Description                        |
+|-----------------|------------------------------------|
+| `30s`           | 30 seconds                         |
+| `5m`            | 5 minutes                          |
+| `1h`            | 1 hour                             |
+| `2h30m`         | 2 hours and 30 minutes             |
+| `1h10m10s`      | 1 hour, 10 minutes, and 10 seconds |
+| `500ms`         | 500 milliseconds                   |
+| `1.5h`          | 1.5 hours (90 minutes)             |
+
+##### Notes
+
+- Negative durations (e.g., `-1.5h`) are technically valid in Go's parser but should be avoided in this context
+- The check will be skipped silently for invalid duration strings
+- Both `us` and `µs` are accepted for microseconds
+
+#### Container Ping Check
+
+This health check pings a container after a specified amount of time or until it reaches healthy status
 
 ## Multihost Support
 

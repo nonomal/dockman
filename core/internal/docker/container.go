@@ -23,6 +23,7 @@ import (
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 )
 
 type ContainerService struct {
@@ -40,6 +41,36 @@ func NewContainerService(cli *client.Client, imageUpdateStore Store, name, updat
 		updaterUrl:       updaterUrl,
 	}
 	return c
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Container stuff
+
+func (s *ContainerService) ContainersList(ctx context.Context) ([]container.Summary, error) {
+	return s.daemon.ContainerList(ctx, container.ListOptions{
+		All:    true,
+		Size:   false,
+		Latest: false,
+	})
+}
+
+func (s *ContainerService) containerListByIDs(ctx context.Context, containerID ...string) ([]container.Summary, error) {
+	filterArgs := filters.NewArgs()
+	for _, id := range containerID {
+		filterArgs.Add("id", id)
+	}
+
+	options := container.ListOptions{
+		All:     true, // Include stopped containers
+		Filters: filterArgs,
+	}
+
+	list, err := s.daemon.ContainerList(ctx, options)
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch container info: %w", err)
+	}
+
+	return list, nil
 }
 
 func (s *ContainerService) ContainersStart(ctx context.Context, containerId ...string) error {
@@ -84,29 +115,61 @@ func (s *ContainerService) ContainersRemove(ctx context.Context, containerId ...
 	return nil
 }
 
-func (s *ContainerService) ContainersUpdateAll(ctx context.Context) error {
-	containers, err := s.daemon.ContainerList(ctx, container.ListOptions{
-		All: true,
+func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
+	return s.daemon.ContainerLogs(ctx, containerID, container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+		Details:    true,
 	})
+}
+
+func (s *ContainerService) ContainerStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
+	containers, err := s.daemon.ContainerList(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("could not list containers: %w", err)
+	}
+
+	if len(containers) == 0 {
+		return []ContainerStats{}, nil
+	}
+
+	statsList := s.containerGetStatsFromList(ctx, containers)
+	return statsList, nil
+}
+
+func (s *ContainerService) containerGetStatsFromList(ctx context.Context, containers []container.Summary) []ContainerStats {
+	return parallelLoop(containers, func(r container.Summary) (ContainerStats, bool) {
+		stats, err := s.getAndFormatStats(ctx, r)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			log.Warn().Err(err).Str("container", r.ID[:12]).Msg("could not convert stats, skipping...")
+			return ContainerStats{}, false
+		}
+		return stats, true
+	})
+}
+
+func (s *ContainerService) ContainersUpdateAll(ctx context.Context) error {
+	containers, err := s.daemon.ContainerList(ctx,
+		container.ListOptions{
+			All: true,
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	for _, cont := range containers {
-		err := s.ContainersUpdateByImage(ctx, cont.Image)
-		if err != nil {
-			return err
-		}
-	}
-
 	return s.containersUpdate(
 		ctx,
-		true,
+		containers,
 		false,
-		containers...,
+		false,
 	)
 }
 
+// ContainersUpdateDockman contID is expected to be a dockman container
+//
+// this will bypass the self update check
 func (s *ContainerService) ContainersUpdateDockman(ctx context.Context, contID string) error {
 	list, err := s.containerListByIDs(ctx, contID)
 	if err != nil {
@@ -115,9 +178,9 @@ func (s *ContainerService) ContainersUpdateDockman(ctx context.Context, contID s
 
 	return s.containersUpdate(
 		ctx,
+		list,
 		true,
 		false,
-		list...,
 	)
 }
 
@@ -129,52 +192,16 @@ func (s *ContainerService) ContainersUpdateByContainerID(ctx context.Context, co
 
 	return s.containersUpdate(
 		ctx,
+		list,
 		false,
 		true,
-		list...,
 	)
 }
 
-func (s *ContainerService) containerListByIDs(ctx context.Context, containerID ...string) ([]container.Summary, error) {
-	filterArgs := filters.NewArgs()
-	for _, id := range containerID {
-		filterArgs.Add("id", id)
-	}
-
-	options := container.ListOptions{
-		All:     true, // Include stopped containers
-		Filters: filterArgs,
-	}
-
-	list, err := s.daemon.ContainerList(ctx, options)
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch container info: %w", err)
-	}
-
-	return list, nil
-}
-
-func (s *ContainerService) ContainersUpdateByImage(ctx context.Context, imageTag string) error {
-	return s.containersUpdateByImage(
-		ctx,
-		false,
-		true,
-		imageTag,
-	)
-}
-
-const DockmanUpdateDisableLabel = "dockman.update.disable"
-
-// containersUpdateByImage finds all containers using the specified image,
+// ContainersUpdateByImage finds all containers using the specified image,
 // pulls the latest version of the image, and recreates the containers
 // with the new image while preserving their configuration.
-func (s *ContainerService) containersUpdateByImage(
-	ctx context.Context,
-	allowSelfUpdate bool,
-// if true any containers with DockmanUpdateDisableLabel labels will not be recreated
-	imageUpdateLock bool,
-	imageTag string,
-) error {
+func (s *ContainerService) ContainersUpdateByImage(ctx context.Context, imageTag string) error {
 	// Find all containers using this image
 	containerFilters := filters.NewArgs()
 	containerFilters.Add("ancestor", imageTag)
@@ -187,13 +214,15 @@ func (s *ContainerService) containersUpdateByImage(
 		return fmt.Errorf("failed to list containers for image %s: %w", imageTag, err)
 	}
 
-	return s.containersUpdate(ctx, allowSelfUpdate, imageUpdateLock, containers...)
+	return s.containersUpdate(ctx, containers, false, true)
 }
 
+// containersUpdate Core updater,
+// uses the image name in the containers to pull/update/healthcheck containers
 func (s *ContainerService) containersUpdate(
 	ctx context.Context,
-	allowSelfUpdate, imageUpdateLock bool,
-	containers ...container.Summary,
+	containers []container.Summary,
+	allowSelfUpdate, allowImageUpdate bool,
 ) error {
 	if len(containers) == 0 {
 		log.Info().Msgf("No containers found. Nothing to do")
@@ -211,7 +240,7 @@ func (s *ContainerService) containersUpdate(
 			continue
 		}
 
-		if isUpdateDisable(&cur) && !imageUpdateLock {
+		if isUpdateDisable(&cur) && !allowImageUpdate {
 			log.Warn().
 				Str("id", cur.ID).Str("name", cur.Names[0]).
 				Msg("updates are disabled for this container")
@@ -221,7 +250,7 @@ func (s *ContainerService) containersUpdate(
 
 		imgTag := cur.Image
 
-		err := s.ImagesPull(ctx, imgTag)
+		err := s.ImagePull(ctx, imgTag)
 		if err != nil {
 			return err
 		}
@@ -233,58 +262,41 @@ func (s *ContainerService) containersUpdate(
 		}
 	}
 
-	// todo check for container health
-	// with either log line
-	// pinging a health endpoint
-	// uptime check > some time
-	// todo rollbacks to previous state if failing health-checks
-
 	// Prune old, dangling images
 	// todo allow option to not prune ??
-	s.cleanupOldImages(ctx)
+	s.containerCleanupImages(ctx)
 
 	return nil
 }
 
-func (s *ContainerService) cleanupOldImages(ctx context.Context) {
-	log.Info().Msg("Cleaning up old, dangling images...")
-	pruneReport, err := s.daemon.ImagesPrune(ctx, filters.Args{})
-	if err != nil {
-		log.Warn().Err(err).Msg("failed to prune images")
-	}
+//////////////////////////////////////////////
+// update guards and utils
 
-	if len(pruneReport.ImagesDeleted) > 0 {
-		log.Info().Msgf("Pruned %d images, reclaimed %d bytes", len(pruneReport.ImagesDeleted), pruneReport.SpaceReclaimed)
-	} else {
-		log.Info().Msg("No images to prune")
-	}
-}
-
-func (s *ContainerService) ImagesPull(ctx context.Context, imageTag string) error {
-	log.Info().Msg("Pulling latest image")
-	reader, err := s.daemon.ImagePull(ctx, imageTag, image.PullOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to pull image %s: %w", imageTag, err)
-	}
-	defer fileutil.Close(reader)
-
-	// Copy the pull output to stdout to show progress
-	if _, err := io.Copy(os.Stdout, reader); err != nil {
-		return fmt.Errorf("failed to read image pull response: %w", err)
-	}
-
-	log.Info().Msg("Image pull complete")
-	return nil
-}
+const DockmanUpdateDisableLabel = "dockman.update.disable"
 
 func isUpdateDisable(c *container.Summary) bool {
 	return c.Labels[DockmanUpdateDisableLabel] == "true"
 }
 
-const dockmanImageName = "ghcr.io/ra341/dockman"
+const DockmanContainerLabel = "dockman.container"
 
 func isDockman(cont *container.Summary) bool {
-	return strings.HasPrefix(cont.Image, dockmanImageName)
+	value := cont.Labels[DockmanContainerLabel]
+	return value == "true"
+}
+
+// UpdateDockman updates a running dockman container
+// by pinging the sidecar updater service
+//
+// containerID is the id of the current dockman container
+func UpdateDockman(containerID, updaterUrl string) error {
+	fullUrl := fmt.Sprintf("%s/%s", updaterUrl, containerID)
+	resp, err := http.Get(fullUrl)
+	if err != nil {
+		return fmt.Errorf("unable to send request updater: %w", err)
+	}
+	defer fileutil.Close(resp.Body)
+	return nil
 }
 
 func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag string, oldContainer container.Summary) error {
@@ -307,7 +319,7 @@ func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag strin
 
 	newContainer, err := s.containerCreate(ctx, imageTag, containerName+"_new", inspectedData)
 	if err != nil {
-		return s.rollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
+		return s.containerRollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
 	}
 
 	log.Debug().Msgf("Starting new container %s...", newContainer.ID[:12])
@@ -318,7 +330,7 @@ func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag strin
 			return err
 		}
 
-		return s.rollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
+		return s.containerRollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
 	}
 
 	if err = s.ContainerHealthCheck(newContainer.ID, &inspectedData); err != nil {
@@ -328,13 +340,12 @@ func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag strin
 			return err
 		}
 
-		return s.rollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
+		return s.containerRollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
 	}
 
 	// Health check passed - now we can safely remove old container and rename new one
 	log.Debug().Msgf("Health check passed, finalizing update...")
 
-	// Remove old container
 	if err := s.daemon.ContainerRemove(ctx, oldContainer.ID, container.RemoveOptions{Force: true}); err != nil {
 		log.Warn().Msgf("Failed to remove old container: %v", err)
 	}
@@ -348,7 +359,7 @@ func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag strin
 	return nil
 }
 
-func (s *ContainerService) rollbackToOldContainer(ctx context.Context, oldContainerID, containerName string, originalErr error) error {
+func (s *ContainerService) containerRollbackToOldContainer(ctx context.Context, oldContainerID, containerName string, originalErr error) error {
 	log.Warn().Msgf("Rolling back to old container %s", containerName)
 
 	if err := s.daemon.ContainerStart(ctx, oldContainerID, container.StartOptions{}); err != nil {
@@ -359,7 +370,12 @@ func (s *ContainerService) rollbackToOldContainer(ctx context.Context, oldContai
 	return fmt.Errorf("update failed, rolled back to previous version: %w", originalErr)
 }
 
-func (s *ContainerService) containerCreate(ctx context.Context, imageTag string, containerName string, inspectedData container.InspectResponse) (container.CreateResponse, error) {
+func (s *ContainerService) containerCreate(
+	ctx context.Context,
+	imageTag string,
+	containerName string,
+	inspectedData container.InspectResponse,
+) (container.CreateResponse, error) {
 	// Create a new container with the same configuration but the new image
 	// The inspected config has the old image name, so we update it.
 	log.Debug().Msgf("Creating new container %s with updated image...", containerName)
@@ -380,78 +396,121 @@ func (s *ContainerService) containerCreate(ctx context.Context, imageTag string,
 	return newContainer, nil
 }
 
-func (s *ContainerService) ContainersList(ctx context.Context) ([]container.Summary, error) {
-	return s.containerListWithFilter(ctx, container.ListOptions{
-		All:    true,
-		Size:   false,
-		Latest: false,
-	})
-}
-
-func (s *ContainerService) containerListWithFilter(ctx context.Context, opts container.ListOptions) ([]container.Summary, error) {
-	return s.daemon.ContainerList(ctx, opts)
-}
-
-func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
-	return s.daemon.ContainerLogs(ctx, containerID, container.LogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Follow:     true,
-		Details:    true,
-	})
-}
-
-func (s *ContainerService) ContainerStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
-	containers, err := s.daemon.ContainerList(ctx, filter)
+func (s *ContainerService) containerCleanupImages(ctx context.Context) {
+	log.Info().Msg("Cleaning up old, dangling images...")
+	pruneReport, err := s.ImagePruneUntagged(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("could not list containers: %w", err)
+		log.Warn().Err(err).Msg("failed to prune images")
 	}
 
-	if len(containers) == 0 {
-		return []ContainerStats{}, nil
+	if len(pruneReport.ImagesDeleted) > 0 {
+		log.Info().Msgf("Pruned %d images, reclaimed %d bytes", len(pruneReport.ImagesDeleted), pruneReport.SpaceReclaimed)
+	} else {
+		log.Info().Msg("No images to prune")
 	}
-
-	statsList := s.getStatsFromContainerList(ctx, containers)
-	return statsList, nil
 }
 
-// UpdateDockman updates a running dockman container containerID is the id of the current dockman container
-func UpdateDockman(containerID, updaterUrl string) error {
-	fullUrl := fmt.Sprintf("%s/%s", updaterUrl, containerID)
-	resp, err := http.Get(fullUrl)
-	if err != nil {
-		return fmt.Errorf("unable to send request updater: %w", err)
+func (s *ContainerService) ContainerHealthCheck(containerID string, c *container.InspectResponse) error {
+	log.Info().Msg("Starting healthcheck for container")
+
+	eg := errgroup.Group{}
+	eg.Go(func() error {
+		err := s.containerHealthCheckUptime(containerID, c)
+		if err != nil {
+			return fmt.Errorf("uptime healthcheck failed\n%w", err)
+		}
+		return nil
+	})
+
+	eg.Go(func() error {
+		err := s.containerHealthCheckPing(c)
+		if err != nil {
+			return fmt.Errorf("endpoint ping healthcheck failed\n%w", err)
+		}
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
+		return err
 	}
-	defer fileutil.Close(resp.Body)
+
 	return nil
 }
 
-// ImageUpdateCheck checks for new image manifests and saves to db
-func (s *ContainerService) ImageUpdateCheck(ctx context.Context) error {
-	list, err := s.ImageList(ctx)
+const DockmanHealthCheckUptimeLabel = "dockman.update.healthcheck.uptime"
+
+func (s *ContainerService) containerHealthCheckUptime(containerID string, c *container.InspectResponse) error {
+	lab := c.Config.Labels[DockmanHealthCheckUptimeLabel]
+	expectedUptime, err := time.ParseDuration(lab)
+	if err != nil {
+		log.Warn().Msg("invalid time format skipping uptime check")
+		return nil
+	}
+
+	timer := time.NewTimer(expectedUptime)
+	defer timer.Stop()
+	<-timer.C
+
+	inspect, err := s.daemon.ContainerInspect(context.Background(), containerID)
 	if err != nil {
 		return err
 	}
-	for _, img := range list {
-		available, newRef, err2 := s.ImageUpdateAvailable(ctx, img.RepoTags[0])
-		if err2 != nil {
-			return err2
-		}
 
-		if available {
-			err = s.imageUpdateStore.Save(ImageUpdate{
-				ImageID:   img.ID,
-				UpdateRef: newRef,
-				Host:      s.host,
-			})
-			if err != nil {
-				log.Warn().Err(err).Str("image", img.RepoTags[0]).Msg("Failed to update image")
-			}
-		}
+	if !inspect.State.Running {
+		return fmt.Errorf("container is not running")
+	}
+
+	startedAt, err := time.Parse(time.RFC3339Nano, inspect.State.StartedAt)
+	if err != nil {
+		return fmt.Errorf("failed to parse started time: %w", err)
+	}
+
+	uptime := time.Since(startedAt)
+	if uptime < expectedUptime {
+		return fmt.Errorf("container did not reach expected uptime of %s, container uptime: %s",
+			expectedUptime.String(), uptime.String())
 	}
 
 	return nil
 }
+
+const DockmanHealthCheckPingLabel = "dockman.update.healthcheck.ping"
+const DockmanHealthCheckPingTimeLabel = "dockman.update.healthcheck.time"
+
+func (s *ContainerService) containerHealthCheckPing(c *container.InspectResponse) error {
+	endpoint := c.Config.Labels[DockmanHealthCheckPingLabel]
+	if endpoint == "" {
+		log.Warn().Msg("healthcheck endpoint is empty skipping check")
+		return nil
+	}
+
+	val := c.Config.Labels[DockmanHealthCheckPingTimeLabel]
+	pingAfter, err := time.ParseDuration(val)
+	if err != nil {
+		log.Warn().Msg("invalid time format skipping uptime check")
+		return nil
+	}
+
+	timer := time.NewTimer(pingAfter)
+	defer timer.Stop()
+	<-timer.C
+
+	resp, err := http.Get(endpoint)
+	if err != nil {
+		return fmt.Errorf("failed to ping %s: %w", endpoint, err)
+	}
+	defer fileutil.Close(resp.Body)
+
+	// Check for a successful status code (in the 2xx range)
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("invalid http status code %d: %s, statusCode must be within 200 <= code < 300", resp.StatusCode, resp.Status)
+	}
+
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Image stuff
 
 func (s *ContainerService) ImageList(ctx context.Context) ([]image.Summary, error) {
 	return s.daemon.ImageList(ctx, image.ListOptions{
@@ -493,6 +552,50 @@ func (s *ContainerService) ImageUpdateAvailable(ctx context.Context, imageName s
 	return localDigest != remoteDigest, remoteDigest, nil
 }
 
+// ImageUpdateCheck checks for new image manifests and saves to db
+func (s *ContainerService) ImageUpdateCheck(ctx context.Context) error {
+	list, err := s.ImageList(ctx)
+	if err != nil {
+		return err
+	}
+	for _, img := range list {
+		available, newRef, err2 := s.ImageUpdateAvailable(ctx, img.RepoTags[0])
+		if err2 != nil {
+			return err2
+		}
+
+		if available {
+			err = s.imageUpdateStore.Save(ImageUpdate{
+				ImageID:   img.ID,
+				UpdateRef: newRef,
+				Host:      s.host,
+			})
+			if err != nil {
+				log.Warn().Err(err).Str("image", img.RepoTags[0]).Msg("Failed to update image")
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *ContainerService) ImagePull(ctx context.Context, imageTag string) error {
+	log.Info().Msg("Pulling latest image")
+	reader, err := s.daemon.ImagePull(ctx, imageTag, image.PullOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to pull image %s: %w", imageTag, err)
+	}
+	defer fileutil.Close(reader)
+
+	// Copy the pull output to stdout to show progress
+	if _, err := io.Copy(os.Stdout, reader); err != nil {
+		return fmt.Errorf("failed to read image pull response: %w", err)
+	}
+
+	log.Info().Msg("Image pull complete")
+	return nil
+}
+
 func (s *ContainerService) ImageDelete(ctx context.Context, imageId string) ([]image.DeleteResponse, error) {
 	return s.daemon.ImageRemove(ctx, imageId, image.RemoveOptions{})
 }
@@ -511,6 +614,9 @@ func (s *ContainerService) ImagePruneUnused(ctx context.Context) (image.PruneRep
 	// force remove all unused
 	return s.daemon.ImagesPrune(ctx, filter)
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Network stuff
 
 func (s *ContainerService) NetworksList(ctx context.Context) ([]network.Inspect, error) {
 	list, err := s.daemon.NetworkList(ctx, network.ListOptions{})
@@ -546,6 +652,16 @@ func (s *ContainerService) NetworksDelete(ctx context.Context, networkID string)
 
 func (s *ContainerService) NetworksPrune(ctx context.Context) (network.PruneReport, error) {
 	return s.daemon.NetworksPrune(ctx, filters.NewArgs())
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Volume stuff
+
+type VolumeInfo struct {
+	*volume.Volume
+	ContainerID        string
+	ComposePath        string
+	ComposeProjectName string
 }
 
 func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error) {
@@ -664,13 +780,6 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 	return volumes, nil
 }
 
-type VolumeInfo struct {
-	*volume.Volume
-	ContainerID        string
-	ComposePath        string
-	ComposeProjectName string
-}
-
 func (s *ContainerService) VolumesCreate(ctx context.Context, name string) (volume.Volume, error) {
 	return s.daemon.VolumeCreate(ctx, volume.CreateOptions{
 		Name: name,
@@ -736,16 +845,8 @@ func (s *ContainerService) VolumesPrune(ctx context.Context) error {
 	return err
 }
 
-func (s *ContainerService) getStatsFromContainerList(ctx context.Context, containers []container.Summary) []ContainerStats {
-	return parallelLoop(containers, func(r container.Summary) (ContainerStats, bool) {
-		stats, err := s.getAndFormatStats(ctx, r)
-		if err != nil && !errors.Is(err, context.Canceled) {
-			log.Warn().Err(err).Str("container", r.ID[:12]).Msg("could not convert stats, skipping...")
-			return ContainerStats{}, false
-		}
-		return stats, true
-	})
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// utils
 
 func (s *ContainerService) getAndFormatStats(ctx context.Context, info container.Summary) (ContainerStats, error) {
 	contId := info.ID[:12]
@@ -814,53 +915,6 @@ func (s *ContainerService) ExecContainer(ctx context.Context, containerID string
 	}
 
 	return &hijackedResp, nil
-}
-
-func (s *ContainerService) ContainerHealthCheck(containerID string, c *container.InspectResponse) error {
-	log.Info().Msg("Starting healthcheck for container")
-
-	// get health check config
-	err := s.containerHealthCheckUptime(containerID, c)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-const DockmanHealthCheckUptimeLabel = "dockman.update.healthcheck.uptime"
-
-func (s *ContainerService) containerHealthCheckUptime(containerID string, c *container.InspectResponse) error {
-	lab := c.Config.Labels[DockmanHealthCheckUptimeLabel]
-	expectedUptime, err := time.ParseDuration(lab)
-	if err != nil {
-		log.Warn().Msg("invalid time format skipping uptime check")
-	}
-
-	timer := time.NewTimer(expectedUptime)
-	defer timer.Stop()
-	<-timer.C
-
-	inspect, err := s.daemon.ContainerInspect(context.Background(), containerID)
-	if err != nil {
-		return err
-	}
-
-	if !inspect.State.Running {
-		return fmt.Errorf("container is not running")
-	}
-
-	startedAt, err := time.Parse(time.RFC3339Nano, inspect.State.StartedAt)
-	if err != nil {
-		return fmt.Errorf("failed to parse started time: %w", err)
-	}
-
-	uptime := time.Since(startedAt)
-	if uptime > expectedUptime {
-		return fmt.Errorf("container did not reach expected uptime of %s, container uptime: %s",
-			expectedUptime.String(), uptime.String())
-	}
-	return nil
 }
 
 func formatDiskIO(statsJSON container.StatsResponse) (uint64, uint64) {

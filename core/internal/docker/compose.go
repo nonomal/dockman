@@ -148,7 +148,7 @@ func (s *ComposeService) ComposeList(ctx context.Context, project *types.Project
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
-	result, err := s.containerService.containerListWithFilter(ctx, container.ListOptions{
+	result, err := s.containerService.daemon.ContainerList(ctx, container.ListOptions{
 		All:     all,
 		Filters: containerFilters,
 	})
@@ -166,7 +166,7 @@ func (s *ComposeService) ComposeStats(ctx context.Context, project *types.Projec
 		return nil, err
 	}
 
-	result := s.containerService.getStatsFromContainerList(ctx, stackList)
+	result := s.containerService.containerGetStatsFromList(ctx, stackList)
 	return result, nil
 }
 
