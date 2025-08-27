@@ -2,25 +2,20 @@ package files
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/pkg/fileutil"
-	"github.com/lithammer/fuzzysearch/fuzzy"
-	"github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
 	"io"
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
-	"sync"
+
+	"github.com/RA341/dockman/pkg/fileutil"
+	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 )
 
 var ignoredFiles = []string{".git"}
 
 type Service struct {
 	composeRoot string
-
-	files     map[string][][]string
-	fileMutex sync.RWMutex
 }
 
 func NewService(composeRoot string) *Service {
@@ -50,39 +45,6 @@ type dirResult struct {
 	fileList []string
 	dirname  string
 }
-
-// todo
-//func (s *Service) WatchFiles() (map[string][]string, error) {
-//	watcher, err := fsnotify.NewWatcher()
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer fileutil.Close(watcher)
-//
-//	err = watcher.SetRecursive()
-//	if err != nil {
-//		return nil, fmt.Errorf("failed to set recursive watcher: %v", err)
-//	}
-//
-//	err = watcher.Add(s.composeRoot)
-//	if err != nil {
-//		return nil, fmt.Errorf("failed to add watcher for dir: %s: %v", s.composeRoot, err)
-//	}
-//
-//	select {
-//	case ev := <-watcher.Events:
-//		s.fileMutex.Lock()
-//		defer s.fileMutex.Unlock()
-//		list, err := s.List()
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//	}
-//}
-//func (s *Service) ListCached() (map[string][]string, error) {
-//
-//}
 
 func (s *Service) List() (map[string][]string, error) {
 	topLevelEntries, err := os.ReadDir(s.composeRoot)
@@ -155,28 +117,6 @@ type File struct {
 	// 0,1 will be match start,
 	// 2,3 will be match end
 	contentMatch [][4]int
-}
-
-// FuzzySearch searches the compose root, and returns a list of files
-// that matches that search, inspired by https://github.com/nvim-telescope/telescope.nvim
-func (s *Service) FuzzySearch(query string) (fuzzy.Ranks, error) {
-	list, err := s.List()
-	if err != nil {
-		return nil, fmt.Errorf("failed listing files: %v", err)
-	}
-
-	// flatten into a list
-	var allPaths []string
-	for parent, subFolder := range list {
-		for _, sub := range subFolder {
-			allPaths = append(allPaths, fmt.Sprintf("%s/%s", parent, sub))
-		}
-	}
-
-	ranks := fuzzy.RankFind(query, allPaths) // [{whl cartwheel 6 0} {whl wheel 2 2}]
-	sort.Sort(ranks)
-
-	return ranks, nil
 }
 
 func (s *Service) Exists(filename string) error {
