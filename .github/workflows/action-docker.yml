@@ -25,7 +25,7 @@ on:
         type: string
         description: title for the image
         required: false
-        default: "."
+        default: "Dockerfile"
 
 jobs:
   build-and-push:
