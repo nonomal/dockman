@@ -6,6 +6,7 @@ on:
       - main # publish a dev build on main
     paths:
       - Dockerfile
+      - Dockerfile.updater
       - .github/workflows/action-docker.yml
       - build-canary.yml
       - core/**
