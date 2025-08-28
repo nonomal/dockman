@@ -1,6 +1,8 @@
 name: Canary-Build
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - main # publish a dev build on main
@@ -38,13 +40,3 @@ jobs:
       source_branch: ${{ matrix.source_branch }}
       dockerfile: ${{ matrix.dockerfile }}
     secrets: inherit
-
-#  build_and_release_linux:
-#    name: Build and Release for Linux
-#    uses: ./.github/workflows/action-gouda-native.yml
-#    with:
-#      os: ubuntu-latest
-#      flutter_version: '3.27.1'
-#      go_version: '1.24'
-#      tag_name: dev
-#    secrets: inherit
