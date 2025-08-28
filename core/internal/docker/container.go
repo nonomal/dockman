@@ -21,6 +21,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
+	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 )
@@ -30,6 +31,22 @@ type ContainerService struct {
 }
 
 func NewContainerService(u *dependencies) *ContainerService {
+	return &ContainerService{dependencies: u}
+}
+
+// NewUpdaterService service used by dockman updater
+func NewUpdaterService(client *client.Client) *ContainerService {
+	u := &dependencies{
+		hostname:         LocalClient,
+		daemon:           client,
+		syncer:           NewNoopSyncer(),
+		imageUpdateStore: NewNoopStore(),
+		// not needed by updater service
+		//daemonAddr:       "",
+		//ComposeRoot:      "",
+		//updaterUrl:       "",
+	}
+
 	return &ContainerService{dependencies: u}
 }
 

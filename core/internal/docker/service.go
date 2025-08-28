@@ -12,7 +12,7 @@ type Service struct {
 	Container *ContainerService
 }
 
-// common info used by container and compose service
+// dependencies common info used by container and compose service
 // normally this would be in the service struct
 // but since the services are seperated we use this
 type dependencies struct {
@@ -24,6 +24,7 @@ type dependencies struct {
 	// syncs local files to remote host
 	syncer Syncer
 
+	// only used by compose service not needed by container
 	composeRoot string
 
 	// to store updates about new images

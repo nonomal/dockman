@@ -43,13 +43,7 @@ func main() {
 		log.Fatal().Err(err).Msg("Unable to connect to local docker client")
 		return
 	}
-
-	srv := docker.NewContainerService(
-		client,
-		nil,
-		"",
-		"",
-	)
+	srv := docker.NewUpdaterService(client)
 
 	http.HandleFunc("/{contID}", func(w http.ResponseWriter, r *http.Request) {
 		contID := r.PathValue("contID")
