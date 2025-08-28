@@ -67,6 +67,11 @@ func NewService(
 	return srv
 }
 
+func (srv *Service) ResetContainerUpdater() {
+	srv.StopContainerUpdater()
+	srv.StartContainerUpdater()
+}
+
 func (srv *Service) StopContainerUpdater() {
 	close(srv.updaterCtx)
 }
@@ -94,8 +99,14 @@ func (srv *Service) StartContainerUpdater() {
 	tick := time.NewTicker(updateInterval)
 	defer tick.Stop()
 
+	var opts []docker.UpdateOption
+	if userConfig.ContainerUpdater.NotifyOnly {
+		log.Info().Msg("notify only mode enabled, only image update notifications will be sent")
+		opts = append(opts, docker.WithNotifyOnly())
+	}
+
 	log.Info().Msg("Starting initial update run")
-	srv.updateContainers()
+	srv.updateContainers(opts)
 
 	for {
 		select {
@@ -105,15 +116,15 @@ func (srv *Service) StartContainerUpdater() {
 				return
 			}
 		case <-tick.C:
-			srv.updateContainers()
+			srv.updateContainers(opts)
 		}
 	}
 }
 
-func (srv *Service) updateContainers() {
+func (srv *Service) updateContainers(opts []docker.UpdateOption) {
 	updateHost := func(name string, dock *ConnectedDockerClient) error {
 		cli := srv.loadDockerService(name, dock)
-		err := cli.Container.ContainersUpdateAll(context.Background())
+		err := cli.Container.ContainersUpdateAll(context.Background(), opts...)
 		if err != nil {
 			return fmt.Errorf("error occured while updating containers for host: %s\n%w", name, err)
 		}

@@ -213,6 +213,7 @@ message ContainerList {
   string serviceName = 8;
   string servicePath = 9;
   string stackName = 10;
+  string updateAvailable = 11;
 }
 
 // ContainerInfo holds metrics for a single Docker container.

@@ -2,7 +2,7 @@ import {type ReactNode, useCallback, useEffect, useState} from 'react'
 import {callRPC, useClient} from "../lib/api.ts";
 import {useSnackbar} from "../hooks/snackbar.ts";
 import {ConfigService, type UserConfig} from "../gen/config/v1/config_pb.ts";
-import {ConfigContext, type ConfigContextType} from "../hooks/config.ts";
+import {ConfigContext, type ConfigContextType, type UpdateSettingsOption} from "../hooks/config.ts";
 
 export type Config = Omit<UserConfig, '$typeName' | '$unknown'>;
 
@@ -13,7 +13,6 @@ export function UserConfigProvider({children}: { children: ReactNode }) {
         useComposeFolders: false
     })
     const [isLoading, setIsLoading] = useState(true)
-
 
     const fetchConfig = useCallback(async () => {
         console.log("Fetching user config...")
@@ -28,16 +27,18 @@ export function UserConfigProvider({children}: { children: ReactNode }) {
         setIsLoading(false)
     }, [client])
 
-    const updateSettings = useCallback(async (user: Config) => {
-        const {err} = await callRPC(() => client.setUserConfig(user))
-        if (err) {
-            showError(`Error saving file: ${err}`)
-        } else {
-            showSuccess(`Settings updated.`)
-        }
+    const updateSettings = useCallback(
+        async (conf: Config, updaterConfig: UpdateSettingsOption = {}) => {
+            const {err} = await callRPC(() => client.setUserConfig({config: conf, ...updaterConfig}))
+            if (err) {
+                showError(`Error saving file: ${err}`)
+            } else {
+                showSuccess(`Settings updated.`)
+            }
 
-        await fetchConfig()
-    }, [client, fetchConfig])
+            await fetchConfig()
+        }, [client, fetchConfig]
+    )
 
     useEffect(() => {
         fetchConfig().then()

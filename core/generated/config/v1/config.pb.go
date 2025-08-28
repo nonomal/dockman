@@ -21,6 +21,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SetUserRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Config *UserConfig            `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	// set to true to reset updater
+	UpdateUpdater bool `protobuf:"varint,2,opt,name=updateUpdater,proto3" json:"updateUpdater,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetUserRequest) Reset() {
+	*x = SetUserRequest{}
+	mi := &file_config_v1_config_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetUserRequest) ProtoMessage() {}
+
+func (x *SetUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetUserRequest.ProtoReflect.Descriptor instead.
+func (*SetUserRequest) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SetUserRequest) GetConfig() *UserConfig {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *SetUserRequest) GetUpdateUpdater() bool {
+	if x != nil {
+		return x.UpdateUpdater
+	}
+	return false
+}
+
 type UserConfig struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	UseComposeFolders bool                   `protobuf:"varint,1,opt,name=useComposeFolders,proto3" json:"useComposeFolders,omitempty"`
@@ -31,7 +84,7 @@ type UserConfig struct {
 
 func (x *UserConfig) Reset() {
 	*x = UserConfig{}
-	mi := &file_config_v1_config_proto_msgTypes[0]
+	mi := &file_config_v1_config_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +96,7 @@ func (x *UserConfig) String() string {
 func (*UserConfig) ProtoMessage() {}
 
 func (x *UserConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[0]
+	mi := &file_config_v1_config_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +109,7 @@ func (x *UserConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserConfig.ProtoReflect.Descriptor instead.
 func (*UserConfig) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{0}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *UserConfig) GetUseComposeFolders() bool {
@@ -76,14 +129,15 @@ func (x *UserConfig) GetUpdater() *ContainerUpdater {
 type ContainerUpdater struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Enable            bool                   `protobuf:"varint,1,opt,name=Enable,proto3" json:"Enable,omitempty"`
-	IntervalInSeconds int64                  `protobuf:"varint,2,opt,name=IntervalInSeconds,proto3" json:"IntervalInSeconds,omitempty"`
+	NotifyOnly        bool                   `protobuf:"varint,2,opt,name=NotifyOnly,proto3" json:"NotifyOnly,omitempty"`
+	IntervalInSeconds int64                  `protobuf:"varint,3,opt,name=IntervalInSeconds,proto3" json:"IntervalInSeconds,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ContainerUpdater) Reset() {
 	*x = ContainerUpdater{}
-	mi := &file_config_v1_config_proto_msgTypes[1]
+	mi := &file_config_v1_config_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -95,7 +149,7 @@ func (x *ContainerUpdater) String() string {
 func (*ContainerUpdater) ProtoMessage() {}
 
 func (x *ContainerUpdater) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[1]
+	mi := &file_config_v1_config_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -108,12 +162,19 @@ func (x *ContainerUpdater) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerUpdater.ProtoReflect.Descriptor instead.
 func (*ContainerUpdater) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{1}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ContainerUpdater) GetEnable() bool {
 	if x != nil {
 		return x.Enable
+	}
+	return false
+}
+
+func (x *ContainerUpdater) GetNotifyOnly() bool {
+	if x != nil {
+		return x.NotifyOnly
 	}
 	return false
 }
@@ -133,7 +194,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_config_v1_config_proto_msgTypes[2]
+	mi := &file_config_v1_config_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -145,7 +206,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[2]
+	mi := &file_config_v1_config_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -158,25 +219,31 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{2}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{3}
 }
 
 var File_config_v1_config_proto protoreflect.FileDescriptor
 
 const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/config.proto\x12\tconfig.v1\"q\n" +
+	"\x16config/v1/config.proto\x12\tconfig.v1\"e\n" +
+	"\x0eSetUserRequest\x12-\n" +
+	"\x06config\x18\x01 \x01(\v2\x15.config.v1.UserConfigR\x06config\x12$\n" +
+	"\rupdateUpdater\x18\x02 \x01(\bR\rupdateUpdater\"q\n" +
 	"\n" +
 	"UserConfig\x12,\n" +
 	"\x11useComposeFolders\x18\x01 \x01(\bR\x11useComposeFolders\x125\n" +
-	"\aupdater\x18\x02 \x01(\v2\x1b.config.v1.ContainerUpdaterR\aupdater\"X\n" +
+	"\aupdater\x18\x02 \x01(\v2\x1b.config.v1.ContainerUpdaterR\aupdater\"x\n" +
 	"\x10ContainerUpdater\x12\x16\n" +
-	"\x06Enable\x18\x01 \x01(\bR\x06Enable\x12,\n" +
-	"\x11IntervalInSeconds\x18\x02 \x01(\x03R\x11IntervalInSeconds\"\a\n" +
-	"\x05Empty2\x87\x01\n" +
+	"\x06Enable\x18\x01 \x01(\bR\x06Enable\x12\x1e\n" +
+	"\n" +
+	"NotifyOnly\x18\x02 \x01(\bR\n" +
+	"NotifyOnly\x12,\n" +
+	"\x11IntervalInSeconds\x18\x03 \x01(\x03R\x11IntervalInSeconds\"\a\n" +
+	"\x05Empty2\x8b\x01\n" +
 	"\rConfigService\x12:\n" +
-	"\rGetUserConfig\x12\x10.config.v1.Empty\x1a\x15.config.v1.UserConfig\"\x00\x12:\n" +
-	"\rSetUserConfig\x12\x15.config.v1.UserConfig\x1a\x10.config.v1.Empty\"\x00B\x8f\x01\n" +
+	"\rGetUserConfig\x12\x10.config.v1.Empty\x1a\x15.config.v1.UserConfig\"\x00\x12>\n" +
+	"\rSetUserConfig\x12\x19.config.v1.SetUserRequest\x1a\x10.config.v1.Empty\"\x00B\x8f\x01\n" +
 	"\rcom.config.v1B\vConfigProtoP\x01Z,github.com/RA341/dockman/generated/config/v1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\x06proto3"
 
@@ -192,23 +259,25 @@ func file_config_v1_config_proto_rawDescGZIP() []byte {
 	return file_config_v1_config_proto_rawDescData
 }
 
-var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_config_v1_config_proto_goTypes = []any{
-	(*UserConfig)(nil),       // 0: config.v1.UserConfig
-	(*ContainerUpdater)(nil), // 1: config.v1.ContainerUpdater
-	(*Empty)(nil),            // 2: config.v1.Empty
+	(*SetUserRequest)(nil),   // 0: config.v1.SetUserRequest
+	(*UserConfig)(nil),       // 1: config.v1.UserConfig
+	(*ContainerUpdater)(nil), // 2: config.v1.ContainerUpdater
+	(*Empty)(nil),            // 3: config.v1.Empty
 }
 var file_config_v1_config_proto_depIdxs = []int32{
-	1, // 0: config.v1.UserConfig.updater:type_name -> config.v1.ContainerUpdater
-	2, // 1: config.v1.ConfigService.GetUserConfig:input_type -> config.v1.Empty
-	0, // 2: config.v1.ConfigService.SetUserConfig:input_type -> config.v1.UserConfig
-	0, // 3: config.v1.ConfigService.GetUserConfig:output_type -> config.v1.UserConfig
-	2, // 4: config.v1.ConfigService.SetUserConfig:output_type -> config.v1.Empty
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1, // 0: config.v1.SetUserRequest.config:type_name -> config.v1.UserConfig
+	2, // 1: config.v1.UserConfig.updater:type_name -> config.v1.ContainerUpdater
+	3, // 2: config.v1.ConfigService.GetUserConfig:input_type -> config.v1.Empty
+	0, // 3: config.v1.ConfigService.SetUserConfig:input_type -> config.v1.SetUserRequest
+	1, // 4: config.v1.ConfigService.GetUserConfig:output_type -> config.v1.UserConfig
+	3, // 5: config.v1.ConfigService.SetUserConfig:output_type -> config.v1.Empty
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_config_proto_init() }
@@ -222,7 +291,7 @@ func file_config_v1_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_config_proto_rawDesc), len(file_config_v1_config_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

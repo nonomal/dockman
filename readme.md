@@ -424,7 +424,7 @@ DEBUG=false
 ## Dockman Updater
 
 > [!IMPORTANT]
-> Dockman updater is only available on ```ghcr.io/ra341/dockman:main``` only
+> Dockman updater is only available on ```ghcr.io/ra341/dockman:main``` tag only
 >
 > and is currently in testing expect bugs
 

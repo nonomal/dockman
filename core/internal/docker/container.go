@@ -139,7 +139,7 @@ func (s *ContainerService) containerGetStatsFromList(ctx context.Context, contai
 	})
 }
 
-func (s *ContainerService) ContainersUpdateAll(ctx context.Context) error {
+func (s *ContainerService) ContainersUpdateAll(ctx context.Context, opts ...UpdateOption) error {
 	containers, err := s.daemon.ContainerList(ctx,
 		container.ListOptions{
 			All: true,
@@ -152,6 +152,7 @@ func (s *ContainerService) ContainersUpdateAll(ctx context.Context) error {
 	return s.containersUpdateLoop(
 		ctx,
 		containers,
+		opts...,
 	)
 }
 
@@ -252,6 +253,7 @@ func (s *ContainerService) containersUpdateLoop(
 	}
 
 	log.Info().Msg("Cleaning up untagged dangling images...")
+
 	pruneReport, err := s.ImagePruneUntagged(ctx)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to prune images")
@@ -279,7 +281,7 @@ func (s *ContainerService) containerUpdate(
 		return
 	}
 
-	if hasDisaableUpdateLabel(&cur) && !updateConfig.ForceUpdate {
+	if hasDisableUpdateLabel(&cur) && !updateConfig.ForceUpdate {
 		log.Warn().
 			Str("id", cur.ID).Str("name", cur.Names[0]).
 			Msg("updates are disabled for this container")
@@ -288,14 +290,14 @@ func (s *ContainerService) containerUpdate(
 
 	imgTag := cur.Image
 
-	available, newImgID, err := s.ImageUpdateAvailable(ctx, imgTag)
+	updateAvailable, newImgID, err := s.ImageUpdateAvailable(ctx, imgTag)
 	if err != nil {
 		log.Warn().Str("cont", cur.Names[0]).
 			Err(err).Msg("Failed to get image metadata, skipping...")
 		return
 	}
 
-	if !available {
+	if !updateAvailable {
 		log.Info().
 			Str("container", cur.Names[0]).Str("img", imgTag).
 			Msgf("Image already up to date, skipping")
@@ -303,15 +305,17 @@ func (s *ContainerService) containerUpdate(
 	}
 
 	if updateConfig.NotifyOnlyMode {
-		err := s.imageUpdateStore.Save(ImageUpdate{
-			ImageID:   imgTag,
-			UpdateRef: newImgID,
+		err := s.imageUpdateStore.Save(&ImageUpdate{
 			Host:      s.hostname,
+			ImageID:   cur.ImageID,
+			UpdateRef: newImgID,
 		})
 		if err != nil {
 			log.Warn().Err(err).Str("img", imgTag).
 				Msg("Failed to update image metadata")
 		}
+
+		// todo notify
 		return
 	}
 
@@ -334,7 +338,7 @@ func (s *ContainerService) containerUpdate(
 
 const DockmanUpdateDisableLabel = "dockman.update.disable"
 
-func hasDisaableUpdateLabel(c *container.Summary) bool {
+func hasDisableUpdateLabel(c *container.Summary) bool {
 	return c.Labels[DockmanUpdateDisableLabel] == "true"
 }
 
@@ -592,12 +596,7 @@ func (s *ContainerService) ImageUpdateAvailable(ctx context.Context, imageName s
 
 	var localDigest string
 	for _, img := range localImages {
-		for _, tag := range img.RepoTags {
-			if tag == imageName {
-				localDigest = img.ID
-				break
-			}
-		}
+		localDigest = img.ID
 	}
 
 	// Get remote image info
@@ -613,35 +612,9 @@ func (s *ContainerService) ImageUpdateAvailable(ctx context.Context, imageName s
 	return localDigest != remoteDigest, remoteDigest, nil
 }
 
-// ImageUpdateCheck checks for new image manifests and saves to db
-func (s *ContainerService) ImageUpdateCheck(ctx context.Context) error {
-	list, err := s.ImageList(ctx)
-	if err != nil {
-		return err
-	}
-	for _, img := range list {
-		available, newRef, err2 := s.ImageUpdateAvailable(ctx, img.RepoTags[0])
-		if err2 != nil {
-			return err2
-		}
-
-		if available {
-			err = s.imageUpdateStore.Save(ImageUpdate{
-				ImageID:   img.ID,
-				UpdateRef: newRef,
-				Host:      s.hostname,
-			})
-			if err != nil {
-				log.Warn().Err(err).Str("image", img.RepoTags[0]).Msg("Failed to update image")
-			}
-		}
-	}
-
-	return nil
-}
-
 func (s *ContainerService) ImagePull(ctx context.Context, imageTag string) error {
 	log.Info().Msg("Pulling latest image")
+
 	reader, err := s.daemon.ImagePull(ctx, imageTag, image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image %s: %w", imageTag, err)
@@ -663,10 +636,24 @@ func (s *ContainerService) ImageDelete(ctx context.Context, imageId string) ([]i
 
 func (s *ContainerService) ImagePruneUntagged(ctx context.Context) (image.PruneReport, error) {
 	filter := filters.NewArgs()
+	// removes dangling (untagged) mostly due to image being updated
 	filter.Add("dangling", "true")
 
-	// removes dangling
-	return s.daemon.ImagesPrune(ctx, filter)
+	prune, err := s.daemon.ImagesPrune(ctx, filter)
+	if err != nil {
+		return prune, err
+	}
+
+	deletedIDs := ToMap(prune.ImagesDeleted, func(t image.DeleteResponse) string {
+		return t.Deleted
+	})
+
+	err = s.imageUpdateStore.Delete(deletedIDs...)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to cleanup image update db")
+	}
+
+	return prune, nil
 }
 
 func (s *ContainerService) ImagePruneUnused(ctx context.Context) (image.PruneReport, error) {
@@ -763,9 +750,9 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 	if diskUsage.Volumes == nil {
 		log.Debug().Msg("DiskUsage returned nil volumes slice")
 	} else {
-		log.Debug().
-			Int("disk_usage_volumes_count", len(diskUsage.Volumes)).
-			Msg("Retrieved disk usage for volumes")
+		//log.Debug().
+		//	Int("disk_usage_volumes_count", len(diskUsage.Volumes)).
+		//	Msg("Retrieved disk usage for volumes")
 		tmpMap = make(map[string]*volume.Volume, len(diskUsage.Volumes))
 		for _, l := range diskUsage.Volumes {
 			tmpMap[l.Name] = l

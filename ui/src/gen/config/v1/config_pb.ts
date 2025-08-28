@@ -10,7 +10,31 @@ import type {Message} from "@bufbuild/protobuf";
  * Describes the file config/v1/config.proto.
  */
 export const file_config_v1_config: GenFile = /*@__PURE__*/
-    fileDesc("ChZjb25maWcvdjEvY29uZmlnLnByb3RvEgljb25maWcudjEiVQoKVXNlckNvbmZpZxIZChF1c2VDb21wb3NlRm9sZGVycxgBIAEoCBIsCgd1cGRhdGVyGAIgASgLMhsuY29uZmlnLnYxLkNvbnRhaW5lclVwZGF0ZXIiPQoQQ29udGFpbmVyVXBkYXRlchIOCgZFbmFibGUYASABKAgSGQoRSW50ZXJ2YWxJblNlY29uZHMYAiABKAMiBwoFRW1wdHkyhwEKDUNvbmZpZ1NlcnZpY2USOgoNR2V0VXNlckNvbmZpZxIQLmNvbmZpZy52MS5FbXB0eRoVLmNvbmZpZy52MS5Vc2VyQ29uZmlnIgASOgoNU2V0VXNlckNvbmZpZxIVLmNvbmZpZy52MS5Vc2VyQ29uZmlnGhAuY29uZmlnLnYxLkVtcHR5IgBCjwEKDWNvbS5jb25maWcudjFCC0NvbmZpZ1Byb3RvUAFaLGdpdGh1Yi5jb20vUkEzNDEvZG9ja21hbi9nZW5lcmF0ZWQvY29uZmlnL3YxogIDQ1hYqgIJQ29uZmlnLlYxygIJQ29uZmlnXFYx4gIVQ29uZmlnXFYxXEdQQk1ldGFkYXRh6gIKQ29uZmlnOjpWMWIGcHJvdG8z");
+    fileDesc("ChZjb25maWcvdjEvY29uZmlnLnByb3RvEgljb25maWcudjEiTgoOU2V0VXNlclJlcXVlc3QSJQoGY29uZmlnGAEgASgLMhUuY29uZmlnLnYxLlVzZXJDb25maWcSFQoNdXBkYXRlVXBkYXRlchgCIAEoCCJVCgpVc2VyQ29uZmlnEhkKEXVzZUNvbXBvc2VGb2xkZXJzGAEgASgIEiwKB3VwZGF0ZXIYAiABKAsyGy5jb25maWcudjEuQ29udGFpbmVyVXBkYXRlciJRChBDb250YWluZXJVcGRhdGVyEg4KBkVuYWJsZRgBIAEoCBISCgpOb3RpZnlPbmx5GAIgASgIEhkKEUludGVydmFsSW5TZWNvbmRzGAMgASgDIgcKBUVtcHR5MosBCg1Db25maWdTZXJ2aWNlEjoKDUdldFVzZXJDb25maWcSEC5jb25maWcudjEuRW1wdHkaFS5jb25maWcudjEuVXNlckNvbmZpZyIAEj4KDVNldFVzZXJDb25maWcSGS5jb25maWcudjEuU2V0VXNlclJlcXVlc3QaEC5jb25maWcudjEuRW1wdHkiAEKPAQoNY29tLmNvbmZpZy52MUILQ29uZmlnUHJvdG9QAVosZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9jb25maWcvdjGiAgNDWFiqAglDb25maWcuVjHKAglDb25maWdcVjHiAhVDb25maWdcVjFcR1BCTWV0YWRhdGHqAgpDb25maWc6OlYxYgZwcm90bzM");
+
+/**
+ * @generated from message config.v1.SetUserRequest
+ */
+export type SetUserRequest = Message<"config.v1.SetUserRequest"> & {
+    /**
+     * @generated from field: config.v1.UserConfig config = 1;
+     */
+    config?: UserConfig;
+
+    /**
+     * set to true to reset updater
+     *
+     * @generated from field: bool updateUpdater = 2;
+     */
+    updateUpdater: boolean;
+};
+
+/**
+ * Describes the message config.v1.SetUserRequest.
+ * Use `create(SetUserRequestSchema)` to create a new message.
+ */
+export const SetUserRequestSchema: GenMessage<SetUserRequest> = /*@__PURE__*/
+    messageDesc(file_config_v1_config, 0);
 
 /**
  * @generated from message config.v1.UserConfig
@@ -32,7 +56,7 @@ export type UserConfig = Message<"config.v1.UserConfig"> & {
  * Use `create(UserConfigSchema)` to create a new message.
  */
 export const UserConfigSchema: GenMessage<UserConfig> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 0);
+    messageDesc(file_config_v1_config, 1);
 
 /**
  * @generated from message config.v1.ContainerUpdater
@@ -44,7 +68,12 @@ export type ContainerUpdater = Message<"config.v1.ContainerUpdater"> & {
     Enable: boolean;
 
     /**
-     * @generated from field: int64 IntervalInSeconds = 2;
+     * @generated from field: bool NotifyOnly = 2;
+     */
+    NotifyOnly: boolean;
+
+    /**
+     * @generated from field: int64 IntervalInSeconds = 3;
      */
     IntervalInSeconds: bigint;
 };
@@ -54,7 +83,7 @@ export type ContainerUpdater = Message<"config.v1.ContainerUpdater"> & {
  * Use `create(ContainerUpdaterSchema)` to create a new message.
  */
 export const ContainerUpdaterSchema: GenMessage<ContainerUpdater> = /*@__PURE__*/
-    messageDesc(file_config_v1_config, 1);
+    messageDesc(file_config_v1_config, 2);
 
 /**
  * @generated from message config.v1.Empty
@@ -67,7 +96,7 @@ export type Empty = Message<"config.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-    messageDesc(file_config_v1_config, 2);
+    messageDesc(file_config_v1_config, 3);
 
 /**
  * @generated from service config.v1.ConfigService
@@ -86,7 +115,7 @@ export const ConfigService: GenService<{
    */
   setUserConfig: {
     methodKind: "unary";
-    input: typeof UserConfigSchema;
+      input: typeof SetUserRequestSchema;
     output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/

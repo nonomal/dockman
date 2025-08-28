@@ -16,7 +16,7 @@ import {
     Tooltip,
     Typography
 } from '@mui/material'
-import {DocumentScannerOutlined, Terminal} from '@mui/icons-material'
+import {DocumentScannerOutlined, Terminal, Update} from '@mui/icons-material'
 import {ContainerInfoPort} from './container-info-port.tsx'
 import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts"
 import {getImageHomePageUrl} from "../../../hooks/docker-images.ts"
@@ -283,6 +283,11 @@ export function ContainerTable(
                                           size="small" sx={{textTransform: 'capitalize'}}/>
                                 </TableCell>
                                 <TableCell>
+                                    {container.updateAvailable && (
+                                        <Tooltip title={"Update available"}>
+                                            <Update sx={{fontSize: 16, color: 'gold', verticalAlign: 'middle', mr: 1}}/>
+                                        </Tooltip>
+                                    )}
                                     <Tooltip title="Open image website" arrow>
                                         <Link
                                             href={getImageHomePageUrl(container.imageName)}

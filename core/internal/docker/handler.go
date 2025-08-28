@@ -129,6 +129,14 @@ func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.Compo
 func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerList {
 	var dockerResult []*v1.ContainerList
 	for _, stack := range result {
+		available, err := h.container().imageUpdateStore.GetUpdateAvailable(
+			h.container().hostname,
+			stack.ImageID,
+		)
+		if err != nil {
+			log.Warn().Msg("Failed to get image update info")
+		}
+
 		var portSlice []*v1.Port
 		for _, p := range stack.Ports {
 			if isIPV4(p.IP) {
@@ -149,6 +157,7 @@ func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerLis
 		dockerResult = append(dockerResult, h.toRPContainer(
 			stack,
 			portSlice,
+			available[stack.ImageID],
 		))
 	}
 	return dockerResult
@@ -291,7 +300,7 @@ func ToMap[T any, Q any](input []T, mapper func(T) Q) []Q {
 func (h *Handler) ImageList(ctx context.Context, _ *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
 	images, err := h.container().ImageList(ctx)
 
-	imageUpdates, err := h.container().imageUpdateStore.UpdateAvailable(
+	imageUpdates, err := h.container().imageUpdateStore.GetUpdateAvailable(
 		"",
 		ToMap(images, func(t image.Summary) string {
 			return t.ID
@@ -669,18 +678,19 @@ func toRPCPort(p container.Port) *v1.Port {
 	}
 }
 
-func (h *Handler) toRPContainer(stack container.Summary, portSlice []*v1.Port) *v1.ContainerList {
+func (h *Handler) toRPContainer(stack container.Summary, portSlice []*v1.Port, update ImageUpdate) *v1.ContainerList {
 	return &v1.ContainerList{
-		Name:        strings.TrimPrefix(stack.Names[0], "/"),
-		Id:          stack.ID,
-		ImageID:     stack.ImageID,
-		ImageName:   stack.Image,
-		Status:      stack.Status,
-		Ports:       portSlice,
-		ServiceName: stack.Labels[api.ServiceLabel],
-		StackName:   stack.Labels[api.ProjectLabel],
-		ServicePath: h.getComposeFilePath(stack.Labels[api.ConfigFilesLabel]),
-		Created:     time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
+		Name:            strings.TrimPrefix(stack.Names[0], "/"),
+		Id:              stack.ID,
+		ImageID:         stack.ImageID,
+		ImageName:       stack.Image,
+		Status:          stack.Status,
+		UpdateAvailable: update.UpdateRef,
+		Ports:           portSlice,
+		ServiceName:     stack.Labels[api.ServiceLabel],
+		StackName:       stack.Labels[api.ProjectLabel],
+		ServicePath:     h.getComposeFilePath(stack.Labels[api.ConfigFilesLabel]),
+		Created:         time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
 	}
 }
 

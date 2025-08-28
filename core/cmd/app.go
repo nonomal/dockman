@@ -35,6 +35,7 @@ type App struct {
 	DB            *database.Service
 	Info          *info.Service
 	SSH           *ssh.Service
+	UserConfigSrv *config.Service
 }
 
 func NewApp(conf *config.AppConfig) (*App, error) {
@@ -45,8 +46,10 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	}
 
 	// initialize services
-	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password, limit)
 	dbSrv := database.NewService(conf.ConfigDir)
+	infoSrv := info.NewService(dbSrv.InfoDB)
+
+	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password, limit)
 	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
 	fileSrv := files.NewService(cr)
 	gitSrv := git.NewService(cr)
@@ -59,7 +62,10 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		&conf.Updater.Addr,
 		&conf.LocalAddr,
 	)
-	infoSrv := info.NewService(dbSrv.InfoDB)
+	userConfigSrv := config.NewService(
+		dbSrv.UserConfigDB,
+		dockerManagerSrv.ResetContainerUpdater,
+	)
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{
@@ -71,6 +77,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		DB:            dbSrv,
 		Info:          infoSrv,
 		SSH:           sshSrv,
+		UserConfigSrv: userConfigSrv,
 	}, nil
 }
 
@@ -103,7 +110,7 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		},
 		// user config
 		func() (string, http.Handler) {
-			return configrpc.NewConfigServiceHandler(config.NewConnectHandler(a.DB.UserConfigDB), authInterceptor)
+			return configrpc.NewConfigServiceHandler(config.NewConnectHandler(a.UserConfigSrv), authInterceptor)
 		},
 		// files
 		func() (string, http.Handler) {

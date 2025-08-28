@@ -14,7 +14,7 @@ func NewImageUpdateDB(db *gorm.DB) *ImageUpdateDB {
 	return &ImageUpdateDB{db: db}
 }
 
-func (i ImageUpdateDB) UpdateAvailable(host string, imageIds ...string) (map[string]docker.ImageUpdate, error) {
+func (i ImageUpdateDB) GetUpdateAvailable(host string, imageIds ...string) (map[string]docker.ImageUpdate, error) {
 	result := make(map[string]docker.ImageUpdate)
 
 	if len(imageIds) == 0 {
@@ -34,10 +34,10 @@ func (i ImageUpdateDB) UpdateAvailable(host string, imageIds ...string) (map[str
 	return result, nil
 }
 
-func (i ImageUpdateDB) Save(image docker.ImageUpdate) error {
+func (i ImageUpdateDB) Save(image *docker.ImageUpdate) error {
 	return i.db.Save(image).Error
 }
 
-func (i ImageUpdateDB) Delete(image docker.ImageUpdate) error {
-	return i.db.Where("image_id = ?", image.ImageID).Delete(&docker.ImageUpdate{}).Error
+func (i ImageUpdateDB) Delete(imageIds ...string) error {
+	return i.db.Where("image_id IN ?", imageIds).Delete(&docker.ImageUpdate{}).Error
 }

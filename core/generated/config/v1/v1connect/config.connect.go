@@ -44,7 +44,7 @@ const (
 // ConfigServiceClient is a client for the config.v1.ConfigService service.
 type ConfigServiceClient interface {
 	GetUserConfig(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.UserConfig], error)
-	SetUserConfig(context.Context, *connect.Request[v1.UserConfig]) (*connect.Response[v1.Empty], error)
+	SetUserConfig(context.Context, *connect.Request[v1.SetUserRequest]) (*connect.Response[v1.Empty], error)
 }
 
 // NewConfigServiceClient constructs a client for the config.v1.ConfigService service. By default,
@@ -64,7 +64,7 @@ func NewConfigServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(configServiceMethods.ByName("GetUserConfig")),
 			connect.WithClientOptions(opts...),
 		),
-		setUserConfig: connect.NewClient[v1.UserConfig, v1.Empty](
+		setUserConfig: connect.NewClient[v1.SetUserRequest, v1.Empty](
 			httpClient,
 			baseURL+ConfigServiceSetUserConfigProcedure,
 			connect.WithSchema(configServiceMethods.ByName("SetUserConfig")),
@@ -76,7 +76,7 @@ func NewConfigServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 // configServiceClient implements ConfigServiceClient.
 type configServiceClient struct {
 	getUserConfig *connect.Client[v1.Empty, v1.UserConfig]
-	setUserConfig *connect.Client[v1.UserConfig, v1.Empty]
+	setUserConfig *connect.Client[v1.SetUserRequest, v1.Empty]
 }
 
 // GetUserConfig calls config.v1.ConfigService.GetUserConfig.
@@ -85,14 +85,14 @@ func (c *configServiceClient) GetUserConfig(ctx context.Context, req *connect.Re
 }
 
 // SetUserConfig calls config.v1.ConfigService.SetUserConfig.
-func (c *configServiceClient) SetUserConfig(ctx context.Context, req *connect.Request[v1.UserConfig]) (*connect.Response[v1.Empty], error) {
+func (c *configServiceClient) SetUserConfig(ctx context.Context, req *connect.Request[v1.SetUserRequest]) (*connect.Response[v1.Empty], error) {
 	return c.setUserConfig.CallUnary(ctx, req)
 }
 
 // ConfigServiceHandler is an implementation of the config.v1.ConfigService service.
 type ConfigServiceHandler interface {
 	GetUserConfig(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.UserConfig], error)
-	SetUserConfig(context.Context, *connect.Request[v1.UserConfig]) (*connect.Response[v1.Empty], error)
+	SetUserConfig(context.Context, *connect.Request[v1.SetUserRequest]) (*connect.Response[v1.Empty], error)
 }
 
 // NewConfigServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -133,6 +133,6 @@ func (UnimplementedConfigServiceHandler) GetUserConfig(context.Context, *connect
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("config.v1.ConfigService.GetUserConfig is not implemented"))
 }
 
-func (UnimplementedConfigServiceHandler) SetUserConfig(context.Context, *connect.Request[v1.UserConfig]) (*connect.Response[v1.Empty], error) {
+func (UnimplementedConfigServiceHandler) SetUserConfig(context.Context, *connect.Request[v1.SetUserRequest]) (*connect.Response[v1.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("config.v1.ConfigService.SetUserConfig is not implemented"))
 }
