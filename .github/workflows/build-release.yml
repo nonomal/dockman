@@ -19,8 +19,8 @@ jobs:
     name: Build and Release for Docker
     uses: ./.github/workflows/action-docker.yml
     with:
-      version_tag: ${{ github.event.inputs.tag_name }}
       is_latest: true
+      version_tag: ${{ github.event.inputs.tag_name }}
       source_branch: ${{ github.ref_name }}
       title: 'Dockman'
     secrets: inherit

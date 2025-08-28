@@ -21,6 +21,11 @@ on:
         description: title for the image
         required: false
         default: "app"
+      dockerfile:
+        type: string
+        description: title for the image
+        required: false
+        default: "."
 
 jobs:
   build-and-push:
@@ -99,7 +104,7 @@ jobs:
         id: build_and_push
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: dockerfile
           push: true
           # Use the target from the matrix
           target: ${{ matrix.target.name }}

@@ -1,13 +1,14 @@
-name: Canary-Build
+name: Develop-Build
 
 on:
   push:
     branches:
-      - main # publish a dev build on main
+      - dev
     paths:
       - Dockerfile
+      - Dockerfile.updater
       - .github/workflows/action-docker.yml
-      - .github/workflows/canary.yml
+      - build-dev.yml
       - core/**
       - ui/**
 
@@ -16,13 +17,23 @@ permissions:
   packages: write  # To push Docker images to GHCR
 
 jobs:
-  build-docker:
+  dockman-docker:
     name: Build docker dev build
     uses: ./.github/workflows/action-docker.yml
     with:
-      title: 'Dockman'
-      version_tag: canary
+      title: 'dockman'
+      version_tag: develop
       source_branch: ${{ github.ref_name }}
+    secrets: inherit
+
+  dockman-updater:
+    name: Build docker dev build
+    uses: ./.github/workflows/action-docker.yml
+    with:
+      title: 'dockman/updater'
+      version_tag: develop
+      source_branch: ${{ github.ref_name }}
+      dockerfile: Dockerfile.updater
     secrets: inherit
 
 #  build_and_release_linux:

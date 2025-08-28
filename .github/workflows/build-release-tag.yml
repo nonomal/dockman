@@ -5,8 +5,10 @@ on:
     branches:
       - release
     paths:
-      - .github/workflows/action-*
-      - .github/workflows/release*
+      - Dockerfile
+      - Dockerfile.updater
+      - .github/workflows/action-docker.yml
+      - build-dev.yml
       - core/**
       - ui/**
 
