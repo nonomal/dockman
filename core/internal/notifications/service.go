@@ -4,8 +4,33 @@ import (
 	"context"
 
 	"github.com/nikoksr/notify"
+	"github.com/nikoksr/notify/service/telegram"
 	"github.com/rs/zerolog/log"
 )
+
+/*
+TODO
+## Notifications
+
+> [!IMPORTANT]
+> Dockman updater is only available on ```ghcr.io/ra341/dockman:main``` tag only
+>
+> and is currently in testing expect bugs
+
+
+Configure dockman to send notifications on certain events
+
+Events config
+
+Available Providers
+
+1. Email
+2. Discord
+3. Slack
+4. Telegram
+5. Http
+
+*/
 
 type Service struct{}
 
@@ -17,9 +42,6 @@ func NewService() {
 	//// Basically where should our message be sent?
 	//telegramService.AddReceivers(-1234567890)
 
-	// Tell our notifier to use the telegram service. You can repeat the above process
-	// for as many services as you like and just tell the notifier to use them.
-	// Inspired by http middlewares used in higher level libraries.
 	//notify.UseServices(telegramService)
 }
 
@@ -31,5 +53,14 @@ func Send(subject, body string) {
 }
 
 func (srv *Service) loadNotifiers() {
-	//telegram.New()
+
+}
+
+func loadTelegram(apiToken string, receivers []int64) error {
+	t, err := telegram.New(apiToken)
+	if err != nil {
+		return err
+	}
+	t.AddReceivers(receivers...)
+	return nil
 }

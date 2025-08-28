@@ -13,14 +13,12 @@
     - [Env Vars](#env-vars)
 - [Roadmap](#roadmap)
 - [Why](#why-dockman)
-- [Common Errors](#common-errors)
 - [File Layout](#file-layout)
-- [Env loading](#env-loading)
 - [Updater](#dockman-updater)
-- [Notifications](#notifications)
 - [Multihost support](#multihost-support)
-- [Feedback](#feedback)
+- [Common Errors](#common-errors)
 - [Security Considerations](#security-considerations)
+- [Feedback](#feedback)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -335,92 +333,6 @@ stacks/
 
 Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/issues) and we can argue about it.
 
-## Env Loading
-
-Dockman can automatically discover and load environment files when running your compose setup.
-
-> [!NOTE]
-> **Only files named `.env` are supported.**
-
-If the same variable is defined in multiple places, the value from the **higher-precedence** source will overwrite the
-lower one. This makes it easy to override global defaults with project-specific settings.
-
-Precedence (highest → lowest):
-
-1. **Subfolder `.env`** - scoped to a specific compose folder
-2. **Root `.env`** - global defaults for everything under the compose root
-3. **OS env vars** - values already defined in your shell/OS environment
-
-```text
-compose-root/
- ├─ .env        (global)
- └─ subfolder/
-     └─ .env    (overrides global)
-```
-
-> [!Note]
-> These `.env` files are **only for Docker Compose interpolation**.
->
-> They are not automatically transferred into the container.
->
-> Only variables referenced with `${VAR}` in the compose file are substituted.
-
-Example (interpolation only):
-
-```yaml
-services:
-  database:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: myapp
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    volumes:
-      - ${TEST}:/var/somepath
-      - ${ENVIRONMENT}:/anotherpath/
-      - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-volumes:
-  db_data:
-```
-
-In this example, `${TEST}` and `${ENVIRONMENT}` are resolved from `.env`
-but are not injected into the container environment automatically.
-
-### Adding Environment Variables to the Container
-
-To actually pass environment variables into the container, you can:
-
-**1. Pass them via `environment`:**
-
-```yaml
-services:
-  app:
-    image: myapp:latest
-    environment:
-      APP_ENV: ${ENVIRONMENT} # <- docker compose will replace these before parsing the compose file
-      DEBUG: ${DEBUG} 
-```
-
-**2. Or use the `env_file`:**
-
-```yaml
-services:
-  app:
-    image: myapp:latest
-    env_file:
-      - ./.env # load sub dir env file
-```
-
-Where `.env` might look like:
-
-```dotenv
-ENVIRONMENT=production
-DEBUG=false
-```
-
 ## Dockman Updater
 
 > [!IMPORTANT]
@@ -439,10 +351,6 @@ Watchtower.
 - **Watchtower Replacement**: Drop-in replacement with enhanced functionality
 
 ### Update Options
-
-Dockman provides flexible update handling with multiple deployment strategies:
-
-#### Update Modes
 
 * **Notify Only**: Receive alerts about available updates without automatic deployment
 * **Auto-Update**: Automatically pull and deploy new container versions on a configurable schedule
@@ -471,8 +379,9 @@ These safety features ensure your services remain stable and minimize downtime d
 
 You can disable updates for specific containers by adding the label
 
-```
-dockman.update.disable=true
+```yaml
+labels:
+  dockman.update.disable=true
 ```
 
 ### Update Healthchecks
@@ -491,43 +400,66 @@ Basically prevents the classic "it works on my machine... oh wait, it just died"
 > the update process until the uptime requirements are met,
 > especially when running via the UI, you dont want to see a loading spinner for 1 hour
 
-- **Success**: If the container meets the minimum uptime requirement, the check passes
-- **Failure**: If the container fails to meet the uptime requirement, it triggers a rollback and sends a notification
-- **Skip**: The check is automatically skipped if no label is set or if an invalid time format is provided
+##### Behavior
 
-##### Configuration
+* Skips if label missing or time invalid.
+* Waits for the specified uptime duration.
+* Passes if the container stays running.
+* Fails if the container crashes/restarts → triggers rollback + notification.
 
-Add the following label to your container to enable the stability check:
+##### Labels
+
+> [!IMPORTANT]
+> The `uptime` value uses Go's [time.ParseDuration](https://pkg.go.dev/time#ParseDuration) format,
+> See [usage examples](#valid-duration-examples) for more info
 
 ```yaml
-dockman.update.healthcheck.uptime=<minimum-uptime>
+dockman.update.healthcheck.uptime=<uptime>
 ```
-
-##### Time Format
-
-The `minimum-uptime` value uses Go's [time.ParseDuration](https://pkg.go.dev/time#ParseDuration) format, which accepts:
-
-- **Units**: `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`
-- **Format**: Decimal numbers with optional fractions and unit suffixes
-- **Examples**: `300ms`, `1.5h`, `2h45m`, `30s`
 
 ##### Examples
 
 ```yaml
-# Wait for 5 minutes of uptime
-dockman.update.healthcheck.uptime=5m
-
+labels:
+  # Wait for 30 seconds of uptime
+  dockman.update.healthcheck.uptime=30s
   # Wait for 2 hours and 30 minutes
-dockman.update.healthcheck.uptime=2h30m
-
-  # Wait for 30 seconds
-dockman.update.healthcheck.uptime=30s
-
-  # Complex duration with milliseconds
-dockman.update.healthcheck.uptime=1h10m500ms
+  dockman.update.healthcheck.uptime=2h30m
 ```
 
-##### Valid Duration Examples
+#### Container Ping Check
+
+This health check pings a container after a specified delay using labels.
+If the configured endpoint returns a `2xx` status code, the update is considered successful.
+
+##### Labels
+
+* **`dockman.update.healthcheck.ping`** – HTTP endpoint to ping.
+* **`dockman.update.healthcheck.time`** – Delay before ping ([Valid Duration Examples](#Valid-Duration-Examples)).
+
+##### Behavior
+
+1. Skips check if endpoint missing or time invalid.
+2. Waits for the given duration.
+3. Sends `GET` request to endpoint.
+4. Passes only on `2xx` responses.
+5. Rolls back container to old image if it fails
+
+##### Example
+
+```yaml
+labels:
+  dockman.update.healthcheck.ping: "http://localhost:8080/health"
+  dockman.update.healthcheck.time: "30s"
+```
+
+#### Valid Duration Examples
+
+GoDoc: [time.ParseDuration](https://pkg.go.dev/time#ParseDuration) format
+
+- **Units**: `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`
+- **Format**: Decimal numbers with optional fractions and unit suffixes
+- **Examples**: `300ms`, `1.5h`, `2h45m`, `30s`
 
 | Duration String | Description                        |
 |-----------------|------------------------------------|
@@ -539,29 +471,8 @@ dockman.update.healthcheck.uptime=1h10m500ms
 | `500ms`         | 500 milliseconds                   |
 | `1.5h`          | 1.5 hours (90 minutes)             |
 
-##### Notes
-
 - Negative durations (e.g., `-1.5h`) are technically valid in Go's parser but should be avoided in this context
-- The check will be skipped silently for invalid duration strings
 - Both `us` and `µs` are accepted for microseconds
-
-#### Container Ping Check
-
-This health check pings a container after a specified amount of time or until it reaches healthy status
-
-## Notifications
-
-Configure dockman to send notifications on certain events
-
-Events config
-
-Available Providers
-
-1. Email
-2. Discord
-3. Slack
-4. Telegram
-5. Http
 
 ## Multihost Support
 
@@ -696,6 +607,7 @@ Compose Root/
 │   │   │   └── dashboards/
 │   │   │       └── default.json
 │   │   └── grafana.ini
+│
 ├── artemis/ <- git branch for host artemis
 │   ├── .env
 │   ├── README.md
