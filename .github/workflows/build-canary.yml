@@ -27,6 +27,7 @@ jobs:
             version_tag: canary
             source_branch: ${{ github.ref_name }}
             dockerfile: Dockerfile
+
           - title: dockman/updater
             version_tag: canary
             source_branch: ${{ github.ref_name }}
