@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/RA341/dockman/pkg/syncmap"
 	"github.com/rs/zerolog/log"
 )
-
-// LocalClient is the name given to the local docker daemon instance
-const LocalClient = "local"
 
 type ClientManager struct {
 	ssh              *ssh.Service
@@ -88,10 +86,10 @@ func (m *ClientManager) ListHostNames() []string {
 	return cliList
 }
 
-func (m *ClientManager) ListHosts() []*ConnectedDockerClient {
-	var cliList []*ConnectedDockerClient
-	m.connectedClients.Range(func(_ string, key *ConnectedDockerClient) bool {
-		cliList = append(cliList, key)
+func (m *ClientManager) ListHosts() map[string]*ConnectedDockerClient {
+	var cliList = make(map[string]*ConnectedDockerClient)
+	m.connectedClients.Range(func(name string, key *ConnectedDockerClient) bool {
+		cliList[name] = key
 		return true
 	})
 
@@ -172,8 +170,8 @@ func (m *ClientManager) loadAllHosts() (string, error) {
 	//	return machines.DefaultHost, nil
 	//}
 
-	if m.Exists(LocalClient) {
-		return LocalClient, nil
+	if m.Exists(docker.LocalClient) {
+		return docker.LocalClient, nil
 	}
 
 	// get first available host
@@ -195,7 +193,7 @@ func (m *ClientManager) loadLocalClient(wg *sync.WaitGroup) {
 		return
 	}
 
-	m.testAndStore(LocalClient, NewConnectedDockerClient(
+	m.testAndStore(docker.LocalClient, NewConnectedDockerClient(
 		localClient,
 		nil,
 	))

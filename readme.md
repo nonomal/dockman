@@ -17,6 +17,7 @@
 - [File Layout](#file-layout)
 - [Env loading](#env-loading)
 - [Updater](#dockman-updater)
+- [Notifications](#notifications)
 - [Multihost support](#multihost-support)
 - [Feedback](#feedback)
 - [Security Considerations](#security-considerations)
@@ -547,6 +548,20 @@ dockman.update.healthcheck.uptime=1h10m500ms
 #### Container Ping Check
 
 This health check pings a container after a specified amount of time or until it reaches healthy status
+
+## Notifications
+
+Configure dockman to send notifications on certain events
+
+Events config
+
+Available Providers
+
+1. Email
+2. Discord
+3. Slack
+4. Telegram
+5. Http
 
 ## Multihost Support
 

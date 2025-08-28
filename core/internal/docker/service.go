@@ -4,10 +4,32 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// LocalClient is the name given to the local docker daemon instance
+const LocalClient = "local"
+
 type Service struct {
+	Compose   *ComposeService
+	Container *ContainerService
+}
+
+// common info used by container and compose service
+// normally this would be in the service struct
+// but since the services are seperated we use this
+type dependencies struct {
+	// hostname of the machine used to identify which client is running on
+	hostname string
+	daemon   *client.Client
+	// address used to prefix container ports for direct links
 	daemonAddr string
-	*ComposeService
-	*ContainerService
+	// syncs local files to remote host
+	syncer Syncer
+
+	composeRoot string
+
+	// to store updates about new images
+	imageUpdateStore Store
+	// external sidecar url to update a dockman container
+	updaterUrl string
 }
 
 func NewService(
@@ -19,18 +41,22 @@ func NewService(
 	updaterUrl string,
 	composeRoot string,
 ) *Service {
-	containerClient := NewContainerService(
-		dockerClient,
-		imageUpdateStore,
-		name,
-		updaterUrl,
-	)
-	composeClient := NewComposeService(composeRoot, containerClient, syncer)
+	uts := &dependencies{
+		hostname:         name,
+		daemon:           dockerClient,
+		syncer:           syncer,
+		daemonAddr:       daemonAddr,
+		composeRoot:      composeRoot,
+		imageUpdateStore: imageUpdateStore,
+		updaterUrl:       updaterUrl,
+	}
+
+	containerClient := NewContainerService(uts)
+	composeClient := NewComposeService(uts, containerClient)
 
 	return &Service{
-		ContainerService: containerClient,
-		ComposeService:   composeClient,
-		daemonAddr:       daemonAddr,
+		Container: containerClient,
+		Compose:   composeClient,
 	}
 }
 

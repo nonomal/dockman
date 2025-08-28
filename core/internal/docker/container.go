@@ -21,26 +21,16 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
-	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 )
 
 type ContainerService struct {
-	daemon           *client.Client
-	imageUpdateStore Store
-	host             string
-	updaterUrl       string
+	*dependencies
 }
 
-func NewContainerService(cli *client.Client, imageUpdateStore Store, name, updaterUrl string) *ContainerService {
-	c := &ContainerService{
-		daemon:           cli,
-		imageUpdateStore: imageUpdateStore,
-		host:             name,
-		updaterUrl:       updaterUrl,
-	}
-	return c
+func NewContainerService(u *dependencies) *ContainerService {
+	return &ContainerService{dependencies: u}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,11 +149,9 @@ func (s *ContainerService) ContainersUpdateAll(ctx context.Context) error {
 		return err
 	}
 
-	return s.containersUpdate(
+	return s.containersUpdateLoop(
 		ctx,
 		containers,
-		false,
-		false,
 	)
 }
 
@@ -176,12 +164,7 @@ func (s *ContainerService) ContainersUpdateDockman(ctx context.Context, contID s
 		return err
 	}
 
-	return s.containersUpdate(
-		ctx,
-		list,
-		true,
-		false,
-	)
+	return s.containersUpdateLoop(ctx, list, WithSelfUpdate())
 }
 
 func (s *ContainerService) ContainersUpdateByContainerID(ctx context.Context, containerID ...string) error {
@@ -190,12 +173,7 @@ func (s *ContainerService) ContainersUpdateByContainerID(ctx context.Context, co
 		return err
 	}
 
-	return s.containersUpdate(
-		ctx,
-		list,
-		false,
-		true,
-	)
+	return s.containersUpdateLoop(ctx, list)
 }
 
 // ContainersUpdateByImage finds all containers using the specified image,
@@ -214,59 +192,141 @@ func (s *ContainerService) ContainersUpdateByImage(ctx context.Context, imageTag
 		return fmt.Errorf("failed to list containers for image %s: %w", imageTag, err)
 	}
 
-	return s.containersUpdate(ctx, containers, false, true)
+	return s.containersUpdateLoop(ctx, containers, WithForceUpdate())
 }
 
-// containersUpdate Core updater,
+type UpdateOption func(*containersUpdateConfig)
+
+func parseOpts(opts ...UpdateOption) *containersUpdateConfig {
+	var conf containersUpdateConfig
+	for _, opt := range opts {
+		opt(&conf)
+	}
+	return &conf
+}
+
+type containersUpdateConfig struct {
+	AllowSelfUpdate bool
+	ForceUpdate     bool
+	// enable this to only notify on new images instead of updating containers
+	NotifyOnlyMode bool
+}
+
+// WithSelfUpdate allows, if a container is detected as being dockman,
+// it will let it update instead of skipping
+func WithSelfUpdate() UpdateOption {
+	return func(c *containersUpdateConfig) { c.AllowSelfUpdate = true }
+}
+
+// WithForceUpdate bypasses the image update false label in a container,
+// and updates it anyways
+func WithForceUpdate() UpdateOption {
+	return func(c *containersUpdateConfig) { c.ForceUpdate = true }
+}
+
+// WithNotifyOnly updates the new img id in db
+// and notifies user that an update is available
+func WithNotifyOnly() UpdateOption {
+	return func(c *containersUpdateConfig) { c.NotifyOnlyMode = true }
+}
+
+func WithConfig(conf *containersUpdateConfig) UpdateOption {
+	return func(c *containersUpdateConfig) { c = conf }
+}
+
+// containersUpdateLoop Core updater,
 // uses the image name in the containers to pull/update/healthcheck containers
-func (s *ContainerService) containersUpdate(
+func (s *ContainerService) containersUpdateLoop(
 	ctx context.Context,
 	containers []container.Summary,
-	allowSelfUpdate, allowImageUpdate bool,
+	opts ...UpdateOption,
 ) error {
+	updateConfig := parseOpts(opts...)
 	if len(containers) == 0 {
-		log.Info().Msgf("No containers found. Nothing to do")
+		log.Info().Msgf("No containers to update. Nothing to do")
 		return nil
 	}
 
-	// Recreate each container
 	for _, cur := range containers {
-		if isDockman(&cur) && !allowSelfUpdate {
-			err := UpdateDockman(cur.ID, s.updaterUrl)
-			if err != nil {
-				log.Warn().Err(err).Msg("Failed to update Dockman container")
-			}
-
-			continue
-		}
-
-		if isUpdateDisable(&cur) && !allowImageUpdate {
-			log.Warn().
-				Str("id", cur.ID).Str("name", cur.Names[0]).
-				Msg("updates are disabled for this container")
-
-			continue
-		}
-
-		imgTag := cur.Image
-
-		err := s.ImagePull(ctx, imgTag)
-		if err != nil {
-			return err
-		}
-
-		err = s.ContainerRecreate(ctx, imgTag, cur)
-		if err != nil {
-			// todo do not fail notify or save reason
-			return err
-		}
+		s.containerUpdate(ctx, cur, updateConfig)
 	}
 
-	// Prune old, dangling images
-	// todo allow option to not prune ??
-	s.containerCleanupImages(ctx)
+	log.Info().Msg("Cleaning up untagged dangling images...")
+	pruneReport, err := s.ImagePruneUntagged(ctx)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to prune images")
+	}
+
+	if len(pruneReport.ImagesDeleted) > 0 {
+		log.Info().Msgf("Pruned %d images, reclaimed %d bytes", len(pruneReport.ImagesDeleted), pruneReport.SpaceReclaimed)
+	} else {
+		log.Info().Msg("No images to prune")
+	}
 
 	return nil
+}
+
+func (s *ContainerService) containerUpdate(
+	ctx context.Context,
+	cur container.Summary,
+	updateConfig *containersUpdateConfig,
+) {
+	if hasDockmanLabel(&cur) && s.hostname == LocalClient && !updateConfig.AllowSelfUpdate {
+		err := UpdateDockman(cur.ID, s.updaterUrl)
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to update Dockman container")
+		}
+		return
+	}
+
+	if hasDisaableUpdateLabel(&cur) && !updateConfig.ForceUpdate {
+		log.Warn().
+			Str("id", cur.ID).Str("name", cur.Names[0]).
+			Msg("updates are disabled for this container")
+		return
+	}
+
+	imgTag := cur.Image
+
+	available, newImgID, err := s.ImageUpdateAvailable(ctx, imgTag)
+	if err != nil {
+		log.Warn().Str("cont", cur.Names[0]).
+			Err(err).Msg("Failed to get image metadata, skipping...")
+		return
+	}
+
+	if !available {
+		log.Info().
+			Str("container", cur.Names[0]).Str("img", imgTag).
+			Msgf("Image already up to date, skipping")
+		return
+	}
+
+	if updateConfig.NotifyOnlyMode {
+		err := s.imageUpdateStore.Save(ImageUpdate{
+			ImageID:   imgTag,
+			UpdateRef: newImgID,
+			Host:      s.hostname,
+		})
+		if err != nil {
+			log.Warn().Err(err).Str("img", imgTag).
+				Msg("Failed to update image metadata")
+		}
+		return
+	}
+
+	err = s.ImagePull(ctx, imgTag)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to pull image, skipping...")
+		return
+	}
+
+	err = s.ContainerRecreate(ctx, imgTag, cur)
+	if err != nil {
+		// todo do not fail notify or save reason
+		log.Error().Err(err).Msg("Failed to recreate container")
+		return
+	}
 }
 
 //////////////////////////////////////////////
@@ -274,13 +334,13 @@ func (s *ContainerService) containersUpdate(
 
 const DockmanUpdateDisableLabel = "dockman.update.disable"
 
-func isUpdateDisable(c *container.Summary) bool {
+func hasDisaableUpdateLabel(c *container.Summary) bool {
 	return c.Labels[DockmanUpdateDisableLabel] == "true"
 }
 
 const DockmanContainerLabel = "dockman.container"
 
-func isDockman(cont *container.Summary) bool {
+func hasDockmanLabel(cont *container.Summary) bool {
 	value := cont.Labels[DockmanContainerLabel]
 	return value == "true"
 }
@@ -317,7 +377,21 @@ func (s *ContainerService) ContainerRecreate(ctx context.Context, imageTag strin
 		return fmt.Errorf("failed to stop container %s: %w", oldContainer.ID, err)
 	}
 
-	newContainer, err := s.containerCreate(ctx, imageTag, containerName+"_new", inspectedData)
+	// if container was not running before create but do not start
+	if !inspectedData.State.Running {
+		if err := s.daemon.ContainerRemove(ctx, oldContainer.ID, container.RemoveOptions{}); err != nil {
+			return fmt.Errorf("failed to remove old container %s: %w", oldContainer.ID, err)
+		}
+
+		_, err := s.containerCreate(ctx, imageTag, containerName, inspectedData)
+		if err != nil {
+			return fmt.Errorf("failed to create container %s: %w", containerName, err)
+		}
+
+		return nil
+	}
+
+	newContainer, err := s.containerCreate(ctx, imageTag, containerName+"_updated", inspectedData)
 	if err != nil {
 		return s.containerRollbackToOldContainer(ctx, oldContainer.ID, containerName, err)
 	}
@@ -372,8 +446,7 @@ func (s *ContainerService) containerRollbackToOldContainer(ctx context.Context, 
 
 func (s *ContainerService) containerCreate(
 	ctx context.Context,
-	imageTag string,
-	containerName string,
+	imageTag, containerName string,
 	inspectedData container.InspectResponse,
 ) (container.CreateResponse, error) {
 	// Create a new container with the same configuration but the new image
@@ -394,20 +467,6 @@ func (s *ContainerService) containerCreate(
 	}
 
 	return newContainer, nil
-}
-
-func (s *ContainerService) containerCleanupImages(ctx context.Context) {
-	log.Info().Msg("Cleaning up old, dangling images...")
-	pruneReport, err := s.ImagePruneUntagged(ctx)
-	if err != nil {
-		log.Warn().Err(err).Msg("failed to prune images")
-	}
-
-	if len(pruneReport.ImagesDeleted) > 0 {
-		log.Info().Msgf("Pruned %d images, reclaimed %d bytes", len(pruneReport.ImagesDeleted), pruneReport.SpaceReclaimed)
-	} else {
-		log.Info().Msg("No images to prune")
-	}
 }
 
 func (s *ContainerService) ContainerHealthCheck(containerID string, c *container.InspectResponse) error {
@@ -447,7 +506,9 @@ func (s *ContainerService) containerHealthCheckUptime(containerID string, c *con
 		return nil
 	}
 
-	timer := time.NewTimer(expectedUptime)
+	// wait for 1.5 times the expected time, to skip any container shenanigans
+	// on 1x the container uptime was not matching expectedUptime for some reason
+	timer := time.NewTimer(time.Duration(float64(expectedUptime) * 1.5))
 	defer timer.Stop()
 	<-timer.C
 
@@ -480,14 +541,14 @@ const DockmanHealthCheckPingTimeLabel = "dockman.update.healthcheck.time"
 func (s *ContainerService) containerHealthCheckPing(c *container.InspectResponse) error {
 	endpoint := c.Config.Labels[DockmanHealthCheckPingLabel]
 	if endpoint == "" {
-		log.Warn().Msg("healthcheck endpoint is empty skipping check")
+		log.Warn().Msg("healthcheck ping endpoint is empty skipping check")
 		return nil
 	}
 
 	val := c.Config.Labels[DockmanHealthCheckPingTimeLabel]
 	pingAfter, err := time.ParseDuration(val)
 	if err != nil {
-		log.Warn().Msg("invalid time format skipping uptime check")
+		log.Warn().Msg("invalid time format skipping ping endpoint check")
 		return nil
 	}
 
@@ -568,7 +629,7 @@ func (s *ContainerService) ImageUpdateCheck(ctx context.Context) error {
 			err = s.imageUpdateStore.Save(ImageUpdate{
 				ImageID:   img.ID,
 				UpdateRef: newRef,
-				Host:      s.host,
+				Host:      s.hostname,
 			})
 			if err != nil {
 				log.Warn().Err(err).Str("image", img.RepoTags[0]).Msg("Failed to update image")

@@ -99,7 +99,7 @@ function ContainersPage() {
         const {err} = await callRPC(
             () => dockerService[rpcName]({
                 containerIds: selectedContainers
-            }) as Promise<never> // we dont care about the output only err
+            }) as Promise<never> // we don't care about the output only err
         )
 
         if (err) {

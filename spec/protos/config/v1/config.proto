@@ -7,11 +7,16 @@ option go_package = "github.com/RA341/dockman/generated/config/v1";
 service ConfigService {
   rpc GetUserConfig(Empty) returns (UserConfig) {}
   rpc SetUserConfig(UserConfig) returns (Empty) {}
-
 }
 
 message UserConfig {
   bool useComposeFolders = 1;
+  ContainerUpdater updater = 2;
+}
+
+message ContainerUpdater {
+  bool Enable = 1;
+  int64 IntervalInSeconds = 2;
 }
 
 message Empty{}

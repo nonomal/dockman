@@ -2,6 +2,7 @@ import React from 'react';
 import {Box, Tab, Tabs} from "@mui/material";
 import {useSearchParams} from 'react-router-dom';
 import {TabDockerHosts} from "./tab-host.tsx";
+import {TabContainerUpdater} from "./tab-updater.tsx";
 
 // Define the structure for a tab configuration
 interface TabConfig {
@@ -15,7 +16,10 @@ const tabConfigurations: TabConfig[] = [
         label: "Docker Hosts",
         component: <TabDockerHosts/>
     },
-
+    {
+        label: "Container Updater",
+        component: <TabContainerUpdater/>
+    },
     // To add a new tab, simply add a new object to this array
     // {
     //   label: "Another Tab",

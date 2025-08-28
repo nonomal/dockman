@@ -1,11 +1,13 @@
 package docker_manager
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/git"
 	"github.com/RA341/dockman/internal/ssh"
@@ -24,6 +26,9 @@ type Service struct {
 	mu           sync.RWMutex
 	activeClient *docker.Service
 
+	userConfig config.Store
+	updaterCtx chan interface{}
+
 	imageUpdateStore docker.Store
 	updaterUrl       string
 }
@@ -32,6 +37,7 @@ func NewService(
 	git *git.Service,
 	ssh *ssh.Service,
 	store docker.Store,
+	userConfig config.Store,
 	composeRoot, updaterUrl, localAddr *string,
 ) *Service {
 	if !filepath.IsAbs(*composeRoot) {
@@ -44,6 +50,7 @@ func NewService(
 		manager: clientManager,
 		ssh:     ssh,
 
+		userConfig:  userConfig,
 		composeRoot: composeRoot,
 		localAddr:   localAddr,
 
@@ -54,22 +61,86 @@ func NewService(
 		log.Fatal().Err(err).Str("name", defaultHost).Msg("unable to switch client")
 	}
 
+	go srv.StartContainerUpdater()
+
 	log.Debug().Msg("Docker manager service loaded successfully")
 	return srv
 }
 
-// StartImageUpdateMonitor todo
-func (srv *Service) StartImageUpdateMonitor() {
-	tick := time.NewTicker(12 * time.Hour)
-	for {
-		select {
-		case <-tick.C:
-			//for _, dock := range srv.manager.ListHosts() {
-			//	srv.loadDockerService(dock)
-			//}
-		}
+func (srv *Service) StopContainerUpdater() {
+	close(srv.updaterCtx)
+}
+
+// StartContainerUpdater blocking function
+// should be always called in a go routine
+func (srv *Service) StartContainerUpdater() {
+	srv.updaterCtx = make(chan interface{})
+
+	userConfig, err := srv.userConfig.GetConfig()
+	if err != nil {
+		log.Warn().Err(err).Msg("unable to get config, container updater will not be run")
+		return
 	}
 
+	if !userConfig.ContainerUpdater.Enable {
+		log.Info().Any("config", userConfig.ContainerUpdater).
+			Msg("Container updater is disabled in config, enable to run updater service")
+		return
+	}
+
+	updateInterval := userConfig.ContainerUpdater.Interval
+	log.Info().Str("interval", updateInterval.String()).
+		Msg("Starting dockman container update service")
+	tick := time.NewTicker(updateInterval)
+	defer tick.Stop()
+
+	log.Info().Msg("Starting initial update run")
+	srv.updateContainers()
+
+	for {
+		select {
+		case _, ok := <-srv.updaterCtx:
+			if !ok {
+				log.Debug().Msg("container updater service stopped")
+				return
+			}
+		case <-tick.C:
+			srv.updateContainers()
+		}
+	}
+}
+
+func (srv *Service) updateContainers() {
+	updateHost := func(name string, dock *ConnectedDockerClient) error {
+		cli := srv.loadDockerService(name, dock)
+		err := cli.Container.ContainersUpdateAll(context.Background())
+		if err != nil {
+			return fmt.Errorf("error occured while updating containers for host: %s\n%w", name, err)
+		}
+
+		log.Info().Str("host", name).Msg("updated containers for host")
+		return nil
+	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var errors []error
+
+	for name, dock := range srv.manager.ListHosts() {
+		wg.Go(func() {
+			if err := updateHost(name, dock); err != nil {
+				mu.Lock()
+				errors = append(errors, err)
+				mu.Unlock()
+			}
+		})
+	}
+	wg.Wait()
+
+	for _, err := range errors {
+		// todo send notif
+		log.Error().Err(err).Msg("host update failed")
+	}
 }
 
 func (srv *Service) GetService() *docker.Service {
@@ -222,7 +293,7 @@ func (srv *Service) loadDockerService(name string, mach *ConnectedDockerClient) 
 	// to add direct links to services
 	var localAddr string
 	var syncer docker.Syncer
-	if name == LocalClient {
+	if name == docker.LocalClient {
 		// todo load from service
 		localAddr = *srv.localAddr
 		syncer = &docker.NoopSyncer{}

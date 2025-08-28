@@ -25,16 +25,14 @@ import (
 // reference: https://github.com/portainer/portainer/blob/develop/pkg/libstack/compose/composeplugin.go
 
 type ComposeService struct {
-	composeRoot      string
 	containerService *ContainerService
-	syncer           Syncer
+	*dependencies
 }
 
-func NewComposeService(composeRoot string, client *ContainerService, syncer Syncer) *ComposeService {
+func NewComposeService(u *dependencies, container *ContainerService) *ComposeService {
 	return &ComposeService{
-		containerService: client,
-		syncer:           syncer,
-		composeRoot:      composeRoot,
+		containerService: container,
+		dependencies:     u,
 	}
 }
 
@@ -148,7 +146,7 @@ func (s *ComposeService) ComposeList(ctx context.Context, project *types.Project
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
-	result, err := s.containerService.daemon.ContainerList(ctx, container.ListOptions{
+	result, err := s.daemon.ContainerList(ctx, container.ListOptions{
 		All:     all,
 		Filters: containerFilters,
 	})
@@ -178,7 +176,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 			continue
 		}
 
-		imageInspect, err := s.containerService.daemon.ImageInspect(ctx, service.Image)
+		imageInspect, err := s.daemon.ImageInspect(ctx, service.Image)
 		if err != nil {
 			// Image might not exist locally yet
 			digests[serviceName] = ""
@@ -198,7 +196,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 
 func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream io.ReadCloser) (api.Service, error) {
 	dockerCli, err := command.NewDockerCli(
-		command.WithAPIClient(s.containerService.daemon),
+		command.WithAPIClient(s.daemon),
 		command.WithCombinedStreams(outputStream),
 		command.WithInputStream(inputStream),
 	)
@@ -270,7 +268,7 @@ const dockmanImage = "ghcr.io/ra341/dockman"
 func (s *ComposeService) withoutDockman(project *types.Project, services ...string) []string {
 	// If sftp client exists, it's a remote machine. Do not filter.
 	// todo
-	//if isRemoteDockman := s.containerService.daemon.DaemonHost() != nil; isRemoteDockman {
+	//if isRemoteDockman := .daemon.DaemonHost() != nil; isRemoteDockman {
 	//	return services
 	//}
 
