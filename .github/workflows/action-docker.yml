@@ -104,7 +104,8 @@ jobs:
         id: build_and_push
         uses: docker/build-push-action@v6
         with:
-          context: dockerfile
+          context: .
+          file: ${{ inputs.dockerfile }}
           push: true
           # Use the target from the matrix
           target: ${{ matrix.target.name }}
