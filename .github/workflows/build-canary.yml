@@ -16,23 +16,26 @@ permissions:
   packages: write  # To push Docker images to GHCR
 
 jobs:
-  build-docker:
-    name: Build docker dev build
-    uses: ./.github/workflows/action-docker.yml
-    with:
-      title: 'Dockman'
-      version_tag: canary
-      source_branch: ${{ github.ref_name }}
-    secrets: inherit
+  build:
+    strategy:
+      matrix:
+        include:
+          - title: dockman
+            version_tag: canary
+            source_branch: ${{ github.ref_name }}
+            dockerfile: Dockerfile
+          - title: dockman/updater
+            version_tag: canary
+            source_branch: ${{ github.ref_name }}
+            dockerfile: Dockerfile.updater
 
-  dockman-updater:
-    name: Build docker dev build
+    name: Build ${{ matrix.title }}
     uses: ./.github/workflows/action-docker.yml
     with:
-      title: 'dockman/updater'
-      version_tag: develop
-      source_branch: ${{ github.ref_name }}
-      dockerfile: Dockerfile.updater
+      title: ${{ matrix.title }}
+      version_tag: ${{ matrix.version_tag }}
+      source_branch: ${{ matrix.source_branch }}
+      dockerfile: ${{ matrix.dockerfile }}
     secrets: inherit
 
 #  build_and_release_linux:
