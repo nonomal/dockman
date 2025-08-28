@@ -25,6 +25,16 @@ jobs:
       source_branch: ${{ github.ref_name }}
     secrets: inherit
 
+  dockman-updater:
+    name: Build docker dev build
+    uses: ./.github/workflows/action-docker.yml
+    with:
+      title: 'dockman/updater'
+      version_tag: develop
+      source_branch: ${{ github.ref_name }}
+      dockerfile: Dockerfile.updater
+    secrets: inherit
+
 #  build_and_release_linux:
 #    name: Build and Release for Linux
 #    uses: ./.github/workflows/action-gouda-native.yml
