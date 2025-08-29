@@ -69,7 +69,7 @@ func NewService(
 
 func (srv *Service) ResetContainerUpdater() {
 	srv.StopContainerUpdater()
-	srv.StartContainerUpdater()
+	go srv.StartContainerUpdater()
 }
 
 func (srv *Service) StopContainerUpdater() {
@@ -105,8 +105,8 @@ func (srv *Service) StartContainerUpdater() {
 		opts = append(opts, docker.WithNotifyOnly())
 	}
 
-	log.Info().Msg("Starting initial update run")
-	srv.updateContainers(opts)
+	//log.Info().Msg("Starting initial update run")
+	//srv.updateContainers(opts)
 
 	for {
 		select {
