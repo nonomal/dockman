@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file files/v1/files.proto.
  */
 export const file_files_v1_files: GenFile = /*@__PURE__*/
-  fileDesc("ChRmaWxlcy92MS9maWxlcy5wcm90bxIIZmlsZXMudjEiMwoMTGlzdFJlc3BvbnNlEiMKBmdyb3VwcxgBIAMoCzITLmZpbGVzLnYxLkZpbGVHcm91cCIrCglGaWxlR3JvdXASDAoEcm9vdBgBIAEoCRIQCghzdWJGaWxlcxgCIAMoCSJOCgpSZW5hbWVGaWxlEh8KB29sZEZpbGUYASABKAsyDi5maWxlcy52MS5GaWxlEh8KB25ld0ZpbGUYAiABKAsyDi5maWxlcy52MS5GaWxlIhgKBEZpbGUSEAoIZmlsZW5hbWUYASABKAkiBwoFRW1wdHky+gEKC0ZpbGVTZXJ2aWNlEisKBkNyZWF0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBExpc3QSDy5maWxlcy52MS5FbXB0eRoWLmZpbGVzLnYxLkxpc3RSZXNwb25zZSIAEisKBkRlbGV0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEisKBkV4aXN0cxIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBlJlbmFtZRIULmZpbGVzLnYxLlJlbmFtZUZpbGUaDy5maWxlcy52MS5FbXB0eSIAQogBCgxjb20uZmlsZXMudjFCCkZpbGVzUHJvdG9QAVorZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9maWxlcy92MaICA0ZYWKoCCEZpbGVzLlYxygIIRmlsZXNcVjHiAhRGaWxlc1xWMVxHUEJNZXRhZGF0YeoCCUZpbGVzOjpWMWIGcHJvdG8z");
+  fileDesc("ChRmaWxlcy92MS9maWxlcy5wcm90bxIIZmlsZXMudjEiMwoMTGlzdFJlc3BvbnNlEiMKBmdyb3VwcxgBIAMoCzITLmZpbGVzLnYxLkZpbGVHcm91cCIrCglGaWxlR3JvdXASDAoEcm9vdBgBIAEoCRIQCghzdWJGaWxlcxgCIAMoCSI2CgpSZW5hbWVGaWxlEhMKC29sZEZpbGVQYXRoGAEgASgJEhMKC25ld0ZpbGVQYXRoGAIgASgJIhgKBEZpbGUSEAoIZmlsZW5hbWUYASABKAkiBwoFRW1wdHky+gEKC0ZpbGVTZXJ2aWNlEisKBkNyZWF0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBExpc3QSDy5maWxlcy52MS5FbXB0eRoWLmZpbGVzLnYxLkxpc3RSZXNwb25zZSIAEisKBkRlbGV0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEisKBkV4aXN0cxIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBlJlbmFtZRIULmZpbGVzLnYxLlJlbmFtZUZpbGUaDy5maWxlcy52MS5FbXB0eSIAQogBCgxjb20uZmlsZXMudjFCCkZpbGVzUHJvdG9QAVorZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9maWxlcy92MaICA0ZYWKoCCEZpbGVzLlYxygIIRmlsZXNcVjHiAhRGaWxlc1xWMVxHUEJNZXRhZGF0YeoCCUZpbGVzOjpWMWIGcHJvdG8z");
 
 /**
  * @generated from message files.v1.ListResponse
@@ -56,14 +56,14 @@ export const FileGroupSchema: GenMessage<FileGroup> = /*@__PURE__*/
  */
 export type RenameFile = Message<"files.v1.RenameFile"> & {
   /**
-   * @generated from field: files.v1.File oldFile = 1;
+   * @generated from field: string oldFilePath = 1;
    */
-  oldFile?: File;
+  oldFilePath: string;
 
   /**
-   * @generated from field: files.v1.File newFile = 2;
+   * @generated from field: string newFilePath = 2;
    */
-  newFile?: File;
+  newFilePath: string;
 };
 
 /**

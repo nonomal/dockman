@@ -119,8 +119,8 @@ func (x *FileGroup) GetSubFiles() []string {
 
 type RenameFile struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	OldFile       *File                  `protobuf:"bytes,1,opt,name=oldFile,proto3" json:"oldFile,omitempty"`
-	NewFile       *File                  `protobuf:"bytes,2,opt,name=newFile,proto3" json:"newFile,omitempty"`
+	OldFilePath   string                 `protobuf:"bytes,1,opt,name=oldFilePath,proto3" json:"oldFilePath,omitempty"`
+	NewFilePath   string                 `protobuf:"bytes,2,opt,name=newFilePath,proto3" json:"newFilePath,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -155,18 +155,18 @@ func (*RenameFile) Descriptor() ([]byte, []int) {
 	return file_files_v1_files_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *RenameFile) GetOldFile() *File {
+func (x *RenameFile) GetOldFilePath() string {
 	if x != nil {
-		return x.OldFile
+		return x.OldFilePath
 	}
-	return nil
+	return ""
 }
 
-func (x *RenameFile) GetNewFile() *File {
+func (x *RenameFile) GetNewFilePath() string {
 	if x != nil {
-		return x.NewFile
+		return x.NewFilePath
 	}
-	return nil
+	return ""
 }
 
 type File struct {
@@ -258,11 +258,11 @@ const file_files_v1_files_proto_rawDesc = "" +
 	"\x06groups\x18\x01 \x03(\v2\x13.files.v1.FileGroupR\x06groups\";\n" +
 	"\tFileGroup\x12\x12\n" +
 	"\x04root\x18\x01 \x01(\tR\x04root\x12\x1a\n" +
-	"\bsubFiles\x18\x02 \x03(\tR\bsubFiles\"`\n" +
+	"\bsubFiles\x18\x02 \x03(\tR\bsubFiles\"P\n" +
 	"\n" +
-	"RenameFile\x12(\n" +
-	"\aoldFile\x18\x01 \x01(\v2\x0e.files.v1.FileR\aoldFile\x12(\n" +
-	"\anewFile\x18\x02 \x01(\v2\x0e.files.v1.FileR\anewFile\"\"\n" +
+	"RenameFile\x12 \n" +
+	"\voldFilePath\x18\x01 \x01(\tR\voldFilePath\x12 \n" +
+	"\vnewFilePath\x18\x02 \x01(\tR\vnewFilePath\"\"\n" +
 	"\x04File\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\"\a\n" +
 	"\x05Empty2\xfa\x01\n" +
@@ -297,23 +297,21 @@ var file_files_v1_files_proto_goTypes = []any{
 }
 var file_files_v1_files_proto_depIdxs = []int32{
 	1, // 0: files.v1.ListResponse.groups:type_name -> files.v1.FileGroup
-	3, // 1: files.v1.RenameFile.oldFile:type_name -> files.v1.File
-	3, // 2: files.v1.RenameFile.newFile:type_name -> files.v1.File
-	3, // 3: files.v1.FileService.Create:input_type -> files.v1.File
-	4, // 4: files.v1.FileService.List:input_type -> files.v1.Empty
-	3, // 5: files.v1.FileService.Delete:input_type -> files.v1.File
-	3, // 6: files.v1.FileService.Exists:input_type -> files.v1.File
-	2, // 7: files.v1.FileService.Rename:input_type -> files.v1.RenameFile
-	4, // 8: files.v1.FileService.Create:output_type -> files.v1.Empty
-	0, // 9: files.v1.FileService.List:output_type -> files.v1.ListResponse
-	4, // 10: files.v1.FileService.Delete:output_type -> files.v1.Empty
-	4, // 11: files.v1.FileService.Exists:output_type -> files.v1.Empty
-	4, // 12: files.v1.FileService.Rename:output_type -> files.v1.Empty
-	8, // [8:13] is the sub-list for method output_type
-	3, // [3:8] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	3, // 1: files.v1.FileService.Create:input_type -> files.v1.File
+	4, // 2: files.v1.FileService.List:input_type -> files.v1.Empty
+	3, // 3: files.v1.FileService.Delete:input_type -> files.v1.File
+	3, // 4: files.v1.FileService.Exists:input_type -> files.v1.File
+	2, // 5: files.v1.FileService.Rename:input_type -> files.v1.RenameFile
+	4, // 6: files.v1.FileService.Create:output_type -> files.v1.Empty
+	0, // 7: files.v1.FileService.List:output_type -> files.v1.ListResponse
+	4, // 8: files.v1.FileService.Delete:output_type -> files.v1.Empty
+	4, // 9: files.v1.FileService.Exists:output_type -> files.v1.Empty
+	4, // 10: files.v1.FileService.Rename:output_type -> files.v1.Empty
+	6, // [6:11] is the sub-list for method output_type
+	1, // [1:6] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_files_v1_files_proto_init() }

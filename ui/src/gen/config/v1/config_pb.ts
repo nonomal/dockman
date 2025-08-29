@@ -2,31 +2,31 @@
 // @generated from file config/v1/config.proto (package config.v1, syntax proto3)
 /* eslint-disable */
 
-import type {GenFile, GenMessage, GenService} from "@bufbuild/protobuf/codegenv2";
-import {fileDesc, messageDesc, serviceDesc} from "@bufbuild/protobuf/codegenv2";
-import type {Message} from "@bufbuild/protobuf";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file config/v1/config.proto.
  */
 export const file_config_v1_config: GenFile = /*@__PURE__*/
-    fileDesc("ChZjb25maWcvdjEvY29uZmlnLnByb3RvEgljb25maWcudjEiTgoOU2V0VXNlclJlcXVlc3QSJQoGY29uZmlnGAEgASgLMhUuY29uZmlnLnYxLlVzZXJDb25maWcSFQoNdXBkYXRlVXBkYXRlchgCIAEoCCJVCgpVc2VyQ29uZmlnEhkKEXVzZUNvbXBvc2VGb2xkZXJzGAEgASgIEiwKB3VwZGF0ZXIYAiABKAsyGy5jb25maWcudjEuQ29udGFpbmVyVXBkYXRlciJRChBDb250YWluZXJVcGRhdGVyEg4KBkVuYWJsZRgBIAEoCBISCgpOb3RpZnlPbmx5GAIgASgIEhkKEUludGVydmFsSW5TZWNvbmRzGAMgASgDIgcKBUVtcHR5MosBCg1Db25maWdTZXJ2aWNlEjoKDUdldFVzZXJDb25maWcSEC5jb25maWcudjEuRW1wdHkaFS5jb25maWcudjEuVXNlckNvbmZpZyIAEj4KDVNldFVzZXJDb25maWcSGS5jb25maWcudjEuU2V0VXNlclJlcXVlc3QaEC5jb25maWcudjEuRW1wdHkiAEKPAQoNY29tLmNvbmZpZy52MUILQ29uZmlnUHJvdG9QAVosZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9jb25maWcvdjGiAgNDWFiqAglDb25maWcuVjHKAglDb25maWdcVjHiAhVDb25maWdcVjFcR1BCTWV0YWRhdGHqAgpDb25maWc6OlYxYgZwcm90bzM");
+  fileDesc("ChZjb25maWcvdjEvY29uZmlnLnByb3RvEgljb25maWcudjEiTgoOU2V0VXNlclJlcXVlc3QSJQoGY29uZmlnGAEgASgLMhUuY29uZmlnLnYxLlVzZXJDb25maWcSFQoNdXBkYXRlVXBkYXRlchgCIAEoCCJVCgpVc2VyQ29uZmlnEhkKEXVzZUNvbXBvc2VGb2xkZXJzGAEgASgIEiwKB3VwZGF0ZXIYAiABKAsyGy5jb25maWcudjEuQ29udGFpbmVyVXBkYXRlciJRChBDb250YWluZXJVcGRhdGVyEg4KBkVuYWJsZRgBIAEoCBISCgpOb3RpZnlPbmx5GAIgASgIEhkKEUludGVydmFsSW5TZWNvbmRzGAMgASgDIgcKBUVtcHR5MosBCg1Db25maWdTZXJ2aWNlEjoKDUdldFVzZXJDb25maWcSEC5jb25maWcudjEuRW1wdHkaFS5jb25maWcudjEuVXNlckNvbmZpZyIAEj4KDVNldFVzZXJDb25maWcSGS5jb25maWcudjEuU2V0VXNlclJlcXVlc3QaEC5jb25maWcudjEuRW1wdHkiAEKPAQoNY29tLmNvbmZpZy52MUILQ29uZmlnUHJvdG9QAVosZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9jb25maWcvdjGiAgNDWFiqAglDb25maWcuVjHKAglDb25maWdcVjHiAhVDb25maWdcVjFcR1BCTWV0YWRhdGHqAgpDb25maWc6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message config.v1.SetUserRequest
  */
 export type SetUserRequest = Message<"config.v1.SetUserRequest"> & {
-    /**
-     * @generated from field: config.v1.UserConfig config = 1;
-     */
-    config?: UserConfig;
+  /**
+   * @generated from field: config.v1.UserConfig config = 1;
+   */
+  config?: UserConfig;
 
-    /**
-     * set to true to reset updater
-     *
-     * @generated from field: bool updateUpdater = 2;
-     */
-    updateUpdater: boolean;
+  /**
+   * set to true to reset updater
+   *
+   * @generated from field: bool updateUpdater = 2;
+   */
+  updateUpdater: boolean;
 };
 
 /**
@@ -34,7 +34,7 @@ export type SetUserRequest = Message<"config.v1.SetUserRequest"> & {
  * Use `create(SetUserRequestSchema)` to create a new message.
  */
 export const SetUserRequestSchema: GenMessage<SetUserRequest> = /*@__PURE__*/
-    messageDesc(file_config_v1_config, 0);
+  messageDesc(file_config_v1_config, 0);
 
 /**
  * @generated from message config.v1.UserConfig
@@ -45,10 +45,10 @@ export type UserConfig = Message<"config.v1.UserConfig"> & {
    */
   useComposeFolders: boolean;
 
-    /**
-     * @generated from field: config.v1.ContainerUpdater updater = 2;
-     */
-    updater?: ContainerUpdater;
+  /**
+   * @generated from field: config.v1.ContainerUpdater updater = 2;
+   */
+  updater?: ContainerUpdater;
 };
 
 /**
@@ -56,26 +56,26 @@ export type UserConfig = Message<"config.v1.UserConfig"> & {
  * Use `create(UserConfigSchema)` to create a new message.
  */
 export const UserConfigSchema: GenMessage<UserConfig> = /*@__PURE__*/
-    messageDesc(file_config_v1_config, 1);
+  messageDesc(file_config_v1_config, 1);
 
 /**
  * @generated from message config.v1.ContainerUpdater
  */
 export type ContainerUpdater = Message<"config.v1.ContainerUpdater"> & {
-    /**
-     * @generated from field: bool Enable = 1;
-     */
-    Enable: boolean;
+  /**
+   * @generated from field: bool Enable = 1;
+   */
+  Enable: boolean;
 
-    /**
-     * @generated from field: bool NotifyOnly = 2;
-     */
-    NotifyOnly: boolean;
+  /**
+   * @generated from field: bool NotifyOnly = 2;
+   */
+  NotifyOnly: boolean;
 
-    /**
-     * @generated from field: int64 IntervalInSeconds = 3;
-     */
-    IntervalInSeconds: bigint;
+  /**
+   * @generated from field: int64 IntervalInSeconds = 3;
+   */
+  IntervalInSeconds: bigint;
 };
 
 /**
@@ -83,7 +83,7 @@ export type ContainerUpdater = Message<"config.v1.ContainerUpdater"> & {
  * Use `create(ContainerUpdaterSchema)` to create a new message.
  */
 export const ContainerUpdaterSchema: GenMessage<ContainerUpdater> = /*@__PURE__*/
-    messageDesc(file_config_v1_config, 2);
+  messageDesc(file_config_v1_config, 2);
 
 /**
  * @generated from message config.v1.Empty
@@ -96,7 +96,7 @@ export type Empty = Message<"config.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-    messageDesc(file_config_v1_config, 3);
+  messageDesc(file_config_v1_config, 3);
 
 /**
  * @generated from service config.v1.ConfigService
@@ -115,7 +115,7 @@ export const ConfigService: GenService<{
    */
   setUserConfig: {
     methodKind: "unary";
-      input: typeof SetUserRequestSchema;
+    input: typeof SetUserRequestSchema;
     output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/

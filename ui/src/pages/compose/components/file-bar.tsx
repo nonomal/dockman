@@ -20,7 +20,7 @@ export function FileList({closeTab}: FileListProps) {
     const {file: currentDir} = useParams<{ file: string }>()
 
     const {selectedHost} = useHost()
-    const {files, isLoading} = useFiles()
+    const {files, isLoading, renameFile} = useFiles()
 
     const {showTelescope} = useTelescope()
     const {showDialog: showGitImport} = useGitImport()
@@ -196,6 +196,7 @@ export function FileList({closeTab}: FileListProps) {
                                 onAdd={showAddFile}
                                 onDelete={handleDelete}
                                 isOpen={openDirs.has(group.name)}
+                                onRename={renameFile}
                                 onToggle={handleToggle}
                             />
                         ))}

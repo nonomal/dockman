@@ -1,8 +1,18 @@
 import {Link as RouterLink, useLocation, useNavigate} from 'react-router-dom'
-import {Box, Collapse, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Tooltip} from '@mui/material'
-import {Add, Analytics, Delete, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material'
+import {
+    Box,
+    Collapse,
+    IconButton,
+    InputBase,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Tooltip
+} from '@mui/material'
+import {Add, Analytics, Delete, Edit, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material'
 import {type FileGroup} from "../../../hooks/files.ts"
-import React, {useMemo} from "react"
+import React, {useEffect, useMemo, useRef, useState} from "react"
 import FileBarIcon, {DockerFolderIcon} from "./file-bar-icon.tsx"
 import {amber} from "@mui/material/colors"
 import {useConfig} from "../../../hooks/config.ts"
@@ -15,7 +25,8 @@ interface FileItemProps {
     onAdd: (name: string) => void,
     isSelected?: boolean,
     level?: number,
-    onDelete: (file: string) => void
+    onDelete: (file: string) => void,
+    onRename: (oldPath: string, newPath: string) => void // Clarify newDisplayName is actually newPath for rename
 }
 
 const COMPOSE_EXTENSIONS = ['compose.yaml', 'compose.yml']
@@ -24,7 +35,6 @@ function isComposeFile(filename: string): boolean {
     return COMPOSE_EXTENSIONS.some(ext => filename.endsWith(ext))
 }
 
-// Transform FileGroup into a normalized structure for easier rendering
 interface NormalizedFileGroup {
     type: 'file' | 'folder' | 'promoted-compose'
     name: string
@@ -79,7 +89,15 @@ function normalizeFileGroup({group, config}: { group: FileGroup, config: Config 
     }
 }
 
-const FileBarItem = React.memo(({group, onAdd, isOpen, onToggle, onDelete}: FileItemProps) => {
+const FileBarItem = React.memo((
+    {
+        group,
+        onAdd,
+        isOpen,
+        onToggle,
+        onDelete,
+        onRename
+    }: FileItemProps) => {
     const {config} = useConfig()
     const normalized = useMemo(
         () => normalizeFileGroup({group, config}),
@@ -97,6 +115,7 @@ const FileBarItem = React.memo(({group, onAdd, isOpen, onToggle, onDelete}: File
                 displayName={normalized.displayName}
                 isCompose={normalized.isCompose}
                 onDelete={() => onDelete(normalized.name)}
+                onRename={onRename}
             />
         )
     }
@@ -120,6 +139,7 @@ const FileBarItem = React.memo(({group, onAdd, isOpen, onToggle, onDelete}: File
                 onAdd={() => onAdd(normalized.name)}
                 onDelete={() => onDelete(normalized.name)}
                 onToggle={handleToggle}
+                onRename={onRename}
             />
 
             {hasChildren && (
@@ -137,6 +157,7 @@ const FileBarItem = React.memo(({group, onAdd, isOpen, onToggle, onDelete}: File
                                     displayName={child}
                                     isCompose={isComposeFile(child)}
                                     onDelete={() => onDelete(childPath)}
+                                    onRename={onRename}
                                 />
                             )
                         })}
@@ -147,54 +168,145 @@ const FileBarItem = React.memo(({group, onAdd, isOpen, onToggle, onDelete}: File
     )
 })
 
-// Extracted component for file list items
 interface FileListItemProps {
-    filename: string
-    displayName: string
+    filename: string // full path (e.g., "my-folder/my-file.txt")
+    displayName: string // just the file name (e.g., "my-file.txt")
     isCompose: boolean
     onDelete: () => void
+    onRename: (oldPath: string, newPath: string) => void // Clarify newDisplayName is actually newPath for rename
 }
 
-const FileListItem = React.memo(({filename, displayName, isCompose, onDelete}: FileListItemProps) => {
+const FileListItem = React.memo(({filename, displayName, isCompose, onDelete, onRename}: FileListItemProps) => {
     const location = useLocation()
     const filePath = `/stacks/${filename}`
+    const isSelected = location.pathname === filePath
+
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedName, setEditedName] = useState(displayName);
+    const [isHovered, setIsHovered] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!isEditing) {
+            setEditedName(displayName);
+        }
+    }, [displayName, isEditing]);
+
+
+    const handleRenameClick = (e: React.MouseEvent) => {
+        handleActionClick(e, () => {
+            setIsEditing(true);
+            setTimeout(() => {
+                inputRef.current?.focus();
+                inputRef.current?.select();
+            }, 0);
+        });
+    };
+
+    const handleSaveRename = () => {
+        const trimmedEditedName = editedName.trim();
+        if (trimmedEditedName === '' || trimmedEditedName === displayName) {
+            setIsEditing(false);
+            setEditedName(displayName);
+            return;
+        }
+
+        // --- Start of change for subfile renaming ---
+        const lastSlashIndex = filename.lastIndexOf('/');
+        let newFullPath: string;
+
+        if (lastSlashIndex !== -1) {
+            // It's a subfile (e.g., "folderA/subfile.txt")
+            const folderPrefix = filename.substring(0, lastSlashIndex + 1); // "folderA/"
+            newFullPath = folderPrefix + trimmedEditedName; // "folderA/new-subfile.txt"
+        } else {
+            // It's a top-level file (e.g., "file.txt")
+            newFullPath = trimmedEditedName; // "new-file.txt"
+        }
+
+        onRename(filename, newFullPath); // Call onRename with old full path and new full path
+        // --- End of change ---
+        setIsEditing(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            inputRef.current?.blur();
+        } else if (e.key === 'Escape') {
+            setIsEditing(false);
+            setEditedName(displayName);
+            inputRef.current?.blur();
+        }
+    };
+
+    const handleBlur = () => {
+        handleSaveRename();
+    };
 
     return (
         <ListItemButton
-            component={RouterLink}
-            to={filePath}
-            selected={location.pathname === filePath}
+            component={isEditing ? 'div' : RouterLink}
+            to={isEditing ? undefined : filePath}
+            selected={isSelected}
             sx={{py: isCompose ? 1.25 : 1}}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
             <ListItemIcon sx={{minWidth: 32}}>
-                <FileBarIcon filename={displayName}/>
+                {isEditing ? (
+                    null
+                ) : (isHovered || isSelected) ? (
+                    <IconButton size="small" onClick={handleRenameClick}>
+                        <Edit fontSize="small"/>
+                    </IconButton>
+                ) : (
+                    <FileBarIcon filename={displayName}/>
+                )}
             </ListItemIcon>
 
             <Box sx={{flex: 1, mr: 1}}>
-                <ListItemText
-                    primary={displayName}
-                    slotProps={{
-                        primary: {sx: {fontSize: '0.85rem'}}
-                    }}
-                />
+                {isEditing ? (
+                    <InputBase
+                        inputRef={inputRef}
+                        value={editedName}
+                        onChange={(e) => setEditedName(e.target.value)}
+                        onBlur={handleBlur}
+                        onKeyDown={handleKeyDown}
+                        sx={{
+                            width: '100%',
+                            fontSize: '0.85rem',
+                            '& .MuiInputBase-input': {
+                                padding: '4px 0',
+                            }
+                        }}
+                    />
+                ) : (
+                    <ListItemText
+                        primary={displayName}
+                        slotProps={{
+                            primary: {sx: {fontSize: '0.85rem'}}
+                        }}
+                    />
+                )}
                 {isCompose && <ComposeActions urlPath={filePath}/>}
             </Box>
 
-            <IconButton
-                size="small"
-                onClick={(e) => handleActionClick(e, onDelete)}
-                color="error"
-            >
-                <Delete fontSize="small"/>
-            </IconButton>
+            {!isEditing && (
+                <IconButton
+                    size="small"
+                    onClick={(e) => handleActionClick(e, onDelete)}
+                    color="error"
+                >
+                    <Delete fontSize="small"/>
+                </IconButton>
+            )}
         </ListItemButton>
     )
 })
 
-// Extracted component for folder list items
 interface FolderListItemProps {
-    folderName: string
-    displayName: string
+    folderName: string // full path (e.g., "my-folder")
+    displayName: string // just the folder name (e.g., "my-folder")
     composePath?: string
     isCompose: boolean
     navigable: boolean
@@ -203,10 +315,12 @@ interface FolderListItemProps {
     onAdd: () => void
     onDelete: () => void
     onToggle: () => void
+    onRename: (oldPath: string, newPath: string) => void // Clarify newDisplayName is actually newPath for rename
 }
 
 const FolderListItem = React.memo(
     ({
+         folderName,
          displayName,
          composePath,
          isCompose,
@@ -215,85 +329,157 @@ const FolderListItem = React.memo(
          isOpen,
          onAdd,
          onDelete,
-         onToggle
+         onToggle,
+         onRename
      }: FolderListItemProps) => {
         const location = useLocation()
+        const composeUrlPath = composePath ? `/stacks/${composePath}` : undefined;
+        const isSelected = navigable && composeUrlPath ? location.pathname === composeUrlPath : false;
 
-        const handleMainItemClick = () => {
-            if (navigable && composePath) {
-                const composeUrlPath = `/stacks/${composePath}`
-                // If already selected, toggle instead of navigate
-                if (location.pathname === composeUrlPath) {
-                    onToggle()
-                    return
-                }
-                // Otherwise let RouterLink handle navigation
-            } else {
-                onToggle()
+        const [isEditing, setIsEditing] = useState(false);
+        const [editedName, setEditedName] = useState(displayName);
+        const [isHovered, setIsHovered] = useState(false);
+        const inputRef = useRef<HTMLInputElement>(null);
+
+        useEffect(() => {
+            if (!isEditing) {
+                setEditedName(displayName);
             }
-        }
+        }, [displayName, isEditing]);
 
-        // Determine main item props based on whether it's navigable
-        const mainItemProps = navigable && composePath ? {
+        const handleRenameClick = (e: React.MouseEvent) => {
+            handleActionClick(e, () => {
+                setIsEditing(true);
+                setTimeout(() => {
+                    inputRef.current?.focus();
+                    inputRef.current?.select();
+                }, 0);
+            });
+        };
+
+        const handleSaveRename = () => {
+            const trimmedEditedName = editedName.trim();
+            if (trimmedEditedName === '' || trimmedEditedName === displayName) {
+                setIsEditing(false);
+                setEditedName(displayName);
+                return;
+            }
+            // For folders, the new display name is the new full path
+            onRename(folderName, trimmedEditedName);
+            setIsEditing(false);
+        };
+
+        const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === 'Enter') {
+                inputRef.current?.blur();
+            } else if (e.key === 'Escape') {
+                setIsEditing(false);
+                setEditedName(displayName);
+                inputRef.current?.blur();
+            }
+        };
+
+        const handleBlur = () => {
+            handleSaveRename();
+        };
+
+        const mainItemProps = isEditing ? {
+            onClick: (e: React.MouseEvent) => e.stopPropagation()
+        } : (navigable && composePath ? {
             component: RouterLink,
-            to: `/stacks/${composePath}`,
-            selected: location.pathname === `/stacks/${composePath}`,
-            onClick: handleMainItemClick
+            to: composeUrlPath,
+            selected: isSelected,
+            onClick: () => {
+                if (isSelected) {
+                    onToggle();
+                    return;
+                }
+            }
         } : {
             onClick: onToggle
-        }
+        });
+
 
         return (
             <ListItemButton
                 {...mainItemProps}
                 sx={{py: isCompose ? 1.25 : 1}}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
             >
                 <ListItemIcon sx={{minWidth: 32}}>
-                    {isCompose ? (
-                        <DockerFolderIcon/>
+                    {isEditing ? (
+                        null
+                    ) : (isHovered || isSelected) ? (
+                        <IconButton size="small" onClick={handleRenameClick}>
+                            <Edit fontSize="small"/>
+                        </IconButton>
                     ) : (
-                        <Folder sx={{color: amber[800], fontSize: '1.1rem'}}/>
+                        isCompose ? (
+                            <DockerFolderIcon/>
+                        ) : (
+                            <Folder sx={{color: amber[800], fontSize: '1.1rem'}}/>
+                        )
                     )}
                 </ListItemIcon>
 
                 <Box sx={{flex: 1, mr: 1}}>
-                    <ListItemText
-                        primary={displayName}
-                        slotProps={{
-                            primary: {sx: {fontSize: '0.85rem'}}
-                        }}
-                    />
+                    {isEditing ? (
+                        <InputBase
+                            inputRef={inputRef}
+                            value={editedName}
+                            onChange={(e) => setEditedName(e.target.value)}
+                            onBlur={handleBlur}
+                            onKeyDown={handleKeyDown}
+                            sx={{
+                                width: '100%',
+                                fontSize: '0.85rem',
+                                '& .MuiInputBase-input': {
+                                    padding: '4px 0',
+                                }
+                            }}
+                        />
+                    ) : (
+                        <ListItemText
+                            primary={displayName}
+                            slotProps={{
+                                primary: {sx: {fontSize: '0.85rem'}}
+                            }}
+                        />
+                    )}
                     {isCompose && composePath && (
                         <ComposeActions urlPath={`/stacks/${composePath}`}/>
                     )}
                 </Box>
 
-                {/* Folder actions */}
-                <IconButton
-                    size="small"
-                    onClick={(e) => handleActionClick(e, onAdd)}
-                    color="success"
-                >
-                    <Add fontSize="small"/>
-                </IconButton>
+                {!isEditing && (
+                    <>
+                        <IconButton
+                            size="small"
+                            onClick={(e) => handleActionClick(e, onAdd)}
+                            color="success"
+                        >
+                            <Add fontSize="small"/>
+                        </IconButton>
 
-                <IconButton
-                    size="small"
-                    onClick={(e) => handleActionClick(e, onDelete)}
-                    color="error"
-                >
-                    <Delete fontSize="small"/>
-                </IconButton>
+                        <IconButton
+                            size="small"
+                            onClick={(e) => handleActionClick(e, onDelete)}
+                            color="error"
+                        >
+                            <Delete fontSize="small"/>
+                        </IconButton>
 
-                {/* Show expand/collapse icon */}
-                {hasChildren && (
-                    <IconButton
-                        size="small"
-                        onClick={(e) => handleActionClick(e, onToggle)}
-                        sx={{ml: 0.5}}
-                    >
-                        {isOpen ? <ExpandLess fontSize="small"/> : <ExpandMore fontSize="small"/>}
-                    </IconButton>
+                        {hasChildren && (
+                            <IconButton
+                                size="small"
+                                onClick={(e) => handleActionClick(e, onToggle)}
+                                sx={{ml: 0.5}}
+                            >
+                                {isOpen ? <ExpandLess fontSize="small"/> : <ExpandMore fontSize="small"/>}
+                            </IconButton>
+                        )}
+                    </>
                 )}
             </ListItemButton>
         )
@@ -325,7 +511,6 @@ function ComposeActions({urlPath}: { urlPath: string }) {
     )
 }
 
-// Helper to stop click from propagating to parent ListItemButton
 const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.preventDefault()
     e.stopPropagation()

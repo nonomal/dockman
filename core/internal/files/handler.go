@@ -125,8 +125,13 @@ func (h *Handler) Delete(_ context.Context, c *connect.Request[v1.File]) (*conne
 	return &connect.Response[v1.Empty]{}, nil
 }
 
-func (h *Handler) Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
-	return nil, fmt.Errorf("unimplemented")
+func (h *Handler) Rename(_ context.Context, req *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
+	err := h.srv.Rename(req.Msg.OldFilePath, req.Msg.NewFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[v1.Empty]{}, nil
 }
 
 func getFile(c *v1.File) (string, error) {

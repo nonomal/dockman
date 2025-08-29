@@ -10,6 +10,7 @@ export interface FilesContextType {
     isLoading: boolean
     addFile: (filename: string, parent: string) => Promise<void>
     deleteFile: (filename: string) => Promise<void>
+    renameFile: (olfFilename: string, newFile: string) => Promise<void>
     refetch: () => Promise<void>
 }
 

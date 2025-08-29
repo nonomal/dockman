@@ -17,11 +17,9 @@ export function FilesProvider({children}: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true)
 
     const fetchFiles = useCallback(async () => {
-        console.log("Fetching files...")
-
         setIsLoading(true)
+
         const {val, err} = await callRPC(() => client.list({}))
-        console.log("Calling api...")
         if (err) {
             showError(err)
             setFiles([])
@@ -32,6 +30,7 @@ export function FilesProvider({children}: { children: ReactNode }) {
             }))
             setFiles([...res])
         }
+
         setIsLoading(false)
     }, [client, selectedHost])
 
@@ -45,32 +44,48 @@ export function FilesProvider({children}: { children: ReactNode }) {
         if (err) {
             showError(`Error saving file: ${err}`)
             return
+        } else {
+            showSuccess(`${filename} created.`)
+            navigate(`/stacks/${filename}`)
         }
 
-        showSuccess(`${filename} created.`)
         await fetchFiles()
-        navigate(`/stacks/${filename}`)
-
     }, [client, fetchFiles, navigate])
 
     const deleteFile = useCallback(async (filename: string) => {
-        const currentPath = location.pathname
-
         const {err} = await callRPC(() => client.delete({filename}))
         if (err) {
             showError(`Error deleting file: ${err}`)
-            return
+        } else {
+            showSuccess(`${filename} deleted.`)
+            const currentPath = location.pathname
+            if (currentPath === `/stacks/${filename}`) {
+                // If the user is currently viewing the deleted file, navigate away
+                navigate('/stacks')
+            }
         }
 
-        showSuccess(`${filename} deleted.`)
-        await fetchFiles() // Refetch after successful deletion
-        if (currentPath === `/stacks/${filename}`) {
-            // If the user is currently viewing the deleted file, navigate away
-            navigate('/stacks')
-        }
-
-        showSuccess(`${filename} deleted.`)
+        await fetchFiles()
     }, [client, fetchFiles, location.pathname, navigate])
+
+    const renameFile = async (oldFilename: string, newFileName: string) => {
+        const {err} = await callRPC(() => client.rename({
+            oldFilePath: oldFilename,
+            newFilePath: newFileName
+        }))
+        if (err) {
+            showError(`Error renaming file: ${err}`)
+        } else {
+            showSuccess(`${oldFilename} renamed to ${newFileName}`)
+            const currentPath = location.pathname
+            if (currentPath === `/stacks/${oldFilename}`) {
+                // If the user is currently viewing the renamed file, navigate to renamed file
+                navigate(`/stacks/${newFileName}`)
+            }
+        }
+
+        await fetchFiles()
+    }
 
     useEffect(() => {
         fetchFiles().then()
@@ -81,6 +96,7 @@ export function FilesProvider({children}: { children: ReactNode }) {
         isLoading,
         addFile,
         deleteFile,
+        renameFile,
         refetch: fetchFiles
     }
 

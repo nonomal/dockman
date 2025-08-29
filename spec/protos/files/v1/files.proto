@@ -23,8 +23,8 @@ message FileGroup {
 }
 
 message RenameFile {
-  File oldFile = 1;
-  File newFile = 2;
+  string oldFilePath = 1;
+  string newFilePath = 2;
 }
 
 message File {

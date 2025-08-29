@@ -140,6 +140,18 @@ func (s *Service) Delete(fileName string) error {
 	return nil
 }
 
+func (s *Service) Rename(oldFileName, newFilename string) error {
+	oldFullPath := s.WithRoot(filepath.ToSlash(filepath.Clean(oldFileName)))
+	newFullPath := s.WithRoot(filepath.ToSlash(filepath.Clean(newFilename)))
+
+	err := os.Rename(oldFullPath, newFullPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Service) Save(filename string, destWriter io.Reader) error {
 	filename = s.WithRoot(filename)
 	read, err := io.ReadAll(destWriter)
