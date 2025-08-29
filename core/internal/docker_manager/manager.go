@@ -151,13 +151,20 @@ func (m *ClientManager) loadAllHosts() (string, error) {
 
 	var wg sync.WaitGroup
 	for name, machine := range machines {
-		// Load remote clients concurrently
-		wg.Add(1)
-		go m.loadSSHClient(name, machine, &wg)
+		wg.Go(func() {
+			m.loadSSHClient(name, machine)
+		})
 	}
-	// Load local client concurrently
-	wg.Add(1)
-	go m.loadLocalClient(&wg)
+
+	// todo toggle local client
+	//if !clientConfig.EnableLocalDocker {
+	//	log.Info().Msgf("Local docker is disabled in config")
+	//	return
+	//}
+	wg.Go(func() {
+		m.loadLocalClient()
+	})
+
 	wg.Wait()
 
 	conClients := m.ListHostNames()
@@ -178,15 +185,7 @@ func (m *ClientManager) loadAllHosts() (string, error) {
 	return conClients[0], nil
 }
 
-func (m *ClientManager) loadLocalClient(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	// todo
-	//if !clientConfig.EnableLocalDocker {
-	//	log.Info().Msgf("Local docker is disabled in config")
-	//	return
-	//}
-
+func (m *ClientManager) loadLocalClient() {
 	localClient, err := NewLocalClient()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup local docker client")
@@ -199,9 +198,7 @@ func (m *ClientManager) loadLocalClient(wg *sync.WaitGroup) {
 	))
 }
 
-func (m *ClientManager) loadSSHClient(name string, machine *ssh.ConnectedMachine, s *sync.WaitGroup) {
-	defer s.Done()
-
+func (m *ClientManager) loadSSHClient(name string, machine *ssh.ConnectedMachine) {
 	dockerCli, err := newDockerSSHClient(machine.SshClient)
 	if err != nil {
 		log.Error().Err(err).Str("client", name).Msg("Failed to setup remote docker client")
