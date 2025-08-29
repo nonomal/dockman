@@ -265,7 +265,21 @@ func (s *ContainerService) containersUpdateLoop(
 		return nil
 	}
 
+	var dockmanUpdate func()
 	for _, cur := range containers {
+		if hasDockmanLabel(&cur) && s.hostname == LocalClient && !updateConfig.AllowSelfUpdate {
+			// Store the update for later
+			id := cur.ID
+			dockmanUpdate = func() {
+				err := UpdateDockman(id, s.updaterUrl)
+				if err != nil {
+					log.Warn().Err(err).Msg("Failed to update Dockman container")
+				}
+			}
+			// defer dockman update until all other containers are done
+			continue
+		}
+
 		s.containerUpdate(ctx, cur, updateConfig)
 	}
 
@@ -282,6 +296,9 @@ func (s *ContainerService) containersUpdateLoop(
 		log.Info().Msg("No images to prune")
 	}
 
+	log.Info().Msg("Starting dockman update")
+	dockmanUpdate()
+
 	return nil
 }
 
@@ -290,14 +307,6 @@ func (s *ContainerService) containerUpdate(
 	cur container.Summary,
 	updateConfig *containersUpdateConfig,
 ) {
-	if hasDockmanLabel(&cur) && s.hostname == LocalClient && !updateConfig.AllowSelfUpdate {
-		err := UpdateDockman(cur.ID, s.updaterUrl)
-		if err != nil {
-			log.Warn().Err(err).Msg("Failed to update Dockman container")
-		}
-		return
-	}
-
 	if hasDisableUpdateLabel(&cur) && !updateConfig.ForceUpdate {
 		log.Warn().
 			Str("id", cur.ID).Str("name", cur.Names[0]).
