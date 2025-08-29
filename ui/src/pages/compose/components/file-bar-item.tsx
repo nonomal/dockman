@@ -253,9 +253,7 @@ const FileListItem = React.memo(({filename, displayName, isCompose, onDelete, on
             onMouseLeave={() => setIsHovered(false)}
         >
             <ListItemIcon sx={{minWidth: 32}}>
-                {isEditing ? (
-                    null
-                ) : (isHovered || isSelected) ? (
+                {isEditing ? null : (isHovered || isSelected) ? (
                     <IconButton size="small" onClick={handleRenameClick}>
                         <Edit fontSize="small"/>
                     </IconButton>
@@ -408,9 +406,7 @@ const FolderListItem = React.memo(
                 onMouseLeave={() => setIsHovered(false)}
             >
                 <ListItemIcon sx={{minWidth: 32}}>
-                    {isEditing ? (
-                        null
-                    ) : (isHovered || isSelected) ? (
+                    {isEditing ? null : (isHovered || isSelected) ? (
                         <IconButton size="small" onClick={handleRenameClick}>
                             <Edit fontSize="small"/>
                         </IconButton>
