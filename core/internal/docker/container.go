@@ -265,7 +265,7 @@ func (s *ContainerService) containersUpdateLoop(
 		return nil
 	}
 
-	var dockmanUpdate func()
+	var dockmanUpdate = func() {}
 	for _, cur := range containers {
 		if hasDockmanLabel(&cur) && s.hostname == LocalClient && !updateConfig.AllowSelfUpdate {
 			// Store the update for later

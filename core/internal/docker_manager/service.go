@@ -105,8 +105,8 @@ func (srv *Service) StartContainerUpdater() {
 		opts = append(opts, docker.WithNotifyOnly())
 	}
 
-	//log.Info().Msg("Starting initial update run")
-	//srv.updateContainers(opts)
+	log.Info().Msg("Starting initial update run")
+	srv.updateContainers(opts)
 
 	for {
 		select {
