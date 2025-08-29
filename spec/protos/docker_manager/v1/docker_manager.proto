@@ -5,6 +5,7 @@ package docker_manager.v1;
 option go_package = "github.com/RA341/dockman/generated/docker_manager/v1";
 
 service DockerManagerService {
+  rpc StartUpdate (Empty) returns (Empty) {}
   rpc SwitchClient(SwitchRequest) returns (Empty) {}
   rpc ListClients(Empty) returns (ListClientsResponse) {}
   rpc ListHosts(Empty) returns (ListMachine) {}

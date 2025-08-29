@@ -105,9 +105,6 @@ func (srv *Service) StartContainerUpdater() {
 		opts = append(opts, docker.WithNotifyOnly())
 	}
 
-	log.Info().Msg("Starting initial update run")
-	srv.updateContainers(opts)
-
 	for {
 		select {
 		case _, ok := <-srv.updaterCtx:
@@ -116,12 +113,12 @@ func (srv *Service) StartContainerUpdater() {
 				return
 			}
 		case <-tick.C:
-			srv.updateContainers(opts)
+			srv.UpdateContainers(opts...)
 		}
 	}
 }
 
-func (srv *Service) updateContainers(opts []docker.UpdateOption) {
+func (srv *Service) UpdateContainers(opts ...docker.UpdateOption) {
 	updateHost := func(name string, dock *ConnectedDockerClient) error {
 		cli := srv.loadDockerService(name, dock)
 		err := cli.Container.ContainersUpdateAll(context.Background(), opts...)

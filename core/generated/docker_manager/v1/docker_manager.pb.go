@@ -420,8 +420,9 @@ const file_docker_manager_v1_docker_manager_proto_rawDesc = "" +
 	"\x13use_public_key_auth\x18\b \x01(\bR\x10usePublicKeyAuth\"-\n" +
 	"\rSwitchRequest\x12\x1c\n" +
 	"\tmachineID\x18\x01 \x01(\tR\tmachineID\"\a\n" +
-	"\x05Empty2\xe5\x04\n" +
-	"\x14DockerManagerService\x12L\n" +
+	"\x05Empty2\xaa\x05\n" +
+	"\x14DockerManagerService\x12C\n" +
+	"\vStartUpdate\x12\x18.docker_manager.v1.Empty\x1a\x18.docker_manager.v1.Empty\"\x00\x12L\n" +
 	"\fSwitchClient\x12 .docker_manager.v1.SwitchRequest\x1a\x18.docker_manager.v1.Empty\"\x00\x12Q\n" +
 	"\vListClients\x12\x18.docker_manager.v1.Empty\x1a&.docker_manager.v1.ListClientsResponse\"\x00\x12G\n" +
 	"\tListHosts\x12\x18.docker_manager.v1.Empty\x1a\x1e.docker_manager.v1.ListMachine\"\x00\x12B\n" +
@@ -456,28 +457,30 @@ var file_docker_manager_v1_docker_manager_proto_goTypes = []any{
 	(*Empty)(nil),               // 6: docker_manager.v1.Empty
 }
 var file_docker_manager_v1_docker_manager_proto_depIdxs = []int32{
-	4, // 0: docker_manager.v1.ListMachine.machines:type_name -> docker_manager.v1.Machine
-	5, // 1: docker_manager.v1.DockerManagerService.SwitchClient:input_type -> docker_manager.v1.SwitchRequest
-	6, // 2: docker_manager.v1.DockerManagerService.ListClients:input_type -> docker_manager.v1.Empty
-	6, // 3: docker_manager.v1.DockerManagerService.ListHosts:input_type -> docker_manager.v1.Empty
-	0, // 4: docker_manager.v1.DockerManagerService.Get:input_type -> docker_manager.v1.GetMachine
-	4, // 5: docker_manager.v1.DockerManagerService.NewClient:input_type -> docker_manager.v1.Machine
-	4, // 6: docker_manager.v1.DockerManagerService.EditClient:input_type -> docker_manager.v1.Machine
-	4, // 7: docker_manager.v1.DockerManagerService.DeleteClient:input_type -> docker_manager.v1.Machine
-	1, // 8: docker_manager.v1.DockerManagerService.ToggleClient:input_type -> docker_manager.v1.ToggleReqeust
-	6, // 9: docker_manager.v1.DockerManagerService.SwitchClient:output_type -> docker_manager.v1.Empty
-	2, // 10: docker_manager.v1.DockerManagerService.ListClients:output_type -> docker_manager.v1.ListClientsResponse
-	3, // 11: docker_manager.v1.DockerManagerService.ListHosts:output_type -> docker_manager.v1.ListMachine
-	4, // 12: docker_manager.v1.DockerManagerService.Get:output_type -> docker_manager.v1.Machine
-	6, // 13: docker_manager.v1.DockerManagerService.NewClient:output_type -> docker_manager.v1.Empty
-	6, // 14: docker_manager.v1.DockerManagerService.EditClient:output_type -> docker_manager.v1.Empty
-	6, // 15: docker_manager.v1.DockerManagerService.DeleteClient:output_type -> docker_manager.v1.Empty
-	6, // 16: docker_manager.v1.DockerManagerService.ToggleClient:output_type -> docker_manager.v1.Empty
-	9, // [9:17] is the sub-list for method output_type
-	1, // [1:9] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	4,  // 0: docker_manager.v1.ListMachine.machines:type_name -> docker_manager.v1.Machine
+	6,  // 1: docker_manager.v1.DockerManagerService.StartUpdate:input_type -> docker_manager.v1.Empty
+	5,  // 2: docker_manager.v1.DockerManagerService.SwitchClient:input_type -> docker_manager.v1.SwitchRequest
+	6,  // 3: docker_manager.v1.DockerManagerService.ListClients:input_type -> docker_manager.v1.Empty
+	6,  // 4: docker_manager.v1.DockerManagerService.ListHosts:input_type -> docker_manager.v1.Empty
+	0,  // 5: docker_manager.v1.DockerManagerService.Get:input_type -> docker_manager.v1.GetMachine
+	4,  // 6: docker_manager.v1.DockerManagerService.NewClient:input_type -> docker_manager.v1.Machine
+	4,  // 7: docker_manager.v1.DockerManagerService.EditClient:input_type -> docker_manager.v1.Machine
+	4,  // 8: docker_manager.v1.DockerManagerService.DeleteClient:input_type -> docker_manager.v1.Machine
+	1,  // 9: docker_manager.v1.DockerManagerService.ToggleClient:input_type -> docker_manager.v1.ToggleReqeust
+	6,  // 10: docker_manager.v1.DockerManagerService.StartUpdate:output_type -> docker_manager.v1.Empty
+	6,  // 11: docker_manager.v1.DockerManagerService.SwitchClient:output_type -> docker_manager.v1.Empty
+	2,  // 12: docker_manager.v1.DockerManagerService.ListClients:output_type -> docker_manager.v1.ListClientsResponse
+	3,  // 13: docker_manager.v1.DockerManagerService.ListHosts:output_type -> docker_manager.v1.ListMachine
+	4,  // 14: docker_manager.v1.DockerManagerService.Get:output_type -> docker_manager.v1.Machine
+	6,  // 15: docker_manager.v1.DockerManagerService.NewClient:output_type -> docker_manager.v1.Empty
+	6,  // 16: docker_manager.v1.DockerManagerService.EditClient:output_type -> docker_manager.v1.Empty
+	6,  // 17: docker_manager.v1.DockerManagerService.DeleteClient:output_type -> docker_manager.v1.Empty
+	6,  // 18: docker_manager.v1.DockerManagerService.ToggleClient:output_type -> docker_manager.v1.Empty
+	10, // [10:19] is the sub-list for method output_type
+	1,  // [1:10] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_docker_manager_v1_docker_manager_proto_init() }

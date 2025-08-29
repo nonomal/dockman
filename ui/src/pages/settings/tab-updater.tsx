@@ -13,12 +13,17 @@ import {
 } from "@mui/material"
 import {useConfig} from "../../hooks/config.ts";
 import {type ChangeEvent, useEffect, useState} from "react";
+import {callRPC, useClient} from "../../lib/api.ts";
+import {DockerManagerService} from "../../gen/docker_manager/v1/docker_manager_pb.ts";
+import {useSnackbar} from "../../hooks/snackbar.ts";
 
 export function TabContainerUpdater() {
     const {config, isLoading, updateSettings} = useConfig()
     const [localConfig, setLocalConfig] = useState(config)
     const [timeUnit, setTimeUnit] = useState('seconds')
     const [displayValue, setDisplayValue] = useState('0')
+    const dockerManager = useClient(DockerManagerService)
+    const {showError, showSuccess} = useSnackbar()
 
     const timeUnits = {
         seconds: 1,
@@ -55,6 +60,14 @@ export function TabContainerUpdater() {
     const handleEnableChange = (event: ChangeEvent<HTMLInputElement>) => {
         localConfig!.updater!.Enable = event.target.checked
         setLocalConfig({...localConfig})
+    }
+
+    const handleManualUpdate = () => {
+        callRPC(() => dockerManager.startUpdate({})).finally(() => {
+            showSuccess("sent update req")
+        }).catch(error => {
+            showError(error)
+        })
     }
 
     const handleNotifyModeChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -156,7 +169,26 @@ export function TabContainerUpdater() {
                             Set how often to check for updates
                         </Typography>
                     </Box>
+
+                    <Box sx={{textAlign: 'left'}}>
+                        <Button
+                            variant="contained"
+                            onClick={handleManualUpdate}
+                            // disabled={isSaving}
+                            sx={{
+                                position: 'relative',
+                            }}
+                        >
+                            Manual Update
+                        </Button>
+                        <Typography variant="caption" sx={{display: 'block', color: 'text.secondary', mt: 0.5}}>
+                            Runs a test update with default options (ignores your settings) useful for debugging.
+                        </Typography>
+                    </Box>
+
+
                 </Box>
+
 
                 {/*todo add loading spinner*/}
                 <Button
