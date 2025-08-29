@@ -170,7 +170,7 @@ export function FileList({closeTab}: FileListProps) {
                 }>
                     <IconButton
                         size="small"
-                        onClick={() => showAddFile('')}
+                        onClick={() => showGitImport()}
                         color="info"
                         sx={{ml: 1}} // Add left margin for spacing
                         aria-label="Import"
