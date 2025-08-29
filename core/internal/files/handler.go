@@ -26,11 +26,13 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connec
 		return nil, err
 	}
 
+	config := h.srv.GetDockmanYaml()
+
 	var resp []*v1.FileGroup
 	for _, key := range slices.Sorted(maps.Keys(fileList)) {
 		// Sort subfiles with the updated rule
 		slices.SortFunc(fileList[key], func(a, b string) int {
-			return sortFiles(a, b, fileList)
+			return sortFiles(a, b, fileList, config)
 		})
 
 		resp = append(resp, &v1.FileGroup{
@@ -41,15 +43,20 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connec
 
 	// Sort groups alphabetically
 	slices.SortFunc(resp, func(a, b *v1.FileGroup) int {
-		return sortFiles(a.Root, b.Root, fileList)
+		return sortFiles(
+			a.Root,
+			b.Root,
+			fileList,
+			config,
+		)
 	})
 
 	return connect.NewResponse(&v1.ListResponse{Groups: resp}), nil
 }
 
-func sortFiles(a, b string, fileList map[string][]string) int {
-	ra := getSortRank(a, fileList)
-	rb := getSortRank(b, fileList)
+func sortFiles(a, b string, fileList map[string][]string, dockmanConf *DockmanYaml) int {
+	ra := getSortRank(a, fileList, dockmanConf)
+	rb := getSortRank(b, fileList, dockmanConf)
 
 	if ra < rb {
 		return -1
@@ -61,9 +68,15 @@ func sortFiles(a, b string, fileList map[string][]string) int {
 }
 
 // getSortRank determines priority: dotfiles, directories, then files by getFileSortRank
-func getSortRank(name string, fileList map[string][]string) int {
+func getSortRank(name string, fileList map[string][]string, conf *DockmanYaml) int {
+	base := filepath.Base(name)
+	// -1: pinned files (highest priority)
+	if _, ok := conf.PinnedFiles[base]; ok {
+		return -1
+	}
+
 	// 0: dotfiles (highest priority)
-	if strings.HasPrefix(filepath.Base(name), ".") {
+	if strings.HasPrefix(base, ".") {
 		return 0
 	}
 

@@ -266,6 +266,40 @@ stacks/
 
 Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/issues) and we can argue about it.
 
+## .dockman.yaml
+
+> [!IMPORTANT]
+> This feature is only available on ```ghcr.io/ra341/dockman:main``` tag only
+>
+> and is currently in testing expect bugs
+
+The `.dockman.yaml` file is an optional configuration file that allows you to customize your dockman instance.
+
+### Pinning Files and Directories
+
+You can pin specific files or directories to appear at the top of your file list for quick access.
+
+The specified files and directories will appear at the top of your file list, followed by the normal
+alphabetical sorting.
+
+Create either `.dockman.yaml` or `.dockman.yml` in your project root directory.
+
+Add a `pinnedFiles` section with the names of files or directories you want to pin:
+
+```yaml
+pinnedFiles:
+  router:
+  media:
+  arr-compose.yaml:
+```
+
+With the configuration above, your file list will show:
+
+1. router/ (pinned)
+2. media/ (pinned)
+3. arr-compose.yaml (pinned)
+4. Other files in normal sort order
+
 ## Dockman Updater
 
 > [!IMPORTANT]

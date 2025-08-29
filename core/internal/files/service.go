@@ -6,10 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sync"
 
 	"github.com/RA341/dockman/pkg/fileutil"
+	"github.com/goccy/go-yaml"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
 )
 
 var ignoredFiles = []string{".git"}
@@ -53,7 +54,7 @@ func (s *Service) List() (map[string][]string, error) {
 	}
 	result := make(map[string][]string, len(topLevelEntries))
 
-	eg := errgroup.Group{}
+	eg := sync.WaitGroup{}
 
 	subDirChan := make(chan dirResult, len(topLevelEntries))
 	for _, entry := range topLevelEntries {
@@ -67,24 +68,23 @@ func (s *Service) List() (map[string][]string, error) {
 			continue
 		}
 
-		eg.Go(func() error {
+		eg.Go(func() {
 			fullPath := s.WithRoot(entryName)
 			files, err := listFiles(fullPath)
 			if err != nil {
 				log.Warn().Err(err).Str("path", fullPath).Msg("error listing subdir")
-				return nil
+				return
 			}
 
 			subDirChan <- dirResult{
 				fileList: files,
 				dirname:  entryName,
 			}
-			return nil
 		})
 	}
 
 	go func() {
-		_ = eg.Wait()
+		eg.Wait()
 		close(subDirChan)
 	}()
 
@@ -107,16 +107,39 @@ func (s *Service) Create(fileName string) error {
 	return nil
 }
 
-type SearchResults struct {
+const dockmanYamlFileYml = ".dockman.yml"
+const dockmanYamlFileYaml = ".dockman.yaml"
+
+type DockmanYaml struct {
+	// define a custom sort to pin certain files when displaying
+	PinnedFiles map[string]interface{} `yaml:"pinnedFiles"`
 }
 
-type File struct {
-	path string
-	// a list of
-	// line and column matches
-	// 0,1 will be match start,
-	// 2,3 will be match end
-	contentMatch [][4]int
+func (s *Service) GetDockmanYaml() *DockmanYaml {
+	filenames := []string{dockmanYamlFileYml, dockmanYamlFileYaml}
+
+	var file []byte
+	var err error
+
+	for _, filename := range filenames {
+		file, err = os.ReadFile(s.WithRoot(filename))
+		if err == nil {
+			break
+		}
+	}
+
+	// generates too many logs be careful
+	if err != nil {
+		//log.Warn().Err(err).Strs("tried", filenames).Msg("unable to open dockman yaml")
+		return &DockmanYaml{}
+	}
+
+	config := &DockmanYaml{}
+	if err := yaml.Unmarshal(file, config); err != nil {
+		//log.Warn().Err(err).Msg("failed to parse dockman yaml")
+	}
+
+	return config
 }
 
 func (s *Service) Exists(filename string) error {
