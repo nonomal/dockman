@@ -271,14 +271,25 @@ func (h *Handler) ContainerLogs(ctx context.Context, req *connect.Request[v1.Con
 		return fmt.Errorf("container id is required")
 	}
 
-	logsReader, err := h.container().ContainerLogs(ctx, req.Msg.GetContainerID())
+	logsReader, tty, err := h.container().ContainerLogs(ctx, req.Msg.GetContainerID())
 	if err != nil {
 		return err
 	}
 	defer fileutil.Close(logsReader)
 
 	writer := &ContainerLogWriter{responseStream: responseStream}
-	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
+
+	if tty {
+		// tty streams dont need docker demultiplexing
+		if _, err = io.Copy(writer, logsReader); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// docker multiplexed stream
+	_, err = stdcopy.StdCopy(writer, writer, logsReader)
+	if err != nil {
 		return err
 	}
 

@@ -122,13 +122,23 @@ func (s *ContainerService) ContainersRemove(ctx context.Context, containerId ...
 	return nil
 }
 
-func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
-	return s.daemon.ContainerLogs(ctx, containerID, container.LogsOptions{
+func (s *ContainerService) ContainerLogs(ctx context.Context, containerID string) (io.ReadCloser, bool, error) {
+	inspect, err := s.daemon.ContainerInspect(ctx, containerID)
+	if err != nil {
+		return nil, false, fmt.Errorf("unable to inspect container: %w", err)
+	}
+
+	logStream, err := s.daemon.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
 		Details:    true,
 	})
+	if err != nil {
+		return nil, false, fmt.Errorf("unable to get container logs: %w", err)
+	}
+
+	return logStream, inspect.Config.Tty, nil
 }
 
 func (s *ContainerService) ContainerStats(ctx context.Context, filter container.ListOptions) ([]ContainerStats, error) {
