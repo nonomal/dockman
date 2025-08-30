@@ -1,5 +1,5 @@
 <div align="center">
-  <img src=".github/img/drawing.svg" alt="Logo" width="200" height="200">
+  <img src=".github/img/dockman.svg" alt="Logo" width="200" height="200">
   <h1>Dockman</h1>
   <p>
     A Docker management tool for users who want unfiltered access to their Docker Compose files, like having a specialized editor for your homelab that helps you manage and track your Docker setup.
