@@ -275,6 +275,8 @@ Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/iss
 
 `.dockman.yaml` file is an optional configuration file that allows you to customize your dockman instance.
 
+### Pinning folders/files
+
 You can pin specific files or directories to appear at the top of your file list for quick access.
 
 The specified files and directories will appear at the top of your file list, followed by the normal
@@ -297,6 +299,33 @@ With the configuration above, your file list will show:
 2. media/ (pinned)
 3. arr-compose.yaml (pinned)
 4. Other files in normal sort order
+
+### Compose Folders
+
+Dockman can give folders a special **compose view**.
+If a folder contains a **single file named `compose.yaml`**, it can be promoted to a *compose folder*.
+
+This doesn’t change the actual files on disk, your folder and file still exist the same way,
+it just changes how Dockman displays them for faster access.
+
+If the folder **doesn’t contain a `compose.yaml` file** or contains **multiple files**, it will be shown as a normal
+folder.
+
+#### Normal Folders
+
+![normal-folders.png](.github/img/folders-normal.png)
+
+#### Compose Folders
+
+![img.png](.github/img/folders-compose.png)
+
+#### Enabling Compose Folders
+
+To turn this on, add the following to your `.dockman.yml` file:
+
+```yaml
+useComposeFolders: true
+```
 
 ## Dockman Updater
 
