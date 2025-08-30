@@ -11,12 +11,12 @@ import {
     Tooltip
 } from '@mui/material'
 import {Add, Analytics, Delete, Edit, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material'
-import {type FileGroup} from "../../../hooks/files.ts"
+import {type FileGroup, useFiles} from "../../../hooks/files.ts"
 import React, {useEffect, useMemo, useRef, useState} from "react"
 import FileBarIcon, {DockerFolderIcon} from "./file-bar-icon.tsx"
 import {amber} from "@mui/material/colors"
-import {useConfig} from "../../../hooks/config.ts"
-import type {Config} from "../../../context/config-context.tsx";
+import {isComposeFile} from "../../../lib/editor.ts";
+import type {DockmanYaml} from "../../../gen/files/v1/files_pb.ts";
 
 interface FileItemProps {
     group: FileGroup,
@@ -29,12 +29,6 @@ interface FileItemProps {
     onRename: (oldPath: string, newPath: string) => void // Clarify newDisplayName is actually newPath for rename
 }
 
-const COMPOSE_EXTENSIONS = ['compose.yaml', 'compose.yml']
-
-export function isComposeFile(filename: string): boolean {
-    return COMPOSE_EXTENSIONS.some(ext => filename.endsWith(ext))
-}
-
 interface NormalizedFileGroup {
     type: 'file' | 'folder' | 'promoted-compose'
     name: string
@@ -45,7 +39,7 @@ interface NormalizedFileGroup {
     isCompose: boolean
 }
 
-function normalizeFileGroup({group, config}: { group: FileGroup, config: Config }): NormalizedFileGroup {
+function normalizeFileGroup({group, config}: { group: FileGroup, config: DockmanYaml | null }): NormalizedFileGroup {
     const isFile = group.children.length === 0
 
     if (isFile) {
@@ -98,10 +92,10 @@ const FileBarItem = React.memo((
         onDelete,
         onRename
     }: FileItemProps) => {
-    const {config} = useConfig()
+    const {dockmanYaml} = useFiles()
     const normalized = useMemo(
-        () => normalizeFileGroup({group, config}),
-        [config, group])
+        () => normalizeFileGroup({group, config: dockmanYaml}),
+        [dockmanYaml, group])
 
     const handleToggle = () => {
         onToggle(group.name)

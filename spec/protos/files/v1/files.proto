@@ -11,6 +11,15 @@ service FileService {
   rpc Delete(File) returns (Empty) {}
   rpc Exists(File) returns (Empty) {}
   rpc Rename(RenameFile) returns (Empty) {}
+  rpc GetDockmanYaml(Empty) returns (DockmanYaml) {}
+
+}
+
+message DockmanYaml {
+  bool useFolderNamesInTabs = 1;
+  bool useComposeFolders = 2;
+  // not needed at the moment
+  //  map<string, int32> PinnedFiles = 2;
 }
 
 message ListResponse {

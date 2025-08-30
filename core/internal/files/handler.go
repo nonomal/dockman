@@ -156,3 +156,13 @@ func getFile(c *v1.File) (string, error) {
 	}
 	return msg, nil
 }
+
+func (h *Handler) GetDockmanYaml(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.DockmanYaml], error) {
+	conf := h.srv.GetDockmanYaml()
+	res := v1.DockmanYaml{
+		UseFolderNamesInTabs: conf.UseFolderNamesInTabs,
+		UseComposeFolders:    conf.UseComposeFolders,
+	}
+
+	return connect.NewResponse(&res), nil
+}

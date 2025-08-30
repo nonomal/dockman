@@ -10,7 +10,32 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file files/v1/files.proto.
  */
 export const file_files_v1_files: GenFile = /*@__PURE__*/
-  fileDesc("ChRmaWxlcy92MS9maWxlcy5wcm90bxIIZmlsZXMudjEiMwoMTGlzdFJlc3BvbnNlEiMKBmdyb3VwcxgBIAMoCzITLmZpbGVzLnYxLkZpbGVHcm91cCIrCglGaWxlR3JvdXASDAoEcm9vdBgBIAEoCRIQCghzdWJGaWxlcxgCIAMoCSI2CgpSZW5hbWVGaWxlEhMKC29sZEZpbGVQYXRoGAEgASgJEhMKC25ld0ZpbGVQYXRoGAIgASgJIhgKBEZpbGUSEAoIZmlsZW5hbWUYASABKAkiBwoFRW1wdHky+gEKC0ZpbGVTZXJ2aWNlEisKBkNyZWF0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBExpc3QSDy5maWxlcy52MS5FbXB0eRoWLmZpbGVzLnYxLkxpc3RSZXNwb25zZSIAEisKBkRlbGV0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEisKBkV4aXN0cxIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBlJlbmFtZRIULmZpbGVzLnYxLlJlbmFtZUZpbGUaDy5maWxlcy52MS5FbXB0eSIAQogBCgxjb20uZmlsZXMudjFCCkZpbGVzUHJvdG9QAVorZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9maWxlcy92MaICA0ZYWKoCCEZpbGVzLlYxygIIRmlsZXNcVjHiAhRGaWxlc1xWMVxHUEJNZXRhZGF0YeoCCUZpbGVzOjpWMWIGcHJvdG8z");
+  fileDesc("ChRmaWxlcy92MS9maWxlcy5wcm90bxIIZmlsZXMudjEiRgoLRG9ja21hbllhbWwSHAoUdXNlRm9sZGVyTmFtZXNJblRhYnMYASABKAgSGQoRdXNlQ29tcG9zZUZvbGRlcnMYAiABKAgiMwoMTGlzdFJlc3BvbnNlEiMKBmdyb3VwcxgBIAMoCzITLmZpbGVzLnYxLkZpbGVHcm91cCIrCglGaWxlR3JvdXASDAoEcm9vdBgBIAEoCRIQCghzdWJGaWxlcxgCIAMoCSI2CgpSZW5hbWVGaWxlEhMKC29sZEZpbGVQYXRoGAEgASgJEhMKC25ld0ZpbGVQYXRoGAIgASgJIhgKBEZpbGUSEAoIZmlsZW5hbWUYASABKAkiBwoFRW1wdHkytgIKC0ZpbGVTZXJ2aWNlEisKBkNyZWF0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBExpc3QSDy5maWxlcy52MS5FbXB0eRoWLmZpbGVzLnYxLkxpc3RSZXNwb25zZSIAEisKBkRlbGV0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEisKBkV4aXN0cxIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBlJlbmFtZRIULmZpbGVzLnYxLlJlbmFtZUZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjoKDkdldERvY2ttYW5ZYW1sEg8uZmlsZXMudjEuRW1wdHkaFS5maWxlcy52MS5Eb2NrbWFuWWFtbCIAQogBCgxjb20uZmlsZXMudjFCCkZpbGVzUHJvdG9QAVorZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9maWxlcy92MaICA0ZYWKoCCEZpbGVzLlYxygIIRmlsZXNcVjHiAhRGaWxlc1xWMVxHUEJNZXRhZGF0YeoCCUZpbGVzOjpWMWIGcHJvdG8z");
+
+/**
+ * @generated from message files.v1.DockmanYaml
+ */
+export type DockmanYaml = Message<"files.v1.DockmanYaml"> & {
+  /**
+   * @generated from field: bool useFolderNamesInTabs = 1;
+   */
+  useFolderNamesInTabs: boolean;
+
+  /**
+   * not needed at the moment
+   *  map<string, int32> PinnedFiles = 2;
+   *
+   * @generated from field: bool useComposeFolders = 2;
+   */
+  useComposeFolders: boolean;
+};
+
+/**
+ * Describes the message files.v1.DockmanYaml.
+ * Use `create(DockmanYamlSchema)` to create a new message.
+ */
+export const DockmanYamlSchema: GenMessage<DockmanYaml> = /*@__PURE__*/
+  messageDesc(file_files_v1_files, 0);
 
 /**
  * @generated from message files.v1.ListResponse
@@ -27,7 +52,7 @@ export type ListResponse = Message<"files.v1.ListResponse"> & {
  * Use `create(ListResponseSchema)` to create a new message.
  */
 export const ListResponseSchema: GenMessage<ListResponse> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 0);
+  messageDesc(file_files_v1_files, 1);
 
 /**
  * @generated from message files.v1.FileGroup
@@ -49,7 +74,7 @@ export type FileGroup = Message<"files.v1.FileGroup"> & {
  * Use `create(FileGroupSchema)` to create a new message.
  */
 export const FileGroupSchema: GenMessage<FileGroup> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 1);
+  messageDesc(file_files_v1_files, 2);
 
 /**
  * @generated from message files.v1.RenameFile
@@ -71,7 +96,7 @@ export type RenameFile = Message<"files.v1.RenameFile"> & {
  * Use `create(RenameFileSchema)` to create a new message.
  */
 export const RenameFileSchema: GenMessage<RenameFile> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 2);
+  messageDesc(file_files_v1_files, 3);
 
 /**
  * @generated from message files.v1.File
@@ -88,7 +113,7 @@ export type File = Message<"files.v1.File"> & {
  * Use `create(FileSchema)` to create a new message.
  */
 export const FileSchema: GenMessage<File> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 3);
+  messageDesc(file_files_v1_files, 4);
 
 /**
  * @generated from message files.v1.Empty
@@ -101,7 +126,7 @@ export type Empty = Message<"files.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 4);
+  messageDesc(file_files_v1_files, 5);
 
 /**
  * @generated from service files.v1.FileService
@@ -148,6 +173,14 @@ export const FileService: GenService<{
     methodKind: "unary";
     input: typeof RenameFileSchema;
     output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc files.v1.FileService.GetDockmanYaml
+   */
+  getDockmanYaml: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof DockmanYamlSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_files_v1_files, 0);

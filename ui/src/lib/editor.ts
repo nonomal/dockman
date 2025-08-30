@@ -1,3 +1,10 @@
+
+export const COMPOSE_EXTENSIONS = ['compose.yaml', 'compose.yml']
+
+export function isComposeFile(filename: string): boolean {
+    return COMPOSE_EXTENSIONS.some(ext => filename.endsWith(ext))
+}
+
 export const formatBytes = (bytes: number | bigint, decimals = 2) => {
     if (bytes === 0 || bytes === 0n) return '0 B'
     const k = 1024
