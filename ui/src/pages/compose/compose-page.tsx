@@ -17,6 +17,7 @@ import {TelescopeProvider} from "./dialogs/search/search-context.tsx";
 import {FileConfigProvider} from "./dialogs/config/config-context.tsx";
 import {DeleteFileProvider} from "./dialogs/delete/delete-context.tsx";
 import {GitImportProvider} from "./dialogs/import/import-context.tsx";
+import {isComposeFile} from "./components/file-bar-item.tsx";
 
 export const ComposePage = () => {
     const navigate = useNavigate();
@@ -257,12 +258,16 @@ function CoreCompose({filename}: { filename: string }) {
                         navigate(`${path}?tab=0`);
                         break;
                     case "KeyX":
-                        e.preventDefault();
-                        navigate(`${path}?tab=1`);
+                        if (isComposeFile(filename)) {
+                            e.preventDefault();
+                            navigate(`${path}?tab=1`);
+                        }
                         break;
                     case "KeyC":
-                        e.preventDefault();
-                        navigate(`${path}?tab=2`);
+                        if (isComposeFile(filename)) {
+                            e.preventDefault();
+                            navigate(`${path}?tab=2`);
+                        }
                         break;
                 }
             }
@@ -275,7 +280,6 @@ function CoreCompose({filename}: { filename: string }) {
     const tabsList: TabDetails[] = useMemo(() => {
         if (!filename) return [];
 
-        const isComposeFile = filename.endsWith(".yml") || filename.endsWith(".yaml");
         const map: TabDetails[] = []
 
         map.push({
@@ -284,7 +288,7 @@ function CoreCompose({filename}: { filename: string }) {
             shortcut: <ShortcutFormatter title={"Editor"} keyCombo={["ALT", "Z"]}/>,
         })
 
-        if (isComposeFile) {
+        if (isComposeFile(filename)) {
             map.push({
                 label: 'Deploy',
                 component: <TabDeploy selectedPage={filename}/>,

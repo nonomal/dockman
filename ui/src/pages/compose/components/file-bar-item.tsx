@@ -31,7 +31,7 @@ interface FileItemProps {
 
 const COMPOSE_EXTENSIONS = ['compose.yaml', 'compose.yml']
 
-function isComposeFile(filename: string): boolean {
+export function isComposeFile(filename: string): boolean {
     return COMPOSE_EXTENSIONS.some(ext => filename.endsWith(ext))
 }
 
