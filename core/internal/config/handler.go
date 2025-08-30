@@ -41,7 +41,6 @@ func (h *Handler) SetUserConfig(_ context.Context, req *connect.Request[v1.SetUs
 
 func ToProto(config *UserConfig) v1.UserConfig {
 	return v1.UserConfig{
-		UseComposeFolders: config.UseComposeFolders,
 		Updater: &v1.ContainerUpdater{
 			Enable:            config.ContainerUpdater.Enable,
 			NotifyOnly:        config.ContainerUpdater.NotifyOnly,
@@ -52,7 +51,6 @@ func ToProto(config *UserConfig) v1.UserConfig {
 
 func FromProto(config *v1.UserConfig) UserConfig {
 	return UserConfig{
-		UseComposeFolders: config.UseComposeFolders,
 		ContainerUpdater: ContainerUpdater{
 			Enable:     config.Updater.Enable,
 			NotifyOnly: config.Updater.NotifyOnly,

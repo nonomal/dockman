@@ -9,9 +9,7 @@ export type Config = Omit<UserConfig, '$typeName' | '$unknown'>;
 export function UserConfigProvider({children}: { children: ReactNode }) {
     const client = useClient(ConfigService)
     const {showError, showSuccess} = useSnackbar()
-    const [config, setConfig] = useState<Config>({
-        useComposeFolders: false
-    })
+    const [config, setConfig] = useState<Config>({})
     const [isLoading, setIsLoading] = useState(true)
 
     const fetchConfig = useCallback(async () => {

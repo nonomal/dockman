@@ -75,11 +75,10 @@ func (x *SetUserRequest) GetUpdateUpdater() bool {
 }
 
 type UserConfig struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	UseComposeFolders bool                   `protobuf:"varint,1,opt,name=useComposeFolders,proto3" json:"useComposeFolders,omitempty"`
-	Updater           *ContainerUpdater      `protobuf:"bytes,2,opt,name=updater,proto3" json:"updater,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Updater       *ContainerUpdater      `protobuf:"bytes,1,opt,name=updater,proto3" json:"updater,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UserConfig) Reset() {
@@ -110,13 +109,6 @@ func (x *UserConfig) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UserConfig.ProtoReflect.Descriptor instead.
 func (*UserConfig) Descriptor() ([]byte, []int) {
 	return file_config_v1_config_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *UserConfig) GetUseComposeFolders() bool {
-	if x != nil {
-		return x.UseComposeFolders
-	}
-	return false
 }
 
 func (x *UserConfig) GetUpdater() *ContainerUpdater {
@@ -229,11 +221,10 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x16config/v1/config.proto\x12\tconfig.v1\"e\n" +
 	"\x0eSetUserRequest\x12-\n" +
 	"\x06config\x18\x01 \x01(\v2\x15.config.v1.UserConfigR\x06config\x12$\n" +
-	"\rupdateUpdater\x18\x02 \x01(\bR\rupdateUpdater\"q\n" +
+	"\rupdateUpdater\x18\x02 \x01(\bR\rupdateUpdater\"C\n" +
 	"\n" +
-	"UserConfig\x12,\n" +
-	"\x11useComposeFolders\x18\x01 \x01(\bR\x11useComposeFolders\x125\n" +
-	"\aupdater\x18\x02 \x01(\v2\x1b.config.v1.ContainerUpdaterR\aupdater\"x\n" +
+	"UserConfig\x125\n" +
+	"\aupdater\x18\x01 \x01(\v2\x1b.config.v1.ContainerUpdaterR\aupdater\"x\n" +
 	"\x10ContainerUpdater\x12\x16\n" +
 	"\x06Enable\x18\x01 \x01(\bR\x06Enable\x12\x1e\n" +
 	"\n" +

@@ -14,7 +14,6 @@ import {ShortcutFormatter} from "./components/shortcut-formatter.tsx";
 import {FilesProvider} from "../../context/file-context.tsx";
 import {AddFilesProvider} from "./dialogs/add/add-context.tsx";
 import {TelescopeProvider} from "./dialogs/search/search-context.tsx";
-import {FileConfigProvider} from "./dialogs/config/config-context.tsx";
 import {DeleteFileProvider} from "./dialogs/delete/delete-context.tsx";
 import {GitImportProvider} from "./dialogs/import/import-context.tsx";
 import {isComposeFile} from "../../lib/editor.ts";
@@ -22,17 +21,15 @@ import {isComposeFile} from "../../lib/editor.ts";
 export const ComposePage = () => {
     return (
         <FilesProvider>
-            <FileConfigProvider>
-                <TelescopeProvider>
-                    <AddFilesProvider>
-                        <DeleteFileProvider>
-                            <GitImportProvider>
-                                <ComposePageInner/>
-                            </GitImportProvider>
-                        </DeleteFileProvider>
-                    </AddFilesProvider>
-                </TelescopeProvider>
-            </FileConfigProvider>
+            <TelescopeProvider>
+                <AddFilesProvider>
+                    <DeleteFileProvider>
+                        <GitImportProvider>
+                            <ComposePageInner/>
+                        </GitImportProvider>
+                    </DeleteFileProvider>
+                </AddFilesProvider>
+            </TelescopeProvider>
         </FilesProvider>
     )
 }

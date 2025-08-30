@@ -9,8 +9,7 @@ import (
 // UserConfig always set defaults when added new configs
 type UserConfig struct {
 	gorm.Model
-	UseComposeFolders bool             `gorm:"not null;default:false"`
-	ContainerUpdater  ContainerUpdater `gorm:"embedded"`
+	ContainerUpdater ContainerUpdater `gorm:"embedded"`
 }
 
 type ContainerUpdater struct {

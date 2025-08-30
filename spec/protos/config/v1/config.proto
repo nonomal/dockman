@@ -17,8 +17,7 @@ message SetUserRequest {
 }
 
 message UserConfig {
-  bool useComposeFolders = 1;
-  ContainerUpdater updater = 2;
+  ContainerUpdater updater = 1;
 }
 
 message ContainerUpdater {

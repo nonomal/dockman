@@ -2,15 +2,15 @@
 // @generated from file config/v1/config.proto (package config.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Message } from "@bufbuild/protobuf";
+import type {GenFile, GenMessage, GenService} from "@bufbuild/protobuf/codegenv2";
+import {fileDesc, messageDesc, serviceDesc} from "@bufbuild/protobuf/codegenv2";
+import type {Message} from "@bufbuild/protobuf";
 
 /**
  * Describes the file config/v1/config.proto.
  */
 export const file_config_v1_config: GenFile = /*@__PURE__*/
-  fileDesc("ChZjb25maWcvdjEvY29uZmlnLnByb3RvEgljb25maWcudjEiTgoOU2V0VXNlclJlcXVlc3QSJQoGY29uZmlnGAEgASgLMhUuY29uZmlnLnYxLlVzZXJDb25maWcSFQoNdXBkYXRlVXBkYXRlchgCIAEoCCJVCgpVc2VyQ29uZmlnEhkKEXVzZUNvbXBvc2VGb2xkZXJzGAEgASgIEiwKB3VwZGF0ZXIYAiABKAsyGy5jb25maWcudjEuQ29udGFpbmVyVXBkYXRlciJRChBDb250YWluZXJVcGRhdGVyEg4KBkVuYWJsZRgBIAEoCBISCgpOb3RpZnlPbmx5GAIgASgIEhkKEUludGVydmFsSW5TZWNvbmRzGAMgASgDIgcKBUVtcHR5MosBCg1Db25maWdTZXJ2aWNlEjoKDUdldFVzZXJDb25maWcSEC5jb25maWcudjEuRW1wdHkaFS5jb25maWcudjEuVXNlckNvbmZpZyIAEj4KDVNldFVzZXJDb25maWcSGS5jb25maWcudjEuU2V0VXNlclJlcXVlc3QaEC5jb25maWcudjEuRW1wdHkiAEKPAQoNY29tLmNvbmZpZy52MUILQ29uZmlnUHJvdG9QAVosZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9jb25maWcvdjGiAgNDWFiqAglDb25maWcuVjHKAglDb25maWdcVjHiAhVDb25maWdcVjFcR1BCTWV0YWRhdGHqAgpDb25maWc6OlYxYgZwcm90bzM");
+    fileDesc("ChZjb25maWcvdjEvY29uZmlnLnByb3RvEgljb25maWcudjEiTgoOU2V0VXNlclJlcXVlc3QSJQoGY29uZmlnGAEgASgLMhUuY29uZmlnLnYxLlVzZXJDb25maWcSFQoNdXBkYXRlVXBkYXRlchgCIAEoCCI6CgpVc2VyQ29uZmlnEiwKB3VwZGF0ZXIYASABKAsyGy5jb25maWcudjEuQ29udGFpbmVyVXBkYXRlciJRChBDb250YWluZXJVcGRhdGVyEg4KBkVuYWJsZRgBIAEoCBISCgpOb3RpZnlPbmx5GAIgASgIEhkKEUludGVydmFsSW5TZWNvbmRzGAMgASgDIgcKBUVtcHR5MosBCg1Db25maWdTZXJ2aWNlEjoKDUdldFVzZXJDb25maWcSEC5jb25maWcudjEuRW1wdHkaFS5jb25maWcudjEuVXNlckNvbmZpZyIAEj4KDVNldFVzZXJDb25maWcSGS5jb25maWcudjEuU2V0VXNlclJlcXVlc3QaEC5jb25maWcudjEuRW1wdHkiAEKPAQoNY29tLmNvbmZpZy52MUILQ29uZmlnUHJvdG9QAVosZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9jb25maWcvdjGiAgNDWFiqAglDb25maWcuVjHKAglDb25maWdcVjHiAhVDb25maWdcVjFcR1BCTWV0YWRhdGHqAgpDb25maWc6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message config.v1.SetUserRequest
@@ -41,12 +41,7 @@ export const SetUserRequestSchema: GenMessage<SetUserRequest> = /*@__PURE__*/
  */
 export type UserConfig = Message<"config.v1.UserConfig"> & {
   /**
-   * @generated from field: bool useComposeFolders = 1;
-   */
-  useComposeFolders: boolean;
-
-  /**
-   * @generated from field: config.v1.ContainerUpdater updater = 2;
+   * @generated from field: config.v1.ContainerUpdater updater = 1;
    */
   updater?: ContainerUpdater;
 };
