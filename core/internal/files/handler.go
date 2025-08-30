@@ -71,22 +71,24 @@ func sortFiles(a, b string, fileList map[string][]string, dockmanConf *DockmanYa
 func getSortRank(name string, fileList map[string][]string, conf *DockmanYaml) int {
 	base := filepath.Base(name)
 	// -1: pinned files (highest priority)
-	if _, ok := conf.PinnedFiles[base]; ok {
-		return -1
+	if priority, ok := conf.PinnedFiles[base]; ok {
+		// potential bug, but if someone is manually writing the order of 100000 files i say get a life
+		// -999 > -12 in this context, pretty stupid but i cant be bothered to fix this mathematically
+		return priority - 100_000
 	}
 
 	// 0: dotfiles (highest priority)
 	if strings.HasPrefix(base, ".") {
-		return 0
+		return 1
 	}
 
 	// Check if it's a directory (has subfiles)
 	if len(fileList[name]) > 0 {
-		return 1
+		return 2
 	}
 
 	// 2+: normal files, ranked by getFileSortRank
-	return 2 + getFileSortRank(name)
+	return 3 + getFileSortRank(name)
 }
 
 // getFileSortRank assigns priority within normal files

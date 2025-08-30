@@ -112,7 +112,7 @@ const dockmanYamlFileYaml = ".dockman.yaml"
 
 type DockmanYaml struct {
 	// define a custom sort to pin certain files when displaying
-	PinnedFiles map[string]interface{} `yaml:"pinnedFiles"`
+	PinnedFiles map[string]int `yaml:"pinnedFiles"`
 }
 
 func (s *Service) GetDockmanYaml() *DockmanYaml {

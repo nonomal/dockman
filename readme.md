@@ -273,24 +273,22 @@ Think this is too limiting? Open an [issue](https://github.com/RA341/dockman/iss
 >
 > and is currently in testing expect bugs
 
-The `.dockman.yaml` file is an optional configuration file that allows you to customize your dockman instance.
-
-### Pinning Files and Directories
+`.dockman.yaml` file is an optional configuration file that allows you to customize your dockman instance.
 
 You can pin specific files or directories to appear at the top of your file list for quick access.
 
 The specified files and directories will appear at the top of your file list, followed by the normal
 alphabetical sorting.
 
-Create either `.dockman.yaml` or `.dockman.yml` in your project root directory.
+Create either `.dockman.yaml` or `.dockman.yml` in your compose root.
 
 Add a `pinnedFiles` section with the names of files or directories you want to pin:
 
 ```yaml
 pinnedFiles:
-  router:
-  media:
-  arr-compose.yaml:
+  router: 1 # <- indicates priority
+  media: 2
+  arr-compose.yaml: 3
 ```
 
 With the configuration above, your file list will show:
