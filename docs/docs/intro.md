@@ -1,50 +1,53 @@
 ---
-sidebar_position: 1
+sidebar_position: 0
+title: Dockman
 ---
 
-# Tutorial Intro
+## **Why Dockman**
 
-Let's discover **Docusaurus in less than 5 minutes**.
+I built Dockman to solve a workflow problem in my homelab.
+While other Docker management tools exist, none matched how I actually wanted to work.
 
-## Getting Started
+My previous setup was manually using scp to transfer compose files to my server after every change. The workflow
+was tedious, but it had one major upside: I could edit configurations in my IDE where I'm most productive.
 
-Get started by **creating a new site**.
+Dockman attempts to eliminate this friction while preserving what worked.
+You get the comfort of your local development environment with easy deployment for your homelab.
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+**Dockman is built for people who:**
 
-### What you'll need
+* Edit configuration files directly rather than through GUI abstractions
+* Want focused tools without feature bloat
+* Value simplicity and reliability over comprehensive features
 
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-    - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+If this matches your workflow, I'd appreciate a star. If not, let me know what's missing.
 
-## Generate a new site
+## Roadmap
 
-Generate a new Docusaurus site using the **classic template**.
+### ✅ Completed
 
-The classic template will automatically be added to your project after you run the command:
+- **Version Control** - Built-in Git support that automatically tracks changes to your compose files and lets you easily
+  roll back when things go wrong
+    - Released: [v1.0](https://github.com/RA341/dockman/releases/tag/v1.0.0)
 
-```bash
-npm init docusaurus@latest my-website classic
-```
+- **Multi-Host Support** - Deploy containers across multiple hosts while keeping everything managed from one place, with
+  isolated configs per host
+    - Released: [v1.1](https://github.com/RA341/dockman/releases/tag/v1.1.0)
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code
-editor.
+### 📋 Planned
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+- **Editor LSP** - Smart autocompletion, syntax checking, formatter and custom Docker Compose helpers like port
+  conflict detection and auto network setup
 
-## Start your site
+- **Smart Updater** - Built-in container update management that replaces watchtower and diun. Choose between
+  auto-updates or just get notified when updates are available
 
-Run the development server:
+- **Backup & Restore** - Complete backup and restore for your entire Docker setup, so you never lose
+  your configs
 
-```bash
-cd my-website
-npm run start
-```
+Have ideas for new features?
+[open an issue](https://github.com/RA341/dockman/issues/new) to share your suggestions!
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site,
-you'll need to navigate the terminal there.
+## Getting Help
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to
-view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+Need assistance? Open a [discussion on GitHub](https://github.com/RA341/dockman/discussions).

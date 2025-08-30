@@ -45,23 +45,24 @@ const config: Config = {
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
                     editUrl:
-                        'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+                        'https://github.com/RA341/dockman/tree/main/docs/docs/',
                 },
-                blog: {
-                    showReadingTime: true,
-                    feedOptions: {
-                        type: ['rss', 'atom'],
-                        xslt: true,
-                    },
-                    // Please change this to your repo.
-                    // Remove this to remove the "edit this page" links.
-                    editUrl:
-                        'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-                    // Useful options to enforce blogging best practices
-                    onInlineTags: 'warn',
-                    onInlineAuthors: 'warn',
-                    onUntruncatedBlogPosts: 'warn',
-                },
+                // todo blog
+                // blog: {
+                //     showReadingTime: true,
+                //     feedOptions: {
+                //         type: ['rss', 'atom'],
+                //         xslt: true,
+                //     },
+                //     // Please change this to your repo.
+                //     // Remove this to remove the "edit this page" links.
+                //     editUrl:
+                //         'https://github.com/RA341/dockman/tree/main/docs/blog/',
+                //     // Useful options to enforce blogging best practices
+                //     onInlineTags: 'warn',
+                //     onInlineAuthors: 'warn',
+                //     onUntruncatedBlogPosts: 'warn',
+                // },
                 theme: {
                     customCss: './src/css/custom.css',
                 },
@@ -71,23 +72,23 @@ const config: Config = {
 
     themeConfig: {
         // Replace with your project's social card
-        image: 'img/docusaurus-social-card.jpg',
+        image: 'img/dockman.svg',
         navbar: {
-            title: 'My Site',
+            title: 'Dockman',
             logo: {
-                alt: 'My Site Logo',
-                src: 'img/logo.svg',
+                alt: 'Dockman logo',
+                src: 'img/dockman.svg',
             },
             items: [
                 {
                     type: 'docSidebar',
                     sidebarId: 'tutorialSidebar',
                     position: 'left',
-                    label: 'Tutorial',
+                    label: 'Guide',
                 },
-                {to: '/blog', label: 'Blog', position: 'left'},
+                // {to: '/blog', label: 'Blog', position: 'left'},
                 {
-                    href: 'https://github.com/facebook/docusaurus',
+                    href: 'https://github.com/ra341/dockman',
                     label: 'GitHub',
                     position: 'right',
                 },
@@ -136,7 +137,7 @@ const config: Config = {
                 //   ],
                 // },
             ],
-            copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Dockman. Built with Docusaurus.`,
         },
         prism: {
             theme: prismThemes.github,
