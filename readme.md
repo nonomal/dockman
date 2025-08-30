@@ -35,15 +35,12 @@ Access at http://localhost:8866
 
 ### Docker Compose
 
-:::info
-The stacks directory path must be absolute and identical in all three locations:
-
-* 1️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
-* 2️⃣ The host side of the volume `/path/to/stacks`
-* 3️⃣ The container side of the volume `/path/to/stacks`
+> [!IMPORTANT]
+> The stacks directory path must be absolute and identical in all three locations:
+> * 1️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
+> * 2️⃣ The host side of the volume `/path/to/stacks`
+> * 3️⃣ The container side of the volume `/path/to/stacks`
   This path consistency is essential for Dockman to locate and manage your compose files properly.
-
-:::
 
 ```yaml title="docker-compose.yaml"
 services:
