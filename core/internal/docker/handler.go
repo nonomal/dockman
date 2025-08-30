@@ -708,7 +708,8 @@ type ContainerLogWriter struct {
 }
 
 func (l *ContainerLogWriter) Write(p []byte) (n int, err error) {
-	if err := l.responseStream.Send(&v1.LogsMessage{Message: string(p)}); err != nil {
+	msg := &v1.LogsMessage{Message: string(p)}
+	if err = l.responseStream.Send(msg); err != nil {
 		return 0, err
 	}
 	return len(p), nil
