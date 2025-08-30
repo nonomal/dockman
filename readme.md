@@ -16,7 +16,7 @@
 
 ## Install
 
-To see full documentation go: https://dockman.radn.dev
+To see full documentation go: https://dockman.radn.dev/docs/Install/docker
 
 ### Docker Run
 
@@ -62,7 +62,7 @@ services:
 
 ## Docs
 
-To see full documentation go: https://dockman.radn.dev
+To see full documentation go: https://dockman.radn.dev/docs/intro
 
 ## Contributing
 
