@@ -21,10 +21,10 @@ import {ContainerInfoPort} from './container-info-port.tsx'
 import type {ContainerList, Port} from "../../../gen/docker/v1/docker_pb.ts"
 import {getImageHomePageUrl} from "../../../hooks/docker-images.ts"
 import scrollbarStyles from "../../../components/scrollbar-style.tsx"
-import type {Message} from "@bufbuild/protobuf"
-import CopyButton from "../../../components/copy-button.tsx";
-import {useCopyButton} from "../../../hooks/copy.ts";
-import ComposeLink from "../../../components/compose-link.tsx";
+import CopyButton from "../../../components/copy-button.tsx"
+import {useCopyButton} from "../../../hooks/copy.ts"
+import ComposeLink from "../../../components/compose-link.tsx"
+import {sortTable, type TableInfo, useSort} from '../../../lib/table.ts'
 
 interface ContainerTableProps {
     containers: ContainerList[]
@@ -37,163 +37,89 @@ interface ContainerTableProps {
     onExec?: (containerId: string, containerName: string) => void
 }
 
-type SortField = 'name' | 'status' | 'image' | 'stack'
-type SortOrder = 'asc' | 'desc'
+export function ContainerTable({
+                                   containers,
+                                   onShowLogs,
+                                   loading,
+                                   setSelectedServices,
+                                   selectedServices,
+                                   useContainerId = false,
+                                   showExec = false,
+                                   onExec,
+                               }: ContainerTableProps) {
 
-export function ContainerTable(
-    {
-        containers,
-        onShowLogs,
-        loading,
-        setSelectedServices,
-        selectedServices,
-        useContainerId = false,
-        showExec = false,
-        onExec,
-    }: ContainerTableProps
-) {
     const [isLoaded, setIsLoaded] = useState(false)
+    const {handleCopy, copiedId} = useCopyButton()
 
-    const [sortField, setSortField] = useState<SortField>('name')
-    const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+    const getContName = (container: ContainerList) => useContainerId ? container.id : container.serviceName
 
-    // Handle sorting
-    const handleSort = (field: SortField) => {
-        if (sortField === field) {
-            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-        } else {
-            setSortField(field)
-            setSortOrder('asc')
-        }
-    }
 
-    const sortedContainers = [...containers].sort((a, b) => {
-        let aValue: unknown, bValue: unknown
-        let comparison = 0;
-
-        switch (sortField) {
-            case 'name': {
-                aValue = a.serviceName
-                bValue = b.serviceName
-                comparison = (aValue as string).localeCompare(bValue as string)
-                break
-            }
-            case "status": {
-                aValue = a.status
-                bValue = b.status
-                comparison = (aValue as string).localeCompare(bValue as string)
-                break
-            }
-            case "image": {
-                aValue = a.imageName
-                bValue = b.imageName
-                comparison = (aValue as string).localeCompare(bValue as string)
-                break
-            }
-            case "stack": {
-                aValue = a.stackName
-                bValue = b.stackName
-                comparison = (aValue as string).localeCompare(bValue as string)
-                break
-            }
-            default:
-                return 0
-        }
-
-        return sortOrder === 'asc' ? comparison : -comparison
-    })
-
-    // This effect sets `isLoaded` to true only once after the first data fetch.
     useEffect(() => {
-        if (!loading && !isLoaded) {
-            setTimeout(() => setIsLoaded(true), 50)
-        }
+        if (!loading && !isLoaded) setTimeout(() => setIsLoaded(true), 50)
     }, [loading, isLoaded])
 
-    const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.checked) {
-            const allSelects = containers.map((n) => getContName(n))
-            setSelectedServices(allSelects)
-            return
-        }
-        setSelectedServices([])
+    const handleSelectAll = () => {
+        const allSelected = selectedServices.length === containers.length
+        setSelectedServices(allSelected ? [] : containers.map(getContName))
     }
 
+    const {
+        sortField,
+        sortOrder,
+        handleSort,
+    } = useSort(
+        'name',
+        'asc'
+    )
+
     const handleRowClick = (id: string) => {
-        const selectedIndex = selectedServices.indexOf(id)
-        let newSelected: string[]
-
-        if (selectedIndex === -1) {
-            // select id
-            newSelected = [...selectedServices, id]
-        } else {
-            // deselect id
-            newSelected = selectedServices.filter((serviceId) => serviceId !== id)
-        }
-
+        const newSelected = selectedServices.includes(id)
+            ? selectedServices.filter(s => s !== id)
+            : [...selectedServices, id]
         setSelectedServices(newSelected)
     }
 
-    const isEmpty = !loading && containers.length === 0
-
-    const getContName = (container: Message<"docker.v1.ContainerList"> & {
-        id: string
-        imageID: string
-        imageName: string
-        status: string
-        name: string
-        created: string
-        ports: Port[]
-        serviceName: string
-    }) => useContainerId ? container.id : container.serviceName
-
-    const {handleCopy, copiedId} = useCopyButton()
-
-    const tableInfo = [
-        {
-            header: (
+    const tableInfo: TableInfo<ContainerList> = {
+        checkbox: {
+            getValue: () => 0,
+            header: () => (
                 <TableCell padding="checkbox">
                     <Checkbox
                         color="primary"
                         indeterminate={selectedServices.length > 0 && selectedServices.length < containers.length}
                         checked={containers.length > 0 && selectedServices.length === containers.length}
-                        onChange={handleSelectAllClick}
-                        slotProps={{
-                            input: {'aria-label': 'select all containers'}
-                        }}
+                        onChange={handleSelectAll}
+                        slotProps={{input: {'aria-label': 'select all containers'}}}
                     />
                 </TableCell>
             ),
-            cell: (container: ContainerList) => (
+            cell: (container) => (
                 <TableCell padding="checkbox">
                     <Checkbox
                         color="primary"
                         checked={selectedServices.includes(getContName(container))}
-                        slotProps={{
-                            input: {'aria-labelledby': `container-table-checkbox-${container.id}`}
-                        }}
+                        slotProps={{input: {'aria-labelledby': `container-table-checkbox-${container.id}`}}}
                     />
                 </TableCell>
             )
         },
-        {
-            header: (
+        name: {
+            getValue: (c) => c.serviceName,
+            header: (label) => (
                 <TableCell sx={tableHeaderStyles}>
                     <TableSortLabel
-                        active={sortField === 'name'}
-                        direction={sortField === 'name' ? sortOrder : 'asc'}
-                        onClick={() => handleSort('name')}
+                        active={sortField === label}
+                        direction={sortField === label ? sortOrder : 'asc'}
+                        onClick={() => handleSort(label)}
                     >
                         Containers
                     </TableSortLabel>
                 </TableCell>
             ),
-            cell: (container: ContainerList) => (
+            cell: (container) => (
                 <TableCell component="th" id={`container-table-checkbox-${container.id}`} scope="row">
                     <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                        <Typography variant="body1" fontWeight="500">
-                            {container.name}
-                        </Typography>
+                        <Typography variant="body1" fontWeight="500">{container.name}</Typography>
                         <CopyButton
                             handleCopy={handleCopy}
                             thisID={container.id}
@@ -204,42 +130,38 @@ export function ContainerTable(
                 </TableCell>
             )
         },
-        {
-            header: (
+        status: {
+            getValue: (c) => c.status,
+            header: (label) => (
                 <TableCell sx={tableHeaderStyles}>
                     <TableSortLabel
-                        active={sortField === 'status'}
-                        direction={sortField === 'status' ? sortOrder : 'asc'}
-                        onClick={() => handleSort('status')}
+                        active={sortField === label}
+                        direction={sortField === label ? sortOrder : 'asc'}
+                        onClick={() => handleSort(label)}
                     >
                         Status
                     </TableSortLabel>
                 </TableCell>
             ),
-            cell: (container: ContainerList) => (
+            cell: (container) => (
                 <TableCell>
-                    <Chip
-                        label={container.status}
-                        color={getStatusChipColor(container.status)}
-                        size="small"
-                        sx={{textTransform: 'capitalize'}}
-                    />
+                    <Chip label={container.status} color={getStatusChipColor(container.status)} size="small"
+                          sx={{textTransform: 'capitalize'}}/>
                 </TableCell>
             )
         },
-        {
-            header: (
-                <TableCell sx={tableHeaderStyles}>Actions</TableCell>
-            ),
-            cell: (container: ContainerList) => (
+        actions: {
+            getValue: () => 0,
+            header: () => <TableCell sx={tableHeaderStyles}>Actions</TableCell>,
+            cell: (container) => (
                 <TableCell align="right">
-                    <Stack direction="row" spacing={1} justifyContent="flex-start">
+                    <Stack direction="row" spacing={1}>
                         <Tooltip title="Show container logs">
                             <DocumentScannerOutlined
                                 aria-label="Show container logs"
                                 color="primary"
-                                onClick={(event) => {
-                                    event.stopPropagation()
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     onShowLogs(container.id, container.name)
                                 }}
                                 sx={{cursor: 'pointer'}}
@@ -250,8 +172,8 @@ export function ContainerTable(
                                 <Terminal
                                     aria-label="Exec into container"
                                     color="primary"
-                                    onClick={(event) => {
-                                        event.stopPropagation()
+                                    onClick={(e) => {
+                                        e.stopPropagation();
                                         onExec?.(container.id, container.name)
                                     }}
                                     sx={{cursor: 'pointer'}}
@@ -262,19 +184,20 @@ export function ContainerTable(
                 </TableCell>
             )
         },
-        {
-            header: (
+        image: {
+            getValue: (c) => c.imageName,
+            header: (label) => (
                 <TableCell sx={tableHeaderStyles}>
                     <TableSortLabel
-                        active={sortField === 'image'}
-                        direction={sortField === 'image' ? sortOrder : 'asc'}
-                        onClick={() => handleSort('image')}
+                        active={sortField === label}
+                        direction={sortField === label ? sortOrder : 'asc'}
+                        onClick={() => handleSort(label)}
                     >
                         Image
                     </TableSortLabel>
                 </TableCell>
             ),
-            cell: (container: ContainerList) => (
+            cell: (container) => (
                 <TableCell>
                     {container.updateAvailable && (
                         <Tooltip title={"Update available"}>
@@ -287,12 +210,10 @@ export function ContainerTable(
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{textDecoration: 'none', color: 'primary.main'}}
-                            onClick={(event) => event.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            <Typography variant="body2" component="span" sx={{
-                                wordBreak: 'break-all',
-                                '&:hover': {textDecoration: 'underline'}
-                            }}>
+                            <Typography variant="body2" component="span"
+                                        sx={{wordBreak: 'break-all', '&:hover': {textDecoration: 'underline'}}}>
                                 {container.imageName}
                             </Typography>
                         </Link>
@@ -300,85 +221,60 @@ export function ContainerTable(
                 </TableCell>
             )
         },
-        {
-            header: (
+        stack: {
+            getValue: (c) => c.stackName,
+            header: (label) => (
                 <TableCell sx={tableHeaderStyles}>
                     <TableSortLabel
-                        active={sortField === 'stack'}
-                        direction={sortField === 'stack' ? sortOrder : 'asc'}
-                        onClick={() => handleSort('stack')}
+                        active={sortField === label}
+                        direction={sortField === label ? sortOrder : 'asc'}
+                        onClick={() => handleSort(label)}
                     >
                         Stack
                     </TableSortLabel>
                 </TableCell>
             ),
-            cell: (container: ContainerList) => (
+            cell: (container) => (
                 <TableCell>
-                    <ComposeLink
-                        stackName={container.stackName}
-                        servicePath={container.servicePath}
-                    />
+                    <ComposeLink stackName={container.stackName} servicePath={container.servicePath}/>
                 </TableCell>
             )
         },
-        {
-            header: (
-                <TableCell sx={tableHeaderStyles}>Ports</TableCell>
-            ),
-            cell: (container: ContainerList) => (
-                <TableCell width={360}>
-                    {formatPorts(container.ports)}
-                </TableCell>
-            )
-        },
-    ];
+        ports: {
+            getValue: () => 0,
+            header: () => <TableCell sx={tableHeaderStyles}>Ports</TableCell>,
+            cell: (container) => <TableCell width={360}>{formatPorts(container.ports)}</TableCell>
+        }
+    }
+
+    const sortedContainers = sortTable(containers, sortField, tableInfo, sortOrder)
+    const isEmpty = !loading && containers.length === 0
 
     return (
-        <TableContainer
-            component={Paper}
-            sx={{
-                flexGrow: 1,
-                boxShadow: 3,
-                borderRadius: 2,
-                ...scrollbarStyles
-            }}>
+        <TableContainer component={Paper} sx={{flexGrow: 1, boxShadow: 3, borderRadius: 2, ...scrollbarStyles}}>
             <Table stickyHeader aria-label="docker containers table">
                 <TableHead>
                     <TableRow>
-                        {tableInfo.map((column, index) => (
-                            <React.Fragment key={index}>
-                                {column.header}
-                            </React.Fragment>
-                        ))}
+                        {Object.entries(tableInfo).map(([key, val], idx) => <React.Fragment
+                            key={idx}>{val.header(key)}</React.Fragment>)}
                     </TableRow>
                 </TableHead>
-
-                <TableBody
-                    sx={{
-                        opacity: isLoaded ? 1 : 0,
-                        transition: 'opacity 200ms ease-in-out',
-                    }}
-                >
+                <TableBody sx={{opacity: isLoaded ? 1 : 0, transition: 'opacity 200ms ease-in-out'}}>
                     {isEmpty ? (
                         <TableRow>
                             <TableCell colSpan={7} sx={{border: 0, height: 550}}>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        height: '100%',
-                                    }}
-                                >
-                                    <Typography variant="h5" color="text.secondary">
-                                        No containers found
-                                    </Typography>
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: '100%'
+                                }}>
+                                    <Typography variant="h5" color="text.secondary">No containers found</Typography>
                                 </Box>
                             </TableCell>
                         </TableRow>
-                    ) : sortedContainers.map((container) => {
+                    ) : sortedContainers.map(container => {
                         const isItemSelected = selectedServices.includes(getContName(container))
-
                         return (
                             <TableRow
                                 hover
@@ -390,11 +286,8 @@ export function ContainerTable(
                                 selected={isItemSelected}
                                 sx={{cursor: 'pointer', '&:last-child td, &:last-child th': {border: 0}}}
                             >
-                                {tableInfo.map((column, index) => (
-                                    <React.Fragment key={index}>
-                                        {column.cell(container)}
-                                    </React.Fragment>
-                                ))}
+                                {Object.values(tableInfo).map((col, idx) => <React.Fragment
+                                    key={idx}>{col.cell(container)}</React.Fragment>)}
                             </TableRow>
                         )
                     })}
@@ -404,30 +297,21 @@ export function ContainerTable(
     )
 }
 
-const tableHeaderStyles = {
-    fontWeight: 'bold',
-    backgroundColor: 'background.paper'
-}
+const tableHeaderStyles = {fontWeight: 'bold', backgroundColor: 'background.paper'}
 
 const formatPorts = (ports: Port[]) => {
     if (!ports || ports.length === 0) return <>—</>
-    return (
-        <>
-            {ports.map((port, index) => (
-                <React.Fragment key={`${port.host}-${port.public}-${port.private}-${port.type}`}>
-                    <ContainerInfoPort port={port}/>
-                    {index < ports.length - 1 && ', '}
-                </React.Fragment>
-            ))}
-        </>
-    )
+    return (<>{ports.map((port, idx) => <React.Fragment
+        key={`${port.host}-${port.public}-${port.private}-${port.type}`}>
+        <ContainerInfoPort port={port}/>
+        {idx < ports.length - 1 && ', '}
+    </React.Fragment>)}</>)
 }
 
 const getStatusChipColor = (status: string): "success" | "warning" | "default" | "error" => {
-    if (status.toLowerCase().startsWith('up')) return 'success'
-    if (status.toLowerCase().startsWith('exited')) return 'error'
-    if (status.toLowerCase().includes('restarting')) return 'warning'
+    const s = status.toLowerCase()
+    if (s.startsWith('up')) return 'success'
+    if (s.startsWith('exited')) return 'error'
+    if (s.includes('restarting')) return 'warning'
     return 'default'
 }
-
-

@@ -15,13 +15,6 @@ service FileService {
 
 }
 
-message DockmanYaml {
-  bool useFolderNamesInTabs = 1;
-  bool useComposeFolders = 2;
-  // not needed at the moment
-  //  map<string, int32> PinnedFiles = 2;
-}
-
 message ListResponse {
   repeated FileGroup groups = 1;
 }
@@ -41,3 +34,33 @@ message File {
 }
 
 message Empty {}
+
+message DockmanYaml {
+  bool useComposeFolders = 1;
+  VolumesConfig volumesPage = 2;
+  NetworkConfig networkPage = 3;
+  ImageConfig imagePage = 4;
+  ContainerConfig containerPage = 5;
+}
+
+message VolumesConfig {
+  Sort sort = 1;
+}
+
+message NetworkConfig {
+  Sort sort = 1;
+}
+
+message ImageConfig {
+  Sort sort = 1;
+}
+
+message ContainerConfig {
+  Sort sort = 1;
+}
+
+
+message Sort {
+  string sortOrder = 1;
+  string sortField = 2;
+}

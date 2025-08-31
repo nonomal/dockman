@@ -10,32 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file files/v1/files.proto.
  */
 export const file_files_v1_files: GenFile = /*@__PURE__*/
-  fileDesc("ChRmaWxlcy92MS9maWxlcy5wcm90bxIIZmlsZXMudjEiRgoLRG9ja21hbllhbWwSHAoUdXNlRm9sZGVyTmFtZXNJblRhYnMYASABKAgSGQoRdXNlQ29tcG9zZUZvbGRlcnMYAiABKAgiMwoMTGlzdFJlc3BvbnNlEiMKBmdyb3VwcxgBIAMoCzITLmZpbGVzLnYxLkZpbGVHcm91cCIrCglGaWxlR3JvdXASDAoEcm9vdBgBIAEoCRIQCghzdWJGaWxlcxgCIAMoCSI2CgpSZW5hbWVGaWxlEhMKC29sZEZpbGVQYXRoGAEgASgJEhMKC25ld0ZpbGVQYXRoGAIgASgJIhgKBEZpbGUSEAoIZmlsZW5hbWUYASABKAkiBwoFRW1wdHkytgIKC0ZpbGVTZXJ2aWNlEisKBkNyZWF0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBExpc3QSDy5maWxlcy52MS5FbXB0eRoWLmZpbGVzLnYxLkxpc3RSZXNwb25zZSIAEisKBkRlbGV0ZRIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEisKBkV4aXN0cxIOLmZpbGVzLnYxLkZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjEKBlJlbmFtZRIULmZpbGVzLnYxLlJlbmFtZUZpbGUaDy5maWxlcy52MS5FbXB0eSIAEjoKDkdldERvY2ttYW5ZYW1sEg8uZmlsZXMudjEuRW1wdHkaFS5maWxlcy52MS5Eb2NrbWFuWWFtbCIAQogBCgxjb20uZmlsZXMudjFCCkZpbGVzUHJvdG9QAVorZ2l0aHViLmNvbS9SQTM0MS9kb2NrbWFuL2dlbmVyYXRlZC9maWxlcy92MaICA0ZYWKoCCEZpbGVzLlYxygIIRmlsZXNcVjHiAhRGaWxlc1xWMVxHUEJNZXRhZGF0YeoCCUZpbGVzOjpWMWIGcHJvdG8z");
-
-/**
- * @generated from message files.v1.DockmanYaml
- */
-export type DockmanYaml = Message<"files.v1.DockmanYaml"> & {
-  /**
-   * @generated from field: bool useFolderNamesInTabs = 1;
-   */
-  useFolderNamesInTabs: boolean;
-
-  /**
-   * not needed at the moment
-   *  map<string, int32> PinnedFiles = 2;
-   *
-   * @generated from field: bool useComposeFolders = 2;
-   */
-  useComposeFolders: boolean;
-};
-
-/**
- * Describes the message files.v1.DockmanYaml.
- * Use `create(DockmanYamlSchema)` to create a new message.
- */
-export const DockmanYamlSchema: GenMessage<DockmanYaml> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 0);
+  fileDesc("ChRmaWxlcy92MS9maWxlcy5wcm90bxIIZmlsZXMudjEiMwoMTGlzdFJlc3BvbnNlEiMKBmdyb3VwcxgBIAMoCzITLmZpbGVzLnYxLkZpbGVHcm91cCIrCglGaWxlR3JvdXASDAoEcm9vdBgBIAEoCRIQCghzdWJGaWxlcxgCIAMoCSI2CgpSZW5hbWVGaWxlEhMKC29sZEZpbGVQYXRoGAEgASgJEhMKC25ld0ZpbGVQYXRoGAIgASgJIhgKBEZpbGUSEAoIZmlsZW5hbWUYASABKAkiBwoFRW1wdHki4AEKC0RvY2ttYW5ZYW1sEhkKEXVzZUNvbXBvc2VGb2xkZXJzGAEgASgIEiwKC3ZvbHVtZXNQYWdlGAIgASgLMhcuZmlsZXMudjEuVm9sdW1lc0NvbmZpZxIsCgtuZXR3b3JrUGFnZRgDIAEoCzIXLmZpbGVzLnYxLk5ldHdvcmtDb25maWcSKAoJaW1hZ2VQYWdlGAQgASgLMhUuZmlsZXMudjEuSW1hZ2VDb25maWcSMAoNY29udGFpbmVyUGFnZRgFIAEoCzIZLmZpbGVzLnYxLkNvbnRhaW5lckNvbmZpZyItCg1Wb2x1bWVzQ29uZmlnEhwKBHNvcnQYASABKAsyDi5maWxlcy52MS5Tb3J0Ii0KDU5ldHdvcmtDb25maWcSHAoEc29ydBgBIAEoCzIOLmZpbGVzLnYxLlNvcnQiKwoLSW1hZ2VDb25maWcSHAoEc29ydBgBIAEoCzIOLmZpbGVzLnYxLlNvcnQiLwoPQ29udGFpbmVyQ29uZmlnEhwKBHNvcnQYASABKAsyDi5maWxlcy52MS5Tb3J0IiwKBFNvcnQSEQoJc29ydE9yZGVyGAEgASgJEhEKCXNvcnRGaWVsZBgCIAEoCTK2AgoLRmlsZVNlcnZpY2USKwoGQ3JlYXRlEg4uZmlsZXMudjEuRmlsZRoPLmZpbGVzLnYxLkVtcHR5IgASMQoETGlzdBIPLmZpbGVzLnYxLkVtcHR5GhYuZmlsZXMudjEuTGlzdFJlc3BvbnNlIgASKwoGRGVsZXRlEg4uZmlsZXMudjEuRmlsZRoPLmZpbGVzLnYxLkVtcHR5IgASKwoGRXhpc3RzEg4uZmlsZXMudjEuRmlsZRoPLmZpbGVzLnYxLkVtcHR5IgASMQoGUmVuYW1lEhQuZmlsZXMudjEuUmVuYW1lRmlsZRoPLmZpbGVzLnYxLkVtcHR5IgASOgoOR2V0RG9ja21hbllhbWwSDy5maWxlcy52MS5FbXB0eRoVLmZpbGVzLnYxLkRvY2ttYW5ZYW1sIgBCiAEKDGNvbS5maWxlcy52MUIKRmlsZXNQcm90b1ABWitnaXRodWIuY29tL1JBMzQxL2RvY2ttYW4vZ2VuZXJhdGVkL2ZpbGVzL3YxogIDRlhYqgIIRmlsZXMuVjHKAghGaWxlc1xWMeICFEZpbGVzXFYxXEdQQk1ldGFkYXRh6gIJRmlsZXM6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message files.v1.ListResponse
@@ -52,7 +27,7 @@ export type ListResponse = Message<"files.v1.ListResponse"> & {
  * Use `create(ListResponseSchema)` to create a new message.
  */
 export const ListResponseSchema: GenMessage<ListResponse> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 1);
+  messageDesc(file_files_v1_files, 0);
 
 /**
  * @generated from message files.v1.FileGroup
@@ -74,7 +49,7 @@ export type FileGroup = Message<"files.v1.FileGroup"> & {
  * Use `create(FileGroupSchema)` to create a new message.
  */
 export const FileGroupSchema: GenMessage<FileGroup> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 2);
+  messageDesc(file_files_v1_files, 1);
 
 /**
  * @generated from message files.v1.RenameFile
@@ -96,7 +71,7 @@ export type RenameFile = Message<"files.v1.RenameFile"> & {
  * Use `create(RenameFileSchema)` to create a new message.
  */
 export const RenameFileSchema: GenMessage<RenameFile> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 3);
+  messageDesc(file_files_v1_files, 2);
 
 /**
  * @generated from message files.v1.File
@@ -113,7 +88,7 @@ export type File = Message<"files.v1.File"> & {
  * Use `create(FileSchema)` to create a new message.
  */
 export const FileSchema: GenMessage<File> = /*@__PURE__*/
-  messageDesc(file_files_v1_files, 4);
+  messageDesc(file_files_v1_files, 3);
 
 /**
  * @generated from message files.v1.Empty
@@ -126,7 +101,134 @@ export type Empty = Message<"files.v1.Empty"> & {
  * Use `create(EmptySchema)` to create a new message.
  */
 export const EmptySchema: GenMessage<Empty> = /*@__PURE__*/
+  messageDesc(file_files_v1_files, 4);
+
+/**
+ * @generated from message files.v1.DockmanYaml
+ */
+export type DockmanYaml = Message<"files.v1.DockmanYaml"> & {
+  /**
+   * @generated from field: bool useComposeFolders = 1;
+   */
+  useComposeFolders: boolean;
+
+  /**
+   * @generated from field: files.v1.VolumesConfig volumesPage = 2;
+   */
+  volumesPage?: VolumesConfig;
+
+  /**
+   * @generated from field: files.v1.NetworkConfig networkPage = 3;
+   */
+  networkPage?: NetworkConfig;
+
+  /**
+   * @generated from field: files.v1.ImageConfig imagePage = 4;
+   */
+  imagePage?: ImageConfig;
+
+  /**
+   * @generated from field: files.v1.ContainerConfig containerPage = 5;
+   */
+  containerPage?: ContainerConfig;
+};
+
+/**
+ * Describes the message files.v1.DockmanYaml.
+ * Use `create(DockmanYamlSchema)` to create a new message.
+ */
+export const DockmanYamlSchema: GenMessage<DockmanYaml> = /*@__PURE__*/
   messageDesc(file_files_v1_files, 5);
+
+/**
+ * @generated from message files.v1.VolumesConfig
+ */
+export type VolumesConfig = Message<"files.v1.VolumesConfig"> & {
+  /**
+   * @generated from field: files.v1.Sort sort = 1;
+   */
+  sort?: Sort;
+};
+
+/**
+ * Describes the message files.v1.VolumesConfig.
+ * Use `create(VolumesConfigSchema)` to create a new message.
+ */
+export const VolumesConfigSchema: GenMessage<VolumesConfig> = /*@__PURE__*/
+  messageDesc(file_files_v1_files, 6);
+
+/**
+ * @generated from message files.v1.NetworkConfig
+ */
+export type NetworkConfig = Message<"files.v1.NetworkConfig"> & {
+  /**
+   * @generated from field: files.v1.Sort sort = 1;
+   */
+  sort?: Sort;
+};
+
+/**
+ * Describes the message files.v1.NetworkConfig.
+ * Use `create(NetworkConfigSchema)` to create a new message.
+ */
+export const NetworkConfigSchema: GenMessage<NetworkConfig> = /*@__PURE__*/
+  messageDesc(file_files_v1_files, 7);
+
+/**
+ * @generated from message files.v1.ImageConfig
+ */
+export type ImageConfig = Message<"files.v1.ImageConfig"> & {
+  /**
+   * @generated from field: files.v1.Sort sort = 1;
+   */
+  sort?: Sort;
+};
+
+/**
+ * Describes the message files.v1.ImageConfig.
+ * Use `create(ImageConfigSchema)` to create a new message.
+ */
+export const ImageConfigSchema: GenMessage<ImageConfig> = /*@__PURE__*/
+  messageDesc(file_files_v1_files, 8);
+
+/**
+ * @generated from message files.v1.ContainerConfig
+ */
+export type ContainerConfig = Message<"files.v1.ContainerConfig"> & {
+  /**
+   * @generated from field: files.v1.Sort sort = 1;
+   */
+  sort?: Sort;
+};
+
+/**
+ * Describes the message files.v1.ContainerConfig.
+ * Use `create(ContainerConfigSchema)` to create a new message.
+ */
+export const ContainerConfigSchema: GenMessage<ContainerConfig> = /*@__PURE__*/
+  messageDesc(file_files_v1_files, 9);
+
+/**
+ * @generated from message files.v1.Sort
+ */
+export type Sort = Message<"files.v1.Sort"> & {
+  /**
+   * @generated from field: string sortOrder = 1;
+   */
+  sortOrder: string;
+
+  /**
+   * @generated from field: string sortField = 2;
+   */
+  sortField: string;
+};
+
+/**
+ * Describes the message files.v1.Sort.
+ * Use `create(SortSchema)` to create a new message.
+ */
+export const SortSchema: GenMessage<Sort> = /*@__PURE__*/
+  messageDesc(file_files_v1_files, 10);
 
 /**
  * @generated from service files.v1.FileService

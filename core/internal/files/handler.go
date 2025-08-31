@@ -159,10 +159,46 @@ func getFile(c *v1.File) (string, error) {
 
 func (h *Handler) GetDockmanYaml(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.DockmanYaml], error) {
 	conf := h.srv.GetDockmanYaml()
-	res := v1.DockmanYaml{
-		UseFolderNamesInTabs: conf.UseFolderNamesInTabs,
-		UseComposeFolders:    conf.UseComposeFolders,
-	}
+	return connect.NewResponse(conf.toProto()), nil
+}
 
-	return connect.NewResponse(&res), nil
+func (d DockmanYaml) toProto() *v1.DockmanYaml {
+	return &v1.DockmanYaml{
+		UseComposeFolders: d.UseComposeFolders,
+		VolumesPage:       d.VolumesPage.toProto(),
+		NetworkPage:       d.NetworkPage.toProto(),
+		ImagePage:         d.ImagePage.toProto(),
+		ContainerPage:     d.ContainerPage.toProto(),
+	}
+}
+
+func (s Sort) toProto() *v1.Sort {
+	return &v1.Sort{
+		SortOrder: s.Order,
+		SortField: s.Field,
+	}
+}
+
+func (v ContainerConfig) toProto() *v1.ContainerConfig {
+	return &v1.ContainerConfig{
+		Sort: v.Sort.toProto(),
+	}
+}
+
+func (v VolumesConfig) toProto() *v1.VolumesConfig {
+	return &v1.VolumesConfig{
+		Sort: v.Sort.toProto(),
+	}
+}
+
+func (n NetworkConfig) toProto() *v1.NetworkConfig {
+	return &v1.NetworkConfig{
+		Sort: n.Sort.toProto(),
+	}
+}
+
+func (i ImageConfig) toProto() *v1.ImageConfig {
+	return &v1.ImageConfig{
+		Sort: i.Sort.toProto(),
+	}
 }
