@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import React, {useState} from 'react';
 import {
     Box,
     Checkbox,
@@ -36,10 +36,9 @@ interface VolumeTableProps {
 }
 
 export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: VolumeTableProps) => {
-    const [sortField, setSortField] = useState<SortField>('label');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+    const [sortField, setSortField] = useState<SortField>('name');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
-    // Handle sorting
     const handleSort = (field: SortField) => {
         if (sortField === field) {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -131,6 +130,230 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
         });
     };
 
+    const tableInfo = [
+        {
+            header: (
+                <TableCell padding="checkbox">
+                    <Checkbox
+                        indeterminate={isIndeterminate}
+                        checked={isAllSelected}
+                        onChange={handleSelectAll}
+                    />
+                </TableCell>
+            ),
+            cell: (volume: Volume) => (
+                <TableCell padding="checkbox">
+                    <Checkbox
+                        checked={selectedVolumes.includes(volume.name)}
+                        onChange={() => handleRowSelection(volume.name)}
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={{fontWeight: 'bold'}}>
+                    <TableSortLabel
+                        active={sortField === 'name'}
+                        direction={sortField === 'name' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('name')}
+                    >
+                        Volume Name
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (volume: Volume) => (
+                <TableCell>
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                        <Box sx={{flex: 1}}>
+                            <Typography variant="body2" sx={{
+                                wordBreak: 'break-all',
+                                fontWeight: 'medium'
+                            }}>
+                                {volume.name}
+                            </Typography>
+                        </Box>
+                        <CopyButton
+                            handleCopy={handleCopy}
+                            thisID={volume.name}
+                            activeID={copiedId ?? ""}
+                            tooltip={"Copy Volume name"}
+                        />
+                    </Box>
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={{fontWeight: 'bold', minWidth: 100}}>
+                    <TableSortLabel
+                        active={sortField === 'label'}
+                        direction={sortField === 'label' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('label')}
+                    >
+                        Label
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (volume: Volume) => (
+                <TableCell>
+                    {volume.labels ? (
+                        <Chip
+                            label={`${volume.labels}`}
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                            icon={<LabelIcon/>}
+                            sx={{fontSize: '0.75rem'}}
+                        />
+                    ) : (
+                        <Typography variant="body2" color="text.secondary">
+                            —
+                        </Typography>
+                    )}
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={{fontWeight: 'bold'}}>
+                    <TableSortLabel
+                        active={sortField === 'project'}
+                        direction={sortField === 'project' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('project')}
+                    >
+                        Stack
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (volume: Volume) => (
+                <TableCell>
+                    <ComposeLink
+                        servicePath={volume.composePath}
+                        stackName={volume.composeProjectName}
+                    />
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
+                    <TableSortLabel
+                        active={sortField === 'size'}
+                        direction={sortField === 'size' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('size')}
+                    >
+                        Size
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (volume: Volume) => (
+                <TableCell>
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                        <StorageIcon sx={{fontSize: 18, color: 'text.secondary'}}/>
+                        <Box sx={{flex: 1}}>
+                            <Typography variant="body2" sx={{
+                                wordBreak: 'break-all',
+                                fontWeight: 'medium'
+                            }}>
+                                {formatBytes(volume.size)}
+                            </Typography>
+                        </Box>
+                    </Box>
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
+                    <TableSortLabel
+                        active={sortField === 'inuse'}
+                        direction={sortField === 'inuse' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('inuse')}
+                    >
+                        In Use
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (volume: Volume) => (
+                <TableCell>
+                    {volume.containerID ? (
+                        <Chip
+                            label={`in use`}
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                        />
+                    ) : (
+                        <Chip
+                            label={`unused`}
+                            size="small"
+                            color="info"
+                            variant="outlined"
+                        />
+                    )}
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={{fontWeight: 'bold', minWidth: 200}}>
+                    <TableSortLabel
+                        active={sortField === 'mountPoint'}
+                        direction={sortField === 'mountPoint' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('mountPoint')}
+                    >
+                        Mount Point
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (volume: Volume) => (
+                <TableCell>
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                        <FolderIcon sx={{fontSize: 16, color: 'text.secondary'}}/>
+                        <Typography variant="body2" sx={{
+                            wordBreak: 'break-all',
+                            fontFamily: 'monospace',
+                            fontSize: '0.85rem'
+                        }}>
+                            {volume.mountPoint}
+                        </Typography>
+                        <CopyButton
+                            handleCopy={handleCopy}
+                            thisID={volume.mountPoint}
+                            activeID={copiedId ?? ""}
+                            tooltip={"Copy Mount point"}
+                        />
+                    </Box>
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={{fontWeight: 'bold', minWidth: 150}}>
+                    <TableSortLabel
+                        active={sortField === 'createdAt'}
+                        direction={sortField === 'createdAt' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('createdAt')}
+                    >
+                        Created
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (volume: Volume) => (
+                <TableCell>
+                    <Box sx={{display: 'flex', alignItems: 'center'}}>
+                        <CalendarIcon sx={{fontSize: 14, mr: 0.5, color: 'text.secondary'}}/>
+                        <Typography variant="body2">
+                            {formatDate(volume.createdAt)}
+                        </Typography>
+                    </Box>
+                </TableCell>
+            )
+        }
+    ];
+
     return (
         <TableContainer
             component={Paper}
@@ -142,85 +365,11 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
         >
             <Table stickyHeader sx={{minWidth: 650}}>
                 <TableHead>
-                    <TableRow>
-                        <TableCell padding="checkbox">
-                            <Checkbox
-                                indeterminate={isIndeterminate}
-                                checked={isAllSelected}
-                                onChange={handleSelectAll}
-                            />
-                        </TableCell>
-
-                        <TableCell sx={{fontWeight: 'bold', minWidth: 100}}>
-                            <TableSortLabel
-                                active={sortField === 'label'}
-                                direction={sortField === 'label' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('label')}
-                            >
-                                Label
-                            </TableSortLabel>
-                        </TableCell>
-
-                        <TableCell sx={{fontWeight: 'bold'}}>
-                            <TableSortLabel
-                                active={sortField === 'name'}
-                                direction={sortField === 'name' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('name')}
-                            >
-                                Volume Name
-                            </TableSortLabel>
-                        </TableCell>
-
-                        <TableCell sx={{fontWeight: 'bold'}}>
-                            <TableSortLabel
-                                active={sortField === 'project'}
-                                direction={sortField === 'project' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('project')}
-                            >
-                                Stack
-                            </TableSortLabel>
-                        </TableCell>
-
-                        <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
-                            <TableSortLabel
-                                active={sortField === 'size'}
-                                direction={sortField === 'size' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('size')}
-                            >
-                                Size
-                            </TableSortLabel>
-                        </TableCell>
-
-                        <TableCell sx={{fontWeight: 'bold', minWidth: 120}}>
-                            <TableSortLabel
-                                active={sortField === 'inuse'}
-                                direction={sortField === 'inuse' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('inuse')}
-                            >
-                                In Use
-                            </TableSortLabel>
-                        </TableCell>
-
-                        <TableCell sx={{fontWeight: 'bold', minWidth: 200}}>
-                            <TableSortLabel
-                                active={sortField === 'mountPoint'}
-                                direction={sortField === 'mountPoint' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('mountPoint')}
-                            >
-                                Mount Point
-                            </TableSortLabel>
-                        </TableCell>
-
-                        <TableCell sx={{fontWeight: 'bold', minWidth: 150}}>
-                            <TableSortLabel
-                                active={sortField === 'createdAt'}
-                                direction={sortField === 'createdAt' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('createdAt')}
-                            >
-                                Created
-                            </TableSortLabel>
-                        </TableCell>
-                    </TableRow>
+                    {tableInfo.map((column, index) => (
+                        <React.Fragment key={index}>
+                            {column.header}
+                        </React.Fragment>
+                    ))}
                 </TableHead>
                 <TableBody>
                     {sortedVolumes.map((volume) => (
@@ -236,116 +385,11 @@ export const VolumeTable = ({volumes, selectedVolumes = [], onSelectionChange}: 
                             }}
                             onClick={() => handleRowSelection(volume.name)}
                         >
-                            <TableCell padding="checkbox">
-                                <Checkbox
-                                    checked={selectedVolumes.includes(volume.name)}
-                                    onChange={() => handleRowSelection(volume.name)}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            </TableCell>
-
-                            <TableCell>
-                                {volume.labels ? (
-                                    <Chip
-                                        label={`${volume.labels}`}
-                                        size="small"
-                                        variant="outlined"
-                                        color="secondary"
-                                        icon={<LabelIcon/>}
-                                        sx={{fontSize: '0.75rem'}}
-                                    />
-                                ) : (
-                                    <Typography variant="body2" color="text.secondary">
-                                        —
-                                    </Typography>
-                                )}
-                            </TableCell>
-
-                            <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                    <Box sx={{flex: 1}}>
-                                        <Typography variant="body2" sx={{
-                                            wordBreak: 'break-all',
-                                            fontWeight: 'medium'
-                                        }}>
-                                            {volume.name}
-                                        </Typography>
-                                    </Box>
-                                    <CopyButton
-                                        handleCopy={handleCopy}
-                                        thisID={volume.name}
-                                        activeID={copiedId ?? ""}
-                                        tooltip={"Copy Volume name"}
-                                    />
-                                </Box>
-                            </TableCell>
-
-                            <TableCell>
-                                <ComposeLink
-                                    servicePath={volume.composePath}
-                                    stackName={volume.composeProjectName}
-                                />
-                            </TableCell>
-
-                            <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                    <StorageIcon sx={{fontSize: 18, color: 'text.secondary'}}/>
-                                    <Box sx={{flex: 1}}>
-                                        <Typography variant="body2" sx={{
-                                            wordBreak: 'break-all',
-                                            fontWeight: 'medium'
-                                        }}>
-                                            {formatBytes(volume.size)}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </TableCell>
-
-                            <TableCell>
-                                {volume.containerID ? (
-                                    <Chip
-                                        label={`in use`}
-                                        size="small"
-                                        color="success"
-                                        variant="outlined"
-                                    />
-                                ) : (
-                                    <Chip
-                                        label={`unused`}
-                                        size="small"
-                                        color="info"
-                                        variant="outlined"
-                                    />)}
-                            </TableCell>
-
-                            <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                    <FolderIcon sx={{fontSize: 16, color: 'text.secondary'}}/>
-                                    <Typography variant="body2" sx={{
-                                        wordBreak: 'break-all',
-                                        fontFamily: 'monospace',
-                                        fontSize: '0.85rem'
-                                    }}>
-                                        {volume.mountPoint}
-                                    </Typography>
-                                    <CopyButton
-                                        handleCopy={handleCopy}
-                                        thisID={volume.mountPoint}
-                                        activeID={copiedId ?? ""}
-                                        tooltip={"Copy Mount point"}
-                                    />
-                                </Box>
-                            </TableCell>
-
-
-                            <TableCell>
-                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                    <CalendarIcon sx={{fontSize: 14, mr: 0.5, color: 'text.secondary'}}/>
-                                    <Typography variant="body2">
-                                        {formatDate(volume.createdAt)}
-                                    </Typography>
-                                </Box>
-                            </TableCell>
+                            {tableInfo.map((column, index) => (
+                                <React.Fragment key={index}>
+                                    {column.cell(volume)}
+                                </React.Fragment>
+                            ))}
                         </TableRow>
                     ))}
                 </TableBody>

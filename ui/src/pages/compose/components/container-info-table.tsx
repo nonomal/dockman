@@ -149,6 +149,190 @@ export function ContainerTable(
 
     const {handleCopy, copiedId} = useCopyButton()
 
+    const tableInfo = [
+        {
+            header: (
+                <TableCell padding="checkbox">
+                    <Checkbox
+                        color="primary"
+                        indeterminate={selectedServices.length > 0 && selectedServices.length < containers.length}
+                        checked={containers.length > 0 && selectedServices.length === containers.length}
+                        onChange={handleSelectAllClick}
+                        slotProps={{
+                            input: {'aria-label': 'select all containers'}
+                        }}
+                    />
+                </TableCell>
+            ),
+            cell: (container: ContainerList) => (
+                <TableCell padding="checkbox">
+                    <Checkbox
+                        color="primary"
+                        checked={selectedServices.includes(getContName(container))}
+                        slotProps={{
+                            input: {'aria-labelledby': `container-table-checkbox-${container.id}`}
+                        }}
+                    />
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={tableHeaderStyles}>
+                    <TableSortLabel
+                        active={sortField === 'name'}
+                        direction={sortField === 'name' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('name')}
+                    >
+                        Containers
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (container: ContainerList) => (
+                <TableCell component="th" id={`container-table-checkbox-${container.id}`} scope="row">
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                        <Typography variant="body1" fontWeight="500">
+                            {container.name}
+                        </Typography>
+                        <CopyButton
+                            handleCopy={handleCopy}
+                            thisID={container.id}
+                            activeID={copiedId ?? ""}
+                            tooltip={"Copy Container ID"}
+                        />
+                    </Box>
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={tableHeaderStyles}>
+                    <TableSortLabel
+                        active={sortField === 'status'}
+                        direction={sortField === 'status' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('status')}
+                    >
+                        Status
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (container: ContainerList) => (
+                <TableCell>
+                    <Chip
+                        label={container.status}
+                        color={getStatusChipColor(container.status)}
+                        size="small"
+                        sx={{textTransform: 'capitalize'}}
+                    />
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={tableHeaderStyles}>Actions</TableCell>
+            ),
+            cell: (container: ContainerList) => (
+                <TableCell align="right">
+                    <Stack direction="row" spacing={1} justifyContent="flex-start">
+                        <Tooltip title="Show container logs">
+                            <DocumentScannerOutlined
+                                aria-label="Show container logs"
+                                color="primary"
+                                onClick={(event) => {
+                                    event.stopPropagation()
+                                    onShowLogs(container.id, container.name)
+                                }}
+                                sx={{cursor: 'pointer'}}
+                            />
+                        </Tooltip>
+                        {showExec && (
+                            <Tooltip title="Exec into container">
+                                <Terminal
+                                    aria-label="Exec into container"
+                                    color="primary"
+                                    onClick={(event) => {
+                                        event.stopPropagation()
+                                        onExec?.(container.id, container.name)
+                                    }}
+                                    sx={{cursor: 'pointer'}}
+                                />
+                            </Tooltip>
+                        )}
+                    </Stack>
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={tableHeaderStyles}>
+                    <TableSortLabel
+                        active={sortField === 'image'}
+                        direction={sortField === 'image' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('image')}
+                    >
+                        Image
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (container: ContainerList) => (
+                <TableCell>
+                    {container.updateAvailable && (
+                        <Tooltip title={"Update available"}>
+                            <Update sx={{fontSize: 16, color: 'gold', verticalAlign: 'middle', mr: 1}}/>
+                        </Tooltip>
+                    )}
+                    <Tooltip title="Open image website" arrow>
+                        <Link
+                            href={getImageHomePageUrl(container.imageName)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{textDecoration: 'none', color: 'primary.main'}}
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <Typography variant="body2" component="span" sx={{
+                                wordBreak: 'break-all',
+                                '&:hover': {textDecoration: 'underline'}
+                            }}>
+                                {container.imageName}
+                            </Typography>
+                        </Link>
+                    </Tooltip>
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={tableHeaderStyles}>
+                    <TableSortLabel
+                        active={sortField === 'stack'}
+                        direction={sortField === 'stack' ? sortOrder : 'asc'}
+                        onClick={() => handleSort('stack')}
+                    >
+                        Stack
+                    </TableSortLabel>
+                </TableCell>
+            ),
+            cell: (container: ContainerList) => (
+                <TableCell>
+                    <ComposeLink
+                        stackName={container.stackName}
+                        servicePath={container.servicePath}
+                    />
+                </TableCell>
+            )
+        },
+        {
+            header: (
+                <TableCell sx={tableHeaderStyles}>Ports</TableCell>
+            ),
+            cell: (container: ContainerList) => (
+                <TableCell width={360}>
+                    {formatPorts(container.ports)}
+                </TableCell>
+            )
+        },
+    ];
+
     return (
         <TableContainer
             component={Paper}
@@ -161,55 +345,11 @@ export function ContainerTable(
             <Table stickyHeader aria-label="docker containers table">
                 <TableHead>
                     <TableRow>
-                        <TableCell padding="checkbox">
-                            <Checkbox
-                                color="primary"
-                                indeterminate={selectedServices.length > 0 && selectedServices.length < containers.length}
-                                checked={containers.length > 0 && selectedServices.length === containers.length}
-                                onChange={handleSelectAllClick}
-                                slotProps={{
-                                    input: {'aria-label': 'select all containers'}
-                                }}
-                            />
-                        </TableCell>
-                        <TableCell sx={tableHeaderStyles}>
-                            <TableSortLabel
-                                active={sortField === 'name'}
-                                direction={sortField === 'name' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('name')}
-                            >
-                                Containers
-                            </TableSortLabel>
-                        </TableCell>
-                        <TableCell sx={tableHeaderStyles}>
-                            <TableSortLabel
-                                active={sortField === 'status'}
-                                direction={sortField === 'status' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('status')}
-                            >
-                                Status
-                            </TableSortLabel>
-                        </TableCell>
-                        <TableCell sx={tableHeaderStyles}>
-                            <TableSortLabel
-                                active={sortField === 'image'}
-                                direction={sortField === 'image' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('image')}
-                            >
-                                Image
-                            </TableSortLabel>
-                        </TableCell>
-                        <TableCell sx={tableHeaderStyles}>
-                            <TableSortLabel
-                                active={sortField === 'stack'}
-                                direction={sortField === 'stack' ? sortOrder : 'asc'}
-                                onClick={() => handleSort('stack')}
-                            >
-                                Stack
-                            </TableSortLabel>
-                        </TableCell>
-                        <TableCell sx={tableHeaderStyles}>Ports</TableCell>
-                        <TableCell sx={tableHeaderStyles}>Actions</TableCell>
+                        {tableInfo.map((column, index) => (
+                            <React.Fragment key={index}>
+                                {column.header}
+                            </React.Fragment>
+                        ))}
                     </TableRow>
                 </TableHead>
 
@@ -238,7 +378,6 @@ export function ContainerTable(
                         </TableRow>
                     ) : sortedContainers.map((container) => {
                         const isItemSelected = selectedServices.includes(getContName(container))
-                        const labelId = `container-table-checkbox-${container.id}`
 
                         return (
                             <TableRow
@@ -251,97 +390,11 @@ export function ContainerTable(
                                 selected={isItemSelected}
                                 sx={{cursor: 'pointer', '&:last-child td, &:last-child th': {border: 0}}}
                             >
-                                <TableCell padding="checkbox">
-                                    <Checkbox
-                                        color="primary"
-                                        checked={isItemSelected}
-                                        slotProps={{
-                                            input: {'aria-labelledby': labelId}
-                                        }}
-                                    />
-                                </TableCell>
-                                <TableCell component="th" id={labelId} scope="row">
-                                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                        <Typography
-                                            variant="body1"
-                                            fontWeight="500"
-                                        >
-                                            {container.name}
-                                        </Typography>
-                                        <CopyButton
-                                            handleCopy={handleCopy}
-                                            thisID={container.id}
-                                            activeID={copiedId ?? ""}
-                                            tooltip={"Copy Container ID"}
-                                        />
-                                    </Box>
-
-
-                                </TableCell>
-                                <TableCell>
-                                    <Chip label={container.status} color={getStatusChipColor(container.status)}
-                                          size="small" sx={{textTransform: 'capitalize'}}/>
-                                </TableCell>
-                                <TableCell>
-                                    {container.updateAvailable && (
-                                        <Tooltip title={"Update available"}>
-                                            <Update sx={{fontSize: 16, color: 'gold', verticalAlign: 'middle', mr: 1}}/>
-                                        </Tooltip>
-                                    )}
-                                    <Tooltip title="Open image website" arrow>
-                                        <Link
-                                            href={getImageHomePageUrl(container.imageName)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            sx={{textDecoration: 'none', color: 'primary.main'}}
-                                            onClick={(event) => event.stopPropagation()} // Prevent row click
-                                        >
-                                            <Typography variant="body2" component="span" sx={{
-                                                wordBreak: 'break-all',
-                                                '&:hover': {textDecoration: 'underline'}
-                                            }}>
-                                                {container.imageName}
-                                            </Typography>
-                                        </Link>
-                                    </Tooltip>
-                                </TableCell>
-                                <TableCell>
-                                    <ComposeLink
-                                        stackName={container.stackName}
-                                        servicePath={container.servicePath}
-                                    />
-                                </TableCell>
-                                <TableCell width={360}>
-                                    {formatPorts(container.ports)}
-                                </TableCell>
-                                <TableCell align="right">
-                                    <Stack direction="row" spacing={1} justifyContent="flex-start">
-                                        <Tooltip title="Show container logs">
-                                            <DocumentScannerOutlined
-                                                aria-label="Show container logs"
-                                                color="primary"
-                                                onClick={(event) => {
-                                                    event.stopPropagation() // Prevent row click
-                                                    onShowLogs(container.id, container.name)
-                                                }}
-                                                sx={{cursor: 'pointer'}}
-                                            />
-                                        </Tooltip>
-                                        {showExec && (
-                                            <Tooltip title="Exec into container">
-                                                <Terminal
-                                                    aria-label="Exec into container"
-                                                    color="primary"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation() // Prevent row click
-                                                        onExec?.(container.id, container.name)
-                                                    }}
-                                                    sx={{cursor: 'pointer'}}
-                                                />
-                                            </Tooltip>
-                                        )}
-                                    </Stack>
-                                </TableCell>
+                                {tableInfo.map((column, index) => (
+                                    <React.Fragment key={index}>
+                                        {column.cell(container)}
+                                    </React.Fragment>
+                                ))}
                             </TableRow>
                         )
                     })}
