@@ -45,7 +45,7 @@ const config: Config = {
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
                     editUrl:
-                        'https://github.com/RA341/dockman/tree/main/docs/docs/',
+                        'https://github.com/RA341/dockman/tree/main/docs/',
                 },
                 // todo blog
                 // blog: {
