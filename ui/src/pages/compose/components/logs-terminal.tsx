@@ -5,13 +5,17 @@ import "@xterm/xterm/css/xterm.css";
 
 interface TerminalComponentProps {
     logStream: AsyncIterable<string> | null;
+    inputFunc?: (cmd: string) => void,
 }
 
 export interface TerminalHandle {
     fit: () => void;
 }
 
-const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>(({logStream}, ref) => {
+const hideCursorByte = '\x1b[?25l';
+const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>((
+        {logStream, inputFunc}, ref
+    ) => {
         const terminalRef = useRef<HTMLDivElement>(null);
         const term = useRef<Terminal | null>(null);
         const fitAddon = useRef<FitAddon | null>(null);
@@ -25,7 +29,7 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>(({logStr
 
             const xterm = new Terminal({
                 cursorBlink: false,
-                disableStdin: true,
+                disableStdin: inputFunc != undefined,
                 convertEol: true,
                 scrollback: 2500,
                 theme: {background: '#1E1E1E', foreground: '#CCCCCC'},
@@ -54,7 +58,16 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>(({logStr
             xterm.loadAddon(addon);
             xterm.open(terminalRef.current);
             addon.fit();
-            xterm.write('\x1b[?25l'); // hide cursor
+            if (!inputFunc) {
+                // hide cursor
+                xterm.write(hideCursorByte);
+            }
+
+            xterm.onData((arg1) => {
+                if (inputFunc) {
+                    inputFunc(arg1)
+                }
+            })
 
             // Use ResizeObserver for more robust fitting
             const resizeObserver = new ResizeObserver(() => {

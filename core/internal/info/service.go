@@ -68,9 +68,9 @@ func (cm *Service) VerifyVersion(currentAppVersion string) (*VersionCheckResult,
 func (cm *Service) CheckVersionStatus(currentAppVersion string) (*VersionCheckResult, error) {
 	ok := isValidSemver(currentAppVersion)
 	if !ok {
-		//log.Debug().
-		//	Str("version", currentAppVersion).
-		//	Msg("invalid semver, changelog will not be checked")
+		log.WithLevel(-1).
+			Str("version", currentAppVersion).
+			Msg("invalid semver, changelog will not be checked")
 
 		return &VersionCheckResult{
 			CurrentVersion: &VersionHistory{

@@ -28,6 +28,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// ServiceProvider use a closure instead of passing a concrete Service to change hosts on demand
 type ServiceProvider func() *Service
 
 type Handler struct {
@@ -296,6 +297,34 @@ func (h *Handler) ContainerLogs(ctx context.Context, req *connect.Request[v1.Con
 	return nil
 }
 
+func (h *Handler) ContainerExecOutput(ctx context.Context, req *connect.Request[v1.ContainerExecRequest], stream *connect.ServerStream[v1.LogsMessage]) error {
+	if req.Msg.GetContainerID() == "" {
+		return fmt.Errorf("container id is required")
+	}
+
+	writer := &ContainerLogWriter{responseStream: stream}
+	err := h.srv().StartContainerExecStream(
+		ctx,
+		req.Msg.ContainerID,
+		req.Msg.ExecCmd,
+		writer,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *Handler) ContainerExecInput(_ context.Context, c *connect.Request[v1.ContainerExecCmdInput]) (*connect.Response[v1.Empty], error) {
+	err := h.srv().SendContainerInputCmd(c.Msg.ContainerID, c.Msg.UserCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.Empty{}), nil
+}
+
 ////////////////////////////////////////////
 // 				Image Actions 			  //
 ////////////////////////////////////////////
@@ -329,12 +358,12 @@ func (h *Handler) ImageList(ctx context.Context, _ *connect.Request[v1.ListImage
 	for _, img := range images {
 		totalDisk += img.Size
 
-		if img.Containers == 0 {
-			unusedContainers++
-		}
-
 		if len(img.RepoTags) == 0 {
 			untagged++
+		}
+
+		if img.Containers == 0 {
+			unusedContainers++
 		}
 
 		rpcImages = append(rpcImages, &v1.Image{

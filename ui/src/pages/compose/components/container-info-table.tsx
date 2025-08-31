@@ -34,7 +34,7 @@ interface ContainerTableProps {
     onShowLogs: (containerId: string, containerName: string) => void
     setSelectedServices: (services: string[]) => void,
     useContainerId?: boolean,
-    showExec?: boolean,
+    showExec: boolean,
     onExec?: (containerId: string, containerName: string) => void
 }
 

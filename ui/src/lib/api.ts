@@ -7,6 +7,14 @@ export const API_URL = import.meta.env.MODE === 'development'
     ? "http://localhost:8866"
     : window.location.origin;
 
+export function getWSUrl(path: string) {
+    const url = new URL(API_URL);
+    const baseUrl = url.host
+    const proto = url.protocol == "http:" ? "wss" : "ws";
+
+    return `${proto}://${baseUrl}/${path}`
+}
+
 console.log(`API url: ${API_URL} `)
 
 const transport = createConnectTransport({

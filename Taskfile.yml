@@ -15,6 +15,12 @@ tasks:
     cmds:
       - task --list --sort=alphanumeric
 
+  lint:
+    desc: Lint project
+    dir: core
+    cmds:
+      - golangci-lint run ./...
+
   dock:
     desc: start a a temp dockman on latest tag for testing
     cmds:

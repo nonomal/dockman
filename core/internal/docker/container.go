@@ -778,9 +778,7 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 
 	var volumeFilters []filters.KeyValuePair
 	for i, vol := range listResp.Volumes {
-		// Add nil check for vol with debug logging
 		if vol == nil {
-			log.Debug().Int("volume_index", i).Msg("Skipping nil volume in listResp")
 			continue
 		}
 
@@ -822,9 +820,7 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 
 	var volumes []VolumeInfo
 	for _, vol := range listResp.Volumes {
-		// Add nil check for vol with debug logging
 		if vol == nil {
-			log.Debug().Msg("Skipping nil volume in final processing")
 			continue
 		}
 
@@ -952,7 +948,7 @@ func (s *ContainerService) ExecContainer(ctx context.Context, containerID string
 		Tty:          true,
 	}
 
-	execCreateResp, err := s.daemon.ContainerExecCreate(ctx, containerID, execConfig)
+	execCreateResp, err := s.daemon.ContainerExecCreate(context.Background(), containerID, execConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create exec instance: %w", err)
 	}
@@ -962,12 +958,12 @@ func (s *ContainerService) ExecContainer(ctx context.Context, containerID string
 		Tty:    true,
 	}
 
-	hijackedResp, err := s.daemon.ContainerExecAttach(ctx, execCreateResp.ID, execAttachOptions)
+	hijackedResp, err := s.daemon.ContainerExecAttach(context.Background(), execCreateResp.ID, execAttachOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to attach to exec instance: %w", err)
 	}
 
-	err = s.daemon.ContainerExecStart(ctx, execCreateResp.ID, container.ExecStartOptions{
+	err = s.daemon.ContainerExecStart(context.Background(), execCreateResp.ID, container.ExecStartOptions{
 		Detach: false,
 		Tty:    true,
 	})
