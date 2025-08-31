@@ -749,30 +749,14 @@ type VolumeInfo struct {
 }
 
 func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error) {
-	// Add nil check for daemon with zerolog debug logging
-	if s.daemon == nil {
-		log.Debug().Msg("Docker daemon client is nil")
-		return nil, fmt.Errorf("docker daemon client not initialized")
-	}
-
-	log.Debug().Msg("Starting VolumesList operation")
-
 	listResp, err := s.daemon.VolumeList(ctx, volume.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	if listResp.Volumes == nil {
-		log.Debug().
-			Int("warnings_count", len(listResp.Warnings)).
-			Strs("warnings", listResp.Warnings).
-			Msg("VolumeList returned nil volumes slice")
 		return []VolumeInfo{}, nil // Return empty slice instead of nil
 	}
-
-	log.Debug().
-		Int("volumes_count", len(listResp.Volumes)).
-		Msg("Successfully retrieved volumes listResp")
 
 	diskUsage, err := s.daemon.DiskUsage(ctx, types.DiskUsageOptions{
 		Types: []types.DiskUsageObject{types.VolumeObject}, // fetch volumes only
@@ -786,9 +770,6 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 	if diskUsage.Volumes == nil {
 		log.Debug().Msg("DiskUsage returned nil volumes slice")
 	} else {
-		//log.Debug().
-		//	Int("disk_usage_volumes_count", len(diskUsage.Volumes)).
-		//	Msg("Retrieved disk usage for volumes")
 		tmpMap = make(map[string]*volume.Volume, len(diskUsage.Volumes))
 		for _, l := range diskUsage.Volumes {
 			tmpMap[l.Name] = l
@@ -856,10 +837,6 @@ func (s *ContainerService) VolumesList(ctx context.Context) ([]VolumeInfo, error
 
 		volumes = append(volumes, inf)
 	}
-
-	log.Debug().
-		Int("final_volumes_count", len(volumes)).
-		Msg("VolumesList operation completed successfully")
 
 	return volumes, nil
 }
