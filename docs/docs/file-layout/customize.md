@@ -57,7 +57,7 @@ To turn this on, add the following to your `.dockman.yml` file:
 useComposeFolders: true
 ```
 
-## Example
+### Example
 
 | Normal Folders                                  | Compose Folders                       |
 |-------------------------------------------------|---------------------------------------|
