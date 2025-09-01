@@ -24,7 +24,8 @@ import scrollbarStyles from "../../../components/scrollbar-style.tsx"
 import CopyButton from "../../../components/copy-button.tsx"
 import {useCopyButton} from "../../../hooks/copy.ts"
 import ComposeLink from "../../../components/compose-link.tsx"
-import {sortTable, type TableInfo, useSort} from '../../../lib/table.ts'
+import {type SortOrder, sortTable, type TableInfo, useSort} from '../../../lib/table.ts'
+import {useConfig} from "../../../hooks/config.ts";
 
 interface ContainerTableProps {
     containers: ContainerList[]
@@ -63,13 +64,14 @@ export function ContainerTable({
         setSelectedServices(allSelected ? [] : containers.map(getContName))
     }
 
+    const {dockYaml} = useConfig()
     const {
         sortField,
         sortOrder,
         handleSort,
     } = useSort(
-        'name',
-        'asc'
+        dockYaml?.containerPage?.sort?.sortField ?? 'name',
+        (dockYaml?.containerPage?.sort?.sortOrder as SortOrder) ?? 'asc'
     )
 
     const handleRowClick = (id: string) => {
@@ -103,7 +105,7 @@ export function ContainerTable({
                 </TableCell>
             )
         },
-        name: {
+        Name: {
             getValue: (c) => c.serviceName,
             header: (label) => (
                 <TableCell sx={tableHeaderStyles}>
@@ -112,7 +114,7 @@ export function ContainerTable({
                         direction={sortField === label ? sortOrder : 'asc'}
                         onClick={() => handleSort(label)}
                     >
-                        Containers
+                        {label}
                     </TableSortLabel>
                 </TableCell>
             ),
@@ -130,7 +132,7 @@ export function ContainerTable({
                 </TableCell>
             )
         },
-        status: {
+        Status: {
             getValue: (c) => c.status,
             header: (label) => (
                 <TableCell sx={tableHeaderStyles}>
@@ -139,7 +141,7 @@ export function ContainerTable({
                         direction={sortField === label ? sortOrder : 'asc'}
                         onClick={() => handleSort(label)}
                     >
-                        Status
+                        {label}
                     </TableSortLabel>
                 </TableCell>
             ),
@@ -150,7 +152,7 @@ export function ContainerTable({
                 </TableCell>
             )
         },
-        actions: {
+        Actions: {
             getValue: () => 0,
             header: () => <TableCell sx={tableHeaderStyles}>Actions</TableCell>,
             cell: (container) => (
@@ -184,7 +186,7 @@ export function ContainerTable({
                 </TableCell>
             )
         },
-        image: {
+        Image: {
             getValue: (c) => c.imageName,
             header: (label) => (
                 <TableCell sx={tableHeaderStyles}>
@@ -193,7 +195,7 @@ export function ContainerTable({
                         direction={sortField === label ? sortOrder : 'asc'}
                         onClick={() => handleSort(label)}
                     >
-                        Image
+                        {label}
                     </TableSortLabel>
                 </TableCell>
             ),
@@ -221,7 +223,7 @@ export function ContainerTable({
                 </TableCell>
             )
         },
-        stack: {
+        Stack: {
             getValue: (c) => c.stackName,
             header: (label) => (
                 <TableCell sx={tableHeaderStyles}>
@@ -230,20 +232,30 @@ export function ContainerTable({
                         direction={sortField === label ? sortOrder : 'asc'}
                         onClick={() => handleSort(label)}
                     >
-                        Stack
+                        {label}
                     </TableSortLabel>
                 </TableCell>
             ),
             cell: (container) => (
                 <TableCell>
-                    <ComposeLink stackName={container.stackName} servicePath={container.servicePath}/>
+                    <ComposeLink
+                        stackName={container.stackName}
+                        servicePath={container.servicePath}
+                    />
                 </TableCell>
             )
         },
-        ports: {
+        Ports: {
             getValue: () => 0,
-            header: () => <TableCell sx={tableHeaderStyles}>Ports</TableCell>,
-            cell: (container) => <TableCell width={360}>{formatPorts(container.ports)}</TableCell>
+            header: (label) => (
+                <TableCell sx={tableHeaderStyles}>
+                    {label}
+                </TableCell>),
+            cell: (container) => (
+                <TableCell width={360}>
+                    {formatPorts(container.ports)}
+                </TableCell>
+            )
         }
     }
 

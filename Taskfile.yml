@@ -156,6 +156,7 @@ tasks:
     cmds:
       - task dk:b:{{.TARGET}}
       - docker run --rm
+        -e DOCKMAN_LOG_LEVEL=debug
         -e DOCKMAN_AUTH_ENABLE=false
         -e DOCKMAN_AUTH_USERNAME=wow
         -e DOCKMAN_AUTH_PASSWORD=wow

@@ -73,15 +73,13 @@ export function TabEditor({selectedPage}: EditorProps) {
         fetchDataCallback().then()
     }, [fetchDataCallback]);
 
-
     const saveFile = (val: string) => {
         uploadFile(selectedPage, val).then(err => {
             if (err) {
                 showError(`Autosave failed: ${err}`);
-                return;
+            } else {
+                setStatus("success")
             }
-
-            setStatus("success")
         })
     }
 

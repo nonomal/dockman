@@ -13,12 +13,12 @@ type DockmanYaml struct {
 	VolumesPage VolumesConfig `yaml:"volumes"`
 
 	// configure network page
-	NetworkPage NetworkConfig `yaml:"network"`
+	NetworkPage NetworkConfig `yaml:"networks"`
 
 	// configure image page
-	ImagePage ImageConfig `yaml:"image"`
+	ImagePage ImageConfig `yaml:"images"`
 
-	ContainerPage ContainerConfig `yaml:"container"`
+	ContainerPage ContainerConfig `yaml:"containers"`
 }
 
 type VolumesConfig struct {

@@ -1,4 +1,4 @@
-import {capitalize, type SortOrder} from "./table.ts";
+import {type SortOrder} from "./table.ts";
 import {TableSortLabel} from "@mui/material";
 
 
@@ -19,7 +19,7 @@ export const TableLabelWithSort = ({activeLabel, sortOrder, handleSort, label}: 
             direction={active ? sortOrder : "asc"}
             onClick={() => handleSort(label)}
         >
-            {capitalize(label)}
+            {label}
         </TableSortLabel>
     );
 };

@@ -3,14 +3,27 @@ import {callRPC, useClient} from "../lib/api.ts";
 import {useSnackbar} from "../hooks/snackbar.ts";
 import {ConfigService, type UserConfig} from "../gen/config/v1/config_pb.ts";
 import {ConfigContext, type ConfigContextType, type UpdateSettingsOption} from "../hooks/config.ts";
+import {type DockmanYaml, FileService} from "../gen/files/v1/files_pb.ts";
 
 export type Config = Omit<UserConfig, '$typeName' | '$unknown'>;
 
 export function UserConfigProvider({children}: { children: ReactNode }) {
     const client = useClient(ConfigService)
-    const {showError, showSuccess} = useSnackbar()
+    const file = useClient(FileService)
+
+    const {showError, showSuccess, showWarning} = useSnackbar()
     const [config, setConfig] = useState<Config>({})
     const [isLoading, setIsLoading] = useState(true)
+
+    const [dockYaml, setDockYaml] = useState<DockmanYaml | null>(null)
+
+    const fetchDockYaml = useCallback(async () => {
+        const {val, err} = await callRPC(() => file.getDockmanYaml({}))
+        if (err) {
+            showWarning(`Unable to get dockman yaml, ${err}`)
+        }
+        setDockYaml(val)
+    }, [file])
 
     const fetchConfig = useCallback(async () => {
         console.log("Fetching user config...")
@@ -22,8 +35,11 @@ export function UserConfigProvider({children}: { children: ReactNode }) {
         } else if (val) {
             setConfig(val)
         }
+
+        await fetchDockYaml()
+
         setIsLoading(false)
-    }, [client])
+    }, [client, fetchDockYaml])
 
     const updateSettings = useCallback(
         async (conf: Config, updaterConfig: UpdateSettingsOption = {}) => {
@@ -46,6 +62,7 @@ export function UserConfigProvider({children}: { children: ReactNode }) {
         config,
         isLoading,
         updateSettings,
+        dockYaml,
     }
 
     return (

@@ -1,5 +1,4 @@
 import {createContext, useContext} from "react";
-import type {DockmanYaml} from "../gen/files/v1/files_pb.ts";
 
 export interface FileGroup {
     name: string
@@ -8,7 +7,6 @@ export interface FileGroup {
 
 export interface FilesContextType {
     files: FileGroup[]
-    dockmanYaml: DockmanYaml | null
     isLoading: boolean
     addFile: (filename: string, parent: string) => Promise<void>
     deleteFile: (filename: string) => Promise<void>

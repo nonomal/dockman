@@ -22,8 +22,9 @@ import {useCopyButton} from "../../hooks/copy.ts";
 import type {Image} from "../../gen/docker/v1/docker_pb.ts";
 import CopyButton from "../../components/copy-button.tsx";
 import {formatDate} from "../../lib/api.ts";
-import {capitalize, sortTable, type TableInfo, useSort} from "../../lib/table.ts";
+import {type SortOrder, sortTable, type TableInfo, useSort} from "../../lib/table.ts";
 import {formatBytes} from "../../lib/editor.ts";
+import {useConfig} from "../../hooks/config.ts";
 
 interface ImageTableProps {
     images: Image[];
@@ -59,7 +60,16 @@ export const ImageTable = ({
     const isAllSelected = selectedImages.length === images.length && images.length > 0;
     const isIndeterminate = selectedImages.length > 0 && selectedImages.length < images.length;
 
-    const {sortField, sortOrder, handleSort} = useSort("images", "desc");
+    const {dockYaml} = useConfig()
+
+    const {
+        sortField,
+        sortOrder,
+        handleSort
+    } = useSort(
+        dockYaml?.imagePage?.sort?.sortField ?? "images",
+        (dockYaml?.imagePage?.sort?.sortOrder as SortOrder) ?? "desc"
+    );
 
     const tableInfo: TableInfo<Image> = {
         checkbox: {
@@ -83,7 +93,7 @@ export const ImageTable = ({
                 </TableCell>
             )
         },
-        images: {
+        Images: {
             getValue: (image) => image.repoTags[0] || 'untagged',
             header: (label) => {
                 const active = sortField === label;
@@ -94,7 +104,7 @@ export const ImageTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            {capitalize(label)}
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -136,7 +146,7 @@ export const ImageTable = ({
                 </TableCell>
             )
         },
-        containers: {
+        Containers: {
             getValue: (image) => Number(image.containers),
             header: (label) => {
                 const active = sortField === label;
@@ -147,7 +157,7 @@ export const ImageTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            {capitalize(label)}
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -172,7 +182,7 @@ export const ImageTable = ({
                 </TableCell>
             )
         },
-        size: {
+        Size: {
             getValue: (image) => Number(image.size),
             header: (label) => {
                 const active = sortField === label;
@@ -183,7 +193,7 @@ export const ImageTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            {capitalize(label)}
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -196,7 +206,7 @@ export const ImageTable = ({
                 </TableCell>
             )
         },
-        sharedSize: {
+        "Shared Size": {
             getValue: (image) => Number(image.sharedSize),
             header: (label) => {
                 const active = sortField === label;
@@ -207,7 +217,7 @@ export const ImageTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            {capitalize(label)}
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -258,7 +268,7 @@ export const ImageTable = ({
         //         </TableCell>
         //     )
         // },
-        created: {
+        Created: {
             getValue: (image) => image.created,
             header: (label) => {
                 const active = sortField === label;
@@ -269,7 +279,7 @@ export const ImageTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            {capitalize(label)}
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )

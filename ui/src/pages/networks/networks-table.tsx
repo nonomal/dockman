@@ -19,8 +19,9 @@ import type {Network} from "../../gen/docker/v1/docker_pb.ts";
 import {useCopyButton} from "../../hooks/copy.ts";
 import CopyButton from "../../components/copy-button.tsx";
 import {formatDate} from "../../lib/api.ts";
-import {capitalize, sortTable, type TableInfo, useSort} from "../../lib/table.ts";
+import {type SortOrder, sortTable, type TableInfo, useSort} from "../../lib/table.ts";
 import {TableLabelWithSort} from "../../lib/table-shared.tsx";
+import {useConfig} from "../../hooks/config.ts";
 
 interface NetworkTableProps {
     networks: Network[];
@@ -50,7 +51,15 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
     const isAllSelected = selectedNetworks.length === networks.length && networks.length > 0;
     const isIndeterminate = selectedNetworks.length > 0 && selectedNetworks.length < networks.length;
 
-    const {sortField, sortOrder, handleSort} = useSort("name", "desc")
+    const {dockYaml} = useConfig()
+    const {
+        sortField,
+        sortOrder,
+        handleSort,
+    } = useSort(
+        dockYaml?.networkPage?.sort?.sortField ?? 'name',
+        (dockYaml?.networkPage?.sort?.sortOrder as SortOrder) ?? 'asc'
+    )
 
     const tableInfo: TableInfo<Network> = {
         checkbox: {
@@ -72,7 +81,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
             ),
             getValue: () => 0
         },
-        name: {
+        "Network Name": {
             header: (label) => {
                 const active = sortField === label;
                 return (
@@ -82,7 +91,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                             direction={active ? sortOrder : "asc"}
                             onClick={() => handleSort(label)}
                         >
-                            {capitalize(label)}
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 );
@@ -115,7 +124,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
             ),
             getValue: (data) => data.name,
         },
-        project: {
+        Project: {
             getValue: data => data.composeProject,
             header: (label) => {
                 return (
@@ -146,7 +155,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                 </TableCell>
             )
         },
-        inuse: {
+        "In use": {
             getValue: data => data.containerIds.length,
             header: (label) => {
                 return (
@@ -172,7 +181,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                 </TableCell>
             )
         },
-        subnet: {
+        Subnet: {
             getValue: data => data.subnet,
             header: (label) => {
                 return (
@@ -194,7 +203,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                 </TableCell>
             )
         },
-        scope: {
+        Scope: {
             getValue: data => data.scope,
             header: (label) => {
                 return (
@@ -216,7 +225,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                 </TableCell>
             )
         },
-        driver: {
+        Driver: {
             getValue: data => data.driver,
             header: (label) => {
                 return (
@@ -238,7 +247,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                 </TableCell>
             )
         },
-        internal: {
+        Internal: {
             getValue: data => data.internal.toString(),
             header: (label) => {
                 return (
@@ -260,7 +269,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                 </TableCell>
             )
         },
-        attachable: {
+        Attachable: {
             getValue: data => data.attachable,
             header: (label) => {
                 return (
@@ -282,7 +291,7 @@ export const NetworkTable = ({networks, selectedNetworks = [], onSelectionChange
                 </TableCell>
             )
         },
-        "created": {
+        "Created": {
             getValue: data => data.createdAt,
             header: (label) => {
                 return (

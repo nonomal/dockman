@@ -4,7 +4,7 @@ import {callRPC, useClient} from "../lib/api.ts";
 import {type FileGroup, FilesContext, type FilesContextType} from "../hooks/files.ts";
 import {useHost} from "../hooks/host.ts";
 import {useSnackbar} from "../hooks/snackbar.ts";
-import {type DockmanYaml, FileService} from '../gen/files/v1/files_pb.ts';
+import {FileService} from '../gen/files/v1/files_pb.ts';
 
 export function FilesProvider({children}: { children: ReactNode }) {
     const navigate = useNavigate()
@@ -15,19 +15,6 @@ export function FilesProvider({children}: { children: ReactNode }) {
 
     const [files, setFiles] = useState<FileGroup[]>([])
     const [isLoading, setIsLoading] = useState(true)
-
-    const [dockmanYaml, setDockmanYaml] = useState<DockmanYaml | null>(null)
-
-    const fetchDockmanYaml = async () => {
-        const {val, err} = await callRPC(() => client.getDockmanYaml({}))
-        if (err) {
-            console.error("dockman yaml:", err)
-            showError(err)
-            setDockmanYaml(null)
-        } else {
-            setDockmanYaml(val)
-        }
-    }
 
     const fetchFiles = useCallback(async () => {
         setIsLoading(true)
@@ -43,8 +30,6 @@ export function FilesProvider({children}: { children: ReactNode }) {
             }))
             setFiles([...res])
         }
-
-        await fetchDockmanYaml()
 
         setIsLoading(false)
     }, [client, selectedHost])
@@ -113,7 +98,6 @@ export function FilesProvider({children}: { children: ReactNode }) {
         deleteFile,
         renameFile,
         refetch: fetchFiles,
-        dockmanYaml,
     }
 
     return (

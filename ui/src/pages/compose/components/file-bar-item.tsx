@@ -11,12 +11,13 @@ import {
     Tooltip
 } from '@mui/material'
 import {Add, Analytics, Delete, Edit, ExpandLess, ExpandMore, Folder, RocketLaunch} from '@mui/icons-material'
-import {type FileGroup, useFiles} from "../../../hooks/files.ts"
+import {type FileGroup} from "../../../hooks/files.ts"
 import React, {useEffect, useMemo, useRef, useState} from "react"
 import FileBarIcon, {DockerFolderIcon} from "./file-bar-icon.tsx"
 import {amber} from "@mui/material/colors"
 import {isComposeFile} from "../../../lib/editor.ts";
 import type {DockmanYaml} from "../../../gen/files/v1/files_pb.ts";
+import {useConfig} from "../../../hooks/config.ts";
 
 interface FileItemProps {
     group: FileGroup,
@@ -92,10 +93,13 @@ const FileBarItem = React.memo((
         onDelete,
         onRename
     }: FileItemProps) => {
-    const {dockmanYaml} = useFiles()
-    const normalized = useMemo(
-        () => normalizeFileGroup({group, config: dockmanYaml}),
-        [dockmanYaml, group])
+
+    const {dockYaml} = useConfig()
+
+    const normalized = useMemo(() =>
+            normalizeFileGroup({group, config: dockYaml}),
+        [dockYaml, group]
+    )
 
     const handleToggle = () => {
         onToggle(group.name)

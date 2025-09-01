@@ -4,14 +4,6 @@ import {callRPC, useClient} from "./api.ts";
 
 export type SortOrder = 'asc' | 'desc';
 
-export function capitalize(word: string): string {
-    if (!word) return word;
-    return word
-        .split(' ')
-        .map((word) => word[0].toUpperCase() + word.slice(1))
-        .join(' ');
-}
-
 export const useDockmanYaml = () => {
     const fs = useClient(FileService)
     const [dockYaml, setDockYaml] = useState<DockmanYaml | null>(null)

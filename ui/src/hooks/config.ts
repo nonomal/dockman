@@ -1,5 +1,6 @@
 import {createContext, useContext} from "react";
 import type {Config} from "../context/config-context.tsx";
+import type {DockmanYaml} from "../gen/files/v1/files_pb.ts";
 
 export interface UpdateSettingsOption {
     updateUpdater?: boolean;
@@ -9,6 +10,7 @@ export interface ConfigContextType {
     config: Config
     isLoading: boolean
     updateSettings: (user: Config, opts?: UpdateSettingsOption) => Promise<void>,
+    dockYaml: DockmanYaml | null
 }
 
 export const ConfigContext = createContext<ConfigContextType | undefined>(undefined)

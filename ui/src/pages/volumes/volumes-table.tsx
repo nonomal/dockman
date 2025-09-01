@@ -25,8 +25,9 @@ import {formatBytes} from "../../lib/editor.ts";
 import {useCopyButton} from "../../hooks/copy.ts";
 import CopyButton from "../../components/copy-button.tsx";
 import ComposeLink from "../../components/compose-link.tsx";
-import {sortTable, type TableInfo, useSort} from "../../lib/table.ts";
+import {type SortOrder, sortTable, type TableInfo, useSort} from "../../lib/table.ts";
 import {formatDate} from "../../lib/api.ts";
+import {useConfig} from "../../hooks/config.ts";
 
 interface VolumeTableProps {
     volumes: Volume[];
@@ -62,7 +63,15 @@ export const VolumeTable = ({
     const isAllSelected = selectedVolumes.length === volumes.length && volumes.length > 0;
     const isIndeterminate = selectedVolumes.length > 0 && selectedVolumes.length < volumes.length;
 
-    const {sortField, sortOrder, handleSort} = useSort('name', 'asc');
+    const {dockYaml} = useConfig()
+    const {
+        sortField,
+        sortOrder,
+        handleSort,
+    } = useSort(
+        dockYaml?.volumesPage?.sort?.sortField ?? 'name',
+        (dockYaml?.volumesPage?.sort?.sortOrder as SortOrder) ?? 'asc'
+    )
 
     const tableInfo: TableInfo<Volume> = {
         checkbox: {
@@ -86,7 +95,7 @@ export const VolumeTable = ({
                 </TableCell>
             )
         },
-        name: {
+        "Volume Name": {
             getValue: (volume) => volume.name,
             header: (label) => {
                 const active = sortField === label;
@@ -97,7 +106,7 @@ export const VolumeTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            Volume Name
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -120,7 +129,7 @@ export const VolumeTable = ({
                 </TableCell>
             )
         },
-        label: {
+        Label: {
             getValue: (volume) => volume.labels || '',
             header: (label) => {
                 const active = sortField === label;
@@ -131,7 +140,7 @@ export const VolumeTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            Label
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -153,7 +162,7 @@ export const VolumeTable = ({
                 </TableCell>
             )
         },
-        project: {
+        Project: {
             getValue: (volume) => volume.composeProjectName || '',
             header: (label) => {
                 const active = sortField === label;
@@ -164,7 +173,7 @@ export const VolumeTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            Stack
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -178,7 +187,7 @@ export const VolumeTable = ({
                 </TableCell>
             )
         },
-        size: {
+        Size: {
             getValue: (volume) => volume.size,
             header: (label) => {
                 const active = sortField === label;
@@ -189,7 +198,7 @@ export const VolumeTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            Size
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -207,7 +216,7 @@ export const VolumeTable = ({
                 </TableCell>
             )
         },
-        inuse: {
+        "In use": {
             getValue: (volume) => !!volume.containerID,
             header: (label) => {
                 const active = sortField === label;
@@ -218,7 +227,7 @@ export const VolumeTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            In Use
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -234,7 +243,7 @@ export const VolumeTable = ({
                 </TableCell>
             )
         },
-        mountPoint: {
+        "Mount Point": {
             getValue: (volume) => volume.mountPoint,
             header: (label) => {
                 const active = sortField === label;
@@ -245,7 +254,7 @@ export const VolumeTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            Mount Point
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
@@ -268,7 +277,7 @@ export const VolumeTable = ({
                 </TableCell>
             )
         },
-        createdAt: {
+        Created: {
             getValue: (volume) => volume.createdAt,
             header: (label) => {
                 const active = sortField === label;
@@ -279,7 +288,7 @@ export const VolumeTable = ({
                             direction={active ? sortOrder : 'asc'}
                             onClick={() => handleSort(label)}
                         >
-                            Created
+                            {label}
                         </TableSortLabel>
                     </TableCell>
                 )
