@@ -281,6 +281,7 @@ func (s *ContainerService) containersUpdateLoop(
 			// Store the update for later
 			id := cur.ID
 			dockmanUpdate = func() {
+				log.Info().Msg("Starting dockman update")
 				err := UpdateDockman(id, s.updaterUrl)
 				if err != nil {
 					log.Warn().Err(err).Msg("Failed to update Dockman container")
@@ -306,7 +307,6 @@ func (s *ContainerService) containersUpdateLoop(
 		log.Info().Msg("No images to prune")
 	}
 
-	log.Info().Msg("Starting dockman update")
 	dockmanUpdate()
 
 	return nil
