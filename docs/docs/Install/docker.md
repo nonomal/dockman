@@ -3,7 +3,7 @@ title: Docker
 sidebar_position: 0
 ---
 
-### Docker Run
+## Docker Run
 
 Try Dockman with this docker run command
 
@@ -19,7 +19,7 @@ docker run --rm -p 8866:8866 -v /var/run/docker.sock:/var/run/docker.sock ghcr.i
 
 Access at http://localhost:8866
 
-### Docker Compose
+## Docker Compose
 
 :::info
 The stacks directory path must be absolute and identical in all three locations:
@@ -77,7 +77,7 @@ services:
     restart: always
 ```
 
-# Docker Tags
+## Docker Tags
 
 Dockman follows [semver](https://semver.org/) and tags its image as such.
 
