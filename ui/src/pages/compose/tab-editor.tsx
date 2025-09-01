@@ -19,7 +19,6 @@ import {GitService} from "../../gen/git/v1/git_pb";
 import {DiffViewer} from "./components/diff.tsx";
 import {MonacoEditor} from "./components/editor.tsx";
 import {useSnackbar} from "../../hooks/snackbar.ts";
-import {GitCommitListOld} from "./components/editor-commit-list-old.tsx";
 
 interface EditorProps {
     selectedPage: string;
@@ -35,9 +34,9 @@ export function TabEditor({selectedPage}: EditorProps) {
 
     const [loading, setLoading] = useState(false)
     const [commitMessage, setCommitMessage] = useState("")
+
     const [openCommitDialog, setOpenCommitDialog] = useState(false)
     const [commitListKey, setCommitListKey] = useState(0);
-
     const [diffCommitId, setDiffCommitId] = useState("")
 
     const [status, setStatus] = useState<SaveState>('idle');
@@ -211,22 +210,6 @@ export function TabEditor({selectedPage}: EditorProps) {
                                 )}
                             </Box>
                         </Fade>
-                    </Box>
-                    <Box sx={{
-                        width: 100,
-                        flexShrink: 0,
-                        display: 'flex',
-                        flexDirection: 'column'
-
-                    }}>
-                        <GitCommitListOld
-                            key={commitListKey}
-                            chooseCommit={commit => {
-                                setDiffCommitId(commit)
-                            }}
-                            selectedCommit={diffCommitId}
-                            selectedFile={selectedPage}
-                        />
                     </Box>
                 </Box>
             </Box>

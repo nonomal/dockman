@@ -1,12 +1,13 @@
 package cache
 
 import (
-	"github.com/rs/zerolog/log"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
-// CacheEntry holds cached data with expiration
+// Entry CacheEntry holds cached data with expiration
 type Entry[T any] struct {
 	Data      T
 	ExpiresAt time.Time
