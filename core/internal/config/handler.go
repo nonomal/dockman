@@ -2,24 +2,23 @@ package config
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"connectrpc.com/connect"
 	v1 "github.com/RA341/dockman/generated/config/v1"
-	"github.com/rs/zerolog/log"
 )
 
 type Handler struct {
-	srv Store
+	srv *Service
 }
 
-func NewConnectHandler(srv Store) *Handler {
+func NewConnectHandler(srv *Service) *Handler {
 	return &Handler{
 		srv: srv,
 	}
 }
 
-func (h Handler) GetUserConfig(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.UserConfig], error) {
+func (h *Handler) GetUserConfig(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.UserConfig], error) {
 	config, err := h.srv.GetConfig()
 	if err != nil {
 		return nil, err
@@ -29,13 +28,10 @@ func (h Handler) GetUserConfig(context.Context, *connect.Request[v1.Empty]) (*co
 	return connect.NewResponse(&rpcConfig), nil
 }
 
-func (h Handler) SetUserConfig(_ context.Context, req *connect.Request[v1.UserConfig]) (*connect.Response[v1.Empty], error) {
-	userconfig := FromProto(req.Msg)
-	fmt.Println("SetUserConfig", userconfig.UseComposeFolders)
+func (h *Handler) SetUserConfig(_ context.Context, req *connect.Request[v1.SetUserRequest]) (*connect.Response[v1.Empty], error) {
+	userconfig := FromProto(req.Msg.Config)
 
-	log.Warn().Any("ss", userconfig).Msg("herher")
-
-	err := h.srv.SetConfig(&userconfig)
+	err := h.srv.SaveConfig(&userconfig, req.Msg.UpdateUpdater)
 	if err != nil {
 		return nil, err
 	}
@@ -45,12 +41,20 @@ func (h Handler) SetUserConfig(_ context.Context, req *connect.Request[v1.UserCo
 
 func ToProto(config *UserConfig) v1.UserConfig {
 	return v1.UserConfig{
-		UseComposeFolders: config.UseComposeFolders,
+		Updater: &v1.ContainerUpdater{
+			Enable:            config.ContainerUpdater.Enable,
+			NotifyOnly:        config.ContainerUpdater.NotifyOnly,
+			IntervalInSeconds: int64(config.ContainerUpdater.Interval.Seconds()),
+		},
 	}
 }
 
 func FromProto(config *v1.UserConfig) UserConfig {
 	return UserConfig{
-		UseComposeFolders: config.UseComposeFolders,
+		ContainerUpdater: ContainerUpdater{
+			Enable:     config.Updater.Enable,
+			NotifyOnly: config.Updater.NotifyOnly,
+			Interval:   time.Duration(config.Updater.IntervalInSeconds) * time.Second,
+		},
 	}
 }

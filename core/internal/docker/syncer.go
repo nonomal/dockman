@@ -3,11 +3,12 @@ package docker
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/rs/zerolog/log"
-	"strings"
 )
 
 // Syncer is responsible for ensuring project files are available on the target host.
@@ -64,6 +65,10 @@ func (s *SFTPSyncer) Sync(_ context.Context, project *types.Project) error {
 
 // NoopSyncer is a syncer that does nothing, for local environments.
 type NoopSyncer struct{}
+
+func NewNoopSyncer() *NoopSyncer {
+	return &NoopSyncer{}
+}
 
 func (n *NoopSyncer) Sync(_ context.Context, _ *types.Project) error {
 	// For local docker, files are already on the host. No sync needed.

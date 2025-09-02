@@ -2,16 +2,17 @@ package git
 
 import (
 	"fmt"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"testing"
+
 	"github.com/RA341/dockman/internal/files"
 	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/RA341/dockman/pkg/logger"
 	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 func init() {
@@ -306,7 +307,7 @@ func TestService(t *testing.T) {
 	abs, err := filepath.Abs(root)
 	require.NoError(t, err)
 	root = abs
-	fil := files.NewService(root)
+	fil := files.NewService(root, "")
 	gitc := NewService(root)
 
 	t.Cleanup(func() {

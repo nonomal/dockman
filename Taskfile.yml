@@ -15,6 +15,21 @@ tasks:
     cmds:
       - task --list --sort=alphanumeric
 
+  dock:
+    desc: start a a temp dockman on latest tag for testing
+    cmds:
+      - task: dock:latest
+
+  dock:*:
+    desc: start a a temp dockman instance for testing
+    env:
+      ttg: "{{index .MATCH 0}}"
+    cmds:
+      - docker run --rm
+        -p 8822:8866
+        -v /var/run/docker.sock:/var/run/docker.sock
+        ghcr.io/ra341/dockman:{{.ttg}}
+
   init:
     desc: "Setup dockman dev environment should be run only once after cloning the project."
     deps:
@@ -141,11 +156,12 @@ tasks:
     cmds:
       - task dk:b:{{.TARGET}}
       - docker run --rm
-          -e DOCKMAN_AUTH_ENABLE=false
-          -e DOCKMAN_AUTH_USERNAME=wow
-          -e DOCKMAN_AUTH_PASSWORD=wow
-          -v /var/run/docker.sock:/var/run/docker.sock 
-          -p 8221:8866 
+        -e DOCKMAN_LOG_LEVEL=debug
+        -e DOCKMAN_AUTH_ENABLE=false
+        -e DOCKMAN_AUTH_USERNAME=wow
+        -e DOCKMAN_AUTH_PASSWORD=wow
+        -v /var/run/docker.sock:/var/run/docker.sock
+        -p 8221:8866
         {{.DOCKMAN_IMAGE_BASE}}:{{.TARGET}}
     preconditions:
       - sh: 'test -n "{{.TARGET}}"'

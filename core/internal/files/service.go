@@ -2,28 +2,27 @@ package files
 
 import (
 	"fmt"
-	"github.com/RA341/dockman/pkg/fileutil"
-	"github.com/lithammer/fuzzysearch/fuzzy"
-	"github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
 	"io"
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
+	"strings"
 	"sync"
+
+	"dario.cat/mergo"
+	"github.com/RA341/dockman/pkg/fileutil"
+	"github.com/goccy/go-yaml"
+	"github.com/rs/zerolog/log"
 )
 
 var ignoredFiles = []string{".git"}
 
 type Service struct {
-	composeRoot string
-
-	files     map[string][][]string
-	fileMutex sync.RWMutex
+	composeRoot  string
+	dockYamlPath string
 }
 
-func NewService(composeRoot string) *Service {
+func NewService(composeRoot string, dockYaml string) *Service {
 	if !filepath.IsAbs(composeRoot) {
 		var err error
 		composeRoot, err = filepath.Abs(composeRoot)
@@ -36,10 +35,24 @@ func NewService(composeRoot string) *Service {
 		log.Fatal().Err(err).Str("compose-root", composeRoot).Msg("failed to create compose root folder")
 	}
 
-	log.Debug().Msg("File service loaded successfully")
-	return &Service{
+	srv := &Service{
 		composeRoot: composeRoot,
 	}
+
+	if dockYaml != "" {
+		if strings.HasPrefix(dockYaml, "/") {
+			// Absolute path provided
+			// e.g /home/zaphodb/conf/.dockman.db
+			srv.dockYamlPath = dockYaml
+		} else {
+			// Relative path; attach compose root
+			// e.g. dockman/.dockman.yml
+			srv.dockYamlPath = srv.WithRoot(dockYaml)
+		}
+	}
+
+	log.Debug().Msg("File service loaded successfully")
+	return srv
 }
 
 func (s *Service) Close() error {
@@ -51,39 +64,6 @@ type dirResult struct {
 	dirname  string
 }
 
-// todo
-//func (s *Service) WatchFiles() (map[string][]string, error) {
-//	watcher, err := fsnotify.NewWatcher()
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer fileutil.Close(watcher)
-//
-//	err = watcher.SetRecursive()
-//	if err != nil {
-//		return nil, fmt.Errorf("failed to set recursive watcher: %v", err)
-//	}
-//
-//	err = watcher.Add(s.composeRoot)
-//	if err != nil {
-//		return nil, fmt.Errorf("failed to add watcher for dir: %s: %v", s.composeRoot, err)
-//	}
-//
-//	select {
-//	case ev := <-watcher.Events:
-//		s.fileMutex.Lock()
-//		defer s.fileMutex.Unlock()
-//		list, err := s.List()
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//	}
-//}
-//func (s *Service) ListCached() (map[string][]string, error) {
-//
-//}
-
 func (s *Service) List() (map[string][]string, error) {
 	topLevelEntries, err := os.ReadDir(s.composeRoot)
 	if err != nil {
@@ -91,7 +71,7 @@ func (s *Service) List() (map[string][]string, error) {
 	}
 	result := make(map[string][]string, len(topLevelEntries))
 
-	eg := errgroup.Group{}
+	eg := sync.WaitGroup{}
 
 	subDirChan := make(chan dirResult, len(topLevelEntries))
 	for _, entry := range topLevelEntries {
@@ -105,24 +85,23 @@ func (s *Service) List() (map[string][]string, error) {
 			continue
 		}
 
-		eg.Go(func() error {
+		eg.Go(func() {
 			fullPath := s.WithRoot(entryName)
 			files, err := listFiles(fullPath)
 			if err != nil {
 				log.Warn().Err(err).Str("path", fullPath).Msg("error listing subdir")
-				return nil
+				return
 			}
 
 			subDirChan <- dirResult{
 				fileList: files,
 				dirname:  entryName,
 			}
-			return nil
 		})
 	}
 
 	go func() {
-		_ = eg.Wait()
+		eg.Wait()
 		close(subDirChan)
 	}()
 
@@ -145,38 +124,43 @@ func (s *Service) Create(fileName string) error {
 	return nil
 }
 
-type SearchResults struct {
-}
+func (s *Service) GetDockmanYaml() *DockmanYaml {
+	filenames := []string{dockmanYamlFileYml, dockmanYamlFileYaml}
 
-type File struct {
-	path string
-	// a list of
-	// line and column matches
-	// 0,1 will be match start,
-	// 2,3 will be match end
-	contentMatch [][4]int
-}
+	// start with defaults
+	var config = defaultDockmanYaml
 
-// FuzzySearch searches the compose root, and returns a list of files
-// that matches that search, inspired by https://github.com/nvim-telescope/telescope.nvim
-func (s *Service) FuzzySearch(query string) (fuzzy.Ranks, error) {
-	list, err := s.List()
-	if err != nil {
-		return nil, fmt.Errorf("failed listing files: %v", err)
-	}
+	var file []byte
+	var err error
 
-	// flatten into a list
-	var allPaths []string
-	for parent, subFolder := range list {
-		for _, sub := range subFolder {
-			allPaths = append(allPaths, fmt.Sprintf("%s/%s", parent, sub))
+	if s.dockYamlPath != "" {
+		file, err = os.ReadFile(s.dockYamlPath)
+	} else {
+		for _, filename := range filenames {
+			file, err = os.ReadFile(s.WithRoot(filename))
+			if err == nil {
+				break
+			}
+		}
+		// generates too many logs be careful
+		if err != nil {
+			//log.Warn().Err(err).Strs("tried", filenames).Msg("unable to open dockman yaml")
+			return &config
 		}
 	}
 
-	ranks := fuzzy.RankFind(query, allPaths) // [{whl cartwheel 6 0} {whl wheel 2 2}]
-	sort.Sort(ranks)
+	var override DockmanYaml
+	if err := yaml.Unmarshal(file, &override); err != nil {
+		//log.Warn().Err(err).Msg("failed to parse dockman yaml")
+	}
 
-	return ranks, nil
+	// Merge override into config, override values win
+	err = mergo.Merge(&config, &override, mergo.WithOverride)
+	if err != nil {
+		return &config
+	}
+
+	return &config
 }
 
 func (s *Service) Exists(filename string) error {
@@ -194,6 +178,18 @@ func (s *Service) Exists(filename string) error {
 func (s *Service) Delete(fileName string) error {
 	fullpath := s.WithRoot(fileName)
 	if err := os.RemoveAll(fullpath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) Rename(oldFileName, newFilename string) error {
+	oldFullPath := s.WithRoot(filepath.ToSlash(filepath.Clean(oldFileName)))
+	newFullPath := s.WithRoot(filepath.ToSlash(filepath.Clean(newFilename)))
+
+	err := os.Rename(oldFullPath, newFullPath)
+	if err != nil {
 		return err
 	}
 

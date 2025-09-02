@@ -1,49 +1,154 @@
 package docker_manager
 
 import (
+	"context"
 	"fmt"
+	"path/filepath"
+	"sync"
+	"time"
+
+	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/internal/docker"
 	"github.com/RA341/dockman/internal/git"
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
-	"path/filepath"
-	"sync"
 )
 
 type Service struct {
-	manager     *ClientManager
-	git         *git.Service
-	ssh         *ssh.Service
 	composeRoot *string
 	localAddr   *string
 
+	manager *ClientManager
+	git     *git.Service
+	ssh     *ssh.Service
+
 	mu           sync.RWMutex
 	activeClient *docker.Service
+
+	userConfig config.Store
+	updaterCtx chan interface{}
+
+	imageUpdateStore docker.Store
+	updaterUrl       string
 }
 
-func NewService(git *git.Service, ssh *ssh.Service, composeRoot, localAddr *string) *Service {
+func NewService(
+	git *git.Service,
+	ssh *ssh.Service,
+	store docker.Store,
+	userConfig config.Store,
+	composeRoot, updaterUrl, localAddr *string,
+) *Service {
 	if !filepath.IsAbs(*composeRoot) {
 		log.Fatal().Str("path", *composeRoot).Msg("composeRoot must be an absolute path")
 	}
 
 	clientManager, defaultHost := NewClientManager(ssh)
 	srv := &Service{
-		composeRoot: composeRoot,
-		localAddr:   localAddr,
-
 		git:     git,
 		manager: clientManager,
 		ssh:     ssh,
 
-		mu: sync.RWMutex{},
+		userConfig:  userConfig,
+		composeRoot: composeRoot,
+		localAddr:   localAddr,
+
+		imageUpdateStore: store,
+		updaterUrl:       *updaterUrl,
 	}
 	if err := srv.SwitchClient(defaultHost); err != nil {
 		log.Fatal().Err(err).Str("name", defaultHost).Msg("unable to switch client")
 	}
 
+	go srv.StartContainerUpdater()
+
 	log.Debug().Msg("Docker manager service loaded successfully")
 	return srv
+}
+
+func (srv *Service) ResetContainerUpdater() {
+	srv.StopContainerUpdater()
+	go srv.StartContainerUpdater()
+}
+
+func (srv *Service) StopContainerUpdater() {
+	close(srv.updaterCtx)
+}
+
+// StartContainerUpdater blocking function
+// should be always called in a go routine
+func (srv *Service) StartContainerUpdater() {
+	srv.updaterCtx = make(chan interface{})
+
+	userConfig, err := srv.userConfig.GetConfig()
+	if err != nil {
+		log.Warn().Err(err).Msg("unable to get config, container updater will not be run")
+		return
+	}
+
+	if !userConfig.ContainerUpdater.Enable {
+		log.Info().Any("config", userConfig.ContainerUpdater).
+			Msg("Container updater is disabled in config, enable to run updater service")
+		return
+	}
+
+	updateInterval := userConfig.ContainerUpdater.Interval
+	log.Info().Str("interval", updateInterval.String()).
+		Msg("Starting dockman container update service")
+	tick := time.NewTicker(updateInterval)
+	defer tick.Stop()
+
+	var opts []docker.UpdateOption
+	if userConfig.ContainerUpdater.NotifyOnly {
+		log.Info().Msg("notify only mode enabled, only image update notifications will be sent")
+		opts = append(opts, docker.WithNotifyOnly())
+	}
+
+	for {
+		select {
+		case _, ok := <-srv.updaterCtx:
+			if !ok {
+				log.Debug().Msg("container updater service stopped")
+				return
+			}
+		case <-tick.C:
+			srv.UpdateContainers(opts...)
+		}
+	}
+}
+
+func (srv *Service) UpdateContainers(opts ...docker.UpdateOption) {
+	updateHost := func(name string, dock *ConnectedDockerClient) error {
+		cli := srv.loadDockerService(name, dock)
+		err := cli.Container.ContainersUpdateAll(context.Background(), opts...)
+		if err != nil {
+			return fmt.Errorf("error occured while updating containers for host: %s\n%w", name, err)
+		}
+
+		log.Info().Str("host", name).Msg("updated containers for host")
+		return nil
+	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var errors []error
+
+	for name, dock := range srv.manager.ListHosts() {
+		wg.Go(func() {
+			if err := updateHost(name, dock); err != nil {
+				mu.Lock()
+				errors = append(errors, err)
+				mu.Unlock()
+			}
+		})
+	}
+	wg.Wait()
+
+	for _, err := range errors {
+		// todo send notif
+		log.Error().Err(err).Msg("host update failed")
+	}
 }
 
 func (srv *Service) GetService() *docker.Service {
@@ -188,11 +293,15 @@ func (srv *Service) SwitchClient(name string) error {
 	}
 
 	mach := srv.manager.GetMachine()
+	srv.activeClient = srv.loadDockerService(name, mach)
+	return nil
+}
 
+func (srv *Service) loadDockerService(name string, mach *ConnectedDockerClient) *docker.Service {
 	// to add direct links to services
 	var localAddr string
 	var syncer docker.Syncer
-	if name == LocalClient {
+	if name == docker.LocalClient {
 		// todo load from service
 		localAddr = *srv.localAddr
 		syncer = &docker.NoopSyncer{}
@@ -201,12 +310,15 @@ func (srv *Service) SwitchClient(name string) error {
 		syncer = docker.NewSFTPSyncer(mach.ssh.SftpClient, *srv.composeRoot)
 	}
 
-	srv.activeClient = docker.NewService(
+	service := docker.NewService(
 		localAddr,
-		*srv.composeRoot,
 		mach.dockerClient,
 		syncer,
+		srv.imageUpdateStore,
+		name,
+		srv.updaterUrl,
+		*srv.composeRoot,
 	)
 
-	return nil
+	return service
 }

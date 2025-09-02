@@ -12,10 +12,11 @@ import (
 func main() {
 	prefixer := argos.Prefixer(config.EnvPrefix)
 
-	_ = os.Setenv(prefixer("LOG_LEVEL"), "10")
+	_ = os.Setenv(prefixer("LOG_LEVEL"), "debug")
 	_ = os.Setenv(prefixer("LOG_VERBOSE"), "true")
 	_ = os.Setenv(prefixer("CONFIG"), "./config")
 	_ = os.Setenv(prefixer("COMPOSE_ROOT"), "./compose")
+	_ = os.Setenv(prefixer("UPDATER_HOST"), "http://localhost:8869")
 
 	cmd.StartServer()
 }

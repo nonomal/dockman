@@ -72,8 +72,8 @@ ENTRYPOINT ["./dockman"]
 # Alpine target
 FROM alpine:latest AS alpine
 
-# incase app needs to make https requests
-#RUN apk add --no-cache ca-certificates
+# identify dockman containers
+LABEL dockman.container=true
 
 WORKDIR /app
 

@@ -17,6 +17,8 @@ import VolumesPage from "./pages/volumes/volumes.tsx";
 import ImagesPage from "./pages/images/images.tsx";
 import ContainersPage from "./pages/containers/containers.tsx";
 import {UserConfigProvider} from "./context/config-context.tsx";
+import {TabsProvider} from "./context/tab-context.tsx";
+import {useTabs} from "./hooks/tabs.ts";
 
 export function App() {
     return (
@@ -30,7 +32,9 @@ export function App() {
                             {/*IMPORTANT: providers that need auth need to be injected inside private route not here */}
                             <Route element={<PrivateRoute/>}>
                                 <Route path="/" element={<HomePage/>}>
-                                    <Route path="/" element={<Navigate to="/stacks" replace/>}/>
+                                    {/*here HomeRedirect uses /stacks*/}
+                                    <Route path="/" element={<HomeRedirect/>}/>
+                                    {/*<Route path="/" element={<Navigate to="/stacks" replace/>}/>*/}
                                     <Route path="stacks">
                                         <Route index element={<ComposePage/>}/>
                                         <Route path=":file/:child?" element={<ComposePage/>}/>
@@ -69,6 +73,17 @@ export function App() {
     );
 }
 
+// Redirect component that reads from TabsProvider
+function HomeRedirect() {
+    const {activeTab, tabs} = useTabs();
+
+    const path = activeTab
+        ? `/stacks/${activeTab}?tab=${tabs[activeTab].subTabIndex}`
+        : `/stacks`;
+
+    return <Navigate to={path} replace/>;
+}
+
 const PrivateRoute = () => {
     const {isAuthenticated, isLoading} = useAuth();
 
@@ -90,7 +105,9 @@ const PrivateRoute = () => {
         <HostProvider>
             <UserConfigProvider>
                 <ChangelogProvider>
-                    <Outlet/>
+                    <TabsProvider>
+                        <Outlet/>
+                    </TabsProvider>
                 </ChangelogProvider>
             </UserConfigProvider>
         </HostProvider>

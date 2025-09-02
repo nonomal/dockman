@@ -1,13 +1,15 @@
 package files
 
 import (
-	"connectrpc.com/connect"
 	"context"
 	"fmt"
-	"github.com/RA341/dockman/generated/files/v1"
 	"maps"
+	"path/filepath"
 	"slices"
 	"strings"
+
+	"connectrpc.com/connect"
+	"github.com/RA341/dockman/generated/files/v1"
 )
 
 type Handler struct {
@@ -24,23 +26,84 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connec
 		return nil, err
 	}
 
+	config := h.srv.GetDockmanYaml()
+
 	var resp []*v1.FileGroup
 	for _, key := range slices.Sorted(maps.Keys(fileList)) {
-		slices.SortFunc(fileList[key], sortFiles)
+		// Sort subfiles with the updated rule
+		slices.SortFunc(fileList[key], func(a, b string) int {
+			return sortFiles(a, b, fileList, config)
+		})
+
 		resp = append(resp, &v1.FileGroup{
 			Root:     key,
 			SubFiles: fileList[key],
 		})
 	}
 
+	// Sort groups alphabetically
 	slices.SortFunc(resp, func(a, b *v1.FileGroup) int {
-		if res := len(b.SubFiles) - len(a.SubFiles); res != 0 {
-			return res
-		}
-		return sortFiles(a.Root, b.Root)
+		return sortFiles(
+			a.Root,
+			b.Root,
+			fileList,
+			config,
+		)
 	})
 
 	return connect.NewResponse(&v1.ListResponse{Groups: resp}), nil
+}
+
+func sortFiles(a, b string, fileList map[string][]string, dockmanConf *DockmanYaml) int {
+	ra := getSortRank(a, fileList, dockmanConf)
+	rb := getSortRank(b, fileList, dockmanConf)
+
+	if ra < rb {
+		return -1
+	}
+	if ra > rb {
+		return 1
+	}
+	return strings.Compare(a, b)
+}
+
+// getSortRank determines priority: dotfiles, directories, then files by getFileSortRank
+func getSortRank(name string, fileList map[string][]string, conf *DockmanYaml) int {
+	base := filepath.Base(name)
+	// -1: pinned files (highest priority)
+	if priority, ok := conf.PinnedFiles[base]; ok {
+		// potential bug, but if someone is manually writing the order of 100000 files i say get a life
+		// -999 > -12 in this context, pretty stupid but i cant be bothered to fix this mathematically
+		return priority - 100_000
+	}
+
+	// 0: dotfiles (highest priority)
+	if strings.HasPrefix(base, ".") {
+		return 1
+	}
+
+	// Check if it's a directory (has subfiles)
+	if len(fileList[name]) > 0 {
+		return 2
+	}
+
+	// 2+: normal files, ranked by getFileSortRank
+	return 3 + getFileSortRank(name)
+}
+
+// getFileSortRank assigns priority within normal files
+func getFileSortRank(filename string) int {
+	base := filepath.Base(filename)
+	// Priority 0: docker-compose files
+	if strings.HasSuffix(base, "compose.yaml") || strings.HasSuffix(base, "compose.yml") {
+		return 0
+	}
+	// Priority 1: other yaml/yml
+	if strings.HasSuffix(base, ".yaml") || strings.HasSuffix(base, ".yml") {
+		return 1
+	}
+	// Priority 2: everything else
+	return 2
 }
 
 func (h *Handler) Create(_ context.Context, c *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
@@ -77,8 +140,13 @@ func (h *Handler) Delete(_ context.Context, c *connect.Request[v1.File]) (*conne
 	return &connect.Response[v1.Empty]{}, nil
 }
 
-func (h *Handler) Rename(context.Context, *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
-	return nil, fmt.Errorf("unimplemented")
+func (h *Handler) Rename(_ context.Context, req *connect.Request[v1.RenameFile]) (*connect.Response[v1.Empty], error) {
+	err := h.srv.Rename(req.Msg.OldFilePath, req.Msg.NewFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[v1.Empty]{}, nil
 }
 
 func getFile(c *v1.File) (string, error) {
@@ -89,33 +157,49 @@ func getFile(c *v1.File) (string, error) {
 	return msg, nil
 }
 
-// sort using getFileSortRank
-func sortFiles(a, b string) int {
-	rankA := getFileSortRank(a)
-	rankB := getFileSortRank(b)
-
-	// the one with the lower rank (higher priority) comes first.
-	if rankA < rankB {
-		return -1 // a comes first
-	}
-	if rankA > rankB {
-		return 1 // b comes first
-	}
-	// If ranks are the same, sort alphabetically.
-	return strings.Compare(a, b)
+func (h *Handler) GetDockmanYaml(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.DockmanYaml], error) {
+	conf := h.srv.GetDockmanYaml()
+	return connect.NewResponse(conf.toProto()), nil
 }
 
-// getFileSortRank assigns a priority score to a filename.
-// Lower numbers have higher priority.
-func getFileSortRank(filename string) int {
-	// Priority 0: Highest priority for compose files
-	if strings.HasSuffix(filename, "compose.yaml") || strings.HasSuffix(filename, "compose.yml") {
-		return 0
+func (d DockmanYaml) toProto() *v1.DockmanYaml {
+	return &v1.DockmanYaml{
+		UseComposeFolders: d.UseComposeFolders,
+		VolumesPage:       d.VolumesPage.toProto(),
+		TabLimit:          d.TabLimit,
+		NetworkPage:       d.NetworkPage.toProto(),
+		ImagePage:         d.ImagePage.toProto(),
+		ContainerPage:     d.ContainerPage.toProto(),
 	}
-	// Priority 1: Next priority for any other yaml/yml files
-	if strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml") {
-		return 1
+}
+
+func (s Sort) toProto() *v1.Sort {
+	return &v1.Sort{
+		SortOrder: s.Order,
+		SortField: s.Field,
 	}
-	// Priority 2: Lowest priority for all other files
-	return 2
+}
+
+func (v ContainerConfig) toProto() *v1.ContainerConfig {
+	return &v1.ContainerConfig{
+		Sort: v.Sort.toProto(),
+	}
+}
+
+func (v VolumesConfig) toProto() *v1.VolumesConfig {
+	return &v1.VolumesConfig{
+		Sort: v.Sort.toProto(),
+	}
+}
+
+func (n NetworkConfig) toProto() *v1.NetworkConfig {
+	return &v1.NetworkConfig{
+		Sort: n.Sort.toProto(),
+	}
+}
+
+func (i ImageConfig) toProto() *v1.ImageConfig {
+	return &v1.ImageConfig{
+		Sort: i.Sort.toProto(),
+	}
 }

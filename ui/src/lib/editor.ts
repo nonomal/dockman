@@ -1,3 +1,11 @@
+import type {TabDetails} from "../hooks/tabs.ts";
+
+export const COMPOSE_EXTENSIONS = ['compose.yaml', 'compose.yml']
+
+export function isComposeFile(filename: string): boolean {
+    return COMPOSE_EXTENSIONS.some(ext => filename.endsWith(ext))
+}
+
 export const formatBytes = (bytes: number | bigint, decimals = 2) => {
     if (bytes === 0 || bytes === 0n) return '0 B'
     const k = 1024
@@ -22,6 +30,10 @@ export const getUsageColor = (value: number): 'success.main' | 'warning.main' | 
     return 'success.main' // Normal
 }
 
+
+export const getEditorUrl = (filename: string, tabDetail: TabDetails) => {
+    return `/stacks/${filename}?tab=${tabDetail.subTabIndex ?? 0}`;
+}
 
 export const getLanguageFromExtension = (filename?: string): string => {
     if (!filename) {

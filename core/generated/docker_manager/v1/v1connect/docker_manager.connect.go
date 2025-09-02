@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// DockerManagerServiceStartUpdateProcedure is the fully-qualified name of the
+	// DockerManagerService's StartUpdate RPC.
+	DockerManagerServiceStartUpdateProcedure = "/docker_manager.v1.DockerManagerService/StartUpdate"
 	// DockerManagerServiceSwitchClientProcedure is the fully-qualified name of the
 	// DockerManagerService's SwitchClient RPC.
 	DockerManagerServiceSwitchClientProcedure = "/docker_manager.v1.DockerManagerService/SwitchClient"
@@ -61,6 +64,7 @@ const (
 
 // DockerManagerServiceClient is a client for the docker_manager.v1.DockerManagerService service.
 type DockerManagerServiceClient interface {
+	StartUpdate(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.Empty], error)
 	SwitchClient(context.Context, *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error)
 	ListClients(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListClientsResponse], error)
 	ListHosts(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListMachine], error)
@@ -82,6 +86,12 @@ func NewDockerManagerServiceClient(httpClient connect.HTTPClient, baseURL string
 	baseURL = strings.TrimRight(baseURL, "/")
 	dockerManagerServiceMethods := v1.File_docker_manager_v1_docker_manager_proto.Services().ByName("DockerManagerService").Methods()
 	return &dockerManagerServiceClient{
+		startUpdate: connect.NewClient[v1.Empty, v1.Empty](
+			httpClient,
+			baseURL+DockerManagerServiceStartUpdateProcedure,
+			connect.WithSchema(dockerManagerServiceMethods.ByName("StartUpdate")),
+			connect.WithClientOptions(opts...),
+		),
 		switchClient: connect.NewClient[v1.SwitchRequest, v1.Empty](
 			httpClient,
 			baseURL+DockerManagerServiceSwitchClientProcedure,
@@ -135,6 +145,7 @@ func NewDockerManagerServiceClient(httpClient connect.HTTPClient, baseURL string
 
 // dockerManagerServiceClient implements DockerManagerServiceClient.
 type dockerManagerServiceClient struct {
+	startUpdate  *connect.Client[v1.Empty, v1.Empty]
 	switchClient *connect.Client[v1.SwitchRequest, v1.Empty]
 	listClients  *connect.Client[v1.Empty, v1.ListClientsResponse]
 	listHosts    *connect.Client[v1.Empty, v1.ListMachine]
@@ -143,6 +154,11 @@ type dockerManagerServiceClient struct {
 	editClient   *connect.Client[v1.Machine, v1.Empty]
 	deleteClient *connect.Client[v1.Machine, v1.Empty]
 	toggleClient *connect.Client[v1.ToggleReqeust, v1.Empty]
+}
+
+// StartUpdate calls docker_manager.v1.DockerManagerService.StartUpdate.
+func (c *dockerManagerServiceClient) StartUpdate(ctx context.Context, req *connect.Request[v1.Empty]) (*connect.Response[v1.Empty], error) {
+	return c.startUpdate.CallUnary(ctx, req)
 }
 
 // SwitchClient calls docker_manager.v1.DockerManagerService.SwitchClient.
@@ -188,6 +204,7 @@ func (c *dockerManagerServiceClient) ToggleClient(ctx context.Context, req *conn
 // DockerManagerServiceHandler is an implementation of the docker_manager.v1.DockerManagerService
 // service.
 type DockerManagerServiceHandler interface {
+	StartUpdate(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.Empty], error)
 	SwitchClient(context.Context, *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error)
 	ListClients(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListClientsResponse], error)
 	ListHosts(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.ListMachine], error)
@@ -205,6 +222,12 @@ type DockerManagerServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewDockerManagerServiceHandler(svc DockerManagerServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	dockerManagerServiceMethods := v1.File_docker_manager_v1_docker_manager_proto.Services().ByName("DockerManagerService").Methods()
+	dockerManagerServiceStartUpdateHandler := connect.NewUnaryHandler(
+		DockerManagerServiceStartUpdateProcedure,
+		svc.StartUpdate,
+		connect.WithSchema(dockerManagerServiceMethods.ByName("StartUpdate")),
+		connect.WithHandlerOptions(opts...),
+	)
 	dockerManagerServiceSwitchClientHandler := connect.NewUnaryHandler(
 		DockerManagerServiceSwitchClientProcedure,
 		svc.SwitchClient,
@@ -255,6 +278,8 @@ func NewDockerManagerServiceHandler(svc DockerManagerServiceHandler, opts ...con
 	)
 	return "/docker_manager.v1.DockerManagerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case DockerManagerServiceStartUpdateProcedure:
+			dockerManagerServiceStartUpdateHandler.ServeHTTP(w, r)
 		case DockerManagerServiceSwitchClientProcedure:
 			dockerManagerServiceSwitchClientHandler.ServeHTTP(w, r)
 		case DockerManagerServiceListClientsProcedure:
@@ -279,6 +304,10 @@ func NewDockerManagerServiceHandler(svc DockerManagerServiceHandler, opts ...con
 
 // UnimplementedDockerManagerServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedDockerManagerServiceHandler struct{}
+
+func (UnimplementedDockerManagerServiceHandler) StartUpdate(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.StartUpdate is not implemented"))
+}
 
 func (UnimplementedDockerManagerServiceHandler) SwitchClient(context.Context, *connect.Request[v1.SwitchRequest]) (*connect.Response[v1.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("docker_manager.v1.DockerManagerService.SwitchClient is not implemented"))

@@ -1,7 +1,7 @@
 import LogsTerminal, {type TerminalHandle} from "../compose/components/logs-terminal.tsx";
 import {useEffect, useRef, useState} from "react";
 import {transformAsyncIterable, useClient} from "../../lib/api.ts";
-import {Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton} from '@mui/material'; // Or your preferred UI library
+import {Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton} from '@mui/material';
 import {DockerService, type LogsMessage} from "../../gen/docker/v1/docker_pb.ts";
 import CloseIcon from "@mui/icons-material/Close";
 

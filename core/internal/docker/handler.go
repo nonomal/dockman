@@ -28,20 +28,26 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type GetService func() *Service
+type ServiceProvider func() *Service
 
 type Handler struct {
-	srv  GetService
+	srv  ServiceProvider
 	addr string
-	pass string
 }
 
-func NewConnectHandler(srv GetService, host, pass string) *Handler {
+func NewConnectHandler(srv ServiceProvider, host string) *Handler {
 	return &Handler{
 		srv:  srv,
 		addr: host,
-		pass: pass,
 	}
+}
+
+func (h *Handler) compose() *ComposeService {
+	return h.srv().Compose
+}
+
+func (h *Handler) container() *ContainerService {
+	return h.srv().Container
 }
 
 ////////////////////////////////////////////
@@ -53,7 +59,7 @@ func (h *Handler) ComposeStart(ctx context.Context, req *connect.Request[v1.Comp
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().ComposeUp,
+		h.compose().ComposeUp,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -63,7 +69,7 @@ func (h *Handler) ComposeStop(ctx context.Context, req *connect.Request[v1.Compo
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().ComposeStop,
+		h.compose().ComposeStop,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -73,7 +79,7 @@ func (h *Handler) ComposeRemove(ctx context.Context, req *connect.Request[v1.Com
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().ComposeDown,
+		h.compose().ComposeDown,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -83,7 +89,7 @@ func (h *Handler) ComposeRestart(ctx context.Context, req *connect.Request[v1.Co
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().ComposeRestart,
+		h.compose().ComposeRestart,
 		req.Msg.GetSelectedServices()...,
 	)
 }
@@ -93,25 +99,25 @@ func (h *Handler) ComposeUpdate(ctx context.Context, req *connect.Request[v1.Com
 		ctx,
 		req.Msg.GetFilename(),
 		responseStream,
-		h.srv().ComposeUpdate,
+		h.compose().ComposeUpdate,
 		req.Msg.GetSelectedServices()...,
 	)
 	if err != nil {
 		return err
 	}
 
-	go sendReqToUpdater(h.addr, h.pass, "")
+	//go sendReqToUpdater(h.addr, h.pass, "")
 
 	return nil
 }
 
 func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
-	project, err := h.srv().LoadProject(ctx, req.Msg.GetFilename())
+	project, err := h.compose().LoadProject(ctx, req.Msg.GetFilename())
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := h.srv().ComposeList(ctx, project, true)
+	result, err := h.compose().ComposeList(ctx, project, true)
 	if err != nil {
 		return nil, err
 	}
@@ -123,10 +129,18 @@ func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.Compo
 func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerList {
 	var dockerResult []*v1.ContainerList
 	for _, stack := range result {
+		available, err := h.container().imageUpdateStore.GetUpdateAvailable(
+			h.container().hostname,
+			stack.ImageID,
+		)
+		if err != nil {
+			log.Warn().Msg("Failed to get image update info")
+		}
+
 		var portSlice []*v1.Port
 		for _, p := range stack.Ports {
 			if isIPV4(p.IP) {
-				p.IP = h.srv().daemonAddr
+				p.IP = h.container().daemonAddr
 				// ignore ipv6 ports no one uses it anyway
 				portSlice = append(portSlice, toRPCPort(p))
 			}
@@ -140,10 +154,10 @@ func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerLis
 			return cmp.Compare(port1.Type, port2.Type)
 		})
 
-		dockerResult = append(dockerResult, toRPContainer(
+		dockerResult = append(dockerResult, h.toRPContainer(
 			stack,
-			*h.srv().composeRoot,
 			portSlice,
+			available[stack.ImageID],
 		))
 	}
 	return dockerResult
@@ -154,7 +168,7 @@ func (h *Handler) containersToRpc(result []container.Summary) []*v1.ContainerLis
 ////////////////////////////////////////////
 
 func (h *Handler) ContainerStart(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
-	err := h.srv().ContainersStart(ctx, req.Msg.ContainerIds...)
+	err := h.container().ContainersStart(ctx, req.Msg.ContainerIds...)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +177,7 @@ func (h *Handler) ContainerStart(ctx context.Context, req *connect.Request[v1.Co
 }
 
 func (h *Handler) ContainerStop(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
-	err := h.srv().ContainersStop(ctx, req.Msg.ContainerIds...)
+	err := h.container().ContainersStop(ctx, req.Msg.ContainerIds...)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +186,7 @@ func (h *Handler) ContainerStop(ctx context.Context, req *connect.Request[v1.Con
 }
 
 func (h *Handler) ContainerRemove(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
-	err := h.srv().ContainersRemove(ctx, req.Msg.ContainerIds...)
+	err := h.container().ContainersRemove(ctx, req.Msg.ContainerIds...)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +195,7 @@ func (h *Handler) ContainerRemove(ctx context.Context, req *connect.Request[v1.C
 }
 
 func (h *Handler) ContainerRestart(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
-	err := h.srv().ContainersRestart(ctx, req.Msg.ContainerIds...)
+	err := h.container().ContainersRestart(ctx, req.Msg.ContainerIds...)
 	if err != nil {
 		return nil, err
 	}
@@ -189,16 +203,16 @@ func (h *Handler) ContainerRestart(ctx context.Context, req *connect.Request[v1.
 	return connect.NewResponse(&v1.LogsMessage{}), nil
 }
 
-func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.LogsMessage], error) {
-	err := h.srv().ContainersUpdate(ctx, req.Msg.ContainerIds...)
+func (h *Handler) ContainerUpdate(ctx context.Context, req *connect.Request[v1.ContainerRequest]) (*connect.Response[v1.Empty], error) {
+	err := h.container().ContainersUpdateByContainerID(ctx, req.Msg.ContainerIds...)
 	if err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("TODO: unimplemented container update")
+	return connect.NewResponse(&v1.Empty{}), nil
 }
 
 func (h *Handler) ContainerList(ctx context.Context, _ *connect.Request[v1.Empty]) (*connect.Response[v1.ListResponse], error) {
-	result, err := h.srv().ContainersList(ctx)
+	result, err := h.container().ContainersList(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -214,13 +228,13 @@ func (h *Handler) ContainerStats(ctx context.Context, req *connect.Request[v1.St
 	var err error
 	if file != nil {
 		// file was passed load it from context
-		project, err := h.srv().LoadProject(ctx, file.Filename)
+		project, err := h.compose().LoadProject(ctx, file.Filename)
 		if err != nil {
 			return nil, err
 		}
-		containers, err = h.srv().ComposeStats(ctx, project)
+		containers, err = h.compose().ComposeStats(ctx, project)
 	} else {
-		containers, err = h.srv().ContainerStats(ctx, container.ListOptions{})
+		containers, err = h.container().ContainerStats(ctx, container.ListOptions{})
 	}
 	if err != nil {
 		return nil, err
@@ -257,14 +271,25 @@ func (h *Handler) ContainerLogs(ctx context.Context, req *connect.Request[v1.Con
 		return fmt.Errorf("container id is required")
 	}
 
-	logsReader, err := h.srv().ContainerLogs(ctx, req.Msg.GetContainerID())
+	logsReader, tty, err := h.container().ContainerLogs(ctx, req.Msg.GetContainerID())
 	if err != nil {
 		return err
 	}
 	defer fileutil.Close(logsReader)
 
 	writer := &ContainerLogWriter{responseStream: responseStream}
-	if _, err = stdcopy.StdCopy(writer, writer, logsReader); err != nil {
+
+	if tty {
+		// tty streams dont need docker demultiplexing
+		if _, err = io.Copy(writer, logsReader); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// docker multiplexed stream
+	_, err = stdcopy.StdCopy(writer, writer, logsReader)
+	if err != nil {
 		return err
 	}
 
@@ -275,8 +300,23 @@ func (h *Handler) ContainerLogs(ctx context.Context, req *connect.Request[v1.Con
 // 				Image Actions 			  //
 ////////////////////////////////////////////
 
-func (h *Handler) ImageList(ctx context.Context, req *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
-	images, err := h.srv().ListImages(ctx)
+func ToMap[T any, Q any](input []T, mapper func(T) Q) []Q {
+	result := make([]Q, len(input))
+	for _, t := range input {
+		result = append(result, mapper(t))
+	}
+	return result
+}
+
+func (h *Handler) ImageList(ctx context.Context, _ *connect.Request[v1.ListImagesRequest]) (*connect.Response[v1.ListImagesResponse], error) {
+	images, err := h.container().ImageList(ctx)
+
+	imageUpdates, err := h.container().imageUpdateStore.GetUpdateAvailable(
+		"",
+		ToMap(images, func(t image.Summary) string {
+			return t.ID
+		})...,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -307,6 +347,7 @@ func (h *Handler) ImageList(ctx context.Context, req *connect.Request[v1.ListIma
 			RepoTags:    img.RepoTags,
 			SharedSize:  img.SharedSize,
 			Size:        img.Size,
+			UpdateRef:   imageUpdates[img.ID].UpdateRef,
 			Manifests:   []*v1.ManifestSummary{}, // todo
 		})
 	}
@@ -320,7 +361,7 @@ func (h *Handler) ImageList(ctx context.Context, req *connect.Request[v1.ListIma
 
 func (h *Handler) ImageRemove(ctx context.Context, req *connect.Request[v1.RemoveImageRequest]) (*connect.Response[v1.RemoveImageResponse], error) {
 	for _, img := range req.Msg.ImageIds {
-		_, err := h.srv().ImageDelete(ctx, img)
+		_, err := h.container().ImageDelete(ctx, img)
 		if err != nil {
 			return nil, fmt.Errorf("unable to remove image %s: %w", img, err)
 		}
@@ -333,9 +374,9 @@ func (h *Handler) ImagePruneUnused(ctx context.Context, req *connect.Request[v1.
 	var result image.PruneReport
 	var err error
 	if req.Msg.GetPruneAll() {
-		result, err = h.srv().PruneUnusedImages(ctx)
+		result, err = h.container().ImagePruneUnused(ctx)
 	} else {
-		result, err = h.srv().PruneUntaggedImages(ctx)
+		result, err = h.container().ImagePruneUntagged(ctx)
 	}
 	if err != nil {
 		return nil, err
@@ -361,8 +402,8 @@ func (h *Handler) ImagePruneUnused(ctx context.Context, req *connect.Request[v1.
 // 				Volume Actions 			  //
 ////////////////////////////////////////////
 
-func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
-	volumes, err := h.srv().VolumesList(ctx)
+func (h *Handler) VolumeList(ctx context.Context, _ *connect.Request[v1.ListVolumesRequest]) (*connect.Response[v1.ListVolumesResponse], error) {
+	volumes, err := h.container().VolumesList(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +418,7 @@ func (h *Handler) VolumeList(ctx context.Context, req *connect.Request[v1.ListVo
 			CreatedAt:          vol.CreatedAt,
 			Labels:             getVolumeProjectNameFromLabel(vol.Labels),
 			MountPoint:         vol.Mountpoint,
-			ComposePath:        vol.ComposePath,
+			ComposePath:        h.getComposeFilePath(vol.ComposePath),
 			ComposeProjectName: vol.ComposeProjectName,
 		})
 	}
@@ -408,7 +449,7 @@ func getVolumeProjectNameFromLabel(labels map[string]string) string {
 	return ""
 }
 
-func (h *Handler) VolumeCreate(_ context.Context, req *connect.Request[v1.CreateVolumeRequest]) (*connect.Response[v1.CreateVolumeResponse], error) {
+func (h *Handler) VolumeCreate(_ context.Context, _ *connect.Request[v1.CreateVolumeRequest]) (*connect.Response[v1.CreateVolumeResponse], error) {
 	//TODO implement me
 	return nil, fmt.Errorf(" implement me VolumeCreate")
 }
@@ -416,12 +457,12 @@ func (h *Handler) VolumeCreate(_ context.Context, req *connect.Request[v1.Create
 func (h *Handler) VolumeDelete(ctx context.Context, req *connect.Request[v1.DeleteVolumeRequest]) (*connect.Response[v1.DeleteVolumeResponse], error) {
 	var err error
 	if req.Msg.Anon {
-		err = h.srv().VolumesPrune(ctx)
+		err = h.container().VolumesPrune(ctx)
 	} else if req.Msg.Unused {
-		err = h.srv().VolumesPruneUnunsed(ctx)
+		err = h.container().VolumesPruneUnunsed(ctx)
 	} else {
 		for _, vols := range req.Msg.VolumeIds {
-			err = h.srv().VolumesDelete(ctx, vols, false)
+			err = h.container().VolumesDelete(ctx, vols, false)
 		}
 	}
 
@@ -433,7 +474,7 @@ func (h *Handler) VolumeDelete(ctx context.Context, req *connect.Request[v1.Dele
 ////////////////////////////////////////////
 
 func (h *Handler) NetworkList(ctx context.Context, _ *connect.Request[v1.ListNetworksRequest]) (*connect.Response[v1.ListNetworksResponse], error) {
-	networks, err := h.srv().NetworksList(ctx)
+	networks, err := h.container().NetworksList(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -466,7 +507,7 @@ func getSubnet(netI network.Inspect) string {
 	return netI.IPAM.Config[0].Subnet
 }
 
-func (h *Handler) NetworkCreate(_ context.Context, req *connect.Request[v1.CreateNetworkRequest]) (*connect.Response[v1.CreateNetworkResponse], error) {
+func (h *Handler) NetworkCreate(_ context.Context, _ *connect.Request[v1.CreateNetworkRequest]) (*connect.Response[v1.CreateNetworkResponse], error) {
 	//TODO implement me
 	return nil, fmt.Errorf(" implement me NetworkCreate")
 }
@@ -474,10 +515,10 @@ func (h *Handler) NetworkCreate(_ context.Context, req *connect.Request[v1.Creat
 func (h *Handler) NetworkDelete(ctx context.Context, req *connect.Request[v1.DeleteNetworkRequest]) (*connect.Response[v1.DeleteNetworkResponse], error) {
 	var err error
 	if req.Msg.Prune {
-		_, err = h.srv().NetworksPrune(ctx)
+		_, err = h.container().NetworksPrune(ctx)
 	} else {
 		for _, nid := range req.Msg.NetworkIds {
-			err = h.srv().NetworksDelete(ctx, nid)
+			err = h.container().NetworksDelete(ctx, nid)
 		}
 	}
 	if err != nil {
@@ -499,7 +540,7 @@ func (h *Handler) executeComposeStreamCommand(
 	action func(context.Context, *types.Project, api.Service, ...string) error,
 	services ...string,
 ) error {
-	project, err := h.srv().LoadProject(ctx, composeFile)
+	project, err := h.compose().LoadProject(ctx, composeFile)
 	if err != nil {
 		return err
 	}
@@ -515,7 +556,7 @@ func (h *Handler) executeComposeStreamCommand(
 		return nil
 	})
 
-	composeClient, err := h.srv().LoadComposeClient(pipeWriter, nil)
+	composeClient, err := h.compose().LoadComposeClient(pipeWriter, nil)
 	if err != nil {
 		return err
 	}
@@ -648,25 +689,26 @@ func toRPCPort(p container.Port) *v1.Port {
 	}
 }
 
-func toRPContainer(stack container.Summary, composeRoot string, portSlice []*v1.Port) *v1.ContainerList {
+func (h *Handler) toRPContainer(stack container.Summary, portSlice []*v1.Port, update ImageUpdate) *v1.ContainerList {
 	return &v1.ContainerList{
-		Name:        strings.TrimPrefix(stack.Names[0], "/"),
-		Id:          stack.ID,
-		ImageID:     stack.ImageID,
-		ImageName:   stack.Image,
-		Status:      stack.Status,
-		Ports:       portSlice,
-		ServiceName: stack.Labels[api.ServiceLabel],
-		StackName:   stack.Labels[api.ProjectLabel],
-		ServicePath: getComposeFilePath(stack, composeRoot),
-		Created:     time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
+		Name:            strings.TrimPrefix(stack.Names[0], "/"),
+		Id:              stack.ID,
+		ImageID:         stack.ImageID,
+		ImageName:       stack.Image,
+		Status:          stack.Status,
+		UpdateAvailable: update.UpdateRef,
+		Ports:           portSlice,
+		ServiceName:     stack.Labels[api.ServiceLabel],
+		StackName:       stack.Labels[api.ProjectLabel],
+		ServicePath:     h.getComposeFilePath(stack.Labels[api.ConfigFilesLabel]),
+		Created:         time.Unix(stack.Created, 0).UTC().Format(time.RFC3339),
 	}
 }
 
-func getComposeFilePath(cont container.Summary, composeRoot string) string {
+func (h *Handler) getComposeFilePath(fullPath string) string {
 	composePath := filepath.ToSlash(
 		strings.TrimPrefix(
-			cont.Labels[api.ConfigFilesLabel], composeRoot,
+			fullPath, h.compose().composeRoot,
 		),
 	)
 	return strings.TrimPrefix(composePath, "/")
@@ -677,7 +719,8 @@ type ContainerLogWriter struct {
 }
 
 func (l *ContainerLogWriter) Write(p []byte) (n int, err error) {
-	if err := l.responseStream.Send(&v1.LogsMessage{Message: string(p)}); err != nil {
+	msg := &v1.LogsMessage{Message: string(p)}
+	if err = l.responseStream.Send(msg); err != nil {
 		return 0, err
 	}
 	return len(p), nil

@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react'
-import {Box, Button, CircularProgress, Divider, IconButton, List, styled, Toolbar, Tooltip} from '@mui/material'
+import {Box, CircularProgress, Divider, IconButton, List, styled, Toolbar, Tooltip, Typography} from '@mui/material'
 import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
 import {useParams} from 'react-router-dom'
 import FileBarItem from './file-bar-item.tsx'
@@ -10,7 +10,6 @@ import {useTelescope} from "../dialogs/search/search-hook.ts";
 import {useGitImport} from "../dialogs/import/import-hook.ts";
 import {useAddFile} from "../dialogs/add/add-hook.ts";
 import {useFileDelete} from "../dialogs/delete/delete-hook.ts";
-import {useFileDisplayConfig} from "../dialogs/config/config-hook.ts";
 
 interface FileListProps {
     closeTab: (tabToClose: string) => void
@@ -20,13 +19,12 @@ export function FileList({closeTab}: FileListProps) {
     const {file: currentDir} = useParams<{ file: string }>()
 
     const {selectedHost} = useHost()
-    const {files, isLoading} = useFiles()
+    const {files, isLoading, renameFile} = useFiles()
 
     const {showTelescope} = useTelescope()
     const {showDialog: showGitImport} = useGitImport()
     const {showDialog: showAddFile} = useAddFile()
     const {showDialog: showDeleteFile} = useFileDelete()
-    const {showDialog: showFileConfig} = useFileDisplayConfig()
 
     // holds the names of all open directories.
     const [openDirs, setOpenDirs] = useState(new Set<string>())
@@ -95,37 +93,9 @@ export function FileList({closeTab}: FileListProps) {
             }}
         >
             <Toolbar>
-                <Tooltip title={"Configure how files are displayed"}>
-                    <Button
-                        variant="text"
-                        onClick={showFileConfig}
-                        sx={{
-                            justifyContent: 'flex-start',
-                            textTransform: 'none',
-                            fontSize: '1.25rem', // h6 font size
-                            fontWeight: 500, // h6 font weight
-                            color: 'text.primary',
-                            padding: '8px 12px',
-                            minWidth: 'auto',
-                            width: 'fit-content',
-                            border: '1px solid transparent',
-                            borderRadius: '6px',
-                            '&:hover': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                                borderColor: 'rgba(255, 255, 255, 0.12)',
-                                color: 'text.primary',
-                            },
-                            '&:focus': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                borderColor: 'rgba(255, 255, 255, 0.2)',
-                                color: 'text.primary',
-                            }
-                        }}
-                        aria-label="Open File Config"
-                    >
-                        Files
-                    </Button>
-                </Tooltip>
+                <Typography variant={"h6"}>
+                    Files
+                </Typography>
 
                 <Box sx={{flexGrow: 1}}/>
 
@@ -170,7 +140,7 @@ export function FileList({closeTab}: FileListProps) {
                 }>
                     <IconButton
                         size="small"
-                        onClick={() => showAddFile('')}
+                        onClick={() => showGitImport()}
                         color="info"
                         sx={{ml: 1}} // Add left margin for spacing
                         aria-label="Import"
@@ -196,6 +166,7 @@ export function FileList({closeTab}: FileListProps) {
                                 onAdd={showAddFile}
                                 onDelete={handleDelete}
                                 isOpen={openDirs.has(group.name)}
+                                onRename={renameFile}
                                 onToggle={handleToggle}
                             />
                         ))}

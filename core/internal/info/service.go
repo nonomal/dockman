@@ -3,11 +3,12 @@ package info
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/RA341/dockman/pkg/fileutil"
-	"github.com/rs/zerolog/log"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/RA341/dockman/pkg/fileutil"
+	"github.com/rs/zerolog/log"
 )
 
 // VersionCheckResult represents the result of a version check
@@ -67,9 +68,9 @@ func (cm *Service) VerifyVersion(currentAppVersion string) (*VersionCheckResult,
 func (cm *Service) CheckVersionStatus(currentAppVersion string) (*VersionCheckResult, error) {
 	ok := isValidSemver(currentAppVersion)
 	if !ok {
-		log.Debug().
-			Str("version", currentAppVersion).
-			Msg("invalid semver, changelog will not be checked")
+		//log.Debug().
+		//	Str("version", currentAppVersion).
+		//	Msg("invalid semver, changelog will not be checked")
 
 		return &VersionCheckResult{
 			CurrentVersion: &VersionHistory{

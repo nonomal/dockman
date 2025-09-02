@@ -11,6 +11,8 @@ service FileService {
   rpc Delete(File) returns (Empty) {}
   rpc Exists(File) returns (Empty) {}
   rpc Rename(RenameFile) returns (Empty) {}
+  rpc GetDockmanYaml(Empty) returns (DockmanYaml) {}
+
 }
 
 message ListResponse {
@@ -23,8 +25,8 @@ message FileGroup {
 }
 
 message RenameFile {
-  File oldFile = 1;
-  File newFile = 2;
+  string oldFilePath = 1;
+  string newFilePath = 2;
 }
 
 message File {
@@ -32,3 +34,34 @@ message File {
 }
 
 message Empty {}
+
+message DockmanYaml {
+  bool useComposeFolders = 1;
+  int32 tabLimit = 6;
+  VolumesConfig volumesPage = 2;
+  NetworkConfig networkPage = 3;
+  ImageConfig imagePage = 4;
+  ContainerConfig containerPage = 5;
+}
+
+message VolumesConfig {
+  Sort sort = 1;
+}
+
+message NetworkConfig {
+  Sort sort = 1;
+}
+
+message ImageConfig {
+  Sort sort = 1;
+}
+
+message ContainerConfig {
+  Sort sort = 1;
+}
+
+
+message Sort {
+  string sortOrder = 1;
+  string sortField = 2;
+}

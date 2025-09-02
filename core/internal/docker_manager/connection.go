@@ -3,11 +3,12 @@ package docker_manager
 import (
 	"context"
 	"fmt"
+	"net"
+
 	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
-	"net"
 )
 
 // NewLocalClient connects to the local docker host.

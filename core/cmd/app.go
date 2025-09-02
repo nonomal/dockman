@@ -1,8 +1,11 @@
 package cmd
 
 import (
-	"connectrpc.com/connect"
 	"fmt"
+	"net/http"
+	"strings"
+
+	"connectrpc.com/connect"
 	authrpc "github.com/RA341/dockman/generated/auth/v1/v1connect"
 	configrpc "github.com/RA341/dockman/generated/config/v1/v1connect"
 	dockerpc "github.com/RA341/dockman/generated/docker/v1/v1connect"
@@ -21,8 +24,6 @@ import (
 	"github.com/RA341/dockman/internal/lsp"
 	"github.com/RA341/dockman/internal/ssh"
 	"github.com/rs/zerolog/log"
-	"net/http"
-	"strings"
 )
 
 type App struct {
@@ -34,6 +35,7 @@ type App struct {
 	DB            *database.Service
 	Info          *info.Service
 	SSH           *ssh.Service
+	UserConfigSrv *config.Service
 }
 
 func NewApp(conf *config.AppConfig) (*App, error) {
@@ -44,13 +46,26 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	}
 
 	// initialize services
-	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password, limit)
 	dbSrv := database.NewService(conf.ConfigDir)
-	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
-	fileSrv := files.NewService(cr)
-	gitSrv := git.NewService(cr)
-	dockerManagerSrv := dm.NewService(gitSrv, sshSrv, &cr, &conf.LocalAddr)
 	infoSrv := info.NewService(dbSrv.InfoDB)
+
+	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password, limit)
+	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
+	fileSrv := files.NewService(cr, conf.DockYaml)
+	gitSrv := git.NewService(cr)
+	dockerManagerSrv := dm.NewService(
+		gitSrv,
+		sshSrv,
+		dbSrv.ImageUpdateDB,
+		dbSrv.UserConfigDB,
+		&cr,
+		&conf.Updater.Addr,
+		&conf.LocalAddr,
+	)
+	userConfigSrv := config.NewService(
+		dbSrv.UserConfigDB,
+		dockerManagerSrv.ResetContainerUpdater,
+	)
 
 	log.Info().Msg("Dockman initialized successfully")
 	return &App{
@@ -62,6 +77,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 		DB:            dbSrv,
 		Info:          infoSrv,
 		SSH:           sshSrv,
+		UserConfigSrv: userConfigSrv,
 	}, nil
 }
 
@@ -94,27 +110,18 @@ func (a *App) registerApiRoutes(mux *http.ServeMux) {
 		},
 		// user config
 		func() (string, http.Handler) {
-			return configrpc.NewConfigServiceHandler(config.NewConnectHandler(a.DB.UserConfigDB), authInterceptor)
+			return configrpc.NewConfigServiceHandler(config.NewConnectHandler(a.UserConfigSrv), authInterceptor)
 		},
 		// files
 		func() (string, http.Handler) {
 			return filesrpc.NewFileServiceHandler(files.NewConnectHandler(a.File), authInterceptor)
-		},
-		// fuzzy file searcher
-		func() (string, http.Handler) {
-			wsFunc := files.NewWebSocketHandler(a.File, lsp.DefaultUpgrader)
-			return a.registerHttpHandler("/ws/fuzz", wsFunc)
 		},
 		func() (string, http.Handler) {
 			return a.registerHttpHandler("/api/file", files.NewFileHandler(a.File))
 		},
 		// docker
 		func() (string, http.Handler) {
-			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(
-				a.DockerManager.GetService,
-				a.Config.Updater.Addr,
-				a.Config.Updater.PassKey,
-			),
+			return dockerpc.NewDockerServiceHandler(docker.NewConnectHandler(a.DockerManager.GetService, a.Config.Updater.Addr),
 				authInterceptor,
 			)
 		},

@@ -26,13 +26,13 @@ import (
 
 type ComposeService struct {
 	containerService *ContainerService
-	syncer           Syncer
+	*dependencies
 }
 
-func NewComposeService(client *ContainerService, syncer Syncer) *ComposeService {
+func NewComposeService(u *dependencies, container *ContainerService) *ComposeService {
 	return &ComposeService{
-		containerService: client,
-		syncer:           syncer,
+		containerService: container,
+		dependencies:     u,
 	}
 }
 
@@ -146,7 +146,7 @@ func (s *ComposeService) ComposeList(ctx context.Context, project *types.Project
 	projectLabel := fmt.Sprintf("%s=%s", api.ProjectLabel, project.Name)
 	containerFilters.Add("label", projectLabel)
 
-	result, err := s.containerService.listWithFilter(ctx, container.ListOptions{
+	result, err := s.daemon.ContainerList(ctx, container.ListOptions{
 		All:     all,
 		Filters: containerFilters,
 	})
@@ -164,7 +164,7 @@ func (s *ComposeService) ComposeStats(ctx context.Context, project *types.Projec
 		return nil, err
 	}
 
-	result := s.containerService.getStatsFromContainerList(ctx, stackList)
+	result := s.containerService.containerGetStatsFromList(ctx, stackList)
 	return result, nil
 }
 
@@ -176,7 +176,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 			continue
 		}
 
-		imageInspect, err := s.containerService.daemon.ImageInspect(ctx, service.Image)
+		imageInspect, err := s.daemon.ImageInspect(ctx, service.Image)
 		if err != nil {
 			// Image might not exist locally yet
 			digests[serviceName] = ""
@@ -196,7 +196,7 @@ func (s *ComposeService) getProjectImageDigests(ctx context.Context, project *ty
 
 func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream io.ReadCloser) (api.Service, error) {
 	dockerCli, err := command.NewDockerCli(
-		command.WithAPIClient(s.containerService.daemon),
+		command.WithAPIClient(s.daemon),
 		command.WithCombinedStreams(outputStream),
 		command.WithInputStream(inputStream),
 	)
@@ -213,14 +213,14 @@ func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream i
 }
 
 func (s *ComposeService) LoadProject(ctx context.Context, shortName string) (*types.Project, error) {
-	fullPath := filepath.Join(*s.containerService.composeRoot, shortName)
+	fullPath := filepath.Join(s.composeRoot, shortName)
 	// will be the parent dir of the compose file else equal to compose root
 	workingDir := filepath.Dir(fullPath)
 
 	var finalEnv []string
 	for _, file := range []string{
 		// Global .env
-		filepath.Join(*s.containerService.composeRoot, ".env"),
+		filepath.Join(s.composeRoot, ".env"),
 		// Subdirectory .env (will override global)
 		filepath.Join(workingDir, ".env"),
 	} {
@@ -268,7 +268,7 @@ const dockmanImage = "ghcr.io/ra341/dockman"
 func (s *ComposeService) withoutDockman(project *types.Project, services ...string) []string {
 	// If sftp client exists, it's a remote machine. Do not filter.
 	// todo
-	//if isRemoteDockman := s.containerService.daemon.DaemonHost() != nil; isRemoteDockman {
+	//if isRemoteDockman := .daemon.DaemonHost() != nil; isRemoteDockman {
 	//	return services
 	//}
 

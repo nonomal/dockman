@@ -3,14 +3,15 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/RA341/dockman/pkg/argos"
-	"github.com/RA341/dockman/pkg/fileutil"
 	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/RA341/dockman/pkg/argos"
+	"github.com/RA341/dockman/pkg/fileutil"
 )
 
 const EnvPrefix = "DOCKMAN"
@@ -23,6 +24,7 @@ type AppConfig struct {
 	LocalAddr      string        `config:"flag=ma,env=MACHINE_ADDR,default=0.0.0.0,usage=Local machine IP address"`
 	ComposeRoot    string        `config:"flag=cr,env=COMPOSE_ROOT,default=/compose,usage=Root directory for compose files"`
 	ConfigDir      string        `config:"flag=conf,env=CONFIG,default=/config,usage=Directory to store dockman config"`
+	DockYaml       string        `config:"flag=dy,env=DOCK_YAML,default=,usage=Custom path for the .dockman.yml file"`
 	Auth           AuthConfig    `config:""` // indicate to parse struct
 	Updater        UpdaterConfig `config:""`
 	Log            Logger        `config:""`
@@ -41,8 +43,7 @@ func (d AuthConfig) GetCookieExpiryLimit() (time.Duration, error) {
 }
 
 type UpdaterConfig struct {
-	Addr    string `config:"flag=upAddr,env=UPDATER_HOST,default=updater:8869,usage=Host address for dockman updater, eg: http://localhost:8869"`
-	PassKey string `config:"flag=upAuth,env=UPDATER_KEY,default=,usage=Authentication key for dockman updater"`
+	Addr string `config:"flag=upAddr,env=UPDATER_HOST,default=http://updater:8869,usage=URL for dockman updater eg: http://localhost:8869"`
 }
 
 type Logger struct {

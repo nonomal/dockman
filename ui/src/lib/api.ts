@@ -9,7 +9,10 @@ export const API_URL = import.meta.env.MODE === 'development'
 
 console.log(`API url: ${API_URL} `)
 
-const transport = createConnectTransport({baseUrl: API_URL})
+const transport = createConnectTransport({
+    baseUrl: API_URL,
+    useBinaryFormat: true,
+})
 
 export function useClient<T extends DescService>(service: T): Client<T> {
     return useMemo(() => createClient(service, transport), [service]);

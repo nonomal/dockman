@@ -1,0 +1,8 @@
+{
+  "label": "Dockman Updater",
+  "position": 3,
+  "link": {
+    "type": "doc",
+    "id": "updater/overview"
+  }
+}

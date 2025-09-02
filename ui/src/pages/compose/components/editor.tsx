@@ -1,14 +1,15 @@
 import {Editor} from "@monaco-editor/react";
 import {getLanguageFromExtension} from "../../../lib/editor";
+import {useRef} from "react";
+import * as monacoEditor from "monaco-editor";
 
 // This MUST match the language ID your LSP server expects.
-const MY_CUSTOM_LANGUAGE_ID = 'compose.yaml';
+// const MY_CUSTOM_LANGUAGE_ID = 'compose.yaml';
 
 interface MonacoEditorProps {
     selectedPage: string;
     fileContent: string;
     handleEditorChange: (value: string | undefined) => void;
-    // handleEditorDidMount?: (editor: monacoEditor.editor.IStandaloneCodeEditor, monaco: typeof monacoEditor) => void;
 }
 
 export function MonacoEditor(
@@ -18,89 +19,48 @@ export function MonacoEditor(
         handleEditorChange,
     }: MonacoEditorProps) {
 
-    // const handleEditorDidMount = async (
-    //     editor: monacoEditor.editor.IStandaloneCodeEditor,
-    //     // _monaco: typeof monacoEditor
-    // ) => {
-    //     // todo
-    //     // await initialize({
-    //     //     ...getLanguagesServiceOverride()
-    //     // });
-    //     //
-    //     // monaco.languages.register({
-    //     //     id: MY_CUSTOM_LANGUAGE_ID,
-    //     //     extensions: ['compose.yaml'], // Associate with a file extension
-    //     //     aliases: ['docker-compose'],
-    //     //     mimetypes: ['application/docker-compose'],
-    //     // });
-    //     //
-    //     // const pa = new URL(API_URL)
-    //     // let wsProtocol = `ws://`
-    //     // if (pa.protocol == "https:") {
-    //     //     wsProtocol = "wss://"
-    //     // }
-    //     // const url = `${wsProtocol}${pa.host}/api/lsp/`
-    //     // const webSocket = new ReconnectingWebSocket(url);
-    //     // const socket = toSocket(webSocket as WebSocket);
-    //     //
-    //     // const client = new MonacoLanguageClient({
-    //     //     messageTransports: {
-    //     //         reader: new WebSocketMessageReader(socket),
-    //     //         writer: new WebSocketMessageWriter(socket),
-    //     //     },
-    //     //     name: 'docker-compose',
-    //     //     clientOptions: {
-    //     //         documentSelector: [MY_CUSTOM_LANGUAGE_ID],
-    //     //         errorHandler: {
-    //     //             error: () => ({action: 1}),
-    //     //             closed: () => ({action: 1})
-    //     //         }
-    //     //     }
-    //     // });
-    //
-    //     // client.start().then();
-    //     //
-    //     // // Dispose of the client when the component unmounts
-    //     // editor.onDidDispose(() => {
-    //     //     client.stop().then();
-    //     //     webSocket.close();
-    //     // });
-    // };
+    const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
+
+    const handleEditorDidMount = (
+        editor: monacoEditor.editor.IStandaloneCodeEditor,
+    ) => {
+        editorRef.current = editor;
+        editor.focus();
+
+        // Clear the undo stack for the initial load
+        const model = editor.getModel();
+        if (model) {
+            console.log("clearing stack for initial load");
+            model.pushStackElement();
+        }
+
+        const val = sessionStorage.getItem(selectedPage);
+        if (editorRef.current && val) {
+            const [row, col] = sessionStorage.getItem(selectedPage)?.split(',').map(Number) || [];
+            editorRef.current!.revealPositionInCenter({lineNumber: row, column: col});
+            editorRef.current!.setPosition({lineNumber: row, column: col});
+        }
+
+        // Listen to cursor position changes
+        editor.onDidChangeCursorPosition((e) => {
+            const {lineNumber, column} = e.position;
+            sessionStorage.setItem(selectedPage, `${lineNumber},${column}`);
+        });
+    };
 
     return (
         <Editor
-            key={selectedPage}
-            // Ensure the language prop is set to your custom language ID for the correct files
-            language={getLanguageFromExtension(selectedPage) === 'mylang' ? MY_CUSTOM_LANGUAGE_ID : getLanguageFromExtension(selectedPage)}
+            key={selectedPage} // This creates a fresh editor for each file
+            language={getLanguageFromExtension(selectedPage)}
             value={fileContent}
             onChange={handleEditorChange}
-            // onMount={handleEditorDidMount}
+            onMount={handleEditorDidMount}
             theme="vs-dark"
             options={{
                 selectOnLineNumbers: true,
-                minimap: {enabled: false}
+                minimap: {enabled: false},
+                automaticLayout: true,
             }}
         />
     );
 }
-
-// You might need to update your getLanguageFromExtension helper
-// to recognize your new extension.
-// For example:
-/*
-export function getLanguageFromExtension(filename: string): string {
-    const extension = filename.split('.').pop()?.toLowerCase();
-    switch (extension) {
-        case 'js':
-            return 'javascript';
-        case 'ts':
-            return 'typescript';
-        case 'json':
-            return 'json';
-        case 'mylang': // Add your custom language
-            return 'mylang';
-        default:
-            return 'plaintext';
-    }
-}
-*/

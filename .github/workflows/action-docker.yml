@@ -21,21 +21,15 @@ on:
         description: title for the image
         required: false
         default: "app"
+      dockerfile:
+        type: string
+        description: title for the image
+        required: false
+        default: "Dockerfile"
 
 jobs:
   build-and-push:
-    strategy:
-      fail-fast: false # Don't cancel other jobs if one fails
-      matrix:
-        target:
-          # "default"
-          - name: alpine
-            suffix: ""
-    #          - name: alpine-ssh
-    #            suffix: -ssh
-
-    # Give the job a dynamic name based on the matrix
-    name: Build Image for (${{ matrix.target.name }})
+    name: Build Image for ${{ inputs.title }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -64,11 +58,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
-          # Add a flavor suffix to all tags based on the matrix
-          flavor: |
-            suffix=${{ matrix.target.suffix }}
-            prefix=
+          images: ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}
           tags: |
             # assumes `version_tag` is valid SemVer skip tag if empty (vX.Y.Z or X.Y.Z), create major and major.minor tags.
             # Example: if version_tag is "v1.2.3", this adds "v1" and "v1.2".
@@ -91,7 +81,7 @@ jobs:
 
           labels: |
             org.opencontainers.image.title=${{ inputs.title }}
-            org.opencontainers.image.description=Docker image for ${{ inputs.title }} built for ${{ matrix.target.name }}.
+            org.opencontainers.image.description=Docker image for ${{ inputs.title }} built.
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
@@ -100,9 +90,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ${{ inputs.dockerfile }}
           push: true
-          # Use the target from the matrix
-          target: ${{ matrix.target.name }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # platforms: "linux/amd64,linux/arm64" todo takes a long time

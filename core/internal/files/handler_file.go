@@ -2,10 +2,11 @@ package files
 
 import (
 	b64 "encoding/base64"
-	"github.com/RA341/dockman/pkg/fileutil"
-	"github.com/rs/zerolog/log"
 	"net/http"
 	"path/filepath"
+
+	"github.com/RA341/dockman/pkg/fileutil"
+	"github.com/rs/zerolog/log"
 )
 
 const fileContentsFormKey = "contents"
@@ -21,13 +22,31 @@ func NewFileHandler(service *Service) http.Handler {
 
 func (h *FileHandler) register() http.Handler {
 	subMux := http.NewServeMux()
-	subMux.HandleFunc("POST /save", h.SaveFile)
-	subMux.HandleFunc("GET /load/{filename}", h.LoadFile)
+	subMux.HandleFunc("POST /save", h.saveFile)
+	subMux.HandleFunc("GET /load/{filename}", h.loadFile)
 
 	return subMux
 }
 
-func (h *FileHandler) SaveFile(w http.ResponseWriter, r *http.Request) {
+func (h *FileHandler) loadFile(w http.ResponseWriter, r *http.Request) {
+	fileName := r.PathValue("filename")
+	if fileName == "" {
+		http.Error(w, "Filename not provided", http.StatusBadRequest)
+		return
+	}
+	cleanPath := filepath.Clean(fileName)
+
+	fullPath, err := h.srv.LoadFilePath(cleanPath)
+	if err != nil {
+		log.Error().Err(err).Str("path", cleanPath).Msg("Error loading file")
+		http.Error(w, "Filename not found", http.StatusBadRequest)
+		return
+	}
+
+	http.ServeFile(w, r, fullPath)
+}
+
+func (h *FileHandler) saveFile(w http.ResponseWriter, r *http.Request) {
 	// 10 MB is the maximum upload size
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		log.Fatal().Err(err).Msg("Error parsing multipart form")
@@ -57,22 +76,4 @@ func (h *FileHandler) SaveFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//log.Debug().Str("filename", meta.Filename).Msg("Successfully saved File")
-}
-
-func (h *FileHandler) LoadFile(w http.ResponseWriter, r *http.Request) {
-	fileName := r.PathValue("filename")
-	if fileName == "" {
-		http.Error(w, "Filename not provided", http.StatusBadRequest)
-		return
-	}
-	cleanPath := filepath.Clean(fileName)
-
-	fullPath, err := h.srv.LoadFilePath(cleanPath)
-	if err != nil {
-		log.Error().Err(err).Str("path", cleanPath).Msg("Error loading file")
-		http.Error(w, "Filename not found", http.StatusBadRequest)
-		return
-	}
-
-	http.ServeFile(w, r, fullPath)
 }
