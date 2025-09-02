@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/RA341/dockman/pkg/fileutil"
@@ -16,10 +17,11 @@ import (
 var ignoredFiles = []string{".git"}
 
 type Service struct {
-	composeRoot string
+	composeRoot  string
+	dockYamlPath string
 }
 
-func NewService(composeRoot string) *Service {
+func NewService(composeRoot string, dockYaml string) *Service {
 	if !filepath.IsAbs(composeRoot) {
 		var err error
 		composeRoot, err = filepath.Abs(composeRoot)
@@ -32,10 +34,24 @@ func NewService(composeRoot string) *Service {
 		log.Fatal().Err(err).Str("compose-root", composeRoot).Msg("failed to create compose root folder")
 	}
 
-	log.Debug().Msg("File service loaded successfully")
-	return &Service{
+	srv := &Service{
 		composeRoot: composeRoot,
 	}
+
+	if dockYaml != "" {
+		if strings.HasPrefix(dockYaml, "/") {
+			// Absolute path provided
+			// e.g /home/zaphodb/conf/.dockman.db
+			srv.dockYamlPath = dockYaml
+		} else {
+			// Relative path; attach compose root
+			// e.g. dockman/.dockman.yml
+			srv.dockYamlPath = srv.WithRoot(dockYaml)
+		}
+	}
+
+	log.Debug().Msg("File service loaded successfully")
+	return srv
 }
 
 func (s *Service) Close() error {
@@ -113,17 +129,20 @@ func (s *Service) GetDockmanYaml() *DockmanYaml {
 	var file []byte
 	var err error
 
-	for _, filename := range filenames {
-		file, err = os.ReadFile(s.WithRoot(filename))
-		if err == nil {
-			break
+	if s.dockYamlPath != "" {
+		file, err = os.ReadFile(s.dockYamlPath)
+	} else {
+		for _, filename := range filenames {
+			file, err = os.ReadFile(s.WithRoot(filename))
+			if err == nil {
+				break
+			}
 		}
-	}
-
-	// generates too many logs be careful
-	if err != nil {
-		//log.Warn().Err(err).Strs("tried", filenames).Msg("unable to open dockman yaml")
-		return &DockmanYaml{}
+		// generates too many logs be careful
+		if err != nil {
+			//log.Warn().Err(err).Strs("tried", filenames).Msg("unable to open dockman yaml")
+			return &DockmanYaml{}
+		}
 	}
 
 	config := &DockmanYaml{}

@@ -24,6 +24,7 @@ type AppConfig struct {
 	LocalAddr      string        `config:"flag=ma,env=MACHINE_ADDR,default=0.0.0.0,usage=Local machine IP address"`
 	ComposeRoot    string        `config:"flag=cr,env=COMPOSE_ROOT,default=/compose,usage=Root directory for compose files"`
 	ConfigDir      string        `config:"flag=conf,env=CONFIG,default=/config,usage=Directory to store dockman config"`
+	DockYaml       string        `config:"flag=dy,env=DOCK_YAML,default=,usage=Custom path for the .dockman.yml file"`
 	Auth           AuthConfig    `config:""` // indicate to parse struct
 	Updater        UpdaterConfig `config:""`
 	Log            Logger        `config:""`

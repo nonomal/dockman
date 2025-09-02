@@ -3,15 +3,6 @@ title: Healthchecks
 sidebar_position: 2
 ---
 
-## Disable updates
-
-You can disable updates for specific containers by adding the label
-
-```yaml
-labels:
-  dockman.update.disable=true
-```
-
 ## Update Healthchecks
 
 ### Container Uptime Check

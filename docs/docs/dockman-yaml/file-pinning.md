@@ -9,8 +9,6 @@ You can pin specific files or directories to appear at the top of your file list
 The specified files and directories will appear at the top of your file list, followed by the normal
 alphabetical sorting.
 
-Create either `.dockman.yaml` or `.dockman.yml` in your compose root.
-
 Add a `pinnedFiles` section with the names of files or directories you want to pin:
 
 ```yaml title=".dockman.yml"

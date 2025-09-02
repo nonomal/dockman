@@ -29,6 +29,6 @@ func TestService_Create(t *testing.T) {
 }
 
 func TestService_FuzzySearch(t *testing.T) {
-	sd := NewService("./test")
+	sd := NewService("./test", "")
 
 }

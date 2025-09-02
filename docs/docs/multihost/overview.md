@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-title: How it works
+title: Overview
 ---
 
 Dockman's multihost feature lets you manage remote Docker hosts from one centralized interface.

@@ -51,7 +51,7 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 
 	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password, limit)
 	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
-	fileSrv := files.NewService(cr)
+	fileSrv := files.NewService(cr, conf.DockYaml)
 	gitSrv := git.NewService(cr)
 	dockerManagerSrv := dm.NewService(
 		gitSrv,
