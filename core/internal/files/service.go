@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"dario.cat/mergo"
 	"github.com/RA341/dockman/pkg/fileutil"
 	"github.com/goccy/go-yaml"
 	"github.com/rs/zerolog/log"
@@ -148,8 +149,15 @@ func (s *Service) GetDockmanYaml() *DockmanYaml {
 		}
 	}
 
-	if err := yaml.Unmarshal(file, &config); err != nil {
+	var override DockmanYaml
+	if err := yaml.Unmarshal(file, &override); err != nil {
 		//log.Warn().Err(err).Msg("failed to parse dockman yaml")
+	}
+
+	// Merge override into config, override values win
+	err = mergo.Merge(&config, &override, mergo.WithOverride)
+	if err != nil {
+		return &config
 	}
 
 	return &config
