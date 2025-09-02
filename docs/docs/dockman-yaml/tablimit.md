@@ -15,4 +15,4 @@ tabLimit: 5 # max 5 tabs open
 ```
 
 * `tabLimit` specifies the maximum number of tabs that can be open at the same time.
-* If omitted, there is no limit by default.
+* If omitted, there is a default limit of 5 tabs.
