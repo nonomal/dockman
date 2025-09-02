@@ -26,6 +26,7 @@ import {
     VolumeIcon
 } from "../compose/components/file-bar-icon.tsx";
 import {useTabs} from "../../hooks/tabs.ts";
+import {getEditorUrl} from "../../lib/editor.ts";
 
 export const TOP_BAR_HEIGHT = 69;
 const MAIN_SIDEBAR_WIDTH = 80;
@@ -51,7 +52,7 @@ export function RootLayout() {
             exact: false, // for startsWith matching
             // use last open tab if possible
             onClick: () => navigate(activeTab ?
-                `/stacks/${activeTab}?tab=${tabs[activeTab].subTabIndex}` :
+                getEditorUrl(activeTab, tabs[activeTab]) :
                 `/stacks`
             ),
         },

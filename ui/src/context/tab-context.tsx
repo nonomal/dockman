@@ -3,6 +3,7 @@ import {useLocation, useNavigate, useParams} from 'react-router-dom';
 import {type TabDetails, TabsContext} from "../hooks/tabs.ts";
 import {useHost} from "../hooks/host.ts";
 import {useConfig} from "../hooks/config.ts";
+import {getEditorUrl} from "../lib/editor.ts";
 
 interface TabsProviderProps {
     children: ReactNode
@@ -29,17 +30,32 @@ export function TabsProvider({children}: TabsProviderProps) {
 
     // handler for when someone clicks on a tab
     const handleTabClick = useCallback((filename: string) => {
+        // capture current row and col
+
+
         const tabDetail = openTabs[filename];
-        navigate(`/stacks/${filename}?tab=${tabDetail.subTabIndex ?? 0}`);
+        const url = getEditorUrl(filename, tabDetail);
+        navigate(url);
     }, [openTabs, navigate]);
 
     const handleOpenTab = useCallback((filename: string) => {
         const params = new URLSearchParams(location.search);
 
         setOpenTabs(prevTabs => {
-            // If tab already exists, just navigate
             if (prevTabs[filename]) {
                 const tab = Number(params.get("tab") ?? "0")
+
+                if (tab === 0) {
+                    const currentUrl = new URL(window.location.href);
+                    const row = parseInt(currentUrl.searchParams.get("row") || "1", 10);
+                    const col = parseInt(currentUrl.searchParams.get("col") || "1", 10);
+
+                    return {
+                        ...prevTabs,
+                        [filename]: {...prevTabs[filename], subTabIndex: tab, row: row, col: col},
+                    }
+                }
+
                 return {
                     ...prevTabs,
                     [filename]: {...prevTabs[filename], subTabIndex: tab},
@@ -55,23 +71,46 @@ export function TabsProvider({children}: TabsProviderProps) {
             }
 
             // Add new tab with default subTabIndex
-            newTabs[filename] = {subTabIndex: 0};
+            newTabs[filename] = {subTabIndex: 0, col: 1, row: 1};
             return newTabs;
         });
     }, [location.search, tabLimit]);
 
+    const setTabDetails = useCallback((filename: string, details: Partial<TabDetails>) => {
+        setOpenTabs(prevTabs => {
+            if (!prevTabs[filename]) return prevTabs;
+
+            return {
+                ...prevTabs,
+                [filename]: {...prevTabs[filename], ...details},
+            };
+        });
+    }, []);
+
     const handleCloseTab = useCallback((filename: string) => {
+        localStorage.removeItem(filename)
+
         setOpenTabs(prevTabs => {
             const newTabs = {...prevTabs};
+            const tabKeys = Object.keys(prevTabs);
+            const currentIndex = tabKeys.indexOf(filename);
+
             delete newTabs[filename];
 
             if (Object.keys(newTabs).length < 1) {
                 navigate("/stacks")
+            } else {
+                if (filename == curTab) {
+                    // Try right tab first, then left, then first
+                    const nextIndex = currentIndex < tabKeys.length - 1 ? currentIndex : currentIndex - 1;
+                    const next = tabKeys[nextIndex] !== filename ? tabKeys[nextIndex] : Object.keys(newTabs)[0];
+                    navigate("/stacks/" + next);
+                }
             }
 
             return newTabs;
         });
-    }, [navigate]);
+    }, [curTab, navigate]);
 
     const handleTabRename = useCallback((oldFilename: string, newFilename: string) => {
         setOpenTabs(prevTabs => {
@@ -102,7 +141,7 @@ export function TabsProvider({children}: TabsProviderProps) {
         if (filename && filename !== curTab) {
             setCurTab(filename);
         }
-    }, [filename, curTab, handleOpenTab, location.pathname]);
+    }, [filename, curTab, handleOpenTab, location.pathname, location.state?.from]);
 
     // const activeTabName = filename ? !!openTabs[filename] : false;
 
@@ -112,7 +151,8 @@ export function TabsProvider({children}: TabsProviderProps) {
         openTab: handleOpenTab,
         closeTab: handleCloseTab,
         renameTab: handleTabRename,
-        onTabClick: handleTabClick
+        onTabClick: handleTabClick,
+        setTabDetails: setTabDetails,
     }
 
     return (

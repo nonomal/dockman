@@ -2,11 +2,14 @@ import {createContext, useContext} from "react";
 
 export interface TabDetails {
     subTabIndex: number;
+    row: number;
+    col: number;
 }
 
 export interface TabsContextType {
     tabs: Record<string, TabDetails>;
     activeTab: string;
+    setTabDetails: (filename: string, details: Partial<TabDetails>) => void;
     openTab: (filename: string) => void;
     closeTab: (filename: string) => void;
     renameTab: (oldFilename: string, newFilename: string) => void;

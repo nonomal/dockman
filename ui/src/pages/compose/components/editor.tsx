@@ -21,11 +21,11 @@ export function MonacoEditor(
 
     const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
 
-    // Handle editor mount
     const handleEditorDidMount = (
         editor: monacoEditor.editor.IStandaloneCodeEditor,
     ) => {
         editorRef.current = editor;
+        editor.focus();
 
         // Clear the undo stack for the initial load
         const model = editor.getModel();
@@ -33,6 +33,19 @@ export function MonacoEditor(
             console.log("clearing stack for initial load");
             model.pushStackElement();
         }
+
+        const val = sessionStorage.getItem(selectedPage);
+        if (editorRef.current && val) {
+            const [row, col] = sessionStorage.getItem(selectedPage)?.split(',').map(Number) || [];
+            editorRef.current!.revealPositionInCenter({lineNumber: row, column: col});
+            editorRef.current!.setPosition({lineNumber: row, column: col});
+        }
+
+        // Listen to cursor position changes
+        editor.onDidChangeCursorPosition((e) => {
+            const {lineNumber, column} = e.position;
+            sessionStorage.setItem(selectedPage, `${lineNumber},${column}`);
+        });
     };
 
     return (
