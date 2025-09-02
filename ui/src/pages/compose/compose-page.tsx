@@ -76,7 +76,10 @@ export const ComposePageInner = () => {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [navigate, tabs, activeTab, onTabClick])
 
-    const tablist = Object.keys(tabs);
+    const tablist = useMemo(() => {
+        return Object.keys(tabs)
+    }, [tabs])
+
     return (
         <Box sx={{
             display: 'flex',

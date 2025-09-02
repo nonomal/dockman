@@ -98,6 +98,7 @@ export function TabsProvider({children}: TabsProviderProps) {
             delete newTabs[filename];
 
             if (Object.keys(newTabs).length < 1) {
+                setCurTab("")
                 navigate("/stacks")
             } else {
                 if (filename == curTab) {
@@ -133,15 +134,18 @@ export function TabsProvider({children}: TabsProviderProps) {
     useEffect(() => {
         if (!location.pathname.startsWith("/stacks")) return;
 
-        const tabToOpen = filename ?? curTab;
-        if (!tabToOpen) return;
-
-        handleOpenTab(tabToOpen);
-
-        if (filename && filename !== curTab) {
-            setCurTab(filename);
+        if (!filename) {
+            // No file in URL → clear active tab
+            setCurTab("");
+            return;
         }
-    }, [filename, curTab, handleOpenTab, location.pathname, location.state?.from]);
+
+        // Open file in tabs if not already present
+        handleOpenTab(filename);
+
+        // Sync active tab with URL
+        setCurTab(filename);
+    }, [filename, handleOpenTab, location.pathname])
 
     // const activeTabName = filename ? !!openTabs[filename] : false;
 
