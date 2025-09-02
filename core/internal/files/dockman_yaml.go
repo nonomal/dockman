@@ -3,6 +3,34 @@ package files
 const dockmanYamlFileYml = ".dockman.yml"
 const dockmanYamlFileYaml = ".dockman.yaml"
 
+var defaultDockmanYaml = DockmanYaml{
+	TabLimit: 5,
+	VolumesPage: VolumesConfig{
+		Sort: Sort{
+			Field: "Volume Name",
+			Order: "asc",
+		},
+	},
+	NetworkPage: NetworkConfig{
+		Sort: Sort{
+			Field: "Network Name",
+			Order: "asc",
+		},
+	},
+	ImagePage: ImageConfig{
+		Sort: Sort{
+			Field: "Images",
+			Order: "asc",
+		},
+	},
+	ContainerPage: ContainerConfig{
+		Sort: Sort{
+			Field: "Name",
+			Order: "asc",
+		},
+	},
+}
+
 type DockmanYaml struct {
 	// define a custom sort to pin certain files when displaying
 	PinnedFiles map[string]int `yaml:"pinnedFiles"`

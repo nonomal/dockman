@@ -126,6 +126,9 @@ func (s *Service) Create(fileName string) error {
 func (s *Service) GetDockmanYaml() *DockmanYaml {
 	filenames := []string{dockmanYamlFileYml, dockmanYamlFileYaml}
 
+	// start with defaults
+	var config = defaultDockmanYaml
+
 	var file []byte
 	var err error
 
@@ -141,16 +144,15 @@ func (s *Service) GetDockmanYaml() *DockmanYaml {
 		// generates too many logs be careful
 		if err != nil {
 			//log.Warn().Err(err).Strs("tried", filenames).Msg("unable to open dockman yaml")
-			return &DockmanYaml{}
+			return &config
 		}
 	}
 
-	config := &DockmanYaml{}
-	if err := yaml.Unmarshal(file, config); err != nil {
+	if err := yaml.Unmarshal(file, &config); err != nil {
 		//log.Warn().Err(err).Msg("failed to parse dockman yaml")
 	}
 
-	return config
+	return &config
 }
 
 func (s *Service) Exists(filename string) error {
