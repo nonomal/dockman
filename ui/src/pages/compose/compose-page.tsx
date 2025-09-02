@@ -17,6 +17,7 @@ import {TelescopeProvider} from "./dialogs/search/search-context.tsx";
 import {DeleteFileProvider} from "./dialogs/delete/delete-context.tsx";
 import {GitImportProvider} from "./dialogs/import/import-context.tsx";
 import {isComposeFile} from "../../lib/editor.ts";
+import {useTabs} from "../../hooks/tabs.ts";
 
 export const ComposePage = () => {
     return (
@@ -35,89 +36,47 @@ export const ComposePage = () => {
 }
 
 export const ComposePageInner = () => {
+    const {file, child} = useParams<{ file: string; child?: string }>();
+    const filename = child ? `${file}/${child}` : file ?? "";
     const navigate = useNavigate();
 
-    const {file, child} = useParams<{ file: string; child?: string }>();
-    const filename = child ? `${file}/${child}` : file;
-
-    const [openTabs, setOpenTabs] = useState<string[]>([]);
-    const TAB_LIMIT = 5;
-
-    // This effect syncs the URL with the open tabs.
-    // When the `filename` in the URL changes, it adds it as a new tab if not already open.
-    useEffect(() => {
-        if (filename) {
-            setOpenTabs(prevTabs => {
-                if (prevTabs.includes(filename)) {
-                    return prevTabs;
-                }
-
-                // If we're at the limit, remove the oldest tab (first in array)
-                if (prevTabs.length >= TAB_LIMIT) {
-                    return [...prevTabs.slice(0, prevTabs.length - 1), filename]; // Remove last, add new at end
-                }
-
-                // Add the new filename to tabs
-                return [...prevTabs, filename];
-            });
-        }
-    }, [filename])
-
-    const activeTabIndex = filename ? openTabs.indexOf(filename) : false;
-
-    const handleTabChange = (_event: React.SyntheticEvent, newIndex: number) => {
-        const newFilename = openTabs[newIndex];
-        navigate(`/stacks/${newFilename}`);
-    };
-
-    // Close a tab and navigate to an appropriate new tab
-    const handleCloseTab = (tabToClose: string) => {
-        const closingTabIndex = openTabs.indexOf(tabToClose);
-        const newTabs = openTabs.filter(tab => tab !== tabToClose);
-        setOpenTabs(newTabs);
-
-        // If the active tab is being closed, determine the next tab to show
-        if (filename === tabToClose) {
-            if (newTabs.length === 0) {
-                navigate('/stacks'); // No tabs left, show empty page
-            } else {
-                // Default to the tab to the left, or the new first tab
-                const newActiveIndex = Math.max(0, closingTabIndex - 1);
-                const newFilename = newTabs[newActiveIndex];
-                const [newFile, ...newChildParts] = newFilename.split('/');
-                const newChild = newChildParts.join('/');
-
-                if (newChild) {
-                    navigate(`/stacks/${newFile}/${newChild}`);
-                } else {
-                    navigate(`/stacks/${newFile}`);
-                }
-            }
-        }
-    };
+    const {tabs, closeTab, onTabClick, activeTab} = useTabs();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Check for the base shortcut combination (Ctrl + Alt)
-            if (e.ctrlKey && !e.altKey && !e.shiftKey && !e.repeat) {
-                // Test if the pressed key is a single digit ('0'-'9')
-                // Convert the key string (e.g., "7") to a number
-                const tabIndex = parseInt(e.key, 10) - 1;
-                if (!isNaN(tabIndex)) {
-                    e.preventDefault();
+            const tabNames = Object.keys(tabs);
 
-                    const page = openTabs[tabIndex]
-                    if (page) {
-                        navigate(`/stacks/${page}`)
+            if (e.altKey && !e.ctrlKey && !e.shiftKey && !e.repeat && (e.key == "ArrowLeft" || e.key == "ArrowRight")) {
+                let currentIndex = tabNames.indexOf(activeTab);
+
+                switch (e.key) {
+                    case "ArrowLeft": {
+                        e.preventDefault();
+                        if (currentIndex > 0) {
+                            currentIndex--;
+
+                        }
+                        break;
+                    }
+                    case "ArrowRight": {
+                        e.preventDefault();
+                        if (currentIndex < tabNames.length - 1) {
+                            currentIndex++
+                        }
+                        break;
                     }
                 }
+
+                const name = tabNames[currentIndex]
+                onTabClick(name);
             }
         };
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [navigate, openTabs])
+    }, [navigate, tabs, activeTab, onTabClick])
 
+    const tablist = Object.keys(tabs);
     return (
         <Box sx={{
             display: 'flex',
@@ -132,7 +91,7 @@ export const ComposePageInner = () => {
                 borderColor: 'divider',
                 overflowY: 'auto'
             }}>
-                <FileList closeTab={handleCloseTab}/>
+                <FileList closeTab={closeTab}/>
             </Box>
 
             <Box sx={{
@@ -142,52 +101,47 @@ export const ComposePageInner = () => {
                 overflow: 'hidden'
             }}>
                 {/* Tab Bar */}
-                {openTabs.length > 0 && (
+                {tablist.length > 0 && (
                     <Box sx={{borderBottom: 1, borderColor: 'divider', flexShrink: 0}}>
                         <Tabs
-                            value={activeTabIndex === -1 ? false : activeTabIndex}
-                            onChange={handleTabChange}
+                            value={filename}
+                            onChange={(_event, value) => onTabClick(value as string)}
                             variant="scrollable"
                             scrollButtons="auto"
                         >
-                            {openTabs.map((tabFilename, index) => (
-                                <Tooltip title={
-                                    <ShortcutFormatter
-                                        title=""
-                                        keyCombo={["CTRL", `${index + 1}`]}
-                                    />
-                                }>
-                                    <Tab
-                                        key={tabFilename}
-                                        sx={{textTransform: 'none', p: 0.5}}
-                                        label={
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    px: 1
-                                                }}>
-                                                {tabFilename}
-                                                {/*todo customize ??*/}
-                                                {/*{dockmanYaml?.useFolderNamesInTabs*/}
-                                                {/*    ? tabFilename.split('/')[0]*/}
-                                                {/*    : tabFilename*/}
-                                                {/*}*/}
-                                                <IconButton
-                                                    size="small"
-                                                    component="div"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation(); // Prevents `handleTabChange` from firing
-                                                        handleCloseTab(tabFilename)
-                                                    }}
-                                                    sx={{ml: 1.5}}
-                                                >
-                                                    <CloseIcon sx={{fontSize: '1rem'}}/>
-                                                </IconButton>
-                                            </Box>
-                                        }
-                                    />
-                                </Tooltip>
+                            {tablist.map((tabFilename) => (
+                                <Tab
+                                    key={tabFilename}
+                                    value={tabFilename}
+                                    sx={{textTransform: 'none', p: 0.5}}
+                                    label={
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            px: 1
+                                        }}>
+                                            {/*// todo tab shortcuts*/}
+                                            <Tooltip title={""
+                                                // <ShortcutFormatter
+                                                //     title="" keyCombo={["CTRL", `${index + 1}`]}
+                                                // />}
+                                            }>
+                                                <span>{tabFilename}</span>
+                                            </Tooltip>
+                                            <IconButton
+                                                size="small"
+                                                component="div"
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevents `handleTabChange` from firing
+                                                    closeTab(tabFilename)
+                                                }}
+                                                sx={{ml: 1.5}}
+                                            >
+                                                <CloseIcon sx={{fontSize: '1rem'}}/>
+                                            </IconButton>
+                                        </Box>
+                                    }
+                                />
                             ))}
                         </Tabs>
                     </Box>

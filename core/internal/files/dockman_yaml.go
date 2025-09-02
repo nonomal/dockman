@@ -9,6 +9,9 @@ type DockmanYaml struct {
 	// use compose folders https://dockman.radn.dev/docs/file-layout/customize#compose-folders
 	UseComposeFolders bool `yaml:"useComposeFolders"`
 
+	// TabLimit in editor
+	TabLimit int32 `yaml:"tabLimit"`
+
 	// configure volumes page
 	VolumesPage VolumesConfig `yaml:"volumes"`
 

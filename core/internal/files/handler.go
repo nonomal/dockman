@@ -166,6 +166,7 @@ func (d DockmanYaml) toProto() *v1.DockmanYaml {
 	return &v1.DockmanYaml{
 		UseComposeFolders: d.UseComposeFolders,
 		VolumesPage:       d.VolumesPage.toProto(),
+		TabLimit:          d.TabLimit,
 		NetworkPage:       d.NetworkPage.toProto(),
 		ImagePage:         d.ImagePage.toProto(),
 		ContainerPage:     d.ContainerPage.toProto(),

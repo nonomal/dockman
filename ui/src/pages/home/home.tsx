@@ -25,6 +25,7 @@ import {
     StatsIcon,
     VolumeIcon
 } from "../compose/components/file-bar-icon.tsx";
+import {useTabs} from "../../hooks/tabs.ts";
 
 export const TOP_BAR_HEIGHT = 69;
 const MAIN_SIDEBAR_WIDTH = 80;
@@ -39,6 +40,8 @@ export function RootLayout() {
         navigate('/');
     };
 
+    const {activeTab, tabs} = useTabs()
+
     const navigationItems = useMemo(() => [
         {
             id: 'files',
@@ -46,7 +49,11 @@ export function RootLayout() {
             path: '/stacks',
             icon: DockerFolderIcon,
             exact: false, // for startsWith matching
-            onClick: () => navigate('/stacks'),
+            // use last open tab if possible
+            onClick: () => navigate(activeTab ?
+                `/stacks/${activeTab}?tab=${tabs[activeTab].subTabIndex}` :
+                `/stacks`
+            ),
         },
         {
             id: 'dashboard',
@@ -88,7 +95,7 @@ export function RootLayout() {
             exact: false, // for startsWith matching
             onClick: () => navigate('/networks'),
         }
-    ], [navigate]);
+    ], [activeTab, navigate]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -102,7 +109,11 @@ export function RootLayout() {
 
                     const page = navigationItems[pageIndex]
                     if (page) {
-                        navigate(page.path)
+                        if (page.onClick) {
+                            page.onClick()
+                        } else {
+                            navigate(page.path)
+                        }
                     }
                 }
             }
