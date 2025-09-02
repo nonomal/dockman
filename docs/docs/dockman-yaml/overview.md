@@ -3,10 +3,6 @@ title: Overview
 sidebar_position: 1
 ---
 
-:::warning
-This feature is only available on the `ghcr.io/ra341/dockman:main` tag and is currently in testing. Expect bugs.
-:::
-
 The **`.dockman.yaml`** file is an optional configuration file that allows you to customize your Dockman instance.
 Use it to define how your instance behaves, looks, and feels.
 
