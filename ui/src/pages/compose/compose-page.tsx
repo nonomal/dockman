@@ -1,4 +1,4 @@
-import React, {type SyntheticEvent, useEffect, useMemo, useState} from 'react';
+import React, {type ReactNode, type SyntheticEvent, useEffect, useMemo, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {TabEditor} from "./tab-editor.tsx";
 import {TabDeploy} from "./tab-deploy.tsx";
@@ -18,6 +18,7 @@ import {DeleteFileProvider} from "./dialogs/delete/delete-context.tsx";
 import {GitImportProvider} from "./dialogs/import/import-context.tsx";
 import {isComposeFile} from "../../lib/editor.ts";
 import {useTabs} from "../../hooks/tabs.ts";
+import {type SaveState, useSaveStatus} from "./status-hook.ts";
 
 export const ComposePage = () => {
     return (
@@ -123,14 +124,7 @@ export const ComposePageInner = () => {
                                             alignItems: 'center',
                                             px: 1
                                         }}>
-                                            {/*// todo tab shortcuts*/}
-                                            <Tooltip title={""
-                                                // <ShortcutFormatter
-                                                //     title="" keyCombo={["CTRL", `${index + 1}`]}
-                                                // />}
-                                            }>
-                                                <span>{tabFilename}</span>
-                                            </Tooltip>
+                                            <span>{tabFilename}</span>
                                             <IconButton
                                                 size="small"
                                                 component="div"
@@ -239,6 +233,7 @@ function CoreCompose({filename}: { filename: string }) {
         return () => window.removeEventListener("keydown", handleKeyDown)
     }, [filename, navigate]);
 
+    const {status, setStatus, handleContentChange} = useSaveStatus(500, filename);
 
     const tabsList: TabDetails[] = useMemo(() => {
         if (!filename) return [];
@@ -247,7 +242,11 @@ function CoreCompose({filename}: { filename: string }) {
 
         map.push({
             label: 'Editor',
-            component: <TabEditor key={filename} selectedPage={filename}/>,
+            component: <TabEditor
+                selectedPage={filename}
+                setStatus={setStatus}
+                handleContentChange={handleContentChange}
+            />,
             shortcut: <ShortcutFormatter title={"Editor"} keyCombo={["ALT", "Z"]}/>,
         })
 
@@ -293,20 +292,61 @@ function CoreCompose({filename}: { filename: string }) {
         );
     }
 
+    const indicatorMap: Record<SaveState, { color: string, component: ReactNode }> = {
+        typing: {
+            color: "primary.main",
+            component: <Typography variant="button" color="primary.main">Typing</Typography>
+        },
+        saving: {
+            color: "info.main",
+            component: <Typography variant="button" color="info.main">Saving</Typography>
+        },
+        success: {
+            color: "success.main",
+            component: <Typography variant="button" color="success.main">Saved</Typography>
+        },
+        error: {
+            color: "error.main",
+            component: <Typography variant="button" color="error.main">Save Failed</Typography>
+        },
+        idle: {
+            color: "primary.secondary",
+            component: <></>
+        }
+    };
+
     const activePanel = tabsList[currentTab].component;
     return (
         <>
             <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
-                <Tabs value={currentTab} onChange={handleTabChange} slotProps={{
-                    indicator: {
-                        sx: {
-                            transition: '0.09s',
+                <Tabs
+                    value={currentTab}
+                    onChange={handleTabChange}
+                    slotProps={{
+                        indicator: {
+                            sx: {
+                                transition: '0.09s',
+                                backgroundColor: indicatorMap[status].color,
+                            }
                         }
-                    }
-                }}>
+                    }}
+                >
                     {tabsList.map((details, key) => (
-                        <Tooltip title={details.shortcut}>
-                            <Tab key={key} value={key} label={details.label}/>
+                        <Tooltip title={details.shortcut} key={key}>
+                            <Tab
+                                value={key}
+                                sx={{
+                                    color: (key == 0) ? indicatorMap[status].color : "primary.secondary",
+                                }}
+                                label={
+                                    key === 0 ? (
+                                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                            {status === 'idle' ?
+                                                <span>{details.label}</span> : indicatorMap[status]?.component}
+                                        </Box>
+                                    ) : details.label
+                                }
+                            />
                         </Tooltip>
                     ))}
                 </Tabs>

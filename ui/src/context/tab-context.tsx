@@ -44,18 +44,6 @@ export function TabsProvider({children}: TabsProviderProps) {
         setOpenTabs(prevTabs => {
             if (prevTabs[filename]) {
                 const tab = Number(params.get("tab") ?? "0")
-
-                if (tab === 0) {
-                    const currentUrl = new URL(window.location.href);
-                    const row = parseInt(currentUrl.searchParams.get("row") || "1", 10);
-                    const col = parseInt(currentUrl.searchParams.get("col") || "1", 10);
-
-                    return {
-                        ...prevTabs,
-                        [filename]: {...prevTabs[filename], subTabIndex: tab, row: row, col: col},
-                    }
-                }
-
                 return {
                     ...prevTabs,
                     [filename]: {...prevTabs[filename], subTabIndex: tab},
@@ -121,7 +109,6 @@ export function TabsProvider({children}: TabsProviderProps) {
             const newTabs = {...prevTabs, [newFilename]: tab};
             delete newTabs[oldFilename];
 
-            // Optional: navigate to renamed tab
             navigate(`/stacks/${newFilename}?tab=${tab.subTabIndex}`);
 
             return newTabs;
