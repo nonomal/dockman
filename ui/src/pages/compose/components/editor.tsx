@@ -35,20 +35,23 @@ export function MonacoEditor(
             model.pushStackElement();
         }
 
-        if (editorRef.current) {
-            const tab = tabs[selectedFile]
-            const {row, col} = tab;
+        // if (editorRef.current) {
+        //     const tab = tabs[selectedFile]
+        //     const {row, col} = tab;
+        //     console.log("Setting cursor pos", row, col);
 
-            const padding = 5; // number of lines above and below
-            editorRef.current!.revealRangeInCenter({
-                startLineNumber: Math.max(1, row - padding),
-                startColumn: 1,
-                endLineNumber: row + padding,
-                endColumn: 1,
-            });
-
-            editorRef.current!.setPosition({lineNumber: row, column: col});
-        }
+        // requestAnimationFrame(() => {
+        //     editorRef.current!.setPosition({lineNumber: row, column: col});
+        //     const padding = 5;
+        //     editorRef.current!.revealRangeInCenter({
+        //         startLineNumber: Math.max(1, row - padding),
+        //         startColumn: 1,
+        //         endLineNumber: row + padding,
+        //         endColumn: 1,
+        //     });
+        //     // focus after setting line pos
+        // });
+        // }
 
         // Listen to cursor position changes
         editor.onDidChangeCursorPosition((e) => {
@@ -59,6 +62,31 @@ export function MonacoEditor(
             })
         });
     };
+
+    useEffect(() => {
+        if (!editorRef.current) return;
+
+        const tab = tabs[selectedFile];
+        if (!tab) return;
+
+        const {row, col} = tab;
+
+        const model = editorRef.current.getModel();
+        if (!model) return;
+
+        // Clamp row/column to model size
+        const lineNumber = Math.min(row, model.getLineCount());
+        const column = Math.min(col, model.getLineMaxColumn(lineNumber));
+
+        editorRef.current.setPosition({lineNumber, column});
+        const padding = 5;
+        editorRef.current.revealRangeInCenter({
+            startLineNumber: Math.max(1, lineNumber - padding),
+            startColumn: 1,
+            endLineNumber: lineNumber + padding,
+            endColumn: 1,
+        });
+    }, [fileContent, selectedFile, tabs]);
 
     return (
         <Editor
@@ -79,7 +107,7 @@ export function MonacoEditor(
 
 type RowColUpdate = { row: number; col: number; filename: string };
 
-function useSaveLineNum(debounceMs: number = 500) {
+function useSaveLineNum(debounceMs: number = 200) {
     const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleContentChange = useCallback(
@@ -90,6 +118,7 @@ function useSaveLineNum(debounceMs: number = 500) {
 
             debounceTimeout.current = setTimeout(() => {
                 onSave(value);
+                console.log("Saving cursor position: ", value)
             }, debounceMs);
         },
         [debounceMs]

@@ -42,7 +42,7 @@ export function TabEditor({selectedPage, setStatus, handleContentChange}: Editor
 
     function handleEditorChange(value: string | undefined): void {
         const newValue = value!;
-        setFileContent(newValue);
+        // setFileContent(newValue);
         handleContentChange(newValue, saveFile);
     }
 
