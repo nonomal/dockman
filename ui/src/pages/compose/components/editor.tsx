@@ -86,7 +86,9 @@ export function MonacoEditor(
             endLineNumber: lineNumber + padding,
             endColumn: 1,
         });
-    }, [fileContent, selectedFile, tabs]);
+        // do not add tabs as dependencies
+        // it will mess with the editor as the user types
+    }, [fileContent, selectedFile]);
 
     return (
         <Editor
