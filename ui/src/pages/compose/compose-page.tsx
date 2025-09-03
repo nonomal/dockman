@@ -123,14 +123,7 @@ export const ComposePageInner = () => {
                                             alignItems: 'center',
                                             px: 1
                                         }}>
-                                            {/*// todo tab shortcuts*/}
-                                            <Tooltip title={""
-                                                // <ShortcutFormatter
-                                                //     title="" keyCombo={["CTRL", `${index + 1}`]}
-                                                // />}
-                                            }>
-                                                <span>{tabFilename}</span>
-                                            </Tooltip>
+                                            <span>{tabFilename}</span>
                                             <IconButton
                                                 size="small"
                                                 component="div"

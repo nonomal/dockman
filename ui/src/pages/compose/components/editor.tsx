@@ -37,7 +37,7 @@ export function MonacoEditor(
         const val = sessionStorage.getItem(selectedPage);
         if (editorRef.current && val) {
             const [row, col] = sessionStorage.getItem(selectedPage)?.split(',').map(Number) || [];
-            editorRef.current!.revealPositionInCenter({lineNumber: row, column: col});
+            // editorRef.current!.revealPositionInCenter({lineNumber: row, column: col});
             editorRef.current!.setPosition({lineNumber: row, column: col});
         }
 
