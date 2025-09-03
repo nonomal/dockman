@@ -18,6 +18,7 @@ import {DeleteFileProvider} from "./dialogs/delete/delete-context.tsx";
 import {GitImportProvider} from "./dialogs/import/import-context.tsx";
 import {isComposeFile} from "../../lib/editor.ts";
 import {useTabs} from "../../hooks/tabs.ts";
+import {useSaveStatus} from "./status-hook.ts";
 
 export const ComposePage = () => {
     return (
@@ -233,6 +234,8 @@ function CoreCompose({filename}: { filename: string }) {
     }, [filename, navigate]);
 
 
+    const {status, setStatus, handleContentChange} = useSaveStatus(500);
+
     const tabsList: TabDetails[] = useMemo(() => {
         if (!filename) return [];
 
@@ -240,7 +243,11 @@ function CoreCompose({filename}: { filename: string }) {
 
         map.push({
             label: 'Editor',
-            component: <TabEditor key={filename} selectedPage={filename}/>,
+            component: <TabEditor
+                selectedPage={filename}
+                setStatus={setStatus}
+                handleContentChange={handleContentChange}
+            />,
             shortcut: <ShortcutFormatter title={"Editor"} keyCombo={["ALT", "Z"]}/>,
         })
 
@@ -286,6 +293,23 @@ function CoreCompose({filename}: { filename: string }) {
         );
     }
 
+
+    const StatusIndicator = () => {
+        switch (status) {
+            case 'typing':
+                return <Typography variant="body2" color="warning.main">Typing...</Typography>;
+            case 'saving':
+                return <Typography variant="body2" color="info.main">Saving...</Typography>;
+            case 'success':
+                return <Typography variant="body2" color="success.main">Saved</Typography>;
+            case 'error':
+                return <Typography variant="body2" color="error.main">Save Failed</Typography>;
+            case 'idle':
+            default:
+                return <></>;
+        }
+    };
+
     const activePanel = tabsList[currentTab].component;
     return (
         <>
@@ -299,7 +323,17 @@ function CoreCompose({filename}: { filename: string }) {
                 }}>
                     {tabsList.map((details, key) => (
                         <Tooltip title={details.shortcut}>
-                            <Tab key={key} value={key} label={details.label}/>
+                            <Tab
+                                key={key}
+                                value={key}
+                                label={
+                                    key === 0 ? (
+                                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                            {status === 'idle' ? <span>{details.label}</span> : <StatusIndicator/>}
+                                        </Box>
+                                    ) : details.label
+                                }
+                            />
                         </Tooltip>
                     ))}
                 </Tabs>
