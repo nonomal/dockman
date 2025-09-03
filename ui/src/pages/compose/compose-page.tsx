@@ -310,7 +310,7 @@ function CoreCompose({filename}: { filename: string }) {
             component: <Typography variant="button" color="error.main">Save Failed</Typography>
         },
         idle: {
-            color: "primary.main",
+            color: "primary.secondary",
             component: <></>
         }
     };
@@ -336,7 +336,7 @@ function CoreCompose({filename}: { filename: string }) {
                             <Tab
                                 value={key}
                                 sx={{
-                                    color: (key == 0) ? indicatorMap[status].color : "primary.main",
+                                    color: (key == 0) ? indicatorMap[status].color : "primary.secondary",
                                 }}
                                 label={
                                     key === 0 ? (
