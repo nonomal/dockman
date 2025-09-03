@@ -1,4 +1,4 @@
-import React, {type SyntheticEvent, useEffect, useMemo, useState} from 'react';
+import React, {type ReactNode, type SyntheticEvent, useEffect, useMemo, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {TabEditor} from "./tab-editor.tsx";
 import {TabDeploy} from "./tab-deploy.tsx";
@@ -18,7 +18,7 @@ import {DeleteFileProvider} from "./dialogs/delete/delete-context.tsx";
 import {GitImportProvider} from "./dialogs/import/import-context.tsx";
 import {isComposeFile} from "../../lib/editor.ts";
 import {useTabs} from "../../hooks/tabs.ts";
-import {useSaveStatus} from "./status-hook.ts";
+import {type SaveState, useSaveStatus} from "./status-hook.ts";
 
 export const ComposePage = () => {
     return (
@@ -233,8 +233,7 @@ function CoreCompose({filename}: { filename: string }) {
         return () => window.removeEventListener("keydown", handleKeyDown)
     }, [filename, navigate]);
 
-
-    const {status, setStatus, handleContentChange} = useSaveStatus(500);
+    const {status, setStatus, handleContentChange} = useSaveStatus(500, filename);
 
     const tabsList: TabDetails[] = useMemo(() => {
         if (!filename) return [];
@@ -293,20 +292,26 @@ function CoreCompose({filename}: { filename: string }) {
         );
     }
 
-
-    const StatusIndicator = () => {
-        switch (status) {
-            case 'typing':
-                return <Typography variant="body2" color="warning.main">Typing...</Typography>;
-            case 'saving':
-                return <Typography variant="body2" color="info.main">Saving...</Typography>;
-            case 'success':
-                return <Typography variant="body2" color="success.main">Saved</Typography>;
-            case 'error':
-                return <Typography variant="body2" color="error.main">Save Failed</Typography>;
-            case 'idle':
-            default:
-                return <></>;
+    const indicatorMap: Record<SaveState, { color: string, component: ReactNode }> = {
+        typing: {
+            color: "primary.main",
+            component: <Typography variant="button" color="primary.main">Typing</Typography>
+        },
+        saving: {
+            color: "info.main",
+            component: <Typography variant="button" color="info.main">Saving</Typography>
+        },
+        success: {
+            color: "success.main",
+            component: <Typography variant="button" color="success.main">Saved</Typography>
+        },
+        error: {
+            color: "error.main",
+            component: <Typography variant="button" color="error.main">Save Failed</Typography>
+        },
+        idle: {
+            color: "primary.main",
+            component: <></>
         }
     };
 
@@ -314,22 +319,30 @@ function CoreCompose({filename}: { filename: string }) {
     return (
         <>
             <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
-                <Tabs value={currentTab} onChange={handleTabChange} slotProps={{
-                    indicator: {
-                        sx: {
-                            transition: '0.09s',
+                <Tabs
+                    value={currentTab}
+                    onChange={handleTabChange}
+                    slotProps={{
+                        indicator: {
+                            sx: {
+                                transition: '0.09s',
+                                backgroundColor: indicatorMap[status].color,
+                            }
                         }
-                    }
-                }}>
+                    }}
+                >
                     {tabsList.map((details, key) => (
-                        <Tooltip title={details.shortcut}>
+                        <Tooltip title={details.shortcut} key={key}>
                             <Tab
-                                key={key}
                                 value={key}
+                                sx={{
+                                    color: (key == 0) ? indicatorMap[status].color : "primary.main",
+                                }}
                                 label={
                                     key === 0 ? (
                                         <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                            {status === 'idle' ? <span>{details.label}</span> : <StatusIndicator/>}
+                                            {status === 'idle' ?
+                                                <span>{details.label}</span> : indicatorMap[status]?.component}
                                         </Box>
                                     ) : details.label
                                 }

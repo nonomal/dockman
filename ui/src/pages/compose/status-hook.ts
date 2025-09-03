@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 
 export type SaveState = 'idle' | 'typing' | 'saving' | 'success' | 'error'
 
@@ -8,9 +8,13 @@ interface UseSaveStatusReturn {
     handleContentChange: (value: string, onSave: (value: string) => void) => void;
 }
 
-export function useSaveStatus(debounceMs: number = 500): UseSaveStatusReturn {
+export function useSaveStatus(debounceMs: number = 500, filename: string): UseSaveStatusReturn {
     const [status, setStatus] = useState<SaveState>('idle');
     const debounceTimeout = useRef<null | number>(null);
+
+    useEffect(() => {
+        setStatus('idle');
+    }, [filename]);
 
     const handleContentChange = useCallback((value: string, onSave: (value: string) => void) => {
         if (debounceTimeout.current) {
