@@ -48,44 +48,43 @@ export function TabEditor({selectedPage, setStatus, handleContentChange}: Editor
 
     return (
         <>
-            <Box sx={{p: 3, height: '100%', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
-                <Box sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    gap: 2,
-                    flexGrow: 1
-                }}>
-                    <Box
-                        sx={{
-                            flexGrow: 1,
-                            position: 'relative',
-                            display: 'flex',
-                            border: '1px dashed',
-                            borderColor: 'rgba(255, 255, 255, 0.23)',
-                            borderRadius: 1,
-                            backgroundColor: 'rgba(0,0,0,0.1)'
-                        }}
-                    >
-                        <Fade in={true} key={'diff'} timeout={280}>
-                            <Box
-                                sx={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    p: 0.2,
-                                    display: 'flex'
-                                }}
-                            >
-                                <MonacoEditor
-                                    selectedPage={selectedPage}
-                                    fileContent={fileContent}
-                                    handleEditorChange={handleEditorChange}
-                                />
-                            </Box>
-                        </Fade>
-                    </Box>
+            <Box sx={{
+                p: 0.7,
+                height: '100%',
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        position: 'relative',
+                        display: 'flex',
+                        border: '1px dashed',
+                        borderColor: 'rgba(255, 255, 255, 0.23)',
+                        borderRadius: 1,
+                        backgroundColor: 'rgba(0,0,0,0.1)'
+                    }}
+                >
+                    <Fade in={true} key={'diff'} timeout={280}>
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                p: 0.1,
+                                display: 'flex'
+                            }}
+                        >
+                            <MonacoEditor
+                                selectedPage={selectedPage}
+                                fileContent={fileContent}
+                                handleEditorChange={handleEditorChange}
+                            />
+                        </Box>
+                    </Fade>
                 </Box>
             </Box>
         </>
