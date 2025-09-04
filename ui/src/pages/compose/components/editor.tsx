@@ -46,6 +46,10 @@ export function MonacoEditor(
         model.pushStackElement();
         model.setValue(fileContent);
 
+        model.onDidChangeContent(() => {
+            handleEditorChange(model.getValue());
+        });
+
         const tab = tabs[selectedFile];
         if (!tab) return;
         const {row, col} = tab;
@@ -72,7 +76,6 @@ export function MonacoEditor(
             key={selectedFile}
             language={getLanguageFromExtension(selectedFile)}
             defaultValue={""}
-            onChange={handleEditorChange}
             onMount={handleEditorDidMount}
             theme="vs-dark"
             options={{
