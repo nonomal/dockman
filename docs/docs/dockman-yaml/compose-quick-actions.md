@@ -4,7 +4,7 @@ title: Compose Quick Actions
 ---
 
 :::info
-This feature is only available in on `ghcr.io/ra341/dockman:canary` build
+This feature is only available on `ghcr.io/ra341/dockman:canary` build
 and is unreleased at the moment.
 :::
 
