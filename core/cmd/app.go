@@ -47,9 +47,14 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 
 	// initialize services
 	dbSrv := database.NewService(conf.ConfigDir)
+	authSrv := auth.NewService(
+		conf.Auth.Username,
+		conf.Auth.Password,
+		limit,
+		dbSrv.AuthDb,
+	)
 	infoSrv := info.NewService(dbSrv.InfoDB)
 
-	authSrv := auth.NewService(conf.Auth.Username, conf.Auth.Password, limit)
 	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
 	fileSrv := files.NewService(cr, conf.DockYaml)
 	gitSrv := git.NewService(cr)

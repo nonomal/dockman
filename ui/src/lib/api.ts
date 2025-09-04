@@ -25,6 +25,11 @@ export async function callRPC<T>(exec: () => Promise<T>): Promise<{ val: T | nul
     } catch (error: unknown) {
         if (error instanceof ConnectError) {
             console.error(`Error: ${error.message}`);
+            // todo maybe ?????
+            // if (error.code == Code.Unauthenticated) {
+            //     nav("/")
+            // }
+
             return {val: null, err: `${error.code}: ${error.message}`};
         }
 
