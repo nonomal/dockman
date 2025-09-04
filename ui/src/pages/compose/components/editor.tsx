@@ -1,6 +1,6 @@
 import {Editor} from "@monaco-editor/react";
 import {getLanguageFromExtension} from "../../../lib/editor";
-import {useCallback, useEffect, useRef} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import * as monacoEditor from "monaco-editor";
 import {useTabs} from "../../../hooks/tabs.ts";
 
@@ -21,24 +21,23 @@ export function MonacoEditor(
     const saveLineNum = useSaveLineNum()
 
     const {tabs, setTabDetails} = useTabs()
+    const [mounted, setMounted] = useState(false);
 
-    const handleEditorDidMount = (
-        editor: monacoEditor.editor.IStandaloneCodeEditor,
-    ) => {
+    const handleEditorDidMount = (editor: monacoEditor.editor.IStandaloneCodeEditor) => {
         editorRef.current = editor;
+        setMounted(true); // mark as ready
         editor.focus();
 
         editor.onDidChangeCursorPosition((e) => {
             const {lineNumber, column} = e.position;
-
-            saveLineNum({filename: selectedFile, col: column, row: lineNumber}, value => {
+            saveLineNum({filename: selectedFile, col: column, row: lineNumber}, (value) => {
                 setTabDetails(value.filename, {row: value.row, col: value.col});
-            })
+            });
         });
     };
 
     useEffect(() => {
-        if (!editorRef.current) return;
+        if (!mounted || !editorRef.current) return;
 
         const model = editorRef.current.getModel();
         if (!model) return;
@@ -46,7 +45,6 @@ export function MonacoEditor(
         console.log("clearing stack for initial load");
         model.pushStackElement();
         model.setValue(fileContent);
-
 
         const tab = tabs[selectedFile];
         if (!tab) return;
@@ -65,14 +63,15 @@ export function MonacoEditor(
             endColumn: 1,
         });
         // do not add tabs as dependencies
-        // it will mess with the editor as the user types
-    }, [fileContent, selectedFile, editorRef]);
+        // it will mess with the editor typing
+        // resetting cursor position when the tab
+    }, [fileContent, selectedFile, mounted]);
 
     return (
         <Editor
             key={selectedFile}
             language={getLanguageFromExtension(selectedFile)}
-            // value={fileContent}
+            defaultValue={""}
             onChange={handleEditorChange}
             onMount={handleEditorDidMount}
             theme="vs-dark"
