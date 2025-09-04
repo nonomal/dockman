@@ -28,32 +28,6 @@ export function MonacoEditor(
         editorRef.current = editor;
         editor.focus();
 
-        // Clear the undo stack for the initial load
-        const model = editor.getModel();
-        if (model) {
-            // console.log("clearing stack for initial load");
-            model.pushStackElement();
-        }
-
-        // if (editorRef.current) {
-        //     const tab = tabs[selectedFile]
-        //     const {row, col} = tab;
-        //     console.log("Setting cursor pos", row, col);
-
-        // requestAnimationFrame(() => {
-        //     editorRef.current!.setPosition({lineNumber: row, column: col});
-        //     const padding = 5;
-        //     editorRef.current!.revealRangeInCenter({
-        //         startLineNumber: Math.max(1, row - padding),
-        //         startColumn: 1,
-        //         endLineNumber: row + padding,
-        //         endColumn: 1,
-        //     });
-        //     // focus after setting line pos
-        // });
-        // }
-
-        // Listen to cursor position changes
         editor.onDidChangeCursorPosition((e) => {
             const {lineNumber, column} = e.position;
 
@@ -66,13 +40,17 @@ export function MonacoEditor(
     useEffect(() => {
         if (!editorRef.current) return;
 
-        const tab = tabs[selectedFile];
-        if (!tab) return;
-
-        const {row, col} = tab;
-
         const model = editorRef.current.getModel();
         if (!model) return;
+
+        console.log("clearing stack for initial load");
+        model.pushStackElement();
+        model.setValue(fileContent);
+
+
+        const tab = tabs[selectedFile];
+        if (!tab) return;
+        const {row, col} = tab;
 
         // Clamp row/column to model size
         const lineNumber = Math.min(row, model.getLineCount());
@@ -88,13 +66,13 @@ export function MonacoEditor(
         });
         // do not add tabs as dependencies
         // it will mess with the editor as the user types
-    }, [fileContent, selectedFile]);
+    }, [fileContent, selectedFile, editorRef]);
 
     return (
         <Editor
-            key={selectedFile} // This creates a fresh editor for each file
+            key={selectedFile}
             language={getLanguageFromExtension(selectedFile)}
-            value={fileContent}
+            // value={fileContent}
             onChange={handleEditorChange}
             onMount={handleEditorDidMount}
             theme="vs-dark"
