@@ -2,9 +2,9 @@
 // @generated from file docker/v1/docker.proto (package docker.v1, syntax proto3)
 /* eslint-disable */
 
-import type {GenEnum, GenFile, GenMessage, GenService} from "@bufbuild/protobuf/codegenv2";
-import {enumDesc, fileDesc, messageDesc, serviceDesc} from "@bufbuild/protobuf/codegenv2";
-import type {Message} from "@bufbuild/protobuf";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file docker/v1/docker.proto.
