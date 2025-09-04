@@ -31,13 +31,19 @@ function HomepageHeader() {
                 </p>
 
                 <div style={{textAlign: 'center', marginBottom: '2rem'}}>
-                    <img
-                        src="https://github.com/user-attachments/assets/e1d17951-3b40-4833-b01c-c9c6d3f52d5a"
-                        alt="Dockman Demo"
+                    <video
                         width="1000"
                         height="450"
                         style={{maxWidth: '100%', height: 'auto'}}
-                    />
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                    >
+                        <source src="https://github.com/RA341/assets/releases/download/dockman/dockman-demo.mp4"
+                                type="video/mp4"/>
+                        Your browser does not support the video tag. This is a demo of Dockman.
+                    </video>
                 </div>
                 <div className={styles.buttons}>
                     <Link

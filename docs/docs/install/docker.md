@@ -7,7 +7,7 @@ sidebar_position: 0
 
 Try Dockman with this docker run command
 
-:::warning
+:::important
 This quick-start command will **delete all dockman data** when the container stops. Use only for testing.
 
 For a more persistent setup, see the [compose](#docker-compose) section below.
