@@ -56,8 +56,8 @@ func NewApp(conf *config.AppConfig) (*App, error) {
 	infoSrv := info.NewService(dbSrv.InfoDB)
 
 	sshSrv := ssh.NewService(dbSrv.SshKeyDB, dbSrv.MachineDB)
-	fileSrv := files.NewService(cr, conf.DockYaml)
-	gitSrv := git.NewService(cr)
+	fileSrv := files.NewService(cr, conf.DockYaml, conf.Perms.PUID, conf.Perms.GID)
+	gitSrv := git.NewService(cr, fileSrv.ChownComposeRoot)
 	dockerManagerSrv := dm.NewService(
 		gitSrv,
 		sshSrv,

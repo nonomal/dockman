@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -20,9 +21,12 @@ var ignoredFiles = []string{".git"}
 type Service struct {
 	composeRoot  string
 	dockYamlPath string
+
+	guid int
+	puid int
 }
 
-func NewService(composeRoot string, dockYaml string) *Service {
+func NewService(composeRoot, dockYaml string, puid, guid int) *Service {
 	if !filepath.IsAbs(composeRoot) {
 		var err error
 		composeRoot, err = filepath.Abs(composeRoot)
@@ -37,6 +41,8 @@ func NewService(composeRoot string, dockYaml string) *Service {
 
 	srv := &Service{
 		composeRoot: composeRoot,
+		guid:        guid,
+		puid:        puid,
 	}
 
 	if dockYaml != "" {
@@ -49,6 +55,12 @@ func NewService(composeRoot string, dockYaml string) *Service {
 			// e.g. dockman/.dockman.yml
 			srv.dockYamlPath = srv.WithRoot(dockYaml)
 		}
+	}
+
+	err := srv.ChownComposeRoot()
+	if err != nil {
+		log.Fatal().Err(err).Str("compose-root", composeRoot).
+			Msg("Failed to change permissions in compose-root")
 	}
 
 	log.Debug().Msg("File service loaded successfully")
@@ -121,6 +133,39 @@ func (s *Service) Create(fileName string) error {
 	if err := s.createFile(fileName); err != nil {
 		return err
 	}
+
+	err := s.chown(fileName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) chown(fileName string) error {
+	if runtime.GOOS == "windows" {
+		//log.Debug().Msg("chowning files on windows is not supported")
+		return nil
+	}
+
+	err := os.Chown(fileName, s.puid, s.guid)
+	if err != nil {
+		return fmt.Errorf("unable to chown path %s: %w", fileName, err)
+	}
+	return nil
+}
+
+func (s *Service) ChownComposeRoot() error {
+	err := filepath.Walk(s.composeRoot, func(path string, info os.FileInfo, err error) error {
+		if err = s.chown(path); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
