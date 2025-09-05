@@ -33,8 +33,8 @@ type AppConfig struct {
 }
 
 type FilePerms struct {
-	PUID int `config:"flag=puid,env=PUID,default=1000,usage=PUID for composeRoot"`
-	GID  int `config:"flag=gid,env=GID,default=1000,usage=GID for composeRoot"`
+	PUID int `config:"flag=puid,env=PUID,default=0,usage=PUID for composeRoot"`
+	GID  int `config:"flag=gid,env=GID,default=0,usage=GID for composeRoot"`
 }
 
 type AuthConfig struct {
