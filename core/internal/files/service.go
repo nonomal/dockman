@@ -134,7 +134,7 @@ func (s *Service) Create(fileName string) error {
 		return err
 	}
 
-	err := s.chown(fileName)
+	err := s.chown(s.WithRoot(fileName))
 	if err != nil {
 		return err
 	}
