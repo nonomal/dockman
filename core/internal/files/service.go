@@ -59,7 +59,7 @@ func NewService(composeRoot, dockYaml string, puid, guid int) *Service {
 
 	err := srv.ChownComposeRoot()
 	if err != nil {
-		log.Fatal().Err(err).Str("compose-root", composeRoot).
+		log.Warn().Err(err).Str("compose-root", composeRoot).
 			Msg("Failed to change permissions in compose-root")
 	}
 
