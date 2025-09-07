@@ -1,11 +1,20 @@
-import {Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton} from '@mui/material'; // Or your preferred UI library
+import {
+    Autocomplete,
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    TextField
+} from '@mui/material'; // Or your preferred UI library
 import CloseIcon from "@mui/icons-material/Close";
 import {useSnackbar} from "../../../hooks/snackbar.ts";
 import {callRPC, transformAsyncIterable, useClient} from "../../../lib/api.ts";
 import LogsTerminal, {type TerminalHandle} from "../../compose/components/logs-terminal.tsx";
 import {useEffect, useRef, useState} from "react";
 import {DockerService, type LogsMessage} from "../../../gen/docker/v1/docker_pb.ts";
-
 
 interface ExecDialogProps {
     show: boolean;
@@ -15,36 +24,36 @@ interface ExecDialogProps {
 }
 
 export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => {
-    const {showError} = useSnackbar()
+    const {showError, showInfo} = useSnackbar()
     const dockerService = useClient(DockerService);
 
     const [panelTitle, setPanelTitle] = useState('');
     const [logStream, setLogStream] = useState<AsyncIterable<string> | null>(null);
+    const [selectedCmd, setSelectedCmd] = useState<string>('/bin/sh');
+    const [connected, setConnected] = useState(false);
 
     const terminalRef = useRef<TerminalHandle>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
+    const commandOptions = ["/bin/sh", "/bin/bash", "sh", "bash", "zsh"];
+
     useEffect(() => {
         if (containerID) {
-            setPanelTitle(`Logs - ${name}`);
-            manageStream<LogsMessage>({
-                getStream: signal => dockerService.containerExecOutput({containerID: containerID, execCmd: "/bin/sh"}, {signal}),
-                transform: item => item.message,
-            });
+            setPanelTitle(`Exec - ${name}`);
         }
 
         return () => {
             abortControllerRef.current?.abort()
             setPanelTitle('')
             setLogStream(null)
+            setConnected(false)
         };
-    }, [containerID, dockerService, name]);
+    }, [containerID, name]);
 
     const manageStream = <T, >({getStream, transform}: {
         getStream: (signal: AbortSignal) => AsyncIterable<T>;
         transform: (item: T) => string;
     }) => {
-        // Close any previous stream before starting a new one
         abortControllerRef.current?.abort("User started a new action");
         const newController = new AbortController();
         abortControllerRef.current = newController;
@@ -52,12 +61,8 @@ export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => 
         const sourceStream = getStream(newController.signal);
         const transformedStream = transformAsyncIterable(sourceStream, {
             transform,
-            onComplete: () => {
-                console.log("Stream completed successfully.");
-            },
-            onError: error => {
-                console.log(`Stream error: ${error}`);
-            },
+            onComplete: () => showInfo("Stream completed successfully."),
+            onError: error => showError(`Stream error: ${error}`),
             onFinally: () => {
                 if (abortControllerRef.current === newController) {
                     abortControllerRef.current = null;
@@ -68,6 +73,20 @@ export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => 
         setLogStream(transformedStream);
     };
 
+    const handleConnect = () => {
+        if (!containerID) return;
+
+        manageStream<LogsMessage>({
+            getStream: signal => dockerService.containerExecOutput({
+                containerID: containerID,
+                execCmd: [selectedCmd.trim()]
+            }, {signal}),
+            transform: item => item.message,
+        });
+
+        setConnected(true);
+    };
+
     function handleInput(cmd: string) {
         callRPC(() => dockerService.containerExecInput(
             {containerID: containerID, userCmd: cmd}
@@ -76,24 +95,12 @@ export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => 
         })
     }
 
-    /**
-     * Handles closing the dialog. This function will:
-     * 1. Abort the active network request for the log stream.
-     * 2. Clear the log stream state.
-     * 3. Call the parent's `hide` function to update visibility state.
-     */
-    const handleClose = () => {
-        abortControllerRef.current?.abort("Dialog closed by user");
-        setLogStream(null);
-        hide();
-    };
-
     return (
         <Dialog
             open={show}
             onClose={hide}
             fullWidth
-            maxWidth="xl"
+            maxWidth="md"
             scroll="paper"
             slotProps={{
                 paper: {
@@ -113,7 +120,7 @@ export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => 
                 color: '#ffffff',
                 borderBottom: '1px solid #333'
             }}>
-                {name}
+                {panelTitle}
                 <IconButton
                     onClick={hide}
                     sx={{
@@ -126,16 +133,44 @@ export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => 
                     <CloseIcon/>
                 </IconButton>
             </DialogTitle>
-            <DialogContent dividers sx={{
-                p: 0,
-                backgroundColor: '#000',
-                // borderColor: '#858484',
-            }}>
-                <LogsTerminal
-                    ref={terminalRef}
-                    logStream={logStream}
-                    inputFunc={handleInput}
-                />
+            <DialogContent dividers sx={{p: 0, backgroundColor: '#000'}}>
+                {!connected ? (
+                    <Box sx={{p: 2, display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center'}}>
+                        <Autocomplete
+                            freeSolo
+                            options={commandOptions}
+                            value={selectedCmd}
+                            onInputChange={(_, value) => setSelectedCmd(value)}
+                            sx={{flex: 1}}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Initial Command"
+                                    variant="outlined"
+                                    size="small"
+                                    InputLabelProps={{style: {color: '#aaa'}}}
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        style: {color: '#fff'}
+                                    }}
+                                />
+                            )}
+                        />
+                        <Button
+                            variant="contained"
+                            onClick={handleConnect}
+                            sx={{whiteSpace: 'nowrap'}}
+                        >
+                            Connect
+                        </Button>
+                    </Box>
+                ) : (
+                    <LogsTerminal
+                        ref={terminalRef}
+                        logStream={logStream}
+                        inputFunc={handleInput}
+                    />
+                )}
             </DialogContent>
             <DialogActions sx={{
                 backgroundColor: '#2e2e2e',

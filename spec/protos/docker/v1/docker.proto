@@ -53,7 +53,7 @@ message ContainerExecCmdInput {
 message ContainerExecRequest {
   string containerID = 1;
   // if not provided uses '/bin/sh' as default
-  string execCmd = 2;
+  repeated string execCmd = 2;
 }
 
 // Image-related messages

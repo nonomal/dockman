@@ -181,6 +181,7 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
                         onShowLogs={handleContainerLogs}
                         setSelectedServices={setSelectedServices}
                         selectedServices={selectedServices}
+                        showExec={false}
                     />
                 </Box>
             </Box>

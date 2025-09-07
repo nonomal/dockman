@@ -185,7 +185,7 @@ type ContainerExecRequest struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	ContainerID string                 `protobuf:"bytes,1,opt,name=containerID,proto3" json:"containerID,omitempty"`
 	// if not provided uses '/bin/sh' as default
-	ExecCmd       string `protobuf:"bytes,2,opt,name=execCmd,proto3" json:"execCmd,omitempty"`
+	ExecCmd       []string `protobuf:"bytes,2,rep,name=execCmd,proto3" json:"execCmd,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -227,11 +227,11 @@ func (x *ContainerExecRequest) GetContainerID() string {
 	return ""
 }
 
-func (x *ContainerExecRequest) GetExecCmd() string {
+func (x *ContainerExecRequest) GetExecCmd() []string {
 	if x != nil {
 		return x.ExecCmd
 	}
-	return ""
+	return nil
 }
 
 // Image-related messages
@@ -2222,7 +2222,7 @@ const file_docker_v1_docker_proto_rawDesc = "" +
 	"\vcontainerID\x18\x02 \x01(\tR\vcontainerID\"R\n" +
 	"\x14ContainerExecRequest\x12 \n" +
 	"\vcontainerID\x18\x01 \x01(\tR\vcontainerID\x12\x18\n" +
-	"\aexecCmd\x18\x02 \x01(\tR\aexecCmd\"\xac\x03\n" +
+	"\aexecCmd\x18\x02 \x03(\tR\aexecCmd\"\xac\x03\n" +
 	"\x05Image\x12\x1e\n" +
 	"\n" +
 	"containers\x18\x01 \x01(\x03R\n" +

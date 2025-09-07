@@ -19,6 +19,7 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>((
         const terminalRef = useRef<HTMLDivElement>(null);
         const term = useRef<Terminal | null>(null);
         const fitAddon = useRef<FitAddon | null>(null);
+    const inputBuffer = useRef<string>('');
 
         useImperativeHandle(ref, () => ({
             fit: () => fitAddon.current?.fit(),
@@ -27,9 +28,11 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>((
         useEffect(() => {
             if (!terminalRef.current) return;
 
+            terminalRef.current.focus()
+
             const xterm = new Terminal({
-                cursorBlink: false,
-                disableStdin: inputFunc != undefined,
+                cursorBlink: true,
+                disableStdin: inputFunc == undefined,
                 convertEol: true,
                 scrollback: 2500,
                 theme: {background: '#1E1E1E', foreground: '#CCCCCC'},
@@ -63,9 +66,35 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>((
                 xterm.write(hideCursorByte);
             }
 
-            xterm.onData((arg1) => {
-                if (inputFunc) {
-                    inputFunc(arg1)
+            xterm.onData((data) => {
+                if (data === "\r") {
+                    // Send the full command and clear buffer
+                    if (inputFunc) {
+                        const lineLength = inputBuffer.current.length;
+
+                        if (inputBuffer.current === "clear") {
+                            xterm.clear()
+                            xterm.write('\r' + ' '.repeat(lineLength) + '\r');
+                        } else {
+                            inputFunc(inputBuffer.current);
+                            xterm.write('\r\n'); // Move to next line
+                        }
+
+                        inputBuffer.current = '';
+                    }
+                } else if (data === "\u007f") { // Backspace
+                    if (inputBuffer.current.length > 0) {
+                        inputBuffer.current = inputBuffer.current.slice(0, -1);
+                        xterm.write('\b \b'); // Move back, write space, move back again
+                    }
+                } else if (data === "\u0015") { // Ctrl+U (clear line)
+                    const lineLength = inputBuffer.current.length;
+                    inputBuffer.current = '';
+                    xterm.write('\r' + ' '.repeat(lineLength) + '\r'); // Clear current line
+                } else {
+                    // Add character to buffer and echo to terminal
+                    inputBuffer.current += data;
+                    xterm.write(data);
                 }
             })
 
@@ -80,7 +109,7 @@ const LogsTerminal = forwardRef<TerminalHandle, TerminalComponentProps>((
                 xterm.dispose();
                 term.current = null;
             };
-        }, []);
+        }, [inputFunc]);
 
         useEffect(() => {
             if (!logStream || !term.current) return;
