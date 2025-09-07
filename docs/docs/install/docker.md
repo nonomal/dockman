@@ -13,7 +13,7 @@ This quick-start command will **delete all dockman data** when the container sto
 For a more persistent setup, see the [compose](#docker-compose) section below.
 :::
 
-```bash title="Bash"
+```bash title="docker"
 docker run --rm -p 8866:8866 -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/ra341/dockman:latest
 ```
 
