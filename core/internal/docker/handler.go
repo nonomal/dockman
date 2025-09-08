@@ -116,6 +116,16 @@ func (h *Handler) ComposeUpdate(ctx context.Context, req *connect.Request[v1.Com
 	return nil
 }
 
+func (h *Handler) ComposeValidate(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ComposeValidateResponse], error) {
+	errs := h.compose().ComposeValidate(ctx, req.Msg.Filename)
+	toMap := ToMap(errs, func(t error) string {
+		return t.Error()
+	})
+	return connect.NewResponse(&v1.ComposeValidateResponse{
+		Errs: toMap,
+	}), nil
+}
+
 func (h *Handler) ComposeList(ctx context.Context, req *connect.Request[v1.ComposeFile]) (*connect.Response[v1.ListResponse], error) {
 	project, err := h.compose().LoadProject(ctx, req.Msg.GetFilename())
 	if err != nil {
@@ -386,7 +396,7 @@ func (h *Handler) ContainerExecInput(_ context.Context, req *connect.Request[v1.
 ////////////////////////////////////////////
 
 func ToMap[T any, Q any](input []T, mapper func(T) Q) []Q {
-	result := make([]Q, len(input))
+	var result []Q
 	for _, t := range input {
 		result = append(result, mapper(t))
 	}

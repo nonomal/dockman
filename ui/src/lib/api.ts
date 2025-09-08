@@ -36,9 +36,9 @@ export async function callRPC<T>(exec: () => Promise<T>): Promise<{ val: T | nul
             // todo maybe ?????
             // if (error.code == Code.Unauthenticated) {
             //     nav("/")
-            // }
+            //
 
-            return {val: null, err: `${error.code}: ${error.message}`};
+            return {val: null, err: `${error.rawMessage}`};
         }
 
         return {val: null, err: `Unknown error while calling api: ${(error as Error).toString()}`};

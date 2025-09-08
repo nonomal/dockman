@@ -27,6 +27,7 @@ service DockerService {
   rpc ComposeRestart(ComposeFile) returns (stream LogsMessage) {}
   rpc ComposeUpdate(ComposeFile) returns (stream LogsMessage) {}
   rpc ComposeList(ComposeFile) returns (ListResponse) {}
+  rpc ComposeValidate(ComposeFile) returns (ComposeValidateResponse) {}
 
   // images
   rpc ImageList(ListImagesRequest) returns (ListImagesResponse) {}
@@ -42,6 +43,10 @@ service DockerService {
   rpc NetworkList(ListNetworksRequest) returns (ListNetworksResponse) {}
   rpc NetworkCreate(CreateNetworkRequest) returns (CreateNetworkResponse) {}
   rpc NetworkDelete(DeleteNetworkRequest) returns (DeleteNetworkResponse) {}
+}
+
+message ComposeValidateResponse {
+  repeated string errs = 1;
 }
 
 // forwards commands from user to a running session
