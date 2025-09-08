@@ -203,7 +203,7 @@ func (s *Service) GetDockmanYaml() *DockmanYaml {
 
 	// Check if the file has been modified since last read
 	if !stat.ModTime().After(s.lastModTime) && s.cachedYaml != nil {
-		log.Debug().Msg("Returning cached version")
+		//log.Debug().Msg("Returning cached version")
 		return s.cachedYaml // Return cached version
 	}
 
