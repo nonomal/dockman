@@ -6,6 +6,7 @@ import {useSnackbar} from "../../hooks/snackbar.ts";
 import {type SaveState} from "./status-hook.ts";
 import {ChevronLeftRounded, ChevronRightOutlined} from "@mui/icons-material";
 import {DockerService} from "../../gen/docker/v1/docker_pb.ts";
+import {isComposeFile} from "../../lib/editor.ts";
 
 interface EditorProps {
     selectedPage: string;
@@ -45,21 +46,23 @@ export function TabEditor({selectedPage, setStatus, handleContentChange}: Editor
             setStatus('success');
         }
 
-        const {val: errs, err: err2} = await callRPC(
-            () => dockerClient.composeValidate({
-                filename: selectedPage
-            }))
-        if (err2) {
-            showWarning(`Error validating file ${err2}`);
-        }
-        const ssd = errs?.errs.map((err) => err.toString())
+        if (isComposeFile(selectedPage)) {
+            const {val: errs, err: err2} = await callRPC(
+                () => dockerClient.composeValidate({
+                    filename: selectedPage
+                }))
+            if (err2) {
+                showWarning(`Error validating file ${err2}`);
+            }
+            const ssd = errs?.errs.map((err) => err.toString())
 
-        if (ssd && ssd.length !== 0) {
-            setErrors(ssd)
-            setIsPanelOpen(true)
-        } else {
-            setErrors([])
-            setIsPanelOpen(false)
+            if (ssd && ssd.length !== 0) {
+                setErrors(ssd)
+                setIsPanelOpen(true)
+            } else {
+                setErrors([])
+                setIsPanelOpen(false)
+            }
         }
 
     }, [selectedPage, setStatus]);
