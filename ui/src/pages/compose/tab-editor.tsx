@@ -54,12 +54,12 @@ export function TabEditor({selectedPage, setStatus, handleContentChange}: Editor
         }
         const ssd = errs?.errs.map((err) => err.toString())
 
-        if (ssd) {
+        if (ssd && ssd.length !== 0) {
             setErrors(ssd)
             setIsPanelOpen(true)
         } else {
-            setIsPanelOpen(false)
             setErrors([])
+            setIsPanelOpen(false)
         }
 
     }, [selectedPage, setStatus]);
