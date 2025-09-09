@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton} from '@mui/material';
 import CloseIcon from "@mui/icons-material/Close";
 import {transformAsyncIterable, useClient} from "../../../lib/api.ts";
-import LogsTerminal, {type TerminalHandle} from "../../compose/components/logs-terminal.tsx";
+import LogsTerminal from "../../compose/components/logs-terminal.tsx";
 import {DockerService, type LogsMessage} from "../../../gen/docker/v1/docker_pb.ts";
 
 
@@ -19,7 +19,6 @@ export const LogsDialog = ({show, hide, name, containerID}: LogsDialogProps) => 
     const [panelTitle, setPanelTitle] = useState('');
     const [logStream, setLogStream] = useState<AsyncIterable<string> | null>(null);
 
-    const terminalRef = useRef<TerminalHandle>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
@@ -121,7 +120,7 @@ export const LogsDialog = ({show, hide, name, containerID}: LogsDialogProps) => 
                 backgroundColor: '#000',
                 // borderColor: '#858484',
             }}>
-                <LogsTerminal logStream={logStream} ref={terminalRef}/>
+                <LogsTerminal isActive={true} logStream={logStream}/>
             </DialogContent>
             <DialogActions sx={{
                 backgroundColor: '#2e2e2e',

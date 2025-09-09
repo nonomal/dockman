@@ -232,7 +232,7 @@ func (s *Service) GetDockmanYaml() *DockmanYaml {
 	s.lastModTime = stat.ModTime()
 	s.cachedYaml = &config
 
-	log.Debug().Msg("Returning fresh version")
+	//log.Debug().Msg("Returning fresh version")
 	return s.cachedYaml
 }
 

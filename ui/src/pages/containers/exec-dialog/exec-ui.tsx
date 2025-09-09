@@ -12,7 +12,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import {useSnackbar} from "../../../hooks/snackbar.ts";
 import {callRPC, transformAsyncIterable, useClient} from "../../../lib/api.ts";
-import LogsTerminal, {type TerminalHandle} from "../../compose/components/logs-terminal.tsx";
+import LogsTerminal from "../../compose/components/logs-terminal.tsx";
 import {useEffect, useRef, useState} from "react";
 import {DockerService, type LogsMessage} from "../../../gen/docker/v1/docker_pb.ts";
 
@@ -32,7 +32,6 @@ export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => 
     const [selectedCmd, setSelectedCmd] = useState<string>('/bin/sh');
     const [connected, setConnected] = useState(false);
 
-    const terminalRef = useRef<TerminalHandle>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const commandOptions = ["/bin/sh", "/bin/bash", "sh", "bash", "zsh"];
@@ -79,7 +78,7 @@ export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => 
         manageStream<LogsMessage>({
             getStream: signal => dockerService.containerExecOutput({
                 containerID: containerID,
-                execCmd: [selectedCmd.trim()]
+                execCmd: selectedCmd.trim().split(' ')
             }, {signal}),
             transform: item => item.message,
         });
@@ -166,7 +165,7 @@ export const ExecDialog = ({show, hide, name, containerID}: ExecDialogProps) => 
                     </Box>
                 ) : (
                     <LogsTerminal
-                        ref={terminalRef}
+                        isActive={true}
                         logStream={logStream}
                         inputFunc={handleInput}
                     />

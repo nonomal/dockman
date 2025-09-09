@@ -64,7 +64,6 @@ export function TabEditor({selectedPage, setStatus, handleContentChange}: Editor
                 setIsPanelOpen(false)
             }
         }
-
     }, [selectedPage, setStatus]);
 
     function handleEditorChange(value: string | undefined): void {

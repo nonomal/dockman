@@ -171,7 +171,6 @@ function CorePage() {
                         setSelectedServices={setSelectedContainers}
                         selectedServices={selectedContainers}
                         useContainerId={true}
-                        showExec={true}
                         onExec={showExecDialog}
                     />
                 </Box>

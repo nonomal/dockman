@@ -212,6 +212,7 @@ func (s *ComposeService) LoadComposeClient(outputStream io.Writer, inputStream i
 
 	return compose.NewComposeService(dockerCli), nil
 }
+
 func (s *ComposeService) ComposeValidate(ctx context.Context, shortName string) []error {
 	var errs []error
 
