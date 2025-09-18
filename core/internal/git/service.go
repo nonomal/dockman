@@ -41,7 +41,7 @@ func newSrv(root string, chownFunc func() error) (*Service, error) {
 	}
 
 	if err = chownFunc(); err != nil {
-		return nil, err
+		// todo
 	}
 
 	srv := &Service{
