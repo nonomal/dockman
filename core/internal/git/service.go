@@ -231,7 +231,8 @@ func (s *Service) SwitchBranch(name string) error {
 	}
 
 	if err = s.chownComposeRootFunc(); err != nil {
-		return err
+		// todo
+		// return err
 	}
 
 	return nil
