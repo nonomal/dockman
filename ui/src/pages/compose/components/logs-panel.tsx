@@ -32,9 +32,10 @@ export function LogsPanel(
         onToggle
     }: LogsPanelProps) {
 
-    if (tabs.length === 0) {
-        return null;
-    }
+    const toggle = tabs.length ?
+        onToggle :
+        () => {
+        };
 
     return (
         <Paper
@@ -50,7 +51,7 @@ export function LogsPanel(
             }}
         >
             <Box
-                onClick={onToggle}
+                onClick={toggle}
                 sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -63,7 +64,7 @@ export function LogsPanel(
                     size="small"
                     sx={{color: 'white', m: '0 4px'}}
                     title={isMinimized ? 'Expand' : 'Collapse'}
-                    onClick={onToggle}
+                    onClick={toggle}
                 >
                     {isMinimized ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
                 </IconButton>

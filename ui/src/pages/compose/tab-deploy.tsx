@@ -89,7 +89,10 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
                 selectedServices: selectedServices,
             }, {signal}),
             transform: item => item.message,
-            onSuccess: () => showSuccess(`Deployment ${message} successfully`),
+            onSuccess: () => {
+                showSuccess(`Deployment ${message} successfully`)
+                setIsLogPanelMinimized(true);
+            },
             onFinalize: () => {
                 setActiveAction('');
                 fetchContainers().then();
@@ -191,7 +194,7 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
     const handleCloseTab = (tabIdToClose: string) => {
         setLogTabs(prevTabs => {
             const tabToClose = prevTabs.find(tab => tab.id === tabIdToClose);
-            // This is the key step: abort the stream associated with the closing tab
+            // abort the stream associated with the closing tab
             tabToClose?.controller.abort("Tab closed by user");
 
             const remainingTabs = prevTabs.filter(tab => tab.id !== tabIdToClose);

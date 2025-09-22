@@ -1,10 +1,6 @@
 import {type KeyboardEvent as ReactKV, useEffect, useRef, useState} from 'react';
 import {Box, IconButton, TextField, Tooltip} from '@mui/material';
-import {
-    Download as DownloadIcon,
-    KeyboardArrowDown as KeyboardArrowDownIcon,
-    KeyboardArrowUp as KeyboardArrowUpIcon
-} from '@mui/icons-material';
+import {Download, KeyboardArrowDown, KeyboardArrowUp,} from '@mui/icons-material';
 import {Terminal} from '@xterm/xterm';
 import {FitAddon} from '@xterm/addon-fit';
 import {SearchAddon} from '@xterm/addon-search';
@@ -13,7 +9,7 @@ import "@xterm/xterm/css/xterm.css";
 interface TerminalComponentProps {
     logStream: AsyncIterable<string> | null;
     inputFunc?: (cmd: string) => void;
-    /** A boolean to indicate if the terminal is currently visible in the UI. */
+    // indicate if the terminal is currently visible in the UI.
     isActive: boolean;
 }
 
@@ -62,7 +58,6 @@ const LogsTerminal = ({logStream, inputFunc, isActive}: TerminalComponentProps) 
         }
     };
 
-    // Handle key presses within the search input
     const handleSearchKeyDown = (e: ReactKV<HTMLInputElement>) => {
         if (e.key === 'Enter' || e.key === 'ArrowDown') {
             e.preventDefault();
@@ -73,8 +68,8 @@ const LogsTerminal = ({logStream, inputFunc, isActive}: TerminalComponentProps) 
         }
     };
 
-    // This effect ensures the terminal fits its container when it becomes active.
     useEffect(() => {
+        // This effect ensures the terminal fits its container when it becomes active.
         if (isActive && fitAddon.current) {
             const timer = setTimeout(() => fitAddon.current?.fit(), 50);
             return () => clearTimeout(timer);
@@ -189,7 +184,7 @@ const LogsTerminal = ({logStream, inputFunc, isActive}: TerminalComponentProps) 
         processStream().then();
     }, [logStream]);
 
-    // Apply custom scrollbar styles to the xterm viewport
+    // custom scrollbar styles to the xterm viewport
     const containerClassName = 'logs-terminal-container';
     const scrollbarStyles = `
         .${containerClassName} .xterm-viewport::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -232,17 +227,17 @@ const LogsTerminal = ({logStream, inputFunc, isActive}: TerminalComponentProps) 
                     }}
                 />
                 <IconButton onClick={handleFindPrevious} size="small" title="Previous (↑)">
-                    <KeyboardArrowUpIcon sx={{color: '#CCCCCC'}}/>
+                    <KeyboardArrowUp sx={{color: '#CCCCCC'}}/>
                 </IconButton>
                 <IconButton onClick={handleFindNext} size="small" title="Next (↓ or Enter)">
-                    <KeyboardArrowDownIcon sx={{color: '#CCCCCC'}}/>
+                    <KeyboardArrowDown sx={{color: '#CCCCCC'}}/>
                 </IconButton>
 
-                <Box sx={{flexGrow: 0.01}}/> {/* Spacer */}
+                <Box sx={{flexGrow: 0.01}}/>
 
                 <IconButton onClick={handleDownload} size="small" title="Download logs">
                     <Tooltip title={"Download logs"}>
-                        <DownloadIcon sx={{color: '#CCCCCC'}}/>
+                        <Download sx={{color: '#CCCCCC'}}/>
                     </Tooltip>
                 </IconButton>
             </Box>
