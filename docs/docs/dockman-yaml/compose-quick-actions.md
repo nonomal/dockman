@@ -3,11 +3,6 @@ sidebar_position: 4
 title: Compose Quick Actions
 ---
 
-:::info
-This feature is only available on `ghcr.io/ra341/dockman:canary` build
-and is unreleased at the moment.
-:::
-
 You can enable or disable quick actions in your compose files.
 
 To toggle this feature, add the following to your `.dockman.yml` file:
