@@ -61,11 +61,7 @@ func NewService(composeRoot, dockYaml string, puid, guid int) *Service {
 		}
 	}
 
-	err := srv.ChownComposeRoot()
-	if err != nil {
-		log.Warn().Err(err).Str("compose-root", composeRoot).
-			Msg("Failed to change permissions in compose-root")
-	}
+	srv.ChownComposeRoot()
 
 	log.Debug().Msg("File service loaded successfully")
 	return srv
@@ -138,39 +134,33 @@ func (s *Service) Create(fileName string) error {
 		return err
 	}
 
-	err := s.chown(s.WithRoot(fileName))
-	if err != nil {
-		return err
-	}
+	s.chown(s.WithRoot(fileName))
 
 	return nil
 }
 
-func (s *Service) chown(fileName string) error {
+func (s *Service) chown(fileName string) {
 	if runtime.GOOS == "windows" {
 		//log.Debug().Msg("chowning files on windows is not supported")
-		return nil
+		return
 	}
 
 	err := os.Chown(fileName, s.puid, s.guid)
 	if err != nil {
-		return fmt.Errorf("unable to chown path %s: %w", fileName, err)
+		log.Warn().
+			Str("path", fileName).Err(err).
+			Msg("Failed to chown file")
 	}
-	return nil
 }
 
-func (s *Service) ChownComposeRoot() error {
+func (s *Service) ChownComposeRoot() {
 	err := filepath.Walk(s.composeRoot, func(path string, info os.FileInfo, err error) error {
-		if err = s.chown(path); err != nil {
-			return err
-		}
+		s.chown(path)
 		return nil
 	})
 	if err != nil {
-		return err
+		log.Warn().Err(err).Msg("Failed to chown compose root")
 	}
-
-	return nil
 }
 
 func (s *Service) GetDockmanYaml() *DockmanYaml {

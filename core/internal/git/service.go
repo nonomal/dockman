@@ -22,10 +22,10 @@ type Service struct {
 	authToken            string
 	repoPath             string
 	repo                 *git.Repository
-	chownComposeRootFunc func() error
+	chownComposeRootFunc func()
 }
 
-func NewService(root string, chownComposeRootFunc func() error) *Service {
+func NewService(root string, chownComposeRootFunc func()) *Service {
 	service, err := newSrv(root, chownComposeRootFunc)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init git service")
@@ -34,15 +34,13 @@ func NewService(root string, chownComposeRootFunc func() error) *Service {
 }
 
 // returns an error instead of fataling useful for testing
-func newSrv(root string, chownFunc func() error) (*Service, error) {
+func newSrv(root string, chownFunc func()) (*Service, error) {
 	repo, err := initializeGit(root)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init git repo: %w", err)
 	}
 
-	if err = chownFunc(); err != nil {
-		// todo
-	}
+	chownFunc()
 
 	srv := &Service{
 		repo:                 repo,
@@ -230,10 +228,7 @@ func (s *Service) SwitchBranch(name string) error {
 		return err
 	}
 
-	if err = s.chownComposeRootFunc(); err != nil {
-		// todo
-		// return err
-	}
+	s.chownComposeRootFunc()
 
 	return nil
 }
