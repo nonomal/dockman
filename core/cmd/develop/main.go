@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/RA341/dockman/cmd"
+	"github.com/RA341/dockman/internal/app"
 	"github.com/RA341/dockman/internal/config"
 	"github.com/RA341/dockman/pkg/argos"
 )
@@ -27,5 +27,5 @@ func main() {
 		_ = os.Setenv(prefixer(k), v)
 	}
 
-	cmd.StartServer()
+	app.StartServer()
 }
