@@ -8,7 +8,11 @@ title: Overview
 I built Dockman to scratch an itch in my homelab. The existing Docker tools never really matched the way I like to work.
 
 Before Dockman, I had a folder full of Compose files that I’d `scp` around to different servers, plus a pile of scripts
-for things like cleaning up old images and updating stacks. It worked… but it was clunky.
+for things like cleaning up old images and updating stacks. It worked, but it always felt clunky. Every change meant bouncing between terminals, 
+servers, and scripts. Nothing was terrible on its own, but together it added up to a lot of friction.
+
+I tried other Docker management tools, but they never really clicked for me. Most leaned on heavy GUIs, lots of buttons and menus, 
+and too much “magic” happening behind the scenes. I missed the simplicity of just editing a config file and deploying.
 
 Dockman keeps the parts I liked, editing configs in my own editor, while taking away the annoyance of deployment.
 
