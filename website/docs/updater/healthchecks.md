@@ -54,7 +54,7 @@ If the configured endpoint returns a `2xx` status code, the update is considered
 #### Labels
 
 * **`dockman.update.healthcheck.ping`** – HTTP endpoint to ping.
-* **`dockman.update.healthcheck.time`** – Delay before ping ([Valid Duration Examples](#Valid-Duration-Examples)).
+* **`dockman.update.healthcheck.time`** – Delay before ping ([Valid Duration Examples](#valid-duration-examples)).
 
 #### Behavior
 

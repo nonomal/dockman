@@ -27,27 +27,18 @@ The stacks directory path must be absolute and identical in all three locations:
 * 1️⃣ Environment variable: `DOCKMAN_COMPOSE_ROOT=/path/to/stacks`
 * 2️⃣ The host side of the volume `/path/to/stacks`
 * 3️⃣ The container side of the volume `/path/to/stacks`
-  This path consistency is essential for Dockman to locate and manage your compose files properly.
+This path consistency is essential for Dockman to locate and manage your compose files properly.
 
 :::
 
-```yaml title="docker-compose.yaml"
-services:
-  dockman:
-    container_name: dockman
-    image: ghcr.io/ra341/dockman:latest
-    environment:
-      # 1️⃣
-      - DOCKMAN_COMPOSE_ROOT=/path/to/stacks
-    volumes:
-      #  2️⃣              3️⃣                
-      - /path/to/stacks:/path/to/stacks
-      - /path/to/dockman/config:/config
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "8866:8866"
-    restart: always
-```
+### Config generator
+
+Generate your config by inputting your preferred paths here
+
+
+import DockerComposeGenerator from '../../src/components/compose-generator';
+
+<DockerComposeGenerator></DockerComposeGenerator>
 
 ### Example with Real Path
 
