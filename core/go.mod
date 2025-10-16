@@ -6,6 +6,7 @@ require (
 	connectrpc.com/connect v1.19.1
 	connectrpc.com/cors v0.1.0
 	dario.cat/mergo v1.0.2
+	github.com/chainguard-dev/yam v0.2.37
 	github.com/compose-spec/compose-go/v2 v2.9.0
 	github.com/docker/cli v28.5.1+incompatible
 	github.com/docker/compose/v2 v2.40.0

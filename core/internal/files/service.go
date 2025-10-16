@@ -89,6 +89,20 @@ type dirResult struct {
 	dirname  string
 }
 
+func (s *Service) Format(path string) error {
+	//contents, err := s.getFileContents(path)
+	//if err != nil {
+	//	return nil, fmt.Errorf("could not get file contents: %w", err)
+	//}
+	//
+	//enc := formatted.NewEncoder(w)
+	//
+	//// use the encoder!
+	//_ = enc.Encode(contents)
+	//
+	return fmt.Errorf("Unimplemented Format")
+}
+
 func (s *Service) List() (map[string][]string, error) {
 	err := os.MkdirAll(s.composeRoot(), os.ModePerm)
 	if err != nil {
@@ -265,6 +279,14 @@ func (s *Service) Save(filename string, destWriter io.Reader) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Service) getFileContents(filename string) ([]byte, error) {
+	file, err := os.ReadFile(s.WithRoot(filepath.ToSlash(filename)))
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
 }
 
 func (s *Service) LoadFilePath(filename string) (string, error) {
