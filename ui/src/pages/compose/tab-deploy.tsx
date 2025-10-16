@@ -52,7 +52,6 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
     const [isLogPanelMinimized, setIsLogPanelMinimized] = useState(true);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
-    // State is now an array of tabs and an active tab ID
     const [logTabs, setLogTabs] = useState<LogTab[]>([]);
     const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
@@ -77,7 +76,7 @@ export function TabDeploy({selectedPage}: DeployPageProps) {
         rpcName: typeof deployActionsConfig[number]['rpcName'],
     ) => {
         setActiveAction(name);
-        // Create a unique ID and title for the new tab
+        // unique ID and title for the new tab
         const tabId = `${name}-${Date.now()}`;
         const tabTitle = `${name} - ${selectedPage.split('/').pop() || selectedPage}`;
 

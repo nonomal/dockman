@@ -2,14 +2,12 @@ import React, {type ReactNode, type SyntheticEvent, useEffect, useMemo, useState
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {TabEditor} from "./tab-editor.tsx";
 import {TabDeploy} from "./tab-deploy.tsx";
-import {Box, CircularProgress, Fade, IconButton, Stack, Tab, Tabs, Tooltip, Typography} from '@mui/material';
+import {Box, CircularProgress, Fade, IconButton, Tab, Tabs, Tooltip, Typography} from '@mui/material';
 import {TabStat} from "./tab-stats.tsx";
 import {callRPC, useClient} from "../../lib/api.ts";
 import {FileService} from "../../gen/files/v1/files_pb.ts";
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import {FileList} from "./components/file-bar.tsx";
-import {DescriptionOutlined} from '@mui/icons-material';
-import CloseIcon from '@mui/icons-material/Close';
+import {Close, ErrorOutline} from '@mui/icons-material';
 import {ShortcutFormatter} from "./components/shortcut-formatter.tsx";
 import {FilesProvider} from "../../context/file-context.tsx";
 import {AddFilesProvider} from "./dialogs/add/add-context.tsx";
@@ -19,6 +17,8 @@ import {GitImportProvider} from "./dialogs/import/import-context.tsx";
 import {isComposeFile} from "../../lib/editor.ts";
 import {useTabs} from "../../hooks/tabs.ts";
 import {type SaveState, useSaveStatus} from "./status-hook.ts";
+import ActionBar from "./components/action-bar.tsx";
+import CoreComposeEmpty from "./compose-empty.tsx";
 
 export const ComposePage = () => {
     return (
@@ -39,8 +39,43 @@ export const ComposePage = () => {
 export const ComposePageInner = () => {
     const {file, child} = useParams<{ file: string; child?: string }>();
     const filename = child ? `${file}/${child}` : file ?? "";
-    const navigate = useNavigate();
 
+    return (
+        <Box sx={{
+            display: 'flex',
+            height: '100vh',
+            width: '100%',
+            overflow: 'hidden'
+        }}>
+            <ActionBar/>
+
+            <FileList/>
+
+            <Box sx={{
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+            }}>
+                <FileTabBar filename={filename}/>
+                <Box sx={{
+                    flexGrow: 1,
+                    overflow: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    {!filename ?
+                        <CoreComposeEmpty/> :
+                        <CoreCompose filename={filename}/>
+                    }
+                </Box>
+            </Box>
+        </Box>
+    );
+};
+
+const FileTabBar = ({filename}: { filename: string }) => {
+    const navigate = useNavigate();
     const {tabs, closeTab, onTabClick, activeTab} = useTabs();
 
     useEffect(() => {
@@ -82,87 +117,49 @@ export const ComposePageInner = () => {
     }, [tabs])
 
     return (
-        <Box sx={{
-            display: 'flex',
-            height: '100vh',
-            width: '100%',
-            overflow: 'hidden'
-        }}>
-            <Box sx={{
-                width: 280,
-                flexShrink: 0,
-                borderRight: 1,
-                borderColor: 'divider',
-                overflowY: 'auto'
-            }}>
-                <FileList closeTab={closeTab}/>
+        tablist.length > 0 && (
+            <Box sx={{borderBottom: 1, borderColor: 'divider', flexShrink: 0}}>
+                <Tabs
+                    value={filename}
+                    onChange={(_event, value) => onTabClick(value as string)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                >
+                    {tablist.map((tabFilename) => (
+                        <Tab
+                            key={tabFilename}
+                            value={tabFilename}
+                            sx={{textTransform: 'none', p: 0.5}}
+                            label={
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    px: 1
+                                }}>
+                                    <span>{tabFilename}</span>
+                                    <IconButton
+                                        size="small"
+                                        component="div"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            closeTab(tabFilename)
+                                        }}
+                                        sx={{ml: 1.5}}
+                                    >
+                                        <Close sx={{fontSize: '1rem'}}/>
+                                    </IconButton>
+                                </Box>
+                            }
+                        />
+                    ))}
+                </Tabs>
             </Box>
-
-            <Box sx={{
-                flexGrow: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden'
-            }}>
-                {/* Tab Bar */}
-                {tablist.length > 0 && (
-                    <Box sx={{borderBottom: 1, borderColor: 'divider', flexShrink: 0}}>
-                        <Tabs
-                            value={filename}
-                            onChange={(_event, value) => onTabClick(value as string)}
-                            variant="scrollable"
-                            scrollButtons="auto"
-                        >
-                            {tablist.map((tabFilename) => (
-                                <Tab
-                                    key={tabFilename}
-                                    value={tabFilename}
-                                    sx={{textTransform: 'none', p: 0.5}}
-                                    label={
-                                        <Box sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            px: 1
-                                        }}>
-                                            <span>{tabFilename}</span>
-                                            <IconButton
-                                                size="small"
-                                                component="div"
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // Prevents `handleTabChange` from firing
-                                                    closeTab(tabFilename)
-                                                }}
-                                                sx={{ml: 1.5}}
-                                            >
-                                                <CloseIcon sx={{fontSize: '1rem'}}/>
-                                            </IconButton>
-                                        </Box>
-                                    }
-                                />
-                            ))}
-                        </Tabs>
-                    </Box>
-                )}
-
-                {/* Content Area */}
-                <Box sx={{
-                    flexGrow: 1,
-                    overflow: 'auto',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
-                    {!filename ?
-                        <CoreComposeEmpty/> :
-                        <CoreCompose filename={filename}/>
-                    }
-                </Box>
-            </Box>
-        </Box>
-
+        )
     );
 };
 
 enum TabType {
+    // noinspection JSUnusedGlobalSymbols
     EDITOR,
     DEPLOY,
     STATS,
@@ -181,10 +178,11 @@ interface TabDetails {
 }
 
 function CoreCompose({filename}: { filename: string }) {
-    const navigate = useNavigate();
     const fileService = useClient(FileService);
+
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const selectedTab = parseTabType(searchParams.get('tab') ?? "0")
+    const selectedTab = parseTabType(searchParams.get('tab'))
 
     const [isLoading, setIsLoading] = useState(true);
     const [fileError, setFileError] = useState("");
@@ -264,6 +262,7 @@ function CoreCompose({filename}: { filename: string }) {
         }
 
         return map;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filename]);
 
     const currentTab = selectedTab ?? 'editor';
@@ -285,7 +284,7 @@ function CoreCompose({filename}: { filename: string }) {
     if (fileError) {
         return (
             <CenteredMessage
-                icon={<ErrorOutlineIcon color="error" sx={{fontSize: 60}}/>}
+                icon={<ErrorOutline color="error" sx={{fontSize: 60}}/>}
                 title={`Unable to load file: ${filename}`}
                 message={fileError}
             />
@@ -370,55 +369,6 @@ function CoreCompose({filename}: { filename: string }) {
     );
 }
 
-function CoreComposeEmpty() {
-    const selected = useMemo(() => {
-        const messages = [
-            {
-                title: "Finder? I barely know her.",
-                subtitle: "Try the sidebar."
-            },
-            {
-                title: "Nah, I don't know nothin' about no file.",
-                subtitle: "Check the sidebar, maybe you'll find what you're lookin' for."
-            },
-            {
-                title: "No file, no problem. Just kidding, we need one.",
-                subtitle: "Pick one from the sidebar."
-            },
-            {
-                title: "File not found? Maybe it's under the couch.",
-                subtitle: "or the sidebar."
-            },
-        ];
-
-        const index = Math.floor(Math.random() * messages.length);
-        return messages[index];
-    }, []);
-
-    return (
-        <Box
-            component="main"
-            sx={{
-                display: 'flex',
-                flexGrow: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-            }}
-        >
-            <Stack spacing={2} alignItems="center" sx={{textAlign: 'center'}}>
-                <DescriptionOutlined sx={{fontSize: '5rem', color: 'grey.400'}}/>
-                <Typography variant="h5" component="h1" color="text.secondary">
-                    {selected.title}
-                </Typography>
-                <Typography variant="body1" color="text.disabled">
-                    {selected.subtitle}
-                </Typography>
-            </Stack>
-        </Box>
-    );
-}
-
 function CenteredMessage(
     {
         icon,
@@ -441,7 +391,7 @@ function CenteredMessage(
                 height: '80vh',
                 textAlign: 'center',
                 p: 3,
-                color: 'text.secondary', // Use a softer color for the text
+                color: 'text.secondary',
             }}
         >
             {icon && <Box sx={{mb: 2}}>{icon}</Box>}
