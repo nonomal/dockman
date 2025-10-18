@@ -1,13 +1,12 @@
 import {useCallback, useEffect, useState} from 'react'
 import {Box, CircularProgress, Divider, IconButton, List, styled, Toolbar, Tooltip, Typography} from '@mui/material'
-import {Add as AddIcon, Search as SearchIcon, Sync} from '@mui/icons-material'
+import {Add, Search} from '@mui/icons-material'
 import {useParams} from 'react-router-dom'
 import FileBarItem from './file-bar-item.tsx'
 import {useFiles} from "../../../hooks/files.ts"
 import {useHost} from "../../../hooks/host.ts"
 import {ShortcutFormatter} from "./shortcut-formatter.tsx"
 import {useTelescope} from "../dialogs/search/search-hook.ts";
-import {useGitImport} from "../dialogs/import/import-hook.ts";
 import {useAddFile} from "../dialogs/add/add-hook.ts";
 import {useFileDelete} from "../dialogs/delete/delete-hook.ts";
 
@@ -22,7 +21,7 @@ export function FileList({closeTab}: FileListProps) {
     const {files, isLoading, renameFile} = useFiles()
 
     const {showTelescope} = useTelescope()
-    const {showDialog: showGitImport} = useGitImport()
+    // const {showDialog: showGitImport} = useGitImport()
     const {showDialog: showAddFile} = useAddFile()
     const {showDialog: showDeleteFile} = useFileDelete()
 
@@ -40,12 +39,6 @@ export function FileList({closeTab}: FileListProps) {
             if ((event.altKey) && event.key === 'a') {
                 event.preventDefault()
                 showAddFile("")
-            }
-
-            // alt + s for importing files
-            if ((event.altKey) && event.key === 'i') {
-                event.preventDefault()
-                showGitImport()
             }
         }
         // Add the event listener to the window
@@ -111,7 +104,7 @@ export function FileList({closeTab}: FileListProps) {
                         color="primary"
                         aria-label="Search"
                     >
-                        <SearchIcon fontSize="small"/>
+                        <Search fontSize="small"/>
                     </IconButton>
                 </Tooltip>
 
@@ -128,26 +121,10 @@ export function FileList({closeTab}: FileListProps) {
                         sx={{ml: 1}} // Add left margin for spacing between buttons
                         aria-label="Add"
                     >
-                        <AddIcon fontSize="small"/>
+                        <Add fontSize="small"/>
                     </IconButton>
                 </Tooltip>
 
-                <Tooltip arrow title={
-                    <ShortcutFormatter
-                        title="Import"
-                        keyCombo={["ALT", "I"]}
-                    />
-                }>
-                    <IconButton
-                        size="small"
-                        onClick={() => showGitImport()}
-                        color="info"
-                        sx={{ml: 1}} // Add left margin for spacing
-                        aria-label="Import"
-                    >
-                        <Sync fontSize="small"/>
-                    </IconButton>
-                </Tooltip>
             </Toolbar>
 
             <Divider/>
