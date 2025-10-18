@@ -6,7 +6,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
     title: 'Dockman',
-    tagline: 'Dinosaurs are cool',
+    tagline: 'Docker Editor',
     favicon: 'img/favicon.ico',
 
     // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -92,6 +92,10 @@ const config: Config = {
                     position: 'left',
                     label: 'Guide',
                 },
+                {
+                    type: 'docsVersionDropdown',
+                    position: 'right',
+                },
                 // {to: '/blog', label: 'Blog', position: 'left'},
                 {
                     href: 'https://github.com/ra341/dockman',
@@ -107,8 +111,8 @@ const config: Config = {
                     title: 'Docs',
                     items: [
                         {
-                            label: 'Tutorial',
-                            to: '/docs/intro',
+                            label: 'Install',
+                            to: '/docs/install/docker',
                         },
                     ],
                 },

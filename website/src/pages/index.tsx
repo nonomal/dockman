@@ -13,6 +13,7 @@ import styles from './index.module.css';
 function HomepageHeader() {
     const {siteConfig} = useDocusaurusContext();
     const demoCommand = "docker run --rm -p 8866:8866 -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/ra341/dockman:latest"
+    const [isLoading, setIsLoading] = useState(true);
 
     return (
         <header className={clsx('hero', styles.heroBanner)}>
@@ -34,15 +35,46 @@ function HomepageHeader() {
                     Docker Compose files.
                 </p>
 
-                <div style={{textAlign: 'center', marginBottom: '2rem'}}>
+                <div style={{
+                    maxWidth: '1000px',
+                    margin: '0 auto 2rem',
+                    position: 'relative',
+                    paddingBottom: '45%',
+                    height: 0,
+                    overflow: 'hidden',
+                    borderRadius: '8px'
+                }}>
+                    {isLoading && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--ifm-color-emphasis-200)',
+                            color: 'var(--ifm-color-emphasis-700)'
+                        }}>
+                            Fetching demo video...
+                        </div>
+                    )}
                     <video
-                        width="1000"
-                        height="450"
-                        style={{maxWidth: '100%', height: 'auto'}}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain'
+                        }}
                         autoPlay
                         loop
                         muted
                         playsInline
+                        onLoadStart={() => setIsLoading(true)}
+                        onCanPlay={() => setIsLoading(false)}
                     >
                         <source src="https://github.com/RA341/assets/releases/download/dockman/dockman-demo.mp4"
                                 type="video/mp4"/>
