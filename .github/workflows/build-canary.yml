@@ -10,7 +10,7 @@ on:
       - Dockerfile
       - Dockerfile.updater
       - .github/workflows/action-docker.yml
-      - build-canary.yml
+      - .github/workflows/build-canary.yml
       - core/**
       - ui/**
 
@@ -28,12 +28,14 @@ jobs:
             source_branch: ${{ github.ref_name }}
             dockerfile: Dockerfile
             machine: ubuntu-latest
+            platform: "linux/amd64"
 
           - title: dockman-arm
             version_tag: canary
             source_branch: ${{ github.ref_name }}
             dockerfile: Dockerfile
             machine: ubuntu-24.04-arm
+            platform: "linux/arm64"
 
           # todo
     #          - title: dockman/updater
@@ -48,4 +50,6 @@ jobs:
       version_tag: ${{ matrix.version_tag }}
       source_branch: ${{ matrix.source_branch }}
       dockerfile: ${{ matrix.dockerfile }}
+      machine: ${{ matrix.machine }}
+      platform: ${{ matrix.platform }}
     secrets: inherit
