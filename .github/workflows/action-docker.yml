@@ -1,47 +1,50 @@
-name: Action-Docker-build
+name: Dockman Multi-Arch Docker Build
 
 on:
   workflow_call:
     inputs:
       version_tag:
-        description: 'The primary version identifier (e.g., v1.2.3, a branch name like main, or a descriptive tag).'
-        required: false
+        description: 'The primary version identifier (e.g., v1.2.3, canary, dev)'
+        required: true
+        type: string
+      source_branch:
+        description: 'The name of the source Git branch (e.g., main, develop)'
+        required: true
         type: string
       is_latest:
-        description: 'Boolean to indicate if this tag should also be pushed as "latest". Typically true for main releases.'
+        description: 'Boolean to indicate if this tag should also be pushed as "latest"'
         required: false
         type: boolean
         default: false
-      source_branch:
-        description: 'The name of the source Git branch (e.g., main, develop, feature/xyz). For build arguments or specific branch tagging.'
-        required: true
-        type: string
       title:
-        type: string
-        description: title for the image
+        description: 'Title for the image'
         required: false
+        type: string
         default: "dockman"
       dockerfile:
-        type: string
-        description: title for the image
+        description: 'Path to Dockerfile'
         required: false
+        type: string
         default: "Dockerfile"
-      machine:
-        type: string
-        description: Github machine type
-        required: false
-        default: "ubuntu-latest"
-      platform:
-        # "linux/amd64,linux/arm64"
-        type: string
-        description: Architecture
-        required: false
-        default: "linux/amd64"
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-  build-and-push:
-    name: Build ${{ inputs.title }}
-    runs-on: ${{ inputs.machine }}
+  build-architectures:
+    strategy:
+      matrix:
+        include:
+          - platform: "linux/amd64"
+            machine: ubuntu-latest
+            arch_suffix: amd64
+          - platform: "linux/arm64"
+            machine: ubuntu-24.04-arm
+            arch_suffix: arm64
+
+    name: Build ${{ inputs.title }} (${{ matrix.arch_suffix }})
+    runs-on: ${{ matrix.machine }}
     permissions:
       contents: read
       packages: write
@@ -50,10 +53,64 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetches all history, tags, and branches; useful for metadata action
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}
+          tags: |
+            type=raw,value=${{ inputs.version_tag }}-${{ matrix.arch_suffix }}
+          labels: |
+            org.opencontainers.image.title=${{ inputs.title }}
+            org.opencontainers.image.description=Docker image for ${{ inputs.title }} (${{ matrix.arch_suffix }})
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Pull existing image for cache
+        continue-on-error: true
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.source_branch }}-${{ matrix.arch_suffix }} || true
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ matrix.platform }}
+          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.source_branch }}-${{ matrix.arch_suffix }}
+          build-args: |
+            VERSION=${{ inputs.version_tag }}
+            COMMIT_INFO=${{ github.sha }}
+            BRANCH=${{ inputs.source_branch }}
+
+  create-multiarch-manifest:
+    needs: build-architectures
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -93,33 +150,24 @@ jobs:
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
-      - name: Pull existing image for cache
-        continue-on-error: true
+      - name: Create and push multi-arch manifest
         run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.source_branch }} || true
+          SOURCE_IMAGES=(
+            "ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.version_tag }}-amd64"
+            "ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.version_tag }}-arm64"
+          )
+          
+          # Parse tags from metadata action output
+          TAGS="${{ steps.meta.outputs.tags }}"
+          
+          # Create manifest for each tag
+          while IFS= read -r TAG; do
+            if [[ -n "$TAG" ]]; then
+              echo "Creating manifest for $TAG"
+              docker buildx imagetools create -t "$TAG" "${SOURCE_IMAGES[@]}"
+            fi
+          done <<< "$TAGS"
 
-      - name: Build and push Docker image
-        id: build_and_push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ inputs.dockerfile }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: ${{ inputs.platform }}
-          cache-to: type=gha,mode=max
-          cache-from: |
-            type=gha
-            type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.source_branch }}
-          build-args: |
-            VERSION=${{ inputs.version_tag  || steps.meta.outputs.version }}
-            COMMIT_INFO=${{ github.sha }}
-            BRANCH=${{ inputs.source_branch || 'unknown' }}
-
-      - name: Echo image details
-        if: success()
+      - name: Inspect multi-arch image
         run: |
-          echo "🚀 Docker image build and push complete for: ghcr.io/${{ github.repository }}"
-          echo "🏷️ Tags created:"
-          echo "${{ steps.meta.outputs.tags }}"
+          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.version_tag }}

@@ -19,34 +19,13 @@ permissions:
   packages: write  # To push Docker images to GHCR
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - version_tag: canary
-            source_branch: ${{ github.ref_name }}
-            dockerfile: Dockerfile
-            machine: ubuntu-latest
-            platform: "linux/amd64"
-
-          - version_tag: canary
-            source_branch: ${{ github.ref_name }}
-            dockerfile: Dockerfile
-            machine: ubuntu-24.04-arm
-            platform: "linux/arm64"
-
-    # todo
-    #          - title: dockman/updater
-    #            version_tag: canary
-    #            source_branch: ${{ github.ref_name }}
-    #            dockerfile: Dockerfile.updater
-
-    name: Build ${{ matrix.title }}
+  build-canary:
+    name: Build Canary
     uses: ./.github/workflows/action-docker.yml
     with:
-      version_tag: ${{ matrix.version_tag }}
-      source_branch: ${{ matrix.source_branch }}
-      dockerfile: ${{ matrix.dockerfile }}
-      machine: ${{ matrix.machine }}
-      platform: ${{ matrix.platform }}
+      version_tag: canary
+      source_branch: ${{ github.ref_name }}
+      is_latest: false
+      title: dockman
+      dockerfile: Dockerfile
     secrets: inherit
