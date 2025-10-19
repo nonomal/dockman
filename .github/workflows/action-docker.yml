@@ -20,7 +20,7 @@ on:
         type: string
         description: title for the image
         required: false
-        default: "app"
+        default: "dockman"
       dockerfile:
         type: string
         description: title for the image

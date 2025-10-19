@@ -23,21 +23,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - title: dockman
-            version_tag: canary
+          - version_tag: canary
             source_branch: ${{ github.ref_name }}
             dockerfile: Dockerfile
             machine: ubuntu-latest
             platform: "linux/amd64"
 
-          - title: dockman-arm
-            version_tag: canary
+          - version_tag: canary
             source_branch: ${{ github.ref_name }}
             dockerfile: Dockerfile
             machine: ubuntu-24.04-arm
             platform: "linux/arm64"
 
-          # todo
+    # todo
     #          - title: dockman/updater
     #            version_tag: canary
     #            source_branch: ${{ github.ref_name }}
@@ -46,7 +44,6 @@ jobs:
     name: Build ${{ matrix.title }}
     uses: ./.github/workflows/action-docker.yml
     with:
-      title: ${{ matrix.title }}
       version_tag: ${{ matrix.version_tag }}
       source_branch: ${{ matrix.source_branch }}
       dockerfile: ${{ matrix.dockerfile }}
