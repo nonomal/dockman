@@ -27,11 +27,19 @@ jobs:
             version_tag: canary
             source_branch: ${{ github.ref_name }}
             dockerfile: Dockerfile
+            machine: ubuntu-latest
 
-          - title: dockman/updater
+          - title: dockman-arm
             version_tag: canary
             source_branch: ${{ github.ref_name }}
-            dockerfile: Dockerfile.updater
+            dockerfile: Dockerfile
+            machine: ubuntu-24.04-arm
+
+          # todo
+    #          - title: dockman/updater
+    #            version_tag: canary
+    #            source_branch: ${{ github.ref_name }}
+    #            dockerfile: Dockerfile.updater
 
     name: Build ${{ matrix.title }}
     uses: ./.github/workflows/action-docker.yml

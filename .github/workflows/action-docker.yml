@@ -26,11 +26,22 @@ on:
         description: title for the image
         required: false
         default: "Dockerfile"
+      machine:
+        type: string
+        description: Github machine type
+        required: false
+        default: "ubuntu-latest"
+      platform:
+        # "linux/amd64,linux/arm64"
+        type: string
+        description: Architecture
+        required: false
+        default: "linux/amd64"
 
 jobs:
   build-and-push:
-    name: Build Image for ${{ inputs.title }}
-    runs-on: ubuntu-latest
+    name: Build ${{ inputs.title }}
+    runs-on: ${{ inputs.machine }}
     permissions:
       contents: read
       packages: write
@@ -40,9 +51,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetches all history, tags, and branches; useful for metadata action
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -94,7 +102,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # platforms: "linux/amd64,linux/arm64" todo takes a long time
+          platforms: ${{ inputs.platform }}
           cache-to: type=gha,mode=max
           cache-from: type=gha
           build-args: |
