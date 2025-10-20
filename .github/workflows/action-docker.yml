@@ -65,11 +65,16 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase image name
+        id: lowercase
+        run: |
+          echo "image=ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
+
       - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}
+          images: ${{ steps.lowercase.outputs.image }}
           tags: |
             type=raw,value=${{ inputs.version_tag }}-${{ matrix.arch_suffix }}
           labels: |
@@ -81,7 +86,7 @@ jobs:
       - name: Pull existing image for cache
         continue-on-error: true
         run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.source_branch }}-${{ matrix.arch_suffix }} || true
+          docker pull ${{ steps.lowercase.outputs.image }}:${{ inputs.source_branch }}-${{ matrix.arch_suffix }} || true
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -95,7 +100,7 @@ jobs:
           cache-to: type=gha,mode=max
           cache-from: |
             type=gha
-            type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.source_branch }}-${{ matrix.arch_suffix }}
+            type=registry,ref=${{ steps.lowercase.outputs.image }}:${{ inputs.source_branch }}-${{ matrix.arch_suffix }}
           build-args: |
             VERSION=${{ inputs.version_tag }}
             COMMIT_INFO=${{ github.sha }}
@@ -119,11 +124,16 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase image name
+        id: lowercase
+        run: |
+          echo "image=ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
+
       - name: Generate Docker image tags and labels
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}
+          images: ${{ steps.lowercase.outputs.image }}
           tags: |
             # assumes `version_tag` is valid SemVer skip tag if empty (vX.Y.Z or X.Y.Z), create major and major.minor tags.
             # Example: if version_tag is "v1.2.3", this adds "v1" and "v1.2".
@@ -153,8 +163,8 @@ jobs:
       - name: Create and push multi-arch manifest
         run: |
           SOURCE_IMAGES=(
-            "ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.version_tag }}-amd64"
-            "ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.version_tag }}-arm64"
+            "${{ steps.lowercase.outputs.image }}:${{ inputs.version_tag }}-amd64"
+            "${{ steps.lowercase.outputs.image }}:${{ inputs.version_tag }}-arm64"
           )
           
           # Parse tags from metadata action output
@@ -170,4 +180,4 @@ jobs:
 
       - name: Inspect multi-arch image
         run: |
-          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/${{ inputs.title }}:${{ inputs.version_tag }}
+          docker buildx imagetools inspect ${{ steps.lowercase.outputs.image }}:${{ inputs.version_tag }}
