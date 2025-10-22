@@ -10,8 +10,8 @@ type FormatFn func(contents []byte) ([]byte, error)
 type Formatters map[string]FormatFn
 
 var availableFormatters Formatters = map[string]FormatFn{
-	"yaml": yamlFormatter,
-	"yml":  yamlFormatter,
+	".yaml": yamlFormatter,
+	".yml":  yamlFormatter,
 }
 
 // todo look into this
