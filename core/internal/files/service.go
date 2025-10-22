@@ -292,6 +292,22 @@ func (s *Service) WithRoot(filename string) string {
 	return filepath.Join(s.composeRoot(), filename)
 }
 
+func (s *Service) Format(filename string) ([]byte, error) {
+	path := s.WithRoot(filename)
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file %w", err)
+	}
+
+	ext := filepath.Ext(filename)
+	formatter, ok := availableFormatters[ext]
+	if ok {
+		return formatter(contents)
+	}
+
+	return contents, nil
+}
+
 func openFile(filename string) (*os.File, error) {
 	return os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 }
