@@ -43,9 +43,9 @@ export function MonacoEditor(
                     const contents = val?.contents;
                     if (contents) {
                         // Save current state
-                        const model = editor.getModel();
-                        const position = editor.getPosition();
-                        const offset = model.getOffsetAt(position);
+                        const model = editor.getModel()!;
+                        const position = editor.getPosition()!;
+                        const offset = model?.getOffsetAt(position);
 
                         // Get the full range of the editor content
                         const fullRange = model.getFullModelRange();
