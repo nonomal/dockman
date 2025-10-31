@@ -1,5 +1,5 @@
 import {Box, Fade, IconButton, Tooltip} from "@mui/material";
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {type JSX, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {callRPC, downloadFile, uploadFile, useClient} from "../../lib/api";
 import {MonacoEditor} from "./components/editor.tsx";
 import {useSnackbar} from "../../hooks/snackbar.ts";
@@ -15,6 +15,12 @@ interface EditorProps {
     setStatus: (status: SaveState) => void;
     handleContentChange: (value: string, onSave: (value: string) => void) => void;
 }
+
+type ActionItem = {
+    element: JSX.Element;
+    icon: JSX.Element;
+    label: string;
+};
 
 function TabEditor({selectedPage, setStatus, handleContentChange}: EditorProps) {
     const {showError, showWarning} = useSnackbar();
@@ -35,24 +41,32 @@ function TabEditor({selectedPage, setStatus, handleContentChange}: EditorProps) 
         // eslint-disable-next-line
     }, [selectedPage]);
 
+
+    const actions: Record<string, ActionItem> = useMemo(() => {
+        const baseActions: Record<string, ActionItem> = {
+            errors: {
+                element: <EditorErrorWidget errors={errors}/>,
+                icon: <ErrorOutlineOutlined/>,
+                label: 'Show validation errors',
+            },
+        };
+
+        if (isComposeFile(selectedPage)) {
+            baseActions["deploy"] = {
+                element: <EditorDeployWidget selectedPage={selectedPage}/>,
+                icon: <CloudUploadOutlined/>,
+                label: 'Deploy project',
+            };
+        }
+
+        return baseActions;
+    }, [selectedPage, errors]);
+
     useEffect(() => {
         fetchDataCallback().then()
     }, [fetchDataCallback]);
 
-    const actions = {
-        errors: {
-            element: <EditorErrorWidget errors={errors}/>,
-            icon: <ErrorOutlineOutlined/>,
-            label: 'Show validation errors',
-        },
-        deploy: {
-            element: <EditorDeployWidget selectedPage={selectedPage}/>,
-            icon: <CloudUploadOutlined/>,
-            label: 'Deploy project',
-        },
-    } as const;
     const [activeAction, setActiveAction] = useState<keyof typeof actions | null>(null);
-
 
     const saveFile = useCallback(async (val: string) => {
         const err = await uploadFile(selectedPage, val);
