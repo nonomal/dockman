@@ -30,9 +30,6 @@ export function FileList() {
     const [openDirs, setOpenDirs] = useAtom(openFiles)
 
     const [isSidebarCollapsed] = useAtom(sideBarState)
-    const [sidebarWidth, setSidebarWidth] = useState(280)
-    const [isResizing, setIsResizing] = useState(false)
-    const sidebarRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -80,60 +77,57 @@ export function FileList() {
         })
     }, [setOpenDirs])
 
-    // Resize functionality
-    const handleMouseDown = useCallback((e: React.MouseEvent) => {
-        e.preventDefault()
-        setIsResizing(true)
-    }, [])
+    const [panelWidth, setPanelWidth] = useState(250);
+    const [isResizing, setIsResizing] = useState(false);
+    const panelRef = useRef<HTMLDivElement | null>(null);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setIsResizing(true);
+        e.preventDefault();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+        if (!isResizing || !panelRef.current) return;
+
+        const panelRect = panelRef.current.getBoundingClientRect();
+        const newWidth = e.clientX - panelRect.left; // Changed this line
+        setPanelWidth(Math.max(150, Math.min(600, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+        setIsResizing(false);
+    };
 
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isResizing) return
-
-            const newWidth = e.clientX
-            // Set min and max width constraints
-            if (newWidth >= 200 && newWidth <= 600) {
-                setSidebarWidth(newWidth)
-            }
-        }
-
-        const handleMouseUp = () => {
-            setIsResizing(false)
-        }
-
         if (isResizing) {
-            document.addEventListener('mousemove', handleMouseMove)
-            document.addEventListener('mouseup', handleMouseUp)
-            document.body.style.cursor = 'col-resize'
-            document.body.style.userSelect = 'none'
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
         }
-
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove)
-            document.removeEventListener('mouseup', handleMouseUp)
-            document.body.style.cursor = ''
-            document.body.style.userSelect = ''
-        }
-    }, [isResizing])
+        // eslint-disable-next-line
+    }, [isResizing]);
 
     return (
         <>
             {/* Sidebar Panel */}
-            <Box
-                ref={sidebarRef}
-                sx={{
-                    width: isSidebarCollapsed ? 0 : sidebarWidth,
-                    flexShrink: 0,
-                    borderRight: isSidebarCollapsed ? 0 : 1,
-                    borderColor: 'divider',
-                    overflowY: 'auto',
-                    transition: isSidebarCollapsed ? 'width 0.15s ease' : 'width 0.15s ease',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
-                    position: 'relative',
-                }}
+            <Box ref={panelRef}
+                 sx={{
+                     width: isSidebarCollapsed ? 0 : panelWidth,
+                     flexShrink: 0,
+                     borderRight: isSidebarCollapsed ? 0 : 1,
+                     borderColor: 'divider',
+                     overflowY: 'auto',
+                     transition: isResizing ? 'none' : 'width 0.1s ease-in-out',
+                     // transition: isSidebarCollapsed ? 'width 0.15s ease' : 'width 0.15s ease',
+                     overflow: 'hidden',
+                     display: 'flex',
+                     flexDirection: 'column',
+                     height: '100%',
+                     position: 'relative',
+                 }}
             >
                 <Toolbar>
                     <Typography variant={"h6"}>
@@ -227,19 +221,16 @@ export function FileList() {
                             top: 0,
                             bottom: 0,
                             width: '4px',
-                            cursor: 'col-resize',
-                            backgroundColor: 'transparent',
-                            transition: 'background-color 0.2s ease',
+                            cursor: 'ew-resize',
+                            backgroundColor: isResizing ? 'primary.main' : 'transparent',
                             '&:hover': {
                                 backgroundColor: 'primary.main',
                             },
-                            zIndex: 1300,
+                            zIndex: 10,
                         }}
                     />
                 )}
             </Box>
-
-
         </>
     )
 }

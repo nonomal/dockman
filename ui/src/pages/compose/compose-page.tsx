@@ -1,6 +1,6 @@
 import React, {type ReactNode, type SyntheticEvent, useEffect, useMemo, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
-import {TabEditor} from "./tab-editor.tsx";
+import TabEditor from "./tab-editor.tsx";
 import {TabDeploy} from "./tab-deploy.tsx";
 import {Box, CircularProgress, Fade, IconButton, Tab, Tabs, Tooltip, Typography} from '@mui/material';
 import {TabStat} from "./tab-stats.tsx";

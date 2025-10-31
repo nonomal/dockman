@@ -1,33 +1,14 @@
-import {
-    Box,
-    Button,
-    CircularProgress,
-    Dialog, DialogActions,
-    DialogContent,
-    DialogTitle,
-    Fade,
-    IconButton,
-    Tooltip,
-    Typography
-} from "@mui/material";
-import {useCallback, useEffect, useState} from "react";
-import {callRPC, downloadFile, transformAsyncIterable, uploadFile, useClient} from "../../lib/api";
+import {Box, Fade, IconButton, Tooltip} from "@mui/material";
+import React, {useCallback, useEffect, useRef, useState} from "react";
+import {callRPC, downloadFile, uploadFile, useClient} from "../../lib/api";
 import {MonacoEditor} from "./components/editor.tsx";
 import {useSnackbar} from "../../hooks/snackbar.ts";
 import {type SaveState} from "./status-hook.ts";
 import {CloudUploadOutlined, ErrorOutlineOutlined} from "@mui/icons-material";
 import {DockerService} from "../../gen/docker/v1/docker_pb.ts";
 import {isComposeFile} from "../../lib/editor.ts";
-import {
-    activeActionAtom,
-    activeTerminalAtom,
-    deployActionsConfig,
-    isTerminalPanelOpenAtom,
-    type LogTab,
-    openTerminalsAtom
-} from "./state.tsx";
-import {useAtom} from "jotai";
-import {useDockerCompose} from "../../hooks/docker-compose.ts";
+import EditorErrorWidget from "./editor-widget-errors.tsx";
+import EditorDeployWidget from "./editor-widget-deploy.tsx";
 
 interface EditorProps {
     selectedPage: string;
@@ -35,7 +16,7 @@ interface EditorProps {
     handleContentChange: (value: string, onSave: (value: string) => void) => void;
 }
 
-export function TabEditor({selectedPage, setStatus, handleContentChange}: EditorProps) {
+function TabEditor({selectedPage, setStatus, handleContentChange}: EditorProps) {
     const {showError, showWarning} = useSnackbar();
     const dockerClient = useClient(DockerService)
 
@@ -103,6 +84,39 @@ export function TabEditor({selectedPage, setStatus, handleContentChange}: Editor
         // eslint-disable-next-line
     }, [selectedPage, setStatus]);
 
+    const [panelWidth, setPanelWidth] = useState(250);
+    const [isResizing, setIsResizing] = useState(false);
+    const panelRef = useRef<HTMLDivElement | null>(null);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setIsResizing(true);
+        e.preventDefault();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+        if (!isResizing || !panelRef.current) return;
+
+        const panelRect = panelRef.current.getBoundingClientRect();
+        const newWidth = panelRect.right - e.clientX;
+        setPanelWidth(Math.max(150, Math.min(600, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+        setIsResizing(false);
+    };
+
+    useEffect(() => {
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+        }
+        // eslint-disable-next-line
+    }, [isResizing]);
+
     function handleEditorChange(value: string | undefined): void {
         const newValue = value!
         handleContentChange(newValue, saveFile)
@@ -154,14 +168,36 @@ export function TabEditor({selectedPage, setStatus, handleContentChange}: Editor
                         </Fade>
                     </Box>
 
-                    <Box sx={{
-                        width: activeAction !== null ? '250px' : '0px',
-                        transition: 'width 0.2s ease-in-out',
-                        overflow: 'hidden',
-                        backgroundColor: '#1E1E1E',
-                    }}>
-                        {/* Inner wrapper to prevent content from wrapping during animation */}
-                        <Box sx={{p: 2, width: '250px'}}>
+                    <Box ref={panelRef}
+                         sx={{
+                             width: activeAction !== null ? `${panelWidth}px` : '0px',
+                             transition: isResizing ? 'none' : 'width 0.1s ease-in-out',
+                             overflow: 'hidden',
+                             backgroundColor: '#1E1E1E',
+                             position: 'relative',
+                         }}>
+                        {/* Resize handle */}
+                        {activeAction !== null && (
+                            <Box
+                                onMouseDown={handleMouseDown}
+                                sx={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    width: '4px',
+                                    cursor: 'ew-resize',
+                                    backgroundColor: isResizing ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255,255,255,0.1)',
+                                    },
+                                    zIndex: 10,
+                                }}
+                            />
+                        )}
+
+                        {/* Content */}
+                        <Box sx={{p: 2, width: '100%'}}>
                             {(activeAction) && actions[activeAction].element}
                         </Box>
                     </Box>
@@ -217,158 +253,7 @@ export function TabEditor({selectedPage, setStatus, handleContentChange}: Editor
     );
 }
 
-const EditorErrorWidget = ({errors}: { errors: string[] }) => {
-    return (
-        errors.length === 0 ? (
-            <Typography variant="subtitle1" sx={{mb: 1, fontWeight: 'bold', whiteSpace: 'nowrap'}}>
-                No errors detected
-            </Typography>
-        ) : <>
-            <Typography
-                variant="subtitle1"
-                sx={{mb: 1, fontWeight: 'bold', whiteSpace: 'nowrap'}}
-            >
-                Errors
-            </Typography>
+export default TabEditor
 
-            {errors.map((value, index) => (
-                <Box
-                    key={index}
-                    sx={{
-                        p: 1.5,
-                        mb: 3,
-                        backgroundColor: 'rgba(211, 47, 47, 0.1)', // Faint red background
-                        border: '1px solid rgba(211, 47, 47, 0.4)',
-                        borderRadius: 1,
-                        fontFamily: 'monospace',
-                        fontSize: '0.875rem',
-                        color: '#ffcdd2', // Light red text for dark mode
-                        whiteSpace: 'pre-wrap', // Allows the text to wrap
-                        wordBreak: 'break-all', // Breaks long unbreakable strings (like paths)
-                    }}
-                >
-                    {value}
-                </Box>
-            ))}
-        </>
-    );
-};
-
-function EditorDeployWidget({selectedPage}: { selectedPage: string }) {
-    const dockerService = useClient(DockerService);
-    const {fetchContainers} = useDockerCompose(selectedPage);
-
-    const [composeErrorDialog, setComposeErrorDialog] = useState<{ dialog: boolean; message: string }>({
-        dialog: false,
-        message: ''
-    });
-    const closeErrorDialog = () => setComposeErrorDialog(p => ({...p, dialog: false}));
-    const showErrorDialog = (message: string) => setComposeErrorDialog({dialog: true, message});
-    const {showSuccess} = useSnackbar();
-    const [activeAction, setActiveAction] = useAtom(activeActionAtom);
-
-    const [, setLogTabs] = useAtom(openTerminalsAtom);
-    const [, setActiveTabId] = useAtom(activeTerminalAtom);
-
-    const [, setIsLogPanelMinimized] = useAtom(isTerminalPanelOpenAtom);
-    const createStream = <T, >(
-        {
-            id, getStream, transform, title, onSuccess, onFinalize, inputFn
-        }:
-        {
-            id: string;
-            getStream: (signal: AbortSignal) => AsyncIterable<T>;
-            transform: (item: T) => string;
-            title: string;
-            inputFn?: (cmd: string) => void,
-            onSuccess?: () => void;
-            onFinalize?: () => void;
-        }) => {
-        const newController = new AbortController();
-        const sourceStream = getStream(newController.signal);
-
-        const transformedStream = transformAsyncIterable(sourceStream, {
-            transform,
-            onComplete: () => onSuccess?.(),
-            onError: (err) => {
-                // Don't show an error dialog if the stream was intentionally aborted
-                if (!newController.signal.aborted) {
-                    showErrorDialog(`Error streaming container logs: ${err}`);
-                }
-            },
-            onFinally: () => onFinalize?.(),
-        });
-
-        const newTab: LogTab = {
-            id,
-            title,
-            stream: transformedStream,
-            controller: newController,
-            inputFn: inputFn
-        };
-
-        setLogTabs(prev => [...prev, newTab]);
-        setActiveTabId(id);
-        setIsLogPanelMinimized(false); // Always expand panel for a new tab
-    };
-
-    const handleComposeAction = (
-        name: typeof deployActionsConfig[number]['name'],
-        message: string,
-        rpcName: typeof deployActionsConfig[number]['rpcName'],
-    ) => {
-        setActiveAction(name);
-        // unique ID and title for the new tab
-        const tabId = `${name}-${Date.now()}`;
-        const tabTitle = `${name} - ${selectedPage.split('/').pop() || selectedPage}`;
-
-        createStream({
-            id: tabId,
-            title: tabTitle,
-            getStream: signal => dockerService[rpcName]({
-                filename: selectedPage,
-                selectedServices: [], // services by default
-            }, {signal}),
-            transform: item => item.message,
-            onSuccess: () => {
-                showSuccess(`Deployment ${message} successfully`)
-                setIsLogPanelMinimized(true);
-            },
-            onFinalize: () => {
-                setActiveAction('');
-                fetchContainers().then();
-            }
-        });
-    };
-
-    return (
-        <>
-            <Box sx={{display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3, flexShrink: 0}}>
-                {deployActionsConfig.map((action) => (
-                    <Button
-                        key={action.name}
-                        variant="outlined"
-                        disabled={!!activeAction}
-                        onClick={() => handleComposeAction(action.name, action.message, action.rpcName)}
-                        startIcon={activeAction === action.name ?
-                            <CircularProgress size={20} color="inherit"/> : action.icon}
-                    >
-                        {action.name.charAt(0).toUpperCase() + action.name.slice(1)}
-                    </Button>
-                ))}
-            </Box>
-
-            <Dialog open={composeErrorDialog.dialog} onClose={closeErrorDialog}>
-                <DialogTitle>Error</DialogTitle>
-                <DialogContent>
-                    <Typography sx={{whiteSpace: 'pre-wrap'}}>{composeErrorDialog.message}</Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={closeErrorDialog} color="primary">Close</Button>
-                </DialogActions>
-            </Dialog>
-        </>
-    );
-}
 
 
