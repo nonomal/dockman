@@ -19,6 +19,9 @@ import {useTabs} from "../../hooks/tabs.ts";
 import {type SaveState, useSaveStatus} from "./status-hook.ts";
 import ActionBar from "./components/action-bar.tsx";
 import CoreComposeEmpty from "./compose-empty.tsx";
+import {LogsPanel} from "./components/logs-panel.tsx";
+import {useAtom, useSetAtom} from "jotai";
+import {activeTerminalAtom, closeTerminalAtom, isTerminalPanelOpenAtom, openTerminalsAtom} from "./state.tsx";
 
 export const ComposePage = () => {
     return (
@@ -186,6 +189,12 @@ function CoreCompose({filename}: { filename: string }) {
 
     const [isLoading, setIsLoading] = useState(true);
     const [fileError, setFileError] = useState("");
+
+
+    const [isLogPanelMinimized, setIsLogPanelMinimized] = useAtom(isTerminalPanelOpenAtom);
+    const [logTabs] = useAtom(openTerminalsAtom);
+    const [activeTerminal, setActiveTerminal] = useAtom(activeTerminalAtom);
+    const closeTab = useSetAtom(closeTerminalAtom);
 
     useEffect(() => {
         setIsLoading(true);
@@ -365,6 +374,15 @@ function CoreCompose({filename}: { filename: string }) {
                     </Box>
                 </Fade>
             )}
+
+            <LogsPanel
+                tabs={logTabs}
+                activeTabId={activeTerminal}
+                isMinimized={isLogPanelMinimized}
+                onTabChange={setActiveTerminal}
+                onTabClose={closeTab}
+                onToggle={() => setIsLogPanelMinimized(prev => !prev)}
+            />
         </>
     );
 }
