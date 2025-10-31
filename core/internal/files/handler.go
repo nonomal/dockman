@@ -54,15 +54,6 @@ func (h *Handler) List(_ context.Context, _ *connect.Request[v1.Empty]) (*connec
 	return connect.NewResponse(&v1.ListResponse{Groups: resp}), nil
 }
 
-func (h *Handler) Format(ctx context.Context, req *connect.Request[v1.File]) (*connect.Response[v1.Empty], error) {
-	err := h.srv.Format(req.Msg.Filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return connect.NewResponse(&v1.Empty{}), nil
-}
-
 func sortFiles(a, b string, fileList map[string][]string, dockmanConf *DockmanYaml) int {
 	ra := getSortRank(a, fileList, dockmanConf)
 	rb := getSortRank(b, fileList, dockmanConf)
