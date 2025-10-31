@@ -191,14 +191,19 @@ function CorePage() {
                 borderColor: 'rgba(255, 255, 255, 0.23)',
                 borderRadius: 3,
                 display: 'flex',
-                overflow: 'hidden',
-                minHeight: 0
+                flexDirection: 'column', // Add this
+                minHeight: 0,
+                overflow: 'hidden' // Keep this on the outer box
             }}>
                 {loading ? (
                     <ContainersLoading/>
                 ) : (
                     <Fade in={!loading} timeout={300}>
-                        <div style={{width: '100%'}}>
+                        <div style={{
+                            width: '100%',
+                            height: '100%',
+                            overflow: 'auto' // Add scrolling here
+                        }}>
                             <ContainerTable
                                 containers={filteredContainers}
                                 loading={loading}
