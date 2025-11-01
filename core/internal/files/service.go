@@ -267,6 +267,14 @@ func (s *Service) Save(filename string, destWriter io.Reader) error {
 	return nil
 }
 
+func (s *Service) getFileContents(filename string) ([]byte, error) {
+	file, err := os.ReadFile(s.WithRoot(filepath.ToSlash(filename)))
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
 func (s *Service) LoadFilePath(filename string) (string, error) {
 	return s.WithRoot(filename), nil
 }
@@ -290,6 +298,22 @@ func (s *Service) createFile(filename string) error {
 // WithRoot joins s.composeRoot() with filename
 func (s *Service) WithRoot(filename string) string {
 	return filepath.Join(s.composeRoot(), filename)
+}
+
+func (s *Service) Format(filename string) ([]byte, error) {
+	path := s.WithRoot(filename)
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file %w", err)
+	}
+
+	ext := filepath.Ext(filename)
+	formatter, ok := availableFormatters[ext]
+	if ok {
+		return formatter(contents)
+	}
+
+	return contents, nil
 }
 
 func openFile(filename string) (*os.File, error) {

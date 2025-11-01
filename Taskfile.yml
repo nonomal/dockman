@@ -21,6 +21,12 @@ tasks:
     cmds:
       - golangci-lint run ./...
 
+  site:
+    desc: Start dev website
+    dir: website
+    cmds:
+      - npm run start
+
   dock:
     desc: start a a temp dockman on latest tag for testing
     cmds:
